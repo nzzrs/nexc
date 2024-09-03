@@ -11,10 +11,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -74,8 +74,8 @@ fun SettingsScreen(navController: NavHostController, userPreferences: DataStoreM
             onDismissRequest = { openPreferenceDialog = false },
             confirmButton = { /*The user doesn't need to confirm*/ },
             text = {
-                Column {
-                    Language.entries.forEach { language ->
+                LazyColumn (modifier = Modifier.height(350.dp)){
+                    items(Language.entries){ language ->
                         Row (
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
@@ -88,7 +88,7 @@ fun SettingsScreen(navController: NavHostController, userPreferences: DataStoreM
                                     AppCompatDelegate.setApplicationLocales(appLocale)
                                 }
                             )
-                            Text(text = language.name)
+                            Text(text = stringResource(id = languageCodeToId(language.code) ))
                         }
                     }
                 }
@@ -137,7 +137,7 @@ fun SettingsScreen(navController: NavHostController, userPreferences: DataStoreM
                     Row {
                         Icon(
                             imageVector = ImageVector.vectorResource(id = R.drawable.ic_dark_mode),
-                            contentDescription = "",
+                            contentDescription = null,
                             modifier = Modifier.padding(start = 15.dp, end = 15.dp)
                         )
                         Text(text = stringResource(id = R.string.label_theme), style = MaterialTheme.typography.titleMedium)
@@ -251,7 +251,7 @@ fun SettingsScreen(navController: NavHostController, userPreferences: DataStoreM
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            text = selectedLanguage,
+                            text = stringResource(id = languageCodeToId(selectedLanguage) ),
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -266,11 +266,21 @@ fun SettingsScreen(navController: NavHostController, userPreferences: DataStoreM
 
 private fun themeModeToId(themeMode: ThemeMode) : Int {
     val id = when(themeMode){
-        ThemeMode.SYSTEM -> R.string.label_theme_system
+        ThemeMode.SYSTEM -> R.string.label_follow_system
         ThemeMode.LIGHT -> R.string.label_theme_light
         ThemeMode.DARK -> R.string.label_theme_dark
     }
     return id
+}
+
+private fun languageCodeToId( code : String ) : Int {
+    val result = when(code){
+        "en" -> R.string.label_language_english
+        "it" -> R.string.label_language_italian
+        else -> R.string.label_follow_system
+    }
+
+    return result
 }
 
 @Preview

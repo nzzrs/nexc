@@ -47,7 +47,7 @@
     <!--Settings-->
     <string name="label_appearance">Appearance</string>
     <string name="label_theme">Theme</string>
-    <string name="label_theme_system">System</string>
+    <string name="label_follow_system">System</string>
     <string name="label_theme_dark">Dark</string>
     <string name="label_theme_light">Light</string>
     <string name="label_material_you">Material You</string>
@@ -77,5 +77,7 @@
     <string name="label_instructions">Instructions</string>
     <string name="label_cancel_dialog">Cancel</string>
     <string name="label_exit_dialog">Exit</string>
+    <string name="label_language_english">English</string>
+    <string name="label_language_italian">Italian</string>
 
 </resources>

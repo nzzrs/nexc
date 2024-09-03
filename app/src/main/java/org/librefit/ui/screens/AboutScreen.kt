@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -68,18 +67,6 @@ fun AboutScreen(navController : NavHostController) {
         },
     ) { innerPadding ->
 
-        val itemList = listOf(
-            listOf(null,stringResource(R.string.label_help_us)),
-            listOf(Icons.Default.Favorite,stringResource(R.string.label_donate)),
-            listOf(ImageVector.vectorResource(R.drawable.ic_handshake),stringResource(R.string.label_contribute)),
-            listOf(ImageVector.vectorResource(R.drawable.ic_translate),stringResource(R.string.label_translate)),
-            listOf(null,stringResource(R.string.label_info)),
-            listOf(ImageVector.vectorResource(R.drawable.ic_globe),stringResource(R.string.label_website)),
-            listOf(ImageVector.vectorResource(R.drawable.ic_source_code),stringResource(R.string.label_source_code)),
-            listOf(ImageVector.vectorResource(R.drawable.ic_policy),stringResource(R.string.label_privacy_policy)),
-            listOf(ImageVector.vectorResource(R.drawable.ic_license), stringResource(R.string.label_license))
-        )
-
         LazyColumn (
             modifier = Modifier
                 .fillMaxSize()
@@ -95,22 +82,75 @@ fun AboutScreen(navController : NavHostController) {
                     contentDescription = null,
                     modifier = Modifier
                         .size(size)
-                        .border(BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainer), RoundedCornerShape(size))
+                        .border(
+                            BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainer),
+                            RoundedCornerShape(size)
+                        )
                 )
             }
-            items(itemList){ item ->
-                AboutItem(item)
+            item {
+                AboutItem(text =  stringResource(R.string.label_help_us))
+            }
+            item {
+                AboutItem(Icons.Default.Favorite, stringResource(R.string.label_donate), null)
+            }
+            item {
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_handshake),
+                    stringResource(R.string.label_contribute),
+                    null
+                )
+            }
+            item {
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_translate),
+                    stringResource(R.string.label_translate),
+                    null
+                )
+            }
+            item {
+                AboutItem(text = stringResource(R.string.label_info))
+            }
+            item {
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_globe),
+                    stringResource(R.string.label_website),
+                    null
+                )
+            }
+            item {
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_source_code),
+                    stringResource(R.string.label_source_code),
+                    stringResource(R.string.label_url_source_code)
+                )
+            }
+            item {
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_policy),
+                    stringResource(R.string.label_privacy_policy),
+                    null
+                )
+            }
+            item {
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_license),
+                    stringResource(R.string.label_license),
+                    null
+                )
             }
         }
     }
 }
 
 @Composable
-private fun AboutItem(item: List<Any?>){
+private fun AboutItem(
+    imageVector: ImageVector? = null,
+    text: String,
+    url: String? = null
+){
 
-    val string = item[1].toString()
-
-    if (item[0] == null){
+    if (imageVector == null){
         Row (
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.Center,
@@ -119,7 +159,7 @@ private fun AboutItem(item: List<Any?>){
                 .height(50.dp)
         ) {
             Text(
-                text = string,
+                text = text,
                 style = MaterialTheme.typography.headlineSmall,
                 color = MaterialTheme.colorScheme.primary
             )
@@ -128,10 +168,8 @@ private fun AboutItem(item: List<Any?>){
         val context = LocalContext.current
 
         OutlinedCard(
-            enabled = false,
+            enabled = url != null,
             onClick = {
-                /*TODO*/
-                val url = "https://www.privacyguides.org"
                 val intent = Intent(Intent.ACTION_VIEW).apply { data = Uri.parse(url) }
                 context.startActivity(intent)
             }
@@ -144,12 +182,12 @@ private fun AboutItem(item: List<Any?>){
             ){
                 Spacer(modifier = Modifier.width(20.dp))
                 Icon(
-                    imageVector = item[0] as ImageVector,
-                    contentDescription = "$string icon"
+                    imageVector = imageVector,
+                    contentDescription = "$text icon"
                 )
                 Spacer(modifier = Modifier.width(20.dp))
                 Text(
-                    text = string,
+                    text = text,
                     fontSize = 20.sp
                 )
             }

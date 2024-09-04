@@ -32,14 +32,22 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.librefit.R
+import org.librefit.data.Category
+import org.librefit.data.Equipment
+import org.librefit.data.Force
+import org.librefit.data.Level
+import org.librefit.data.Mechanic
+import org.librefit.data.Muscle
 import org.librefit.data.SharedViewModel
-import org.librefit.util.stringToEnum
+import org.librefit.util.exerciseEnumToStringId
+import kotlin.enums.EnumEntries
 
 @Composable
 fun FiltersCard(
@@ -81,23 +89,25 @@ fun FiltersCard(
             }
         }
 
-        val titles = listOf("Force","Level","Mechanic","Equipment","Primary Muscles","Secondary Muscles","Category")
+
+        val titles = listOf(
+            R.string.label_force,
+            R.string.label_level,
+            R.string.label_mechanic,
+            R.string.label_equipment,
+            R.string.label_primary_muscles,
+            R.string.label_secondary_muscles,
+            R.string.label_category
+        )
+
         val options = listOf(
-            listOf("Static", "Pull", "Push"),
-            listOf("Beginner", "Intermediate", "Expert"),
-            listOf("Isolation", "Compound"),
-            listOf("Medicine ball","Dumbbell","Body only","Bands","Kettlebells",
-                "Foam roll","Cable","Machine","Barbell","Exercise ball","E-z curl bar","Other"
-            ),
-            listOf("Abdominals","Abductors","Adductors","Biceps","Calves","Chest",
-                "Forearms","Glutes","Hamstrings","Lats","Lower back","Middle back",
-                "Neck","Quadriceps","Shoulders","Traps","Triceps"
-            ),
-            listOf("Abdominals","Abductors","Adductors","Biceps","Calves","Chest",
-                "Forearms","Glutes","Hamstrings","Lats","Lower back","Middle back",
-                "Neck","Quadriceps","Shoulders","Traps","Triceps"
-            ),
-            listOf("Powerlifting","Strength","Stretching","Cardio","Olympic weightlifting","Strongman","Plyometrics")
+            Force.entries,
+            Level.entries,
+            Mechanic.entries,
+            Equipment.entries,
+            Muscle.entries,
+            Muscle.entries,
+            Category.entries
         )
 
 
@@ -109,10 +119,14 @@ fun FiltersCard(
                     .padding(15.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                for (i in titles.indices){
-                    ItemFilter(title = titles[i], options = options[i], viewModel = viewModel)
-                    Spacer(modifier = Modifier.height(10.dp))
-                }
+                //TODO this is temporary, until filter works
+                ItemFilter(stringResource(titles[0]), options[0] , viewModel )
+                ItemFilter(stringResource(titles[6]), options[6] , viewModel )
+
+//                for (i in titles.indices){
+//                    ItemFilter(title = stringResource(titles[i]), options = options[i], viewModel = viewModel)
+//                    Spacer(modifier = Modifier.height(10.dp))
+//                }
             }
         }
     }
@@ -122,7 +136,7 @@ fun FiltersCard(
 @Composable
 fun ItemFilter(
     title: String,
-    options: List<String>,
+    options: EnumEntries<out Enum<*>>,
     viewModel: SharedViewModel
 ) {
 
@@ -132,11 +146,10 @@ fun ItemFilter(
         modifier = Modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        options.forEach { option ->
-            val enum = stringToEnum(option)
+        options.forEach { enum ->
 
             FilterChip(
-                selected = viewModel.isEnumInList(enum!!),
+                selected = viewModel.isEnumInList(enum),
                 onClick = {
                     if (viewModel.isEnumInList(enum)){
                         viewModel.removeEnum(enum)
@@ -144,7 +157,7 @@ fun ItemFilter(
                         viewModel.addEnum(enum)
                     }
                 },
-                label = { Text(text = option, maxLines = 1, overflow = TextOverflow.Ellipsis) },
+                label = { Text(stringResource(exerciseEnumToStringId(enum)), maxLines = 1, overflow = TextOverflow.Ellipsis) },
                 leadingIcon = if (viewModel.isEnumInList(enum)) {
                     {
                         Icon(

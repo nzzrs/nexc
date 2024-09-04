@@ -50,6 +50,7 @@ import org.librefit.data.Exercise
 import org.librefit.data.SharedViewModel
 import org.librefit.ui.components.ConfirmExitDialog
 import org.librefit.ui.components.ExerciseDetailModalBottomSheet
+import org.librefit.ui.components.FiltersCard
 import org.librefit.util.exerciseEnumToStringId
 
 
@@ -195,8 +196,8 @@ private fun AddExerciseScreenContent(
         //This is temporary until FiltersCard is ready
         item { Spacer(modifier = Modifier.height(15.dp)) }
 
-        // Card to let the user filter the exercises list
-        //item { FiltersCard(isFilterExpanded = isFilterExpanded, viewModel = viewModel) } /*TODO*/
+        // Card to let the user filter the exercises list TODO doesn't work properly
+        item { FiltersCard(isFilterExpanded = isFilterExpanded, viewModel = viewModel) }
 
         if(filteredExercisesList.isNotEmpty()) {
             item { HorizontalDivider() }

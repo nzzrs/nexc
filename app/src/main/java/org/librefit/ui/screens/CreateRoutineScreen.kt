@@ -183,10 +183,12 @@ private fun RoutineScreen(
                 )
             }
             item{
-                Text(
-                    text = stringResource(id = R.string.label_start_creating_routine),
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+                Row (modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center){
+                    Text(
+                        text = stringResource(id = R.string.label_start_creating_routine),
+                        color = MaterialTheme.colorScheme.onBackground
+                    )
+                }
             }
         } else {
 //            val exercise = Exercise("1", "Pull up", null,

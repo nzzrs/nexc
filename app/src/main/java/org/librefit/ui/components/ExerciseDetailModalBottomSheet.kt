@@ -121,6 +121,39 @@ fun ExerciseDetailModalBottomSheet(
     }
 }
 
+@Composable
+private fun MuscleContent(title : String, musclesList: List<Muscle>) {
+    var list = ""
+    musclesList.forEachIndexed { index , muscle->
+        list += stringResource(exerciseEnumToStringId(muscle)) + if(index != musclesList.lastIndex) ", " else ""
+    }
+    Text(text = formatDetails(title, list) )
+    LazyRow {
+        items(musclesList){ muscle ->
+            val vector = when(muscle){
+                Muscle.ABDOMINALS -> ImageVector.vectorResource(id = R.drawable.abdominals)
+                Muscle.ABDUCTORS -> ImageVector.vectorResource(id = R.drawable.abductors)
+                Muscle.ADDUCTORS -> ImageVector.vectorResource(id = R.drawable.adductors)
+                Muscle.BICEPS -> ImageVector.vectorResource(id = R.drawable.biceps)
+                Muscle.CALVES -> ImageVector.vectorResource(id = R.drawable.calves)
+                Muscle.CHEST -> ImageVector.vectorResource(id = R.drawable.chest)
+                Muscle.FOREARMS -> ImageVector.vectorResource(id = R.drawable.forearms)
+                Muscle.GLUTES -> ImageVector.vectorResource(id = R.drawable.glutes)
+                Muscle.HAMSTRINGS -> ImageVector.vectorResource(id = R.drawable.harmstring)
+                Muscle.LATS -> ImageVector.vectorResource(id = R.drawable.lats)
+                Muscle.LOWER_BACK -> ImageVector.vectorResource(id = R.drawable.lower_back)
+                Muscle.MIDDLE_BACK -> ImageVector.vectorResource(id = R.drawable.middle_back)
+                Muscle.NECK -> ImageVector.vectorResource(id = R.drawable.neck)
+                Muscle.QUADRICEPS -> ImageVector.vectorResource(id = R.drawable.quads)
+                Muscle.SHOULDERS -> ImageVector.vectorResource(id = R.drawable.shoulders)
+                Muscle.TRAPS -> ImageVector.vectorResource(id = R.drawable.traps)
+                Muscle.TRICEPS -> ImageVector.vectorResource(id = R.drawable.triceps)
+            }
+            Image(imageVector = vector, contentDescription = "", modifier = Modifier.size(150.dp))
+        }
+    }
+}
+
 private fun formatDetails(type: String, details : String) : AnnotatedString {
     val result = buildAnnotatedString {
         withStyle(style = SpanStyle(fontWeight = FontWeight.Medium)){ append("$type: ") }
@@ -157,36 +190,5 @@ private fun AlternatingImages(exercise: Exercise){
                 .clip(RoundedCornerShape(20.dp))
                 .fillMaxSize()
         )
-    }
-}
-
-@Composable
-private fun MuscleContent(title : String, musclesList: List<Muscle>) {
-    var list = ""
-    musclesList.forEach { list += stringResource(exerciseEnumToStringId(it)) }
-    Text(text = formatDetails(title, list) )
-    LazyRow {
-        items(musclesList){ muscle ->
-            val vector = when(muscle){
-                Muscle.ABDOMINALS -> ImageVector.vectorResource(id = R.drawable.abdominals)
-                Muscle.ABDUCTORS -> ImageVector.vectorResource(id = R.drawable.abductors)
-                Muscle.ADDUCTORS -> ImageVector.vectorResource(id = R.drawable.adductors)
-                Muscle.BICEPS -> ImageVector.vectorResource(id = R.drawable.biceps)
-                Muscle.CALVES -> ImageVector.vectorResource(id = R.drawable.calves)
-                Muscle.CHEST -> ImageVector.vectorResource(id = R.drawable.chest)
-                Muscle.FOREARMS -> ImageVector.vectorResource(id = R.drawable.forearms)
-                Muscle.GLUTES -> ImageVector.vectorResource(id = R.drawable.glutes)
-                Muscle.HAMSTRINGS -> ImageVector.vectorResource(id = R.drawable.harmstring)
-                Muscle.LATS -> ImageVector.vectorResource(id = R.drawable.lats)
-                Muscle.LOWER_BACK -> ImageVector.vectorResource(id = R.drawable.lower_back)
-                Muscle.MIDDLE_BACK -> ImageVector.vectorResource(id = R.drawable.middle_back)
-                Muscle.NECK -> ImageVector.vectorResource(id = R.drawable.neck)
-                Muscle.QUADRICEPS -> ImageVector.vectorResource(id = R.drawable.quads)
-                Muscle.SHOULDERS -> ImageVector.vectorResource(id = R.drawable.shoulders)
-                Muscle.TRAPS -> ImageVector.vectorResource(id = R.drawable.traps)
-                Muscle.TRICEPS -> ImageVector.vectorResource(id = R.drawable.triceps)
-            }
-            Image(imageVector = vector, contentDescription = "", modifier = Modifier.size(150.dp))
-        }
     }
 }

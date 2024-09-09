@@ -29,6 +29,9 @@
     <string name="label_privacy_policy">Privacy policy</string>
     <string name="label_license">License</string>
     <string name="label_url_source_code" translatable="false">https://github.com/IamDg/LibreFit</string>
+    <string name="label_url_gpl3" translatable="false">https://www.gnu.org/licenses/gpl-3.0.html#license-text</string>
+    <string name="label_url_privacy" translatable="false">https://github.com/IamDg/LibreFit-website/blob/main/PRIVACY.md</string>
+    <string name="label_url_website" translatable="false">https://iamdg.github.io/LibreFit-website/</string>
 
 
     <!--Create routine screen-->

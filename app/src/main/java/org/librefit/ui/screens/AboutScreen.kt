@@ -95,7 +95,10 @@ fun AboutScreen(navController : NavHostController) {
 
             HeadlineText(text =  stringResource(R.string.label_help_us))
 
-            AboutItem(Icons.Default.Favorite, stringResource(R.string.label_donate))
+            AboutItem(
+                Icons.Default.Favorite,
+                stringResource(R.string.label_donate)
+            )
 
             AboutItem(
                 ImageVector.vectorResource(R.drawable.ic_handshake),
@@ -113,7 +116,7 @@ fun AboutScreen(navController : NavHostController) {
             AboutItem(
                 ImageVector.vectorResource(R.drawable.ic_globe),
                 stringResource(R.string.label_website),
-                "https://iamdg.github.io/LibreFit-website/" //Hardcoded because it's temporary
+                stringResource(R.string.label_url_website)//Hardcoded because it's temporary
             )
 
 
@@ -125,12 +128,14 @@ fun AboutScreen(navController : NavHostController) {
 
             AboutItem(
                 ImageVector.vectorResource(R.drawable.ic_policy),
-                stringResource(R.string.label_privacy_policy)
+                stringResource(R.string.label_privacy_policy),
+                stringResource(R.string.label_url_privacy)
             )
 
             AboutItem(
                 ImageVector.vectorResource(R.drawable.ic_license),
-                stringResource(R.string.label_license)
+                stringResource(R.string.label_license),
+                stringResource(R.string.label_url_gpl3)
             )
 
         }

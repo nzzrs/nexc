@@ -37,23 +37,35 @@ fun NavigationHost(list: List<ExerciseDC>, userPreferences: DataStoreManager, sh
             MainScreen(navController = navController, sharedViewModel = sharedViewModel)
         }
         composable<Destination.CreateRoutineScreen> {
-            CreateRoutineScreen(navController =  navController, viewModel = sharedViewModel)
+            CreateRoutineScreen(
+                viewModel = sharedViewModel,
+                navigateBack = { navController.popBackStack() },
+                navigateAddExercise = { navController.navigate(Destination.AddExerciseScreen )}
+            )
         }
         composable<Destination.AddExerciseScreen> {
-            AddExerciseScreen(list = list, navController = navController, viewModel = sharedViewModel)
+            AddExerciseScreen(
+                list = list,
+                navigateBack = { navController.popBackStack() },
+                viewModel = sharedViewModel
+            )
         }
         composable<Destination.SettingsScreen> {
-            SettingsScreen(navController = navController, userPreferences = userPreferences)
+            SettingsScreen(
+                userPreferences = userPreferences,
+                navigateBack = { navController.popBackStack() }
+            )
         }
         composable<Destination.AboutScreen> {
-            AboutScreen(navController = navController)
+            AboutScreen(navigateBack = { navController.popBackStack() })
         }
         composable<Destination.WorkoutScreen> {
             WorkoutScreen(
                 userPreferences = userPreferences,
                 sharedViewModel = sharedViewModel,
                 workoutId = it.toRoute<Destination.WorkoutScreen>().workoutId,
-                navController = navController
+                navController = navController,
+                list = list
             )
         }
     }

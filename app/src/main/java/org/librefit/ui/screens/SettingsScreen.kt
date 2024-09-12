@@ -44,8 +44,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
-import androidx.navigation.NavHostController
-import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.ui.components.HeadlineText
@@ -55,7 +53,10 @@ import org.librefit.util.ThemeMode
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(navController: NavHostController, userPreferences: DataStoreManager) {
+fun SettingsScreen(
+    userPreferences: DataStoreManager,
+    navigateBack: () -> Unit
+) {
     val selectedTheme = userPreferences.themeMode.collectAsState(initial = ThemeMode.SYSTEM).value
 
     val keepWorkoutScreenOn = userPreferences.workoutScreenOn.collectAsState(initial = true).value
@@ -106,9 +107,7 @@ fun SettingsScreen(navController: NavHostController, userPreferences: DataStoreM
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = {
-                            navController.popBackStack()
-                        }
+                        onClick = { navigateBack() }
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
@@ -287,5 +286,5 @@ private fun languageCodeToId( code : String ) : Int {
 @Preview
 @Composable
 fun SettingsScreenPreview(){
-    SettingsScreen(rememberNavController(), DataStoreManager(LocalContext.current))
+    SettingsScreen( DataStoreManager(LocalContext.current) ) {  }
 }

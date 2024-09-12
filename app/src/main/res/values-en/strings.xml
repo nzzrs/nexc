@@ -123,5 +123,6 @@
     <string name="label_category_plyometrics">Plyometrics</string>
     <string name="label_equipment_dumbbell">Dumbbell</string>
     <string name="label_category_stretching">Stretching</string>
+    <string name="label_workout">Workout</string>
 
 </resources>

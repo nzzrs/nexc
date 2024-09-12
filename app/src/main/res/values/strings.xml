@@ -73,6 +73,10 @@
     <string name="label_coming_soon">Coming soon</string>
 
 
+    <!-- Workout screen -->
+    <string name="label_workout">Workout</string>
+
+
     <!--Exercise detail modal bottom sheet-->
     <string name="label_details">Details</string>
     <string name="label_force">Force</string>

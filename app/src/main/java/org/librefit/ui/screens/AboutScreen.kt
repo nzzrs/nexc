@@ -39,14 +39,13 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
 import org.librefit.ui.components.HeadlineText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(navController : NavHostController) {
+fun AboutScreen(navigateBack : () -> Unit) {
 
     Scaffold (
         topBar = {
@@ -56,9 +55,7 @@ fun AboutScreen(navController : NavHostController) {
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = {
-                            navController.popBackStack()
-                        }
+                        onClick = { navigateBack() }
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
@@ -182,5 +179,5 @@ private fun AboutItem(
 @Preview
 @Composable
 private fun AboutScreenPreview(){
-    AboutScreen(rememberNavController())
+    AboutScreen {}
 }

@@ -103,4 +103,5 @@
     <string name="label_category_plyometrics">Pliometria</string>
     <string name="label_equipment_dumbbell">Manubri</string>
     <string name="label_category_stretching">Stretching</string>
+    <string name="label_workout">Allenamento</string>
 </resources>

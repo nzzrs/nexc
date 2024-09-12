@@ -14,7 +14,6 @@ import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -26,7 +25,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -37,7 +35,6 @@ import androidx.navigation.compose.rememberNavController
 import org.librefit.R
 import org.librefit.data.SharedViewModel
 import org.librefit.nav.Destination
-import org.librefit.util.DataStoreManager
 
 @Composable
 fun HomeScreen(
@@ -50,7 +47,7 @@ fun HomeScreen(
     Column (
         modifier = Modifier
             .padding(paddingValues = innerPadding)
-            .padding(start = 20.dp, end = 20.dp)
+            .padding(start = 15.dp, end = 15.dp)
             .fillMaxSize()
     ){
         Text(
@@ -85,33 +82,38 @@ fun HomeScreen(
          * List of workout routines created by the user in [CreateRoutineScreen]
          */
 
+
         if(workoutList?.isNotEmpty() == true){
-            workoutList!!.forEach {
-                ElevatedCard {
-                    Column (
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(15.dp)
-                    ) {
-                        Row (
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ){
-                            Text(
-                                text = it.title,
-                                style = MaterialTheme.typography.headlineSmall,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier.weight(1f)
-                            )
-                            IconButton(onClick = {
-                                navController.navigate(Destination.WorkoutScreen(workoutId = it.id))
-                            }) {
-                                Icon(Icons.Default.PlayArrow, Icons.Default.PlayArrow.name )
-                            }
-                            IconButton(onClick = { sharedViewModel.deleteWorkout(it) }) {
-                                Icon(Icons.Default.Delete, Icons.Default.Delete.name )
+            Column (
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ){
+                workoutList!!.forEach {
+                    ElevatedCard {
+                        Column (
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(15.dp)
+                        ) {
+                            Row (
+                                modifier = Modifier.fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceBetween
+                            ){
+                                Text(
+                                    text = it.title,
+                                    style = MaterialTheme.typography.headlineSmall,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    modifier = Modifier.weight(1f)
+                                )
+                                IconButton(onClick = {
+                                    navController.navigate(Destination.WorkoutScreen(workoutId = it.id))
+                                }) {
+                                    Icon(Icons.Default.PlayArrow, Icons.Default.PlayArrow.name )
+                                }
+                                IconButton(onClick = { sharedViewModel.deleteWorkout(it) }) {
+                                    Icon(Icons.Default.Delete, Icons.Default.Delete.name )
+                                }
                             }
                         }
                     }

@@ -57,7 +57,7 @@ import org.librefit.util.exerciseEnumToStringId
 @Composable
 fun AddExerciseScreen(
     list: List<ExerciseDC>,
-    navController: NavHostController,
+    navigateBack : () -> Unit,
     viewModel: SharedViewModel
 ){
     val selectedExercisesList = remember { mutableStateListOf<ExerciseDC>() }
@@ -72,7 +72,7 @@ fun AddExerciseScreen(
         ConfirmExitDialog(
             text = stringResource(id = R.string.label_exit_add_exercise),
             onExit = {
-                navController.popBackStack()
+                navigateBack()
                 showExitDialog = false
                 viewModel.resetFilterList()
             },
@@ -93,7 +93,7 @@ fun AddExerciseScreen(
                             if(selectedExercisesList.isNotEmpty()){
                                 showExitDialog = true
                             } else {
-                                navController.popBackStack()
+                                navigateBack()
                             }
                         }
                     ) {
@@ -108,7 +108,7 @@ fun AddExerciseScreen(
                         enabled = selectedExercisesList.isNotEmpty(),
                         onClick = {
                             viewModel.addExerciseList(selectedExercisesList)
-                            navController.popBackStack()
+                            navigateBack()
                         }
                     ) {
                         Icon(
@@ -281,5 +281,5 @@ private fun AddExerciseScreenContent(
 @Preview
 @Composable
 private fun AddExerciseScreenPreview(){
-    AddExerciseScreen(emptyList(), rememberNavController(), viewModel())
+    AddExerciseScreen(emptyList(), {}, viewModel())
 }

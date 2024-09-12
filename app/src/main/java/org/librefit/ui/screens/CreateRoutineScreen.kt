@@ -55,7 +55,6 @@ import androidx.navigation.compose.rememberNavController
 import org.librefit.R
 import org.librefit.data.ExerciseDC
 import org.librefit.data.SharedViewModel
-import org.librefit.db.Exercise
 import org.librefit.db.Workout
 import org.librefit.nav.Destination
 import org.librefit.ui.components.ConfirmExitDialog
@@ -64,8 +63,9 @@ import org.librefit.ui.components.ExerciseDetailModalBottomSheet
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CreateRoutineScreen(
-    navController: NavHostController,
-    viewModel : SharedViewModel
+    viewModel: SharedViewModel,
+    navigateBack: () -> Unit,
+    navigateAddExercise: () -> Unit
 ) {
     var titleRoutine = rememberSaveable { mutableStateOf("") }
 
@@ -79,7 +79,7 @@ fun CreateRoutineScreen(
         ConfirmExitDialog(
             text = stringResource(id = R.string.label_exit_create_routine),
             onExit = {
-                navController.popBackStack()
+                navigateBack()
                 showExitDialog = false
                 viewModel.resetList()
             },
@@ -101,7 +101,7 @@ fun CreateRoutineScreen(
                             if (viewModel.addedExercisesList.isNotEmpty()) {
                                 showExitDialog = true
                             } else {
-                                navController.popBackStack()
+                                navigateBack()
                             }
                         }
                     ) {
@@ -116,7 +116,7 @@ fun CreateRoutineScreen(
                         onClick = {
                             viewModel.addWorkoutWithExercises(Workout(title = titleRoutine.value), viewModel.addedExercisesList)
                             viewModel.resetList()
-                            navController.popBackStack()
+                            navigateBack()
                         },
                         enabled = ableToSave.value && viewModel.addedExercisesList.isNotEmpty()
                     ) {
@@ -131,7 +131,7 @@ fun CreateRoutineScreen(
     ){ innerPadding ->
         RoutineScreen(
             innerPadding,
-            navController,
+            navigateAddExercise,
             viewModel,
             ableToSave,
             titleRoutine
@@ -142,14 +142,16 @@ fun CreateRoutineScreen(
 @Composable
 private fun RoutineScreen(
     innerPadding: PaddingValues,
-    navController: NavHostController,
+    navigateAddExercise: () -> Unit,
     viewModel: SharedViewModel,
     ableToSave: MutableState<Boolean>,
     titleRoutine : MutableState<String>
 ) {
     var isModalSheetOpen by remember { mutableStateOf(false) }
 
-    //Used to display information about the selected exercise in the modal bottom sheet
+    /**
+     * Used to display information about the selected exercise in [ExerciseDetailModalBottomSheet]
+     */
     var selectedExercise by remember { mutableStateOf<ExerciseDC?>(null) }
 
     LazyColumn(
@@ -198,16 +200,6 @@ private fun RoutineScreen(
                 }
             }
         } else {
-//            val exercise = Exercise("1", "Pull up", null,
-//                Level.BEGINNER,null,null,listOf(Muscle.LATS),
-//                listOf(Muscle.LATS), listOf(""), Category.CARDIO, listOf("0","1")
-//            )
-//            item{
-//                ExerciseCard(exercise = exercise, viewModel = viewModel){
-//                    selectedExercise = exercise
-//                    isModalSheetOpen = true
-//                }
-//            }
             items(viewModel.addedExercisesList){ exercise ->
                 ExerciseCard(
                     exercise = exercise,
@@ -222,7 +214,7 @@ private fun RoutineScreen(
 
         item{
             TextButton(
-                onClick = { navController.navigate(Destination.AddExerciseScreen) },
+                onClick = { navigateAddExercise() },
                 colors = ButtonDefaults.buttonColors()
             ) {
                 Icon(
@@ -236,7 +228,10 @@ private fun RoutineScreen(
         }
     }
 
-    // Opened by info icon (in the exercise card), it shows the details of an exercise
+    /**
+     * Opened by info icon (in the [ExerciseCard]), it shows the details of an exercise
+      */
+
     if(isModalSheetOpen){
         ExerciseDetailModalBottomSheet(exercise = selectedExercise!!) { isModalSheetOpen = false }
     }
@@ -327,8 +322,8 @@ private fun ExerciseCard(
             TextButton(
                 onClick = { sets++ },
                 colors = ButtonDefaults.textButtonColors(
-                    containerColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondary
+                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
+                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                 )
             ) {
                 Icon(
@@ -346,5 +341,5 @@ private fun ExerciseCard(
 @Preview
 @Composable
 private fun CreateRoutineScreenPreview(){
-    CreateRoutineScreen( rememberNavController() , viewModel() )
+    CreateRoutineScreen( viewModel(), {  }, {  } )
 }

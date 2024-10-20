@@ -20,7 +20,7 @@
 
 
     <!--About screen-->
-    <string name="label_help_us">Help us</string>
+    <string name="label_support_project">Support the project</string>
     <string name="label_donate">Donate</string>
     <string name="label_contribute">Contribute</string>
     <string name="label_translate">Translate</string>
@@ -29,10 +29,12 @@
     <string name="label_source_code">Source code</string>
     <string name="label_privacy_policy">Privacy policy</string>
     <string name="label_license">License</string>
-    <string name="label_url_source_code" translatable="false">https://github.com/IamDg/LibreFit</string>
-    <string name="label_url_gpl3" translatable="false">https://www.gnu.org/licenses/gpl-3.0.html#license-text</string>
-    <string name="label_url_privacy" translatable="false">https://github.com/IamDg/LibreFit-website/blob/main/PRIVACY.md</string>
-    <string name="label_url_website" translatable="false">https://iamdg.github.io/LibreFit-website/</string>
+    <string name="url_source_code" translatable="false">https://github.com/IamDg/LibreFit</string>
+    <string name="url_privacy" translatable="false">https://github.com/IamDg/LibreFit/blob/main/PRIVACY.md</string>
+    <string name="url_website" translatable="false">https://iamdg.github.io/LibreFit-website/</string>
+    <string name="label_contributors">Contributors</string>
+    <string name="url_IamDg" translatable="false">https://github.com/IamDg</string>
+    <string name="label_translators">Translators</string>
 
 
     <!--Create routine screen-->
@@ -68,8 +70,8 @@
     <string name="label_screen_off_desc">Screen does not stay on during workout</string>
     <string name="label_settings_general">General</string>
     <string name="label_language">Language</string>
-    <string name="label_language_english">English</string>
-    <string name="label_language_italian">Italian</string>
+    <string name="label_language_english" translatable="false">English</string>
+    <string name="label_language_italian" translatable="false">Italiano</string>
 
 
     <!--Profile screen-->

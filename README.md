@@ -1,81 +1,5 @@
 # LibreFit - Workout Tracker and Planner
 
-<div>
-    <svg width="48" height="48" viewBox="0 0 12.7 12.7" version="1.1" id="svg1" xmlns="http://www.w3.org/2000/svg" xmlns:svg="http://www.w3.org/2000/svg">
-    <defs id="defs1" /> 
-    <g
-        id="layer2"
-        style="display:inline">
-        <rect
-        style="fill:#ffffff;fill-opacity:1;stroke-width:0.229096"
-        id="rect5"
-        width="12.699677"
-        height="12.7"
-        x="0"
-        y="0"
-        ry="6.3498387" />
-    </g>
-    <g
-        id="layer1"
-        style="display:inline">
-        <rect
-        style="display:inline;fill:#00bcd4;fill-opacity:1;stroke-width:0.267713"
-        id="rect1"
-        width="2.5212505"
-        height="0.99321985"
-        x="5.0881948"
-        y="5.8533897"
-        ry="0.25515753" />
-    </g>
-    <g
-        id="layer3"
-        transform="translate(-0.02951527)"
-        style="display:inline">
-        <rect
-        style="fill:#333333;fill-opacity:1;stroke-width:0.184457;stroke-dasharray:none"
-        id="rect2"
-        width="0.99321985"
-        height="5.3481073"
-        x="8.0209684"
-        y="3.6759462"
-        ry="0.30560613"
-        rx="0" />
-        <rect
-        style="fill:#333333;fill-opacity:1;stroke-width:0.146242;stroke-dasharray:none"
-        id="rect2-9"
-        width="0.99321985"
-        height="3.3616674"
-        x="9.1669912"
-        y="4.6691666"
-        ry="0.30848956"
-        rx="0" />
-    </g>
-    <g
-        id="g4"
-        transform="matrix(-1,0,0,1,12.831879,0)"
-        style="display:inline">
-        <rect
-        style="fill:#333333;fill-opacity:1;stroke-width:0.184457;stroke-dasharray:none"
-        id="rect3"
-        width="0.99321985"
-        height="5.3481073"
-        x="8.1238861"
-        y="3.6759462"
-        ry="0.30560613"
-        rx="0" />
-        <rect
-        style="fill:#333333;fill-opacity:1;stroke-width:0.145557;stroke-dasharray:none"
-        id="rect4"
-        width="0.99321985"
-        height="3.330246"
-        x="9.279355"
-        y="4.6848769"
-        ry="0.30560613"
-        rx="0" />
-    </g>
-</svg>
-
-</div>
 
 LibreFit is a free and open-source workout tracker and planner designed with privacy in mind. Built using Jetpack Compose and Material Design 3, LibreFit provides a modern and intuitive interface for users to plan, track, and analyze their fitness journeys without compromising their personal data.
 
@@ -89,4 +13,4 @@ LibreFit is a free and open-source workout tracker and planner designed with pri
 
 ## License
 
-LibreFit is licensed under the [GNU General Public License v3.0 (GPL-3)](LICENSE). Feel free to use, modify, and distribute the software as you see fit.
+LibreFit is licensed under the [GNU General Public License v3.0 (GPL-3)](COPYING). Feel free to use, modify, and distribute the software as you see fit.

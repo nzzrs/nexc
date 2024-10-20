@@ -1,3 +1,20 @@
+<!--
+ ~ Copyright (c) 2024 LibreFit
+ ~
+ ~ LibreFit is free software: you can redistribute it and/or modify
+ ~ it under the terms of the GNU General Public License as published by
+ ~ the Free Software Foundation, either version 3 of the License, or
+ ~ (at your option) any later version.
+ ~
+ ~ LibreFit is distributed in the hope that it will be useful,
+ ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ ~ GNU General Public License for more details.
+ ~
+ ~ You should have received a copy of the GNU General Public License
+ ~ along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
+ -->
+
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:height="108dp" android:viewportHeight="12.7" android:viewportWidth="12.7" android:width="108dp">
       
     <path android:fillColor="#00bcd4" android:pathData="M5.533,5.947L7.164,5.947A0.207,0.207 0,0 1,7.371 6.154L7.371,6.546A0.207,0.207 0,0 1,7.164 6.753L5.533,6.753A0.207,0.207 0,0 1,5.326 6.546L5.326,6.154A0.207,0.207 0,0 1,5.533 5.947z" android:strokeWidth="0.217135"/>

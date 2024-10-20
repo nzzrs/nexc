@@ -1,4 +1,23 @@
-package org.librefit.ui.screens
+/*
+ * Copyright (c) 2024 LibreFit
+ *
+ * This file is part of LibreFit
+ *
+ * LibreFit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * LibreFit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package org.librefit.ui.screens.about
 
 import android.content.Intent
 import android.net.Uri
@@ -21,6 +40,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -39,13 +59,17 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
+import org.librefit.nav.Destination
 import org.librefit.ui.components.HeadlineText
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AboutScreen(navigateBack : () -> Unit) {
+fun AboutScreen(navController : NavHostController) {
+
+    val context = LocalContext.current
 
     Scaffold (
         topBar = {
@@ -55,7 +79,7 @@ fun AboutScreen(navigateBack : () -> Unit) {
                 },
                 navigationIcon = {
                     IconButton(
-                        onClick = { navigateBack() }
+                        onClick = { navController.popBackStack() }
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Default.ArrowBack,
@@ -90,51 +114,92 @@ fun AboutScreen(navigateBack : () -> Unit) {
             )
 
 
-            HeadlineText(text =  stringResource(R.string.label_help_us))
+            HeadlineText(text =  stringResource(R.string.label_support_project))
 
             AboutItem(
                 Icons.Default.Favorite,
-                stringResource(R.string.label_donate)
+                text = stringResource(R.string.label_donate),
+                onClick = {
+//                    val intent = Intent(Intent.ACTION_VIEW).apply {
+//                        data = Uri.parse(context.getString( ))
+//                    }
+//                    context.startActivity(intent)
+                },
+                enabled = false
             )
 
             AboutItem(
                 ImageVector.vectorResource(R.drawable.ic_handshake),
-                stringResource(R.string.label_contribute)
+                text = stringResource(R.string.label_contribute),
+                onClick = {},
+                false
             )
 
             AboutItem(
                 ImageVector.vectorResource(R.drawable.ic_translate),
-                stringResource(R.string.label_translate)
+                stringResource(R.string.label_translate),
+                onClick = {},
+                false
             )
 
 
             HeadlineText(text = stringResource(R.string.label_info))
 
             AboutItem(
-                ImageVector.vectorResource(R.drawable.ic_globe),
-                stringResource(R.string.label_website),
-                stringResource(R.string.label_url_website)//Hardcoded because it's temporary
+                ImageVector.vectorResource(R.drawable.ic_policy),
+                stringResource(R.string.label_privacy_policy),
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse(context.getString(R.string.url_privacy))
+                    }
+                    context.startActivity(intent)
+                }
+
             )
 
+            AboutItem(
+                ImageVector.vectorResource(R.drawable.ic_globe),
+                stringResource(R.string.label_website),
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse(context.getString(R.string.url_website))
+                    }
+                    context.startActivity(intent)
+                }
+            )
 
             AboutItem(
                 ImageVector.vectorResource(R.drawable.ic_source_code),
                 stringResource(R.string.label_source_code),
-                stringResource(R.string.label_url_source_code)
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse(context.getString(R.string.url_source_code))
+                    }
+                    context.startActivity(intent)
+                }
             )
 
-            AboutItem(
-                ImageVector.vectorResource(R.drawable.ic_policy),
-                stringResource(R.string.label_privacy_policy),
-                stringResource(R.string.label_url_privacy)
-            )
 
             AboutItem(
                 ImageVector.vectorResource(R.drawable.ic_license),
                 stringResource(R.string.label_license),
-                stringResource(R.string.label_url_gpl3)
+                onClick = {
+                    navController.navigate(Destination.LicenseScreen)
+                }
             )
 
+            HeadlineText(stringResource(R.string.label_contributors))
+
+            AboutItem(
+                Icons.Default.Person,
+                "IamDg",
+                onClick = {
+                    val intent = Intent(Intent.ACTION_VIEW).apply {
+                        data = Uri.parse(context.getString(R.string.url_IamDg))
+                    }
+                    context.startActivity(intent)
+                }
+            )
         }
     }
 }
@@ -143,16 +208,13 @@ fun AboutScreen(navigateBack : () -> Unit) {
 private fun AboutItem(
     imageVector: ImageVector,
     text: String,
-    url: String? = null
+    onClick : () -> Unit,
+    enabled : Boolean = true
 ){
-    val context = LocalContext.current
 
     OutlinedCard(
-        enabled = url != null,
-        onClick = {
-            val intent = Intent(Intent.ACTION_VIEW).apply { data = Uri.parse(url) }
-            context.startActivity(intent)
-        }
+        enabled = enabled,
+        onClick = onClick
     ) {
         Row (
             verticalAlignment = Alignment.CenterVertically,
@@ -179,5 +241,5 @@ private fun AboutItem(
 @Preview
 @Composable
 private fun AboutScreenPreview(){
-    AboutScreen {}
+    AboutScreen (rememberNavController())
 }

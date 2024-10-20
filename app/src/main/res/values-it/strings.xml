@@ -11,7 +11,7 @@
     <string name="label_routine">Routine</string>
     <string name="label_start_empty_workout">Inizia un allenamento vuoto</string>
     <string name="label_create_routine">Crea una routine</string>
-    <string name="label_help_us">Aiutaci</string>
+    <string name="label_support_project">Supporta il progetto</string>
     <string name="label_donate">Dona</string>
     <string name="label_contribute">Contribuisci</string>
     <string name="label_translate">Traduci</string>
@@ -20,6 +20,8 @@
     <string name="label_source_code">Codice sorgente</string>
     <string name="label_privacy_policy">Informativa sulla privacy</string>
     <string name="label_license">Licenza</string>
+    <string name="label_contributors">Contributori</string>
+    <string name="label_translators">Traduttori</string>
     <string name="label_start_creating_routine">Inizia aggiungendo un esercizio alla tua routine</string>
     <string name="label_exit_create_routine">Sei sicuro di voler uscire? La tua routine non sarà salvata</string>
     <string name="label_text_field_title">Titolo</string>
@@ -57,8 +59,6 @@
     <string name="label_language">Lingua</string>
     <string name="label_cancel_dialog">Annulla</string>
     <string name="label_exit_dialog">Esci</string>
-    <string name="label_language_english">Inglese</string>
-    <string name="label_language_italian">Italiano</string>
     <string name="label_force_static">Statico</string>
     <string name="label_force_pull">Tirata</string>
     <string name="label_force_push">Spinta</string>

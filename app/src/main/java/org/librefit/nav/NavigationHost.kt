@@ -1,3 +1,22 @@
+/*
+ * Copyright (c) 2024 LibreFit
+ *
+ * This file is part of LibreFit
+ *
+ * LibreFit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * LibreFit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package org.librefit.nav
 
 import androidx.compose.animation.core.tween
@@ -13,13 +32,14 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import org.librefit.data.ExerciseDC
 import org.librefit.data.SharedViewModel
-import org.librefit.ui.screens.AboutScreen
+import org.librefit.ui.screens.about.AboutScreen
 import org.librefit.ui.screens.AddExerciseScreen
 import org.librefit.ui.screens.createRoutine.CreateRoutineScreen
 import org.librefit.ui.screens.MainScreen
 import org.librefit.ui.screens.SettingsScreen
 import org.librefit.ui.screens.workout.WorkoutScreen
 import org.librefit.data.DataStoreManager
+import org.librefit.ui.screens.about.LicenseScreen
 
 @Composable
 fun NavigationHost(list: List<ExerciseDC>, userPreferences: DataStoreManager) {
@@ -60,7 +80,10 @@ fun NavigationHost(list: List<ExerciseDC>, userPreferences: DataStoreManager) {
             )
         }
         composable<Destination.AboutScreen> {
-            AboutScreen(navigateBack = { navController.popBackStack() })
+            AboutScreen(navController = navController)
+        }
+        composable<Destination.LicenseScreen>{
+            LicenseScreen(navigateBack = { navController.popBackStack() })
         }
         composable<Destination.WorkoutScreen> {
             WorkoutScreen(

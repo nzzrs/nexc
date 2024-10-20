@@ -18,7 +18,7 @@
     <string name="label_create_routine">Create a routine</string>
 
     <!--About screen-->
-    <string name="label_help_us">Help us</string>
+    <string name="label_support_project">Support the project</string>
     <string name="label_donate">Donate</string>
     <string name="label_contribute">Contribute</string>
     <string name="label_translate">Translate</string>
@@ -29,6 +29,8 @@
     <string name="label_license">License</string>
 
     <!--Create routine screen-->
+    <string name="label_contributors">Contributors</string>
+    <string name="label_translators">Translators</string>
     <string name="label_start_creating_routine">Start by adding an exercise to your routine</string>
     <string name="label_exit_create_routine">Are you sure you want to exit? Your routine won\'t be saved</string>
     <string name="label_text_field_title">Title</string>
@@ -77,8 +79,6 @@
     <string name="label_instructions">Instructions</string>
     <string name="label_cancel_dialog">Cancel</string>
     <string name="label_exit_dialog">Exit</string>
-    <string name="label_language_english">English</string>
-    <string name="label_language_italian">Italian</string>
     <string name="label_force_static">Static</string>
     <string name="label_force_pull">Pull</string>
     <string name="label_force_push">Push</string>

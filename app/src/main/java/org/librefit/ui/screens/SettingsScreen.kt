@@ -65,8 +65,8 @@ import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
 import kotlinx.coroutines.launch
 import org.librefit.R
-import org.librefit.ui.components.HeadlineText
 import org.librefit.data.DataStoreManager
+import org.librefit.ui.components.HeadlineText
 import org.librefit.util.Language
 import org.librefit.util.ThemeMode
 
@@ -82,34 +82,39 @@ fun SettingsScreen(
 
     val materialModeOn = userPreferences.materialMode.collectAsState(initial = true).value
 
-    var selectedLanguage by remember { mutableStateOf(AppCompatDelegate.getApplicationLocales().toLanguageTags()) }
+    var selectedLanguage by remember {
+        mutableStateOf(
+            AppCompatDelegate.getApplicationLocales().toLanguageTags()
+        )
+    }
 
     var openPreferenceDialog by remember { mutableStateOf(false) }
 
     val coroutineScope = rememberCoroutineScope()
 
 
-    if(openPreferenceDialog){
+    if (openPreferenceDialog) {
         AlertDialog(
             title = { Text(stringResource(id = R.string.label_language)) },
             onDismissRequest = { openPreferenceDialog = false },
             confirmButton = { /*The user doesn't need to confirm*/ },
             text = {
-                LazyColumn{
-                    items(Language.entries){ language ->
-                        Row (
+                LazyColumn {
+                    items(Language.entries) { language ->
+                        Row(
                             modifier = Modifier.fillMaxWidth(),
                             verticalAlignment = Alignment.CenterVertically
-                        ){
+                        ) {
                             RadioButton(
                                 selected = language.code == selectedLanguage,
                                 onClick = {
                                     selectedLanguage = language.code
-                                    val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(language.code)
+                                    val appLocale: LocaleListCompat =
+                                        LocaleListCompat.forLanguageTags(language.code)
                                     AppCompatDelegate.setApplicationLocales(appLocale)
                                 }
                             )
-                            Text(text = stringResource(id = languageCodeToId(language.code) ))
+                            Text(text = stringResource(id = languageCodeToId(language.code)))
                         }
                     }
                 }
@@ -117,7 +122,7 @@ fun SettingsScreen(
         )
     }
 
-    Scaffold (
+    Scaffold(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
@@ -136,13 +141,12 @@ fun SettingsScreen(
                 }
             )
         },
-    ){ innerPadding ->
-        LazyColumn (
+    ) { innerPadding ->
+        LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
                 .fillMaxSize()
-        ){
-
+        ) {
 
             item { HeadlineText(text = stringResource(id = R.string.label_appearance)) }
 
@@ -154,17 +158,33 @@ fun SettingsScreen(
                             contentDescription = null,
                             modifier = Modifier.padding(start = 15.dp, end = 15.dp)
                         )
-                        Text(text = stringResource(id = R.string.label_theme), style = MaterialTheme.typography.titleMedium)
+                        Text(
+                            text = stringResource(id = R.string.label_theme),
+                            style = MaterialTheme.typography.titleMedium
+                        )
                     }
 
-                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center){
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center
+                    ) {
                         SingleChoiceSegmentedButtonRow {
                             ThemeMode.entries.forEachIndexed { index, mode ->
                                 SegmentedButton(
                                     selected = selectedTheme == mode,
-                                    onClick = { coroutineScope.launch { userPreferences.savePreference(userPreferences.themeModeKey , index) } },
-                                    shape = SegmentedButtonDefaults.itemShape(index = index, count = ThemeMode.entries.size)
-                                ) { Text( stringResource(id = themeModeToId(mode))  ) }
+                                    onClick = {
+                                        coroutineScope.launch {
+                                            userPreferences.savePreference(
+                                                key = userPreferences.themeModeKey,
+                                                value = index
+                                            )
+                                        }
+                                    },
+                                    shape = SegmentedButtonDefaults.itemShape(
+                                        index = index,
+                                        count = ThemeMode.entries.size
+                                    )
+                                ) { Text(stringResource(id = themeModeToId(mode))) }
                             }
 
                         }
@@ -173,26 +193,29 @@ fun SettingsScreen(
             }
 
             item {
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.S){
-                    Row (
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                    Row(
                         modifier = Modifier
                             .height(70.dp)
                             .fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
-                    ){
-                        Row (verticalAlignment = Alignment.CenterVertically) {
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(
                                 imageVector = ImageVector.vectorResource(id = R.drawable.ic_material),
                                 contentDescription = "",
                                 modifier = Modifier.padding(start = 15.dp, end = 15.dp)
                             )
-                            Column (verticalArrangement = Arrangement.Center){
-                                Text(text = stringResource(id = R.string.label_material_you), style = MaterialTheme.typography.titleMedium)
+                            Column(verticalArrangement = Arrangement.Center) {
+                                Text(
+                                    text = stringResource(id = R.string.label_material_you),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
                                 Text(
                                     text = stringResource(
-                                        id = if(materialModeOn) R.string.label_dynamic_color_enabled else R.string.label_dynamic_color_disabled
-                                    ) ,
+                                        id = if (materialModeOn) R.string.label_dynamic_color_enabled else R.string.label_dynamic_color_disabled
+                                    ),
                                     style = MaterialTheme.typography.bodyMedium
                                 )
                             }
@@ -201,7 +224,10 @@ fun SettingsScreen(
                             checked = materialModeOn,
                             onCheckedChange = {
                                 coroutineScope.launch {
-                                    userPreferences.savePreference(userPreferences.materialModeKey, it)
+                                    userPreferences.savePreference(
+                                        key = userPreferences.materialModeKey,
+                                        value = it
+                                    )
                                 }
                             }
                         )
@@ -210,27 +236,30 @@ fun SettingsScreen(
             }
 
             item {
-                Row (
+                Row(
                     modifier = Modifier
                         .height(70.dp)
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
-                ){
-                    Row (verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
                         Icon(
                             imageVector = ImageVector.vectorResource(id = R.drawable.ic_keep),
                             contentDescription = "",
                             modifier = Modifier.padding(start = 15.dp, end = 15.dp)
                         )
-                        Column(Modifier.weight(1f)){
+                        Column(Modifier.weight(1f)) {
                             Text(
                                 text = stringResource(id = R.string.label_keep_screen_on),
                                 style = MaterialTheme.typography.titleMedium,
                             )
                             Text(
-                                text =  stringResource(
-                                    id= if(keepWorkoutScreenOn) R.string.label_screen_on_desc else R.string.label_screen_off_desc
+                                text = stringResource(
+                                    id = if (keepWorkoutScreenOn) R.string.label_screen_on_desc else R.string.label_screen_off_desc
                                 ),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
@@ -240,7 +269,10 @@ fun SettingsScreen(
                         checked = keepWorkoutScreenOn,
                         onCheckedChange = {
                             coroutineScope.launch {
-                                userPreferences.savePreference(userPreferences.keepOnWorkoutScreenKey, it)
+                                userPreferences.savePreference(
+                                    key = userPreferences.keepOnWorkoutScreenKey,
+                                    value = it
+                                )
                             }
                         }
                     )
@@ -251,14 +283,14 @@ fun SettingsScreen(
 
             item { HeadlineText(text = stringResource(id = R.string.label_settings_general)) }
 
-            item{
-                Row (
+            item {
+                Row(
                     modifier = Modifier
                         .height(70.dp)
                         .fillMaxWidth()
                         .clickable { openPreferenceDialog = true },
                     verticalAlignment = Alignment.CenterVertically
-                ){
+                ) {
                     Icon(
                         imageVector = ImageVector.vectorResource(id = R.drawable.ic_translate),
                         contentDescription = null,
@@ -270,7 +302,7 @@ fun SettingsScreen(
                             style = MaterialTheme.typography.titleMedium
                         )
                         Text(
-                            text = stringResource(id = languageCodeToId(selectedLanguage) ),
+                            text = stringResource(id = languageCodeToId(selectedLanguage)),
                             style = MaterialTheme.typography.bodyMedium,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis
@@ -283,8 +315,8 @@ fun SettingsScreen(
 }
 
 
-private fun themeModeToId(themeMode: ThemeMode) : Int {
-    val id = when(themeMode){
+private fun themeModeToId(themeMode: ThemeMode): Int {
+    val id = when (themeMode) {
         ThemeMode.SYSTEM -> R.string.label_follow_system
         ThemeMode.LIGHT -> R.string.label_theme_light
         ThemeMode.DARK -> R.string.label_theme_dark
@@ -292,8 +324,8 @@ private fun themeModeToId(themeMode: ThemeMode) : Int {
     return id
 }
 
-private fun languageCodeToId( code : String ) : Int {
-    val result = when(code){
+private fun languageCodeToId(code: String): Int {
+    val result = when (code) {
         "en" -> R.string.label_language_english_nt
         "it" -> R.string.label_language_italian_nt
         else -> R.string.label_follow_system
@@ -304,6 +336,6 @@ private fun languageCodeToId( code : String ) : Int {
 
 @Preview
 @Composable
-fun SettingsScreenPreview(){
-    SettingsScreen( DataStoreManager(LocalContext.current) ) {  }
+fun SettingsScreenPreview() {
+    SettingsScreen(DataStoreManager(LocalContext.current)) { }
 }

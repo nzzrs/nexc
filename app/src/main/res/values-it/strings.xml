@@ -54,6 +54,8 @@
     <string name="label_screen_off_desc">Lo schermo non rimane accesso durante l\'allenamento</string>
     <string name="label_language_italian">Italiano</string>
     <string name="label_coming_soon">Prossimamente</string>
+    <string name="label_add_to_empty_workout">Inizia aggiungendo un esercizio al tuo allenamento</string>
+    <string name="label_elapsed_time">Tempo trascorso</string>
     <string name="label_details">Dettagli</string>
     <string name="label_force">Forza</string>
     <string name="label_level">Livello</string>
@@ -68,6 +70,8 @@
     <string name="label_language">Lingua</string>
     <string name="label_cancel_dialog">Annulla</string>
     <string name="label_exit_dialog">Esci</string>
+    <string name="label_rest_time">Tempo di riposo</string>
+    <string name="label_any">Qualsiasi</string>
     <string name="label_force_static">Statico</string>
     <string name="label_force_pull">Tirata</string>
     <string name="label_force_push">Spinta</string>
@@ -121,4 +125,7 @@
     <string name="error_title_empty">Il titolo non può essere vuoto</string>
     <string name="label_language_english">Inglese</string>
     <string name="label_open">Apri</string>
+    <string name="label_delete">Elimina</string>
+    <string name="label_license_desc">LibreFit è distribuito sotto la licenza GNU General Public License v3.0 (GPL-3).</string>
+    <string name="label_view_gpl3_online">Visualizza versione online</string>
 </resources>

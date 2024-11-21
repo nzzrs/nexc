@@ -1,22 +1,44 @@
+/*
+ * Copyright (c) 2024 LibreFit
+ *
+ * This file is part of LibreFit
+ *
+ * LibreFit is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * LibreFit is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
 package org.librefit.ui.screens.workout
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.librefit.MainApplication
+import org.librefit.data.ExerciseWithSets
 import org.librefit.db.Exercise
 import org.librefit.db.Set
-import org.librefit.ui.screens.createRoutine.ExerciseWithSets
 
 class WorkoutScreenViewModel : ViewModel() {
-    val totalSets: Int
+    private val totalSets: Int
         get() = exercisesWithSets.value.sumOf { it.sets.size }
 
     private var completedSets by mutableFloatStateOf(0F)
@@ -38,11 +60,14 @@ class WorkoutScreenViewModel : ViewModel() {
     private var currentId: Int = 0
 
     fun addExerciseWithSets(exerciseWithSets: ExerciseWithSets) {
-        val newExerciseWithSets = exerciseWithSets.copy(id = currentId++)
+        val newExerciseWithSets = exerciseWithSets.copy(
+            id = currentId++,
+            sets = listOf(Set(exerciseId = currentId++))
+        )
         _exercisesWithSets.value += newExerciseWithSets
     }
 
-    fun addSetToExercise(index : Int) {
+    fun addSetToExercise(index: Int) {
         _exercisesWithSets.value = _exercisesWithSets.value.map { exerciseWithSets ->
             if (exerciseWithSets.id == index) {
                 exerciseWithSets.copy(sets = exerciseWithSets.sets + Set(exerciseId = 0))
@@ -72,6 +97,10 @@ class WorkoutScreenViewModel : ViewModel() {
         }
     }
 
+    fun deleteExercise(index: Int) {
+        _exercisesWithSets.value = _exercisesWithSets.value.filter { it.id != index }
+    }
+
 
     private val workoutDao = MainApplication.workoutDatabase.getWorkoutDao()
     private val _exercises = MutableStateFlow<List<Exercise>>(emptyList())
@@ -84,7 +113,8 @@ class WorkoutScreenViewModel : ViewModel() {
         }
 
     }
-    fun getSetsFromExercise(exerciseId : Int) {
+
+    fun getSetsFromExercise(exerciseId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             val data = workoutDao.getSetsFromExercise(exerciseId)
             val updatedExercisesWithSets = _exercisesWithSets.value.map { exerciseWithSets ->
@@ -96,5 +126,46 @@ class WorkoutScreenViewModel : ViewModel() {
             }
             _exercisesWithSets.value = updatedExercisesWithSets
         }
+    }
+
+    var timeElapsed by mutableIntStateOf(0)
+        private set
+    var isTimerRunning by mutableStateOf(true)
+        private set
+    private var pulsingText by mutableIntStateOf(0)
+
+
+    init {
+        startTimer()
+    }
+
+    fun startTimer() {
+        isTimerRunning = true
+        val startTime = System.currentTimeMillis()
+        val pastTimeElapsed = timeElapsed
+
+        viewModelScope.launch(Dispatchers.IO) {
+            while (isTimerRunning) {
+                val currentTime = System.currentTimeMillis()
+
+                timeElapsed = (currentTime - startTime).toInt()/1000 + pastTimeElapsed
+                delay(1000)
+            }
+        }
+    }
+
+    fun stopTimer() {
+        isTimerRunning = false
+
+        viewModelScope.launch(Dispatchers.Main) {
+            while (!isTimerRunning) {
+                pulsingText++
+                delay(600)
+            }
+        }
+    }
+
+    fun pulsingTimer(): Boolean {
+        return !isTimerRunning && pulsingText % 2 == 1
     }
 }

@@ -35,6 +35,7 @@
     <string name="label_website">Website</string>
     <string name="label_source_code">Source code</string>
     <string name="label_license">License</string>
+    <string name="label_license_desc">LibreFit is licensed under the GNU General Public License v3.0 (GPL-3).</string>
     <string name="url_source_code" translatable="false">https://github.com/IamDg/LibreFit</string>
     <string name="url_privacy" translatable="false">https://github.com/IamDg/LibreFit/blob/main/PRIVACY.md</string>
     <string name="url_website" translatable="false">https://iamdg.github.io/LibreFit-website/</string>
@@ -43,6 +44,8 @@
     <string name="label_project_owner">Project owner</string>
     <string name="label_translators">Translators</string>
     <string name="label_contributed_to">Contributed to: </string>
+    <string name="label_view_gpl3_online">View online version</string>
+    <string name="url_gpl3" translatable="false">https://www.gnu.org/licenses/gpl-3.0.en.html#license-text</string>
 
 
     <!--Create routine screen-->
@@ -91,9 +94,11 @@
 
     <!-- Workout screen -->
     <string name="label_workout">Workout</string>
-    <string name="label_exit_workout">Are you sure you want to exit? Your workout won\'t be added</string>
+    <string name="label_exit_workout">Are you sure you want to exit? Your workout won\'t be saved</string>
     <string name="label_play">Play</string>
     <string name="label_pause">Pause</string>
+    <string name="label_add_to_empty_workout">Start by adding an exercise to your workout</string>
+    <string name="label_elapsed_time">Elapsed time</string>
 
 
     <!--Exercise detail modal bottom sheet-->
@@ -107,6 +112,14 @@
     <string name="label_primary_muscles">Primary muscles</string>
     <string name="label_secondary_muscles">Secondary muscles</string>
     <string name="label_instructions">Instructions</string>
+
+
+    <!--Exercise card-->
+    <string name="label_rest_time">Rest time</string>
+
+
+    <!--Filter card-->
+    <string name="label_any">Any</string>
 
 
     <!--Exercise Enums-->
@@ -163,6 +176,9 @@
     <!--Dialog -->
     <string name="label_cancel_dialog">Cancel</string>
     <string name="label_exit_dialog">Exit</string>
+
+    <!--Util-->
+    <string name="label_delete">Delete</string>
 
 
 </resources>

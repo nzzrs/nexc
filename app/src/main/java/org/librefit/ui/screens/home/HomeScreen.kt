@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Delete
@@ -57,17 +58,17 @@ import org.librefit.nav.Destination
 fun HomeScreen(
     innerPadding: PaddingValues,
     navController: NavHostController,
-){
-    val viewModel : HomeScreenViewModel = viewModel()
+) {
+    val viewModel: HomeScreenViewModel = viewModel()
 
     val workoutList by viewModel.workoutList
 
-    Column (
+    Column(
         modifier = Modifier
             .padding(paddingValues = innerPadding)
             .padding(start = 15.dp, end = 15.dp)
             .fillMaxSize()
-    ){
+    ) {
         Text(
             text = stringResource(id = R.string.label_quick_start),
             color = MaterialTheme.colorScheme.onBackground,
@@ -76,19 +77,23 @@ fun HomeScreen(
 
         //"Start empty workout" button
         TextButton(
-            enabled = false,
             onClick = {
-                //navController.navigate(Routes.WorkoutScreen)
+                navController.navigate(Destination.WorkoutScreen())
             },
             colors = ButtonDefaults.buttonColors()
         ) {
-            Icon(
-                imageVector = Icons.Default.PlayArrow,
-                contentDescription = Icons.Default.PlayArrow.name
-            )
-            Spacer( modifier = Modifier.weight(1f) )
-            Text( text = stringResource(id = R.string.label_start_empty_workout) )
-            Spacer( modifier = Modifier.weight(1.3f) )
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Icon(
+                    imageVector = Icons.Default.PlayArrow,
+                    contentDescription = Icons.Default.PlayArrow.name
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(text = stringResource(id = R.string.label_start_empty_workout))
+            }
         }
         Spacer(modifier = Modifier.height(15.dp))
         Text(
@@ -98,22 +103,22 @@ fun HomeScreen(
         )
 
 
-        if(workoutList.isNotEmpty()){
-            Column (
+        if (workoutList.isNotEmpty()) {
+            Column(
                 verticalArrangement = Arrangement.spacedBy(10.dp)
-            ){
+            ) {
                 workoutList.forEach {
                     ElevatedCard {
-                        Column (
+                        Column(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .padding(15.dp)
                         ) {
-                            Row (
+                            Row(
                                 modifier = Modifier.fillMaxWidth(),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceBetween
-                            ){
+                            ) {
                                 Text(
                                     text = it.title,
                                     style = MaterialTheme.typography.headlineSmall,
@@ -124,10 +129,13 @@ fun HomeScreen(
                                 IconButton(onClick = {
                                     navController.navigate(Destination.WorkoutScreen(workoutId = it.id))
                                 }) {
-                                    Icon(Icons.Default.PlayArrow, Icons.Default.PlayArrow.name )
+                                    Icon(Icons.Default.PlayArrow, Icons.Default.PlayArrow.name)
                                 }
                                 IconButton(onClick = { viewModel.deleteWorkout(it) }) {
-                                    Icon(Icons.Default.Delete, Icons.Default.Delete.name )
+                                    Icon(
+                                        Icons.Default.Delete,
+                                        stringResource(R.string.label_delete)
+                                    )
                                 }
                             }
                         }
@@ -145,20 +153,25 @@ fun HomeScreen(
             },
             colors = ButtonDefaults.buttonColors()
         ) {
-            Icon(
-                imageVector = Icons.Default.AddCircle,
-                contentDescription = Icons.Default.AddCircle.name
-            )
-            Spacer( modifier = Modifier.weight(1f) )
-            Text(text = stringResource(id = R.string.label_create_routine) )
-            Spacer( modifier = Modifier.weight(1.3f) )
+            Row (
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ){
+                Icon(
+                    imageVector = Icons.Default.AddCircle,
+                    contentDescription = Icons.Default.AddCircle.name
+                )
+                Spacer(Modifier.width(10.dp))
+                Text(text = stringResource(id = R.string.label_create_routine))
+            }
         }
     }
 }
 
 @Preview
 @Composable
-fun HomeScreenPreview(){
+fun HomeScreenPreview() {
     val navController = rememberNavController()
     HomeScreen(innerPadding = PaddingValues(20.dp), navController)
 }

@@ -19,43 +19,60 @@
 
 package org.librefit.nav
 
+import android.content.Context
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.google.gson.GsonBuilder
+import com.google.gson.reflect.TypeToken
+import org.librefit.R
+import org.librefit.data.DataStoreManager
 import org.librefit.data.ExerciseDC
+import org.librefit.data.ExerciseDeserializer
 import org.librefit.data.SharedViewModel
-import org.librefit.ui.screens.about.AboutScreen
 import org.librefit.ui.screens.AddExerciseScreen
-import org.librefit.ui.screens.createRoutine.CreateRoutineScreen
 import org.librefit.ui.screens.MainScreen
 import org.librefit.ui.screens.SettingsScreen
-import org.librefit.ui.screens.workout.WorkoutScreen
-import org.librefit.data.DataStoreManager
+import org.librefit.ui.screens.about.AboutScreen
 import org.librefit.ui.screens.about.LicenseScreen
+import org.librefit.ui.screens.createRoutine.CreateRoutineScreen
+import org.librefit.ui.screens.workout.WorkoutScreen
 
 @Composable
-fun NavigationHost(list: List<ExerciseDC>, userPreferences: DataStoreManager) {
+fun NavigationHost(userPreferences: DataStoreManager) {
 
     val navController = rememberNavController()
 
-    val sharedViewModel : SharedViewModel = viewModel()
+    val sharedViewModel: SharedViewModel = viewModel()
+
+    val exerciseList = remember { mutableStateOf(emptyList<ExerciseDC>()) }
+
+    val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        exerciseList.value = loadExercises(context)
+    }
 
     NavHost(
         navController = navController,
         startDestination = Destination.MainScreen,
-        enterTransition = { scaleIn(tween(450), 0.8f) + fadeIn(tween(400)) },
-        exitTransition = { scaleOut(tween(450), 1.2f)  },
-        popEnterTransition = { scaleIn(tween(450),1.2f)  },
-        popExitTransition = { scaleOut(tween(450), 0.8f) + fadeOut(tween(400)) }
-    ){
+        enterTransition = { scaleIn(tween(400), 0.8f) + fadeIn(tween(350)) },
+        exitTransition = { scaleOut(tween(400), 1.2f) },
+        popEnterTransition = { scaleIn(tween(400), 1.2f) },
+        popExitTransition = { scaleOut(tween(400), 0.8f) + fadeOut(tween(350)) }
+    ) {
         composable<Destination.MainScreen> {
             MainScreen(navController = navController)
         }
@@ -67,7 +84,7 @@ fun NavigationHost(list: List<ExerciseDC>, userPreferences: DataStoreManager) {
         }
         composable<Destination.AddExerciseScreen> {
             AddExerciseScreen(
-                list = list,
+                exerciseList = exerciseList.value,
                 navigateBack = { navController.popBackStack() },
                 viewModel = sharedViewModel
             )
@@ -81,7 +98,7 @@ fun NavigationHost(list: List<ExerciseDC>, userPreferences: DataStoreManager) {
         composable<Destination.AboutScreen> {
             AboutScreen(navController = navController)
         }
-        composable<Destination.LicenseScreen>{
+        composable<Destination.LicenseScreen> {
             LicenseScreen(navigateBack = { navController.popBackStack() })
         }
         composable<Destination.WorkoutScreen> {
@@ -89,8 +106,22 @@ fun NavigationHost(list: List<ExerciseDC>, userPreferences: DataStoreManager) {
                 userPreferences = userPreferences,
                 workoutId = it.toRoute<Destination.WorkoutScreen>().workoutId,
                 navController = navController,
-                list = list
+                list = exerciseList.value,
+                sharedViewModel = sharedViewModel
             )
         }
+    }
+}
+
+private fun loadExercises(context: Context): List<ExerciseDC> {
+    val inputStream = context.resources.openRawResource(R.raw.exercises)
+
+    return inputStream.bufferedReader().use { reader ->
+        val gson = GsonBuilder()
+            .registerTypeAdapter(ExerciseDC::class.java, ExerciseDeserializer())
+            .create()
+        val listType = object : TypeToken<List<ExerciseDC>>() {}.type
+
+        gson.fromJson(reader, listType)
     }
 }

@@ -35,9 +35,8 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Favorite
@@ -137,37 +136,39 @@ fun AboutScreen(navController : NavHostController) {
         },
     ) { innerPadding ->
 
-        Column (
+        LazyColumn (
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues = innerPadding)
-                .verticalScroll(rememberScrollState())
                 .padding(start = 15.dp, end = 15.dp),
             verticalArrangement = Arrangement.spacedBy(15.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ){
 
             val logoSize = 170.dp
-            Image(
-                imageVector = ImageVector.vectorResource(id = R.drawable.ic_logo),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(logoSize)
-                    .border(
-                        BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainer),
-                        RoundedCornerShape(logoSize)
-                    )
-            )
-
-            Text(
-                buildAnnotatedString {
-                    withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)){
-                        append(stringResource(id = R.string.app_name).removeRange(5,8))
-                    }
-                    append(stringResource(id = R.string.app_name).removeRange(0,5))
-                },
-                style = MaterialTheme.typography.displayMedium
-            )
+            item{
+                Image(
+                    imageVector = ImageVector.vectorResource(id = R.drawable.ic_logo),
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(logoSize)
+                        .border(
+                            BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainer),
+                            RoundedCornerShape(logoSize)
+                        )
+                )
+            }
+            item {
+                Text(
+                    buildAnnotatedString {
+                        withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                            append(stringResource(id = R.string.app_name).removeRange(5, 8))
+                        }
+                        append(stringResource(id = R.string.app_name).removeRange(0, 5))
+                    },
+                    style = MaterialTheme.typography.displayMedium
+                )
+            }
 
             var version = ""
 
@@ -180,99 +181,128 @@ fun AboutScreen(navController : NavHostController) {
                 e.printStackTrace()
             }
 
-            Text(version)
-
-
-            HeadlineText(text =  stringResource(R.string.label_support_project))
-
-            AboutItem(
-                Icons.Default.Favorite,
-                text = stringResource(R.string.label_donate),
-                description = stringResource(R.string.label_donate_desc),
-                onClick = {},
-                enabled = false
-            )
-
-            AboutItem(
-                ImageVector.vectorResource(R.drawable.ic_handshake),
-                text = stringResource(R.string.label_contribute),
-                description = stringResource(R.string.label_contribute_desc),
-                onClick = {},
-                enabled = false
-            )
-
-            AboutItem(
-                ImageVector.vectorResource(R.drawable.ic_translate),
-                stringResource(R.string.label_translate),
-                description = stringResource(R.string.label_translate_desc),
-                onClick = {},
-                enabled = false
-            )
-
-
-            HeadlineText(stringResource(R.string.label_info))
-
-            AboutItem(
-                ImageVector.vectorResource(R.drawable.ic_policy),
-                stringResource(R.string.label_privacy_policy),
-                description = stringResource(R.string.label_privacy_policy_desc),
-                onClick = {
-                    url = context.getString(R.string.url_privacy)
-                    showDialog = true
+            item{
+                if(version != "") {
+                    Text(version)
                 }
+            }
 
-            )
-
-            AboutItem(
-                ImageVector.vectorResource(R.drawable.ic_globe),
-                stringResource(R.string.label_website),
-                onClick = {
-                    url = context.getString(R.string.url_website)
-                    showDialog = true
-                }
-            )
-
-            AboutItem(
-                ImageVector.vectorResource(R.drawable.ic_source_code),
-                stringResource(R.string.label_source_code),
-                onClick = {
-                    url = context.getString(R.string.url_source_code)
-                    showDialog = true
-                }
-            )
+            item{
+                HeadlineText(text =  stringResource(R.string.label_support_project))
+            }
 
 
-            AboutItem(
-                ImageVector.vectorResource(R.drawable.ic_license),
-                stringResource(R.string.label_license),
-                onClick = {
-                    navController.navigate(Destination.LicenseScreen)
-                }
-            )
+            item{
+                AboutItem(
+                    Icons.Default.Favorite,
+                    text = stringResource(R.string.label_donate),
+                    description = stringResource(R.string.label_donate_desc),
+                    onClick = {},
+                    enabled = false
+                )
+            }
 
-            HeadlineText(stringResource(R.string.label_contributors))
+            item{
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_handshake),
+                    text = stringResource(R.string.label_contribute),
+                    description = stringResource(R.string.label_contribute_desc),
+                    onClick = {},
+                    enabled = false
+                )
+            }
 
-            AboutItem(
-                Icons.Default.Person,
-                stringResource(R.string.url_IamDg).split("/").last(),
-                stringResource(R.string.label_project_owner),
-                onClick = {
-                    url = context.getString(R.string.url_IamDg)
-                    showDialog = true
-                }
-            )
+            item{
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_translate),
+                    stringResource(R.string.label_translate),
+                    description = stringResource(R.string.label_translate_desc),
+                    onClick = {},
+                    enabled = false
+                )
+            }
 
-            HeadlineText(stringResource(R.string.label_translators))
+            item{
+                HeadlineText(stringResource(R.string.label_info))
+            }
 
-            AboutItem(
-                Icons.Default.Person,
-                stringResource(R.string.url_IamDg).split("/").last(),
-                stringResource(R.string.label_contributed_to) + stringResource(R.string.label_language_italian),
-                onClick = {
-                    url = context.getString(R.string.url_IamDg)
-                    showDialog = true
-                }
-            )
+            item {
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_policy),
+                    stringResource(R.string.label_privacy_policy),
+                    description = stringResource(R.string.label_privacy_policy_desc),
+                    onClick = {
+                        url = context.getString(R.string.url_privacy)
+                        showDialog = true
+                    }
+
+                )
+            }
+
+            item {
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_globe),
+                    stringResource(R.string.label_website),
+                    onClick = {
+                        url = context.getString(R.string.url_website)
+                        showDialog = true
+                    }
+                )
+            }
+
+            item {
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_source_code),
+                    stringResource(R.string.label_source_code),
+                    onClick = {
+                        url = context.getString(R.string.url_source_code)
+                        showDialog = true
+                    }
+                )
+            }
+
+            item {
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_license),
+                    stringResource(R.string.label_license),
+                    description = stringResource(R.string.label_license_desc),
+                    onClick = {
+                        navController.navigate(Destination.LicenseScreen)
+                    }
+                )
+            }
+
+            item {
+                HeadlineText(stringResource(R.string.label_contributors))
+            }
+
+            item {
+                AboutItem(
+                    Icons.Default.Person,
+                    stringResource(R.string.url_IamDg).split("/").last(),
+                    stringResource(R.string.label_project_owner),
+                    onClick = {
+                        url = context.getString(R.string.url_IamDg)
+                        showDialog = true
+                    }
+                )
+            }
+
+            item {
+                HeadlineText(stringResource(R.string.label_translators))
+            }
+
+            item {
+                AboutItem(
+                    Icons.Default.Person,
+                    stringResource(R.string.url_IamDg).split("/").last(),
+                    stringResource(R.string.label_contributed_to) + stringResource(R.string.label_language_italian),
+                    onClick = {
+                        url = context.getString(R.string.url_IamDg)
+                        showDialog = true
+                    }
+                )
+            }
         }
     }
 }

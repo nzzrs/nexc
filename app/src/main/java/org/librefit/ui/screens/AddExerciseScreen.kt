@@ -75,7 +75,7 @@ import org.librefit.util.exerciseEnumToStringId
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AddExerciseScreen(
-    list: List<ExerciseDC>,
+    exerciseList: List<ExerciseDC>,
     navigateBack: () -> Unit,
     viewModel: SharedViewModel
 ) {
@@ -138,7 +138,7 @@ fun AddExerciseScreen(
             )
         }
     ) { innerPadding ->
-        AddExerciseScreenContent(innerPadding, list, selectedExercisesList, viewModel)
+        AddExerciseScreenContent(innerPadding, exerciseList, selectedExercisesList, viewModel)
     }
 }
 
@@ -150,7 +150,7 @@ private fun AddExerciseScreenContent(
     viewModel: SharedViewModel,
 ) {
     LaunchedEffect(Unit) {
-        viewModel.resetFilterList()
+        viewModel.cleanFilter()
     }
 
     var isFilterExpanded = rememberSaveable { mutableStateOf(false) }
@@ -164,10 +164,6 @@ private fun AddExerciseScreenContent(
 
     // Query used to search an exercises based on the name
     var query by remember { mutableStateOf("") }
-
-    val filteredExercisesList = exerciseList.filter { exercise ->
-        exercise.name.contains(query, ignoreCase = true) && viewModel.filter(exercise)
-    }
 
     LazyColumn(
         modifier = Modifier.padding(innerPadding)
@@ -214,7 +210,11 @@ private fun AddExerciseScreenContent(
         // Card to let the user filter the exercises list
         item { FiltersCard(isFilterExpanded = isFilterExpanded, viewModel = viewModel) }
 
-        if (filteredExercisesList.isNotEmpty()) {
+        if (
+            exerciseList.any {
+                it.name.contains(query, ignoreCase = true) && viewModel.filterExercise(it)
+            }
+        ) {
             item { HorizontalDivider() }
         } else {
             item {
@@ -235,7 +235,9 @@ private fun AddExerciseScreenContent(
 
         //Filtered list of exercises
         items(
-            items = filteredExercisesList,
+            items = exerciseList.filter { exercise ->
+                exercise.name.contains(query, ignoreCase = true) && viewModel.filterExercise(exercise)
+            },
             key = { exercise -> exercise.id }
         ) { exercise ->
             Row(

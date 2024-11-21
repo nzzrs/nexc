@@ -20,13 +20,10 @@
 package org.librefit.data
 
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 
 class SharedViewModel : ViewModel() {
-    /**
-     * A list used by CreateRoutineScreen and AddExerciseScreen
-     */
-
     private val selectedExercisesList = mutableStateListOf<ExerciseDC>()
 
     fun getSelectedExercisesList(): List<ExerciseDC> {
@@ -45,59 +42,66 @@ class SharedViewModel : ViewModel() {
     }
 
 
-    /**
-     * A list used only by AddExerciseScreen based on FiltersCard
-     */
+    //They are used to filter the exercise list in AddExerciseScreen
+    private var levelFilter = mutableStateOf<Level?>(null)
+    private var forceFilter = mutableStateOf<Force?>(null)
+    private var mechanicFilter = mutableStateOf<Mechanic?>(null)
+    private var equipmentFilter = mutableStateOf<Equipment?>(null)
+    private var muscleFilter = mutableStateOf<Muscle?>(null)
+    private var categoryFilter = mutableStateOf<Category?>(null)
 
-    private var filtersList = mutableStateListOf<Enum<*>>()
 
-    init {
-        initializeFilterList()
+    fun cleanFilter() {
+        levelFilter.value = null
+        forceFilter.value = null
+        mechanicFilter.value = null
+        equipmentFilter.value = null
+        muscleFilter.value = null
+        categoryFilter.value = null
     }
 
-    private fun initializeFilterList() {
-        filtersList.addAll(Level.entries)
-        filtersList.addAll(Force.entries)
-        filtersList.addAll(Mechanic.entries)
-        filtersList.addAll(Equipment.entries)
-        filtersList.addAll(Muscle.entries)
-        filtersList.addAll(Category.entries)
+    fun updateFilter(enum: Enum<*>?, mode: Int) {
+        when(mode){
+            0 -> levelFilter.value = enum as Level?
+            1 -> forceFilter.value = enum as Force?
+            2 -> mechanicFilter.value = enum as Mechanic?
+            3 -> equipmentFilter.value = enum as Equipment?
+            4 -> muscleFilter.value = enum as Muscle?
+            5 -> categoryFilter.value = enum as Category?
+            else -> null
+        }
     }
 
-    fun addEnumToFilter(enum: Enum<*>) {
-        filtersList.add(enum)
+    fun getFilter(mode: Int): Enum<*>? {
+        return when(mode){
+            0 -> levelFilter.value
+            1 -> forceFilter.value
+            2 -> mechanicFilter.value
+            3 -> equipmentFilter.value
+            4 -> muscleFilter.value
+            5 -> categoryFilter.value
+            else -> null
+        }
     }
 
-    fun removeEnumFromFilter(enum: Enum<*>) {
-        filtersList.remove(enum)
-    }
-
-    fun isEnumInFilter(enum: Enum<*>): Boolean {
-        return filtersList.contains(enum)
-    }
-
-    fun resetFilterList() {
-        filtersList.clear()
-        initializeFilterList()
-    }
-
-    fun filter(exercise: ExerciseDC): Boolean {
-        if (!filtersList.contains(exercise.level)) {
+    fun filterExercise(exercise: ExerciseDC): Boolean {
+        if (levelFilter.value != null && levelFilter.value != exercise.level) {
             return false
         }
-        if (exercise.force != null && !filtersList.contains(exercise.force)) {
+        if (forceFilter.value != null && forceFilter.value != exercise.force) {
             return false
         }
-        if (exercise.mechanic != null && !filtersList.contains(exercise.mechanic)) {
+        if (mechanicFilter.value != null && mechanicFilter.value != exercise.mechanic) {
             return false
         }
-        if (exercise.equipment != null && !filtersList.contains(exercise.equipment)) {
+        if (equipmentFilter.value != null && equipmentFilter.value != exercise.equipment) {
             return false
         }
-        if (!filtersList.containsAll(exercise.primaryMuscles) || !filtersList.containsAll(exercise.secondaryMuscles)) {
+        if (muscleFilter.value != null && !exercise.primaryMuscles.contains(muscleFilter.value)
+                    && !exercise.secondaryMuscles.contains(muscleFilter.value) ) {
             return false
         }
-        if (!filtersList.contains(exercise.category)) {
+        if (categoryFilter.value != null && categoryFilter.value != exercise.category) {
             return false
         }
         return true

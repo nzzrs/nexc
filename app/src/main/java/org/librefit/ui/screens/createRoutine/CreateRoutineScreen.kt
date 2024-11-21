@@ -19,32 +19,24 @@
 
 package org.librefit.ui.screens.createRoutine
 
-import android.util.Log
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.AddCircle
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -60,16 +52,13 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -77,11 +66,13 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
 import org.librefit.data.ExerciseDC
+import org.librefit.data.ExerciseWithSets
+import org.librefit.data.SetMode
 import org.librefit.data.SharedViewModel
-import org.librefit.db.Set
 import org.librefit.db.Workout
 import org.librefit.nav.Destination
 import org.librefit.ui.components.ConfirmExitDialog
+import org.librefit.ui.components.ExerciseCard
 import org.librefit.ui.components.ExerciseDetailModalBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -104,7 +95,7 @@ fun CreateRoutineScreen(
 
     var showExitDialog by remember { mutableStateOf(false) }
 
-    BackHandler(enabled = !showExitDialog && !viewModel.isEmpty()) {
+    BackHandler(enabled = !showExitDialog && !viewModel.isListEmpty()) {
         showExitDialog = true
     }
 
@@ -128,7 +119,7 @@ fun CreateRoutineScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = {
-                            if (viewModel.isEmpty()) {
+                            if (viewModel.isListEmpty()) {
                                 navController.popBackStack()
                             } else {
                                 showExitDialog = true
@@ -150,7 +141,7 @@ fun CreateRoutineScreen(
                             )
                             navController.popBackStack()
                         },
-                        enabled = !viewModel.isTitleEmpty() && !viewModel.isEmpty()
+                        enabled = !viewModel.isTitleEmpty() && !viewModel.isListEmpty()
                     ) {
                         Icon(
                             imageVector = Icons.Default.Done,
@@ -224,7 +215,7 @@ private fun CreateRoutineScreen(
                 }
             )
         }
-        if (viewModel.isEmpty()) {
+        if (viewModel.isListEmpty()) {
             item {
                 Icon(
                     imageVector = ImageVector.vectorResource(id = R.drawable.ic_launcher_monochrome),
@@ -251,7 +242,9 @@ private fun CreateRoutineScreen(
                         selectedExercise = exerciseWithSets.exercise
                         isModalSheetOpen = true
                     },
-                    onDelete = { viewModel.deleteExercise(exerciseWithSets.id) },
+                    onDelete = {
+                        viewModel.deleteExercise(exerciseWithSets.id)
+                    },
                     addSet = {
                         viewModel.addSetToExercise(exerciseWithSets.id)
                     },
@@ -269,28 +262,35 @@ private fun CreateRoutineScreen(
                                 reps = value,
                             )
                         } else if (SetMode.TIME == mode) {
-                            /* TODO */
+                            viewModel.updateSet(
+                                exerciseId = exerciseWithSets.id,
+                                set = set,
+                                time = value,
+                            )
                         }
                     },
-                    updateNote = {
-                        exerciseWithSets.note = it
-                    }
+                    completedSet = {}
                 )
             }
         }
 
         item {
             TextButton(
-                onClick = { navigateAddExercise() },
-                colors = ButtonDefaults.buttonColors()
+                onClick = navigateAddExercise ,
+                colors = ButtonDefaults.buttonColors(),
             ) {
-                Icon(
-                    imageVector = Icons.Default.AddCircle,
-                    contentDescription = Icons.Default.AddCircle.name
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Text(text = stringResource(id = R.string.label_add_exercise))
-                Spacer(modifier = Modifier.weight(1.3f))
+                Row (
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ){
+                    Icon(
+                        imageVector = Icons.Default.AddCircle,
+                        contentDescription = Icons.Default.AddCircle.name
+                    )
+                    Spacer(Modifier.width(10.dp))
+                    Text(text = stringResource(id = R.string.label_add_exercise))
+                }
             }
         }
     }
@@ -301,184 +301,6 @@ private fun CreateRoutineScreen(
 
     if (isModalSheetOpen) {
         ExerciseDetailModalBottomSheet(exercise = selectedExercise!!) { isModalSheetOpen = false }
-    }
-}
-
-
-@Composable
-private fun ExerciseCard(
-    exerciseWithSets: ExerciseWithSets,
-    onDetail: () -> Unit,
-    onDelete: () -> Unit,
-    addSet: () -> Unit,
-    updateSet: (Set, Int, SetMode) -> Unit,
-    updateNote: (String) -> Unit
-) {
-    Log.d("ExerciseItem", "Recomposing for exercise ID: ${exerciseWithSets.id}")
-    var note by remember { mutableStateOf("") }
-
-    ElevatedCard(
-        modifier = Modifier.fillMaxWidth()
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(15.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
-        ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Text(
-                    text = exerciseWithSets.exercise.name,
-                    style = MaterialTheme.typography.headlineSmall,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
-                IconButton(onClick = { onDetail() }) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = Icons.Default.Info.name
-                    )
-                }
-                IconButton(onClick = { onDelete() }) {
-                    Icon(
-                        imageVector = Icons.Default.Delete,
-                        contentDescription = Icons.Default.Delete.name
-                    )
-                }
-            }
-
-            //Notes
-            OutlinedTextField(
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = stringResource(id = R.string.label_notes)) },
-                value = note,
-                onValueChange = {
-                    note = it
-                    updateNote(it)
-                }
-            )
-
-            Spacer(modifier = Modifier.height(10.dp))
-
-            HorizontalDivider()
-
-            //Headline set
-            Row(
-                modifier = Modifier
-                    .height(40.dp)
-                    .fillMaxWidth()
-                    .padding(start = 10.dp, end = 10.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-                Text(
-                    text = stringResource(id = R.string.label_exercise_card_set),
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Text(
-                    text = stringResource(id = R.string.label_exercise_card_reps),
-                    color = MaterialTheme.colorScheme.secondary
-                )
-                Text(
-                    text = stringResource(id = R.string.label_exercise_card_weight),
-                    color = MaterialTheme.colorScheme.secondary
-                )
-            }
-            //Sets
-            exerciseWithSets.sets.forEachIndexed { index, set ->
-
-                var repValue by rememberSaveable { mutableStateOf("0") }
-                var weightValue by rememberSaveable { mutableStateOf("0") }
-                var repError by rememberSaveable { mutableStateOf(false) }
-                var weightError by rememberSaveable { mutableStateOf(false) }
-
-                val i = index + 1
-                Row(
-                    modifier = Modifier
-                        .height(80.dp)
-                        .fillMaxWidth()
-                        .padding(start = 20.dp, end = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text("$i", color = MaterialTheme.colorScheme.onSurface)
-
-                    Spacer(modifier = Modifier.weight(2.5f))
-
-                    //Reps
-                    OutlinedTextField(
-                        modifier = Modifier.width(80.dp),
-                        value = repValue,
-                        onValueChange = { string ->
-                            if (string.all { it.isDigit() }) {
-                                if (string.length > 4) {
-                                    repError = true
-                                } else {
-                                    repError = false
-                                    repValue = string
-                                    updateSet(set, repValue.ifEmpty { "0" }.toInt(), SetMode.REPS)
-                                }
-                            }
-                        },
-                        singleLine = true,
-                        isError = repError,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    )
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    //Weight
-                    OutlinedTextField(
-                        modifier = Modifier.width(100.dp),
-                        value = weightValue,
-                        suffix = { Text("kg") },
-                        onValueChange = { string ->
-                            if (string.all { it.isDigit() }) {
-                                if (string.length > 4) {
-                                    weightError = true
-                                } else {
-                                    weightValue = string
-                                    weightError = false
-                                    updateSet(
-                                        set,
-                                        weightValue.ifEmpty { "0" }.toInt(),
-                                        SetMode.WEIGHT
-                                    )
-                                }
-                            }
-                        },
-                        singleLine = true,
-                        isError = weightError,
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-
-                }
-            }
-
-            Spacer(Modifier.height(10.dp))
-
-            HorizontalDivider()
-
-            TextButton(
-                onClick = addSet,
-                colors = ButtonDefaults.textButtonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                )
-            ) {
-                Icon(
-                    imageVector = Icons.Default.AddCircle,
-                    contentDescription = Icons.Default.AddCircle.name
-                )
-                Spacer(modifier = Modifier.weight(1f))
-                Text(text = stringResource(id = R.string.label_exercise_card_add))
-                Spacer(modifier = Modifier.weight(1.3f))
-            }
-        }
     }
 }
 

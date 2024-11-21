@@ -8,7 +8,7 @@ import org.librefit.data.Level
 import org.librefit.data.Mechanic
 import org.librefit.data.Muscle
 
-fun exerciseEnumToStringId(enum : Enum<*>) : Int {
+fun exerciseEnumToStringId(enum: Enum<*>?) : Int {
     return when (enum) {
         Force.PUSH -> R.string.label_force_push
         Force.PULL -> R.string.label_force_pull

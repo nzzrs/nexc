@@ -29,7 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.librefit.MainApplication
-import org.librefit.data.ExerciseDC
+import org.librefit.data.ExerciseWithSets
 import org.librefit.db.Set
 import org.librefit.db.Workout
 
@@ -65,11 +65,11 @@ class CreateRoutineScreenViewModel : ViewModel() {
         _exercisesWithSets.value = _exercisesWithSets.value.filter { it.id != index }
     }
 
-    fun isEmpty(): Boolean {
+    fun isListEmpty(): Boolean {
         return exercisesWithSets.value.isEmpty()
     }
 
-    fun updateSet(exerciseId: Int, set: Set, weight: Int? = null, reps: Int? = null) {
+    fun updateSet(exerciseId: Int, set: Set, weight: Int? = null, reps: Int? = null, time : Int? = null) {
         val exerciseWithSets = _exercisesWithSets.value.find { it.id == exerciseId }
 
         if (exerciseWithSets != null) {
@@ -80,7 +80,8 @@ class CreateRoutineScreenViewModel : ViewModel() {
                 val updatedSets = exerciseWithSets.sets.toMutableList().apply {
                     this[setToUpdateIndex] = this[setToUpdateIndex].copy(
                         weight = weight ?: this[setToUpdateIndex].weight,
-                        reps = reps ?: this[setToUpdateIndex].reps
+                        reps = reps ?: this[setToUpdateIndex].reps,
+                        elapsedTime = time?: this[setToUpdateIndex].elapsedTime
                     )
                 }
 
@@ -119,19 +120,5 @@ class CreateRoutineScreenViewModel : ViewModel() {
             workoutDao.addWorkoutWithExercises(workout, list)
         }
     }
-}
-
-data class ExerciseWithSets(
-    val id: Int = 0,
-    val exerciseId: Int = 0,
-    val exercise: ExerciseDC,
-    var sets: List<Set> = emptyList(),
-    var note: String = ""
-)
-
-enum class SetMode {
-    WEIGHT,
-    REPS,
-    TIME
 }
 

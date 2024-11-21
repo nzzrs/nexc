@@ -25,7 +25,7 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
-import org.librefit.ui.screens.createRoutine.ExerciseWithSets
+import org.librefit.data.ExerciseWithSets
 
 @Dao
 interface WorkoutDao {

@@ -22,15 +22,16 @@ package org.librefit.data
 import com.google.gson.JsonDeserializationContext
 import com.google.gson.JsonDeserializer
 import com.google.gson.JsonElement
-import com.google.gson.reflect.TypeToken
 import java.lang.reflect.Type
 import java.util.Locale
 
 class ExerciseDeserializer : JsonDeserializer<ExerciseDC> {
-    override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): ExerciseDC {
+    override fun deserialize(
+        json: JsonElement,
+        typeOfT: Type,
+        context: JsonDeserializationContext
+    ): ExerciseDC {
         val jsonObject = json.asJsonObject
-
-        val muscleListType = object : TypeToken<List<Muscle>>() {}.type
 
         return ExerciseDC(
             id = jsonObject["id"].asString,
@@ -70,7 +71,8 @@ class ExerciseDeserializer : JsonDeserializer<ExerciseDC> {
             } else {
                 val muscleList = jsonObject["primaryMuscles"].asJsonArray
                 muscleList.mapNotNull { muscleElement ->
-                    val muscleName = muscleElement.asString.uppercase(Locale.ROOT).replace(" ", "_") // Convert to enum format
+                    val muscleName = muscleElement.asString.uppercase(Locale.ROOT)
+                        .replace(" ", "_") // Convert to enum format
                     Muscle.entries.find { it.name == muscleName } // Find the enum value
                 }
             },
@@ -79,7 +81,8 @@ class ExerciseDeserializer : JsonDeserializer<ExerciseDC> {
             } else {
                 val muscleList = jsonObject["secondaryMuscles"].asJsonArray
                 muscleList.mapNotNull { muscleElement ->
-                    val muscleName = muscleElement.asString.uppercase(Locale.ROOT).replace(" ", "_") // Convert to enum format
+                    val muscleName = muscleElement.asString.uppercase(Locale.ROOT)
+                        .replace(" ", "_") // Convert to enum format
                     Muscle.entries.find { it.name == muscleName } // Find the enum value
                 }
             },

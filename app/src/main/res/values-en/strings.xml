@@ -14,7 +14,7 @@
 
     <!--Home screen-->
     <string name="label_quick_start">Quick start</string>
-    <string name="label_routine">Routine</string>
+    <string name="label_your_routines">Your routines</string>
     <string name="label_start_empty_workout">Start empty workout</string>
     <string name="label_create_routine">Create a routine</string>
 
@@ -44,10 +44,8 @@
     <string name="label_start_creating_routine">Start by adding an exercise to your routine</string>
     <string name="label_exit_create_routine">Are you sure you want to exit? Your routine won\'t be saved</string>
     <string name="label_text_field_title">Title</string>
-    <string name="label_exercise_card_set">Set</string>
-    <string name="label_exercise_card_reps">Reps</string>
-    <string name="label_exercise_card_weight">Weight</string>
-    <string name="label_exercise_card_add">Add set</string>
+    <string name="label_set">Set</string>
+    <string name="label_add_set">Add set</string>
     <string name="label_notes">Notes</string>
     <string name="error_title_empty">Title cannot be empty</string>
     <string name="error_title_length_exceeded">Title cannot exceed 30 characters</string>
@@ -158,10 +156,15 @@
     <!--Dialog -->
     <string name="label_cancel_dialog">Cancel</string>
     <string name="label_exit_dialog">Exit</string>
+    <string name="label_start_routine">Start routine</string>
     <string name="label_open">Open</string>
     <string name="label_delete">Delete</string>
     <string name="label_license_desc">LibreFit is licensed under the GNU General Public License v3.0 (GPL-3).</string>
     <string name="label_view_gpl3_online">View online version</string>
+    <string name="label_your_workouts">Your workouts</string>
+    <string name="label_time">Time</string>
+    <string name="label_weight">Weight</string>
+    <string name="label_reps">Reps</string>
 
 
 </resources>

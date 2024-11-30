@@ -19,7 +19,6 @@
 
 package org.librefit.ui.screens.home
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -34,11 +33,12 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -93,7 +93,7 @@ fun HomeScreen(
 
         item{
             Text(
-                text = stringResource(id = R.string.label_routine),
+                text = stringResource(id = R.string.label_your_routines),
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.headlineSmall
             )
@@ -101,20 +101,11 @@ fun HomeScreen(
 
 
 
-        /*TODO: improve card clarity*/
         if (routineList.isNotEmpty()) {
             items(routineList) { routine ->
                 ElevatedCard(
                     modifier = Modifier
                         .padding(5.dp)
-                        .clickable{
-                            navController.navigate(
-                                Destination.WorkoutScreen(
-                                    workoutId = routine.id,
-                                    workoutTitle = routine.title
-                                )
-                            )
-                        }
                 ) {
                     Column(
                         modifier = Modifier
@@ -135,16 +126,19 @@ fun HomeScreen(
                             )
                             IconButton(
                                 onClick = {
-                                    navController.navigate(
-                                        Destination.WorkoutScreen(
-                                            workoutId = routine.id,
-                                            workoutTitle = routine.title
-                                        )
-                                    )
+                                    //TODO: routine edit
                                 },
-                                colors =  IconButtonDefaults.filledIconButtonColors()
+                                enabled = false
                             ) {
-                                Icon(Icons.Default.PlayArrow, Icons.Default.PlayArrow.name)
+                                Icon(Icons.Default.Edit, null)
+                            }
+                            IconButton(
+                                onClick = {
+                                    //TODO: show exercises of routine
+                                },
+                                enabled = false
+                            ) {
+                                Icon(Icons.Default.Info, null)
                             }
                             IconButton(onClick = { viewModel.deleteRoutine(routine) }) {
                                 Icon(
@@ -152,6 +146,18 @@ fun HomeScreen(
                                     stringResource(R.string.label_delete)
                                 )
                             }
+                        }
+                        CustomTextButton(
+                            text = stringResource(R.string.label_start_routine),
+                            icon = Icons.Default.PlayArrow,
+                            elevated = false
+                        ) {
+                            navController.navigate(
+                                Destination.WorkoutScreen(
+                                    workoutId = routine.id,
+                                    workoutTitle = routine.title
+                                )
+                            )
                         }
                     }
                 }

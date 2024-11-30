@@ -8,7 +8,7 @@
     <string name="label_add_exercise">Aggiungi esercizio</string>
     <string name="label_more_options">Più opzioni</string>
     <string name="label_quick_start">Avvio rapido</string>
-    <string name="label_routine">Routine</string>
+    <string name="label_your_routines">Le tue routine</string>
     <string name="label_start_empty_workout">Inizia un allenamento vuoto</string>
     <string name="label_create_routine">Crea una routine</string>
     <string name="label_copy">Copia</string>
@@ -32,10 +32,8 @@
     <string name="label_start_creating_routine">Inizia aggiungendo un esercizio alla tua routine</string>
     <string name="label_exit_create_routine">Sei sicuro di voler uscire? La tua routine non sarà salvata</string>
     <string name="label_text_field_title">Titolo</string>
-    <string name="label_exercise_card_set">Set</string>
-    <string name="label_exercise_card_reps">Ripetizioni</string>
-    <string name="label_exercise_card_weight">Peso</string>
-    <string name="label_exercise_card_add">Aggiungi set</string>
+    <string name="label_set">Set</string>
+    <string name="label_add_set">Aggiungi set</string>
     <string name="label_notes">Note</string>
     <string name="label_exit_add_exercise">Sei sicuro di voler uscire? I tuoi esercizi selezionati non saranno salvati</string>
     <string name="label_search_exercise_field">Cerca un esercizio</string>
@@ -124,8 +122,13 @@
     <string name="error_title_length_exceeded">"Il titolo "</string>
     <string name="error_title_empty">Il titolo non può essere vuoto</string>
     <string name="label_language_english">Inglese</string>
+    <string name="label_start_routine">Inizia routine</string>
     <string name="label_open">Apri</string>
     <string name="label_delete">Elimina</string>
     <string name="label_license_desc">LibreFit è distribuito sotto la licenza GNU General Public License v3.0 (GPL-3).</string>
     <string name="label_view_gpl3_online">Visualizza versione online</string>
+    <string name="label_your_workouts">I tuoi allenamenti</string>
+    <string name="label_time">Tempo</string>
+    <string name="label_weight">Peso</string>
+    <string name="label_reps">Ripetizioni</string>
 </resources>

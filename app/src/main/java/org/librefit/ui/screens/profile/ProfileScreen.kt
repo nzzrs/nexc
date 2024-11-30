@@ -28,17 +28,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import org.librefit.R
 
 @Composable
 fun ProfileScreen(innerPadding: PaddingValues) {
@@ -50,19 +57,18 @@ fun ProfileScreen(innerPadding: PaddingValues) {
     LazyColumn(
         modifier = Modifier
             .padding(paddingValues = innerPadding)
-            .padding(start = 20.dp, end = 20.dp)
+            .padding(start = 15.dp, end = 15.dp)
             .fillMaxSize()
     ) {
         item {
-            /*TODO: insert text in string.xml*/
             Text(
-                text = "Your workouts",
+                text = stringResource(R.string.label_your_workouts),
                 color = MaterialTheme.colorScheme.onBackground,
                 style = MaterialTheme.typography.headlineSmall
             )
         }
 
-        items(workoutList) {
+        items(workoutList) { workout ->
             ElevatedCard(
                 modifier = Modifier.padding(5.dp)
             ) {
@@ -77,26 +83,26 @@ fun ProfileScreen(innerPadding: PaddingValues) {
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
                         Text(
-                            text = it.title,
+                            text = workout.title,
                             style = MaterialTheme.typography.headlineSmall,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.weight(1f)
                         )
-//                        IconButton(
-//                            onClick = {
-//                                navController.navigate(Destination.WorkoutScreen(workoutId = it.id))
-//                            },
-//                            colors =  IconButtonDefaults.filledIconButtonColors()
-//                        ) {
-//                            Icon(Icons.Default.PlayArrow, Icons.Default.PlayArrow.name)
-//                        }
-//                        IconButton(onClick = { viewModel.deleteRoutine(it) }) {
-//                            Icon(
-//                                Icons.Default.Delete,
-//                                stringResource(R.string.label_delete)
-//                            )
-//                        }
+                        IconButton(
+                            onClick = {
+                                //TODO: show stats of workout
+                            },
+                            enabled = false
+                        ) {
+                            Icon(Icons.Default.Info, null)
+                        }
+                        IconButton(onClick = { viewModel.deleteWorkout(workout) }) {
+                            Icon(
+                                Icons.Default.Delete,
+                                stringResource(R.string.label_delete)
+                            )
+                        }
                     }
                 }
             }

@@ -104,7 +104,7 @@ fun CreateRoutineScreen(
     }
 
     CustomScaffold(
-        title = stringResource(id = R.string.label_routine),
+        title = stringResource(id = R.string.label_your_routines),
         navigateBack = {
             if (viewModel.isListEmpty()) {
                 navController.popBackStack()

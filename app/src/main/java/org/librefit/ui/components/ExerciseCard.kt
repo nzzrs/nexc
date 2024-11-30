@@ -131,27 +131,7 @@ fun ExerciseCard(
 
             Spacer(modifier = Modifier.height(10.dp))
 
-            //Rest timer
-//            Row(
-//                modifier = Modifier.fillMaxWidth(),
-//                horizontalArrangement = Arrangement.Center
-//            ) {
-//                TextButton(
-//                    onClick = {
-//
-//                    },
-//                    colors = ButtonDefaults.textButtonColors(
-//                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-//                        contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-//                    )
-//                ) {
-//                    Icon(
-//                        imageVector = ImageVector.vectorResource(R.drawable.ic_timer),
-//                        contentDescription = stringResource(R.string.label_rest_time)
-//                    )
-//                    Text("Rest: 1 minute and 30 seconds")
-//                }
-//            }
+            //TODO: rest timer
 
             Spacer(modifier = Modifier.height(10.dp))
 
@@ -165,6 +145,7 @@ fun ExerciseCard(
                     SetMode.entries.forEachIndexed { index, mode ->
                         SegmentedButton(
                             selected = setMode == mode,
+                            enabled = mode != SetMode.TIME, //TODO: remove this condition when time text field works
                             onClick = {
                                 setMode = mode
                                 exerciseWithSets.setMode = mode
@@ -174,9 +155,8 @@ fun ExerciseCard(
                                 count = SetMode.entries.size
                             )
                         ) {
-                            /*TODO: insert text in string.xml*/
                             Text(
-                                text = mode.name.lowercase().replaceFirstChar { it.uppercase() },
+                                text = stringResource(setModeToStringId(mode)),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
@@ -200,23 +180,22 @@ fun ExerciseCard(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    text = stringResource(id = R.string.label_exercise_card_set),
+                    text = stringResource(id = R.string.label_set),
                     color = MaterialTheme.colorScheme.secondary
                 )
                 if (setMode == SetMode.TIME) {
-                    /*TODO: insert text in string.xml*/
                     Text(
-                        text = "Time",
+                        text = stringResource(R.string.label_time),
                         color = MaterialTheme.colorScheme.secondary
                     )
                 } else {
                     Text(
-                        text = stringResource(id = R.string.label_exercise_card_reps),
+                        text = stringResource(id = R.string.label_reps),
                         color = MaterialTheme.colorScheme.secondary
                     )
                     if (setMode == SetMode.WEIGHT) {
                         Text(
-                            text = stringResource(id = R.string.label_exercise_card_weight),
+                            text = stringResource(id = R.string.label_weight),
                             color = MaterialTheme.colorScheme.secondary
                         )
                     }
@@ -365,12 +344,20 @@ fun ExerciseCard(
             HorizontalDivider()
 
             CustomTextButton(
-                text = stringResource(id = R.string.label_exercise_card_add),
+                text = stringResource(id = R.string.label_add_set),
                 icon = Icons.Default.AddCircle,
                 onClick = addSet,
                 elevated = false
             )
         }
+    }
+}
+
+private fun setModeToStringId(setMode: SetMode) : Int {
+    return when(setMode){
+        SetMode.WEIGHT -> R.string.label_weight
+        SetMode.REPS -> R.string.label_reps
+        SetMode.TIME -> R.string.label_time
     }
 }
 

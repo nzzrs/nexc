@@ -28,7 +28,6 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.librefit.MainApplication
@@ -36,9 +35,13 @@ import org.librefit.db.Exercise
 import org.librefit.db.Set
 import org.librefit.db.Workout
 import org.librefit.enums.SetMode
+import org.librefit.util.ExerciseDC
 import org.librefit.util.ExerciseWithSets
 
-class WorkoutScreenViewModel : ViewModel() {
+class WorkoutScreenViewModel(
+    workoutId: Int,
+    private val list: List<ExerciseDC>
+) : ViewModel() {
 
     fun getProgress(): Float {
         return exercisesWithSets.value.sumOf { it.sets.filter { it.completed == true }.size }
@@ -62,7 +65,9 @@ class WorkoutScreenViewModel : ViewModel() {
     fun addSetToExercise(index: Int) {
         _exercisesWithSets.value = _exercisesWithSets.value.map { exerciseWithSets ->
             if (exerciseWithSets.id == index) {
-                exerciseWithSets.copy(sets = exerciseWithSets.sets + Set(exerciseId = 0))
+                exerciseWithSets.copy(
+                    sets = exerciseWithSets.sets + Set(exerciseId = currentId++)
+                )
             } else {
                 exerciseWithSets
             }
@@ -85,7 +90,12 @@ class WorkoutScreenViewModel : ViewModel() {
         _exercisesWithSets.value = _exercisesWithSets.value.map { exerciseWithSets ->
             if (exerciseWithSets.id == exerciseId) {
                 val updatedSets = exerciseWithSets.sets.map { currentSet ->
-                    if (currentSet == set) {
+                    /*
+                    It compares "exerciseId" instead of "id" because in
+                    AddSetToExercise method a unique ID is assigned at "exerciseId".
+                    Furthermore it will be overwritten when saved in db.
+                     */
+                    if (currentSet.exerciseId == set.exerciseId) {
                         when (mode) {
                             0 -> currentSet.copy(weight = value)
                             1 -> currentSet.copy(reps = value)
@@ -141,13 +151,28 @@ class WorkoutScreenViewModel : ViewModel() {
 
 
     private val workoutDao = MainApplication.workoutDatabase.getWorkoutDao()
-    private val _exercises = MutableStateFlow<List<Exercise>>(emptyList())
-    val exercises: StateFlow<List<Exercise>> = _exercises
+
+    init {
+        getExercisesFromWorkout(workoutId)
+    }
 
     fun getExercisesFromWorkout(workoutId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             val data = workoutDao.getExercisesFromWorkout(workoutId)
-            _exercises.value = data
+            data.forEach { exercise ->
+                val item = list.associateBy { it.id }[exercise.exerciseId]
+                if (item != null) {
+                    getSetsFromExercise(exercise.id)
+
+                    addExerciseWithSets(
+                        ExerciseWithSets(
+                            exercise = item,
+                            exerciseId = exercise.id,
+                            note = exercise.notes
+                        )
+                    )
+                }
+            }
         }
     }
 

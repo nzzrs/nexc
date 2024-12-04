@@ -41,9 +41,6 @@ class CreateRoutineScreenViewModel : ViewModel() {
 
     private var currentId: Int = 0
 
-    fun getExercisesWithSets(): List<ExerciseWithSets> {
-        return exercisesWithSets.value
-    }
 
     fun addExerciseWithSets(exerciseWithSets: ExerciseWithSets) {
         val newExerciseWithSets = exerciseWithSets.copy(
@@ -56,7 +53,9 @@ class CreateRoutineScreenViewModel : ViewModel() {
     fun addSetToExercise(index: Int) {
         _exercisesWithSets.value = _exercisesWithSets.value.map { exerciseWithSets ->
             if (exerciseWithSets.id == index) {
-                exerciseWithSets.copy(sets = exerciseWithSets.sets + Set(exerciseId = currentId++))
+                exerciseWithSets.copy(
+                    sets = exerciseWithSets.sets + Set(exerciseId = currentId++)
+                )
             } else {
                 exerciseWithSets
             }
@@ -86,7 +85,12 @@ class CreateRoutineScreenViewModel : ViewModel() {
         _exercisesWithSets.value = _exercisesWithSets.value.map { exerciseWithSets ->
             if (exerciseWithSets.id == exerciseId) {
                 val updatedSets = exerciseWithSets.sets.map { currentSet ->
-                    if (currentSet == set) {
+                    /*
+                    It compares "exerciseId" instead of "id" because in
+                    AddSetToExercise method a unique ID is assigned at "exerciseId".
+                    Furthermore it will be overwritten when saved in db.
+                     */
+                    if (currentSet.exerciseId == set.exerciseId) {
                         when (mode) {
                             0 -> currentSet.copy(weight = value)
                             1 -> currentSet.copy(reps = value)

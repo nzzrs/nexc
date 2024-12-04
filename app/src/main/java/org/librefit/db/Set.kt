@@ -38,9 +38,9 @@ import androidx.room.PrimaryKey
 )
 data class Set(
     @PrimaryKey(true) val id: Int = 0,
-    val weight: Int? = null,
-    val reps: Int? = null,
-    val elapsedTime: Int? = null,
+    val weight: Int = 0,
+    val reps: Int = 0,
+    val elapsedTime: Int = 0,
     val completed : Boolean = false,
     val exerciseId: Int // Foreign key reference to Exercise
 )

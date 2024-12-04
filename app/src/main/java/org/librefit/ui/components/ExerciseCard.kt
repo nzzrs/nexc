@@ -140,7 +140,6 @@ fun ExerciseCard(
                     SetMode.entries.forEachIndexed { index, mode ->
                         SegmentedButton(
                             selected = exerciseWithSets.setMode == mode,
-                            enabled = mode != SetMode.TIME, //TODO: remove this condition when time text field works
                             onClick = {
                                 updateExercise(mode.name, 1)
                             },
@@ -168,10 +167,9 @@ fun ExerciseCard(
             Row(
                 modifier = Modifier
                     .height(40.dp)
-                    .fillMaxWidth()
-                    .padding(start = 10.dp, end = 10.dp),
+                    .fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceAround
             ) {
                 Text(
                     text = stringResource(id = R.string.label_set),
@@ -188,8 +186,9 @@ fun ExerciseCard(
                         color = MaterialTheme.colorScheme.secondary
                     )
                     if (exerciseWithSets.setMode == SetMode.WEIGHT) {
+                        /*TODO: insert suffix text in string.xml*/
                         Text(
-                            text = stringResource(id = R.string.label_weight),
+                            text = stringResource(id = R.string.label_weight) + " (kg)",
                             color = MaterialTheme.colorScheme.secondary
                         )
                     }
@@ -205,15 +204,14 @@ fun ExerciseCard(
             //Sets
             exerciseWithSets.sets.forEachIndexed { i, set ->
 
-                var time = if (set.elapsedTime != null) {
-                    set.elapsedTime.toString()
-                } else {
-                    "0"
+                var timeValue by remember { mutableStateOf(
+                        set.elapsedTime.toString().padStart(4,'0')
+                    )
                 }
 
-                var timeValue by remember { mutableStateOf(time) }
-                var repValue by remember { mutableStateOf(if (set.reps != null) set.reps.toString() else "0") }
-                var weightValue by remember { mutableStateOf(if (set.weight != null) set.weight.toString() else "0") }
+
+                var repValue by remember { mutableStateOf( set.reps.toString() ) }
+                var weightValue by remember { mutableStateOf( set.weight.toString() ) }
                 var timeError by remember { mutableStateOf(false) }
                 var repError by remember { mutableStateOf(false) }
                 var weightError by remember { mutableStateOf(false) }
@@ -235,35 +233,36 @@ fun ExerciseCard(
                             ) else Color.Transparent
                         )
                         .height(80.dp)
-                        .fillMaxWidth()
-                        .padding(start = 15.dp),
+                        .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween
+                    horizontalArrangement = Arrangement.SpaceAround
                 ) {
                     Text(
                         text = "${i + 1}",
                         color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(end = 20.dp)
+                        modifier = Modifier.padding(start = 20.dp, end = 10.dp)
                     )
 
                     if (exerciseWithSets.setMode == SetMode.TIME) {
                         //Time
-                        /*TODO: input not working*/
                         OutlinedTextField(
                             modifier = Modifier.width(80.dp),
                             value = String.format(
                                 Locale.getDefault(),
                                 "%s:%s",
-                                timeValue.padStart(4, '0').substring(0, 2),
-                                timeValue.padStart(4, '0').substring(2, 4)
+                                timeValue.substring(0, 2),
+                                timeValue.substring(2, 4)
                             ),
                             onValueChange = { string ->
-                                if (string.all { it.isDigit() }) {
-                                    if (string.length > 4) {
+                                //It removes the double dots and the leading zeros
+                                val value = string.filter { it != ':' }.replace("^0+".toRegex(), "")
+
+                                if (value.all { it.isDigit() }) {
+                                    if (value.length > 4) {
                                         timeError = true
                                     } else {
                                         timeError = false
-                                        timeValue = string.ifEmpty { "0" }
+                                        timeValue = value.padStart(4, '0')
                                         updateSet(
                                             set,
                                             timeValue.toInt(),
@@ -302,11 +301,9 @@ fun ExerciseCard(
                         )
                         if (exerciseWithSets.setMode == SetMode.WEIGHT) {
                             //Weight
-                            /*TODO: insert suffix text in string.xml*/
                             OutlinedTextField(
-                                modifier = Modifier.width(100.dp),
+                                modifier = Modifier.width(80.dp),
                                 value = weightValue,
-                                suffix = { Text("kg") },
                                 onValueChange = { string ->
                                     if (string.all { it.isDigit() }) {
                                         if (string.length > 4) {
@@ -387,8 +384,7 @@ private fun ExerciseCardPreview() {
                 category = Category.POWERLIFTING,
                 images = listOf("")
             ),
-            sets = listOf(Set(exerciseId = 0)),
-            setMode = SetMode.REPS
+            setMode = SetMode.TIME
         ),
         {},
         {},

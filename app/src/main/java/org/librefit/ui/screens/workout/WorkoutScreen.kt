@@ -72,6 +72,8 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import org.librefit.R
@@ -95,12 +97,41 @@ fun WorkoutScreen(
     list: List<ExerciseDC>,
     sharedViewModel: SharedViewModel
 ) {
-    val viewModel: WorkoutScreenViewModel = viewModel()
+    /*
+    This will pass "workoutId" and "list" to the view model so it can load
+    exercises from db just one time (in initialization)
+     */
+    val viewModel: WorkoutScreenViewModel = viewModel(
+        factory = object : ViewModelProvider.Factory {
+            override fun <T : ViewModel> create(modelClass: Class<T>): T {
+                require(modelClass == WorkoutScreenViewModel::class.java) {
+                    "Unknown ViewModel class"
+                }
+                @Suppress("UNCHECKED_CAST")
+                return WorkoutScreenViewModel(workoutId, list) as T
+            }
+        }
+    )
+
+    val exercisesWithSets by viewModel.exercisesWithSets.collectAsState()
+
+    //It adds the selected exercises from AddExerciseScreen
+    LaunchedEffect(Unit) {
+        sharedViewModel.getSelectedExercisesList().forEach { exerciseDC ->
+            viewModel.addExerciseWithSets(
+                ExerciseWithSets(
+                    exercise = exerciseDC
+                )
+            )
+        }
+    }
+
 
     val keepWorkoutScreenOn = userPreferences.workoutScreenOn.collectAsState(initial = true).value
 
     val context = LocalContext.current
 
+    //It keeps the screen turned on
     if (keepWorkoutScreenOn) {
         DisposableEffect(key1 = Unit) {
             val window = (context as Activity).window
@@ -127,36 +158,6 @@ fun WorkoutScreen(
         )
     }
 
-
-
-    viewModel.getExercisesFromWorkout(workoutId)
-
-
-    LaunchedEffect(Unit) {
-        viewModel.exercises.value.forEach { exercise ->
-            val item = list.associateBy { it.id }[exercise.exerciseId]
-            if (item != null) {
-                viewModel.getSetsFromExercise(exercise.id)
-
-                viewModel.addExerciseWithSets(
-                    ExerciseWithSets(
-                        exercise = item,
-                        exerciseId = exercise.id,
-                        note = exercise.notes!!
-                    )
-                )
-            }
-        }
-        sharedViewModel.getSelectedExercisesList().forEach { exerciseDC ->
-            viewModel.addExerciseWithSets(
-                ExerciseWithSets(
-                    exercise = exerciseDC
-                )
-            )
-        }
-    }
-
-    val exercisesWithSets by viewModel.exercisesWithSets.collectAsState()
 
     BackHandler(enabled = !showExitDialog && exercisesWithSets.isNotEmpty()) {
         showExitDialog = true

@@ -39,6 +39,6 @@ import androidx.room.PrimaryKey
 data class Exercise(
     @PrimaryKey(true) val id: Int = 0,
     val exerciseId : String,
-    val notes: String? = null,
+    val notes: String = "",
     val workoutId: Int // Foreign key reference to Workout
 )

@@ -280,15 +280,15 @@ fun WorkoutScreen(
                 items(exercisesWithSets, key = { it.id }) { exerciseWithSets ->
                     ExerciseCard(
                         exerciseWithSets = exerciseWithSets,
+                        addSet = {
+                            viewModel.addSetToExercise(exerciseWithSets.id)
+                        },
                         onDetail = {
                             selectedExercise = exerciseWithSets.exercise
                             isModalSheetOpen = true
                         },
                         onDelete = {
                             viewModel.deleteExercise(exerciseWithSets.id)
-                        },
-                        addSet = {
-                            viewModel.addSetToExercise(exerciseWithSets.id)
                         },
                         updateSet = { set, value, mode ->
                             viewModel.updateSet(

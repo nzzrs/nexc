@@ -34,18 +34,17 @@ import org.librefit.db.Set
 import org.librefit.db.Workout
 import org.librefit.enums.SetMode
 import org.librefit.util.ExerciseWithSets
+import kotlin.random.Random
 
 class CreateRoutineScreenViewModel : ViewModel() {
     private val _exercisesWithSets = MutableStateFlow<List<ExerciseWithSets>>(emptyList())
     val exercisesWithSets = _exercisesWithSets.asStateFlow()
 
-    private var currentId: Int = 0
-
 
     fun addExerciseWithSets(exerciseWithSets: ExerciseWithSets) {
         val newExerciseWithSets = exerciseWithSets.copy(
-            id = currentId++,
-            sets = listOf(Set(exerciseId = currentId++))
+            id = Random.nextInt(),
+            sets = listOf(Set(exerciseId = Random.nextInt()))
         )
         _exercisesWithSets.value += newExerciseWithSets
     }
@@ -54,7 +53,7 @@ class CreateRoutineScreenViewModel : ViewModel() {
         _exercisesWithSets.value = _exercisesWithSets.value.map { exerciseWithSets ->
             if (exerciseWithSets.id == index) {
                 exerciseWithSets.copy(
-                    sets = exerciseWithSets.sets + Set(exerciseId = currentId++)
+                    sets = exerciseWithSets.sets + Set(exerciseId = Random.nextInt())
                 )
             } else {
                 exerciseWithSets

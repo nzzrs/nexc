@@ -19,6 +19,7 @@
 
 package org.librefit.ui.components
 
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -71,6 +72,20 @@ import java.util.Locale
 import kotlin.text.ifEmpty
 import kotlin.text.toInt
 
+/**
+ * A custom card to display an [ExerciseWithSets] with a consistent design across [org.librefit.ui.screens.workout.WorkoutScreen]
+ * and [org.librefit.ui.screens.createRoutine.CreateRoutineScreen]
+ * @param exerciseWithSets an [ExerciseWithSets] that contains all the necessary information for the card
+ * @param addSet it's performed when [CustomTextButton] with "Add set" is clicked
+ * @param onDetail it's performed when [Info] icon is clicked so [ExerciseDetailModalBottomSheet] should be called
+ * @param onDelete it's performed when [Delete] icon is clicked so the card should be deleted
+ * @param updateSet read more at [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateSet]
+ * and [org.librefit.ui.screens.createRoutine.CreateRoutineScreenViewModel.updateSet]
+ * @param updateExercise read more <t> [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateExercise]
+ * and [org.librefit.ui.screens.createRoutine.CreateRoutineScreenViewModel.updateExercise]
+ * @param workout when true a checkbox to check [Set.completed] appears so it should be true when the card is in
+ * [org.librefit.ui.screens.workout.WorkoutScreen] otherwise it should be false
+ */
 @Composable
 fun ExerciseCard(
     exerciseWithSets: ExerciseWithSets,
@@ -81,6 +96,7 @@ fun ExerciseCard(
     updateExercise: (String, Int) -> Unit = { value, mode -> },
     workout: Boolean = false
 ) {
+    Log.d("ExerciseCard", "Recomposition of card id: " + exerciseWithSets.id)
 
     ElevatedCard {
         Column(
@@ -124,7 +140,7 @@ fun ExerciseCard(
                 }
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            //Spacer(modifier = Modifier.height(10.dp))
 
             //TODO: rest timer
 
@@ -159,9 +175,7 @@ fun ExerciseCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            HorizontalDivider()
+            HorizontalDivider(modifier = Modifier.padding(top = 10.dp, bottom = 10.dp))
 
             //Headline set
             Row(
@@ -347,9 +361,7 @@ fun ExerciseCard(
                 }
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            HorizontalDivider()
+            HorizontalDivider(modifier = Modifier.padding(top = 10.dp, bottom = 10.dp))
 
             CustomTextButton(
                 text = stringResource(id = R.string.label_add_set),

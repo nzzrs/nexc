@@ -37,6 +37,7 @@ import org.librefit.db.Workout
 import org.librefit.enums.SetMode
 import org.librefit.util.ExerciseDC
 import org.librefit.util.ExerciseWithSets
+import kotlin.random.Random
 
 class WorkoutScreenViewModel(
     workoutId: Int,
@@ -50,13 +51,12 @@ class WorkoutScreenViewModel(
 
     private val _exercisesWithSets = MutableStateFlow<List<ExerciseWithSets>>(emptyList())
     val exercisesWithSets = _exercisesWithSets.asStateFlow()
-    private var currentId: Int = 0
 
     fun addExerciseWithSets(exerciseWithSets: ExerciseWithSets) {
         val newExerciseWithSets = exerciseWithSets.copy(
-            id = currentId++,
+            id = Random.nextInt(),
             sets = if (exerciseWithSets.sets.isEmpty()) {
-                listOf(Set(exerciseId = currentId++))
+                listOf(Set(exerciseId = Random.nextInt()))
             } else exerciseWithSets.sets
         )
         _exercisesWithSets.value += newExerciseWithSets
@@ -66,7 +66,8 @@ class WorkoutScreenViewModel(
         _exercisesWithSets.value = _exercisesWithSets.value.map { exerciseWithSets ->
             if (exerciseWithSets.id == index) {
                 exerciseWithSets.copy(
-                    sets = exerciseWithSets.sets + Set(exerciseId = currentId++)
+                    id = Random.nextInt(),
+                    sets = exerciseWithSets.sets + Set(exerciseId = Random.nextInt())
                 )
             } else {
                 exerciseWithSets
@@ -93,7 +94,7 @@ class WorkoutScreenViewModel(
                     /*
                     It compares "exerciseId" instead of "id" because in
                     AddSetToExercise method a unique ID is assigned at "exerciseId".
-                    Furthermore it will be overwritten when saved in db.
+                    Furthermore it will be reassigned by room.
                      */
                     if (currentSet.exerciseId == set.exerciseId) {
                         when (mode) {
@@ -181,7 +182,8 @@ class WorkoutScreenViewModel(
             val data = workoutDao.getSetsFromExercise(exerciseId)
             val updatedExercisesWithSets = _exercisesWithSets.value.map { exerciseWithSets ->
                 if (exerciseWithSets.exerciseId == exerciseId) {
-                    exerciseWithSets.copy(sets = data)
+                    //A random id is assigned to avoid conflicts in updateSet method
+                    exerciseWithSets.copy(sets = data.map { it.copy(exerciseId = Random.nextInt()) })
                 } else {
                     exerciseWithSets
                 }

@@ -23,6 +23,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import org.librefit.enums.SetMode
 
 @Entity(
     tableName = "exercises",
@@ -40,5 +41,6 @@ data class Exercise(
     @PrimaryKey(true) val id: Int = 0,
     val exerciseId : String,
     val notes: String = "",
+    val setMode: SetMode = SetMode.WEIGHT,
     val workoutId: Int // Foreign key reference to Workout
 )

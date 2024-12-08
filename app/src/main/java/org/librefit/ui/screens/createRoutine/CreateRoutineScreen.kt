@@ -79,7 +79,7 @@ fun CreateRoutineScreen(
         sharedViewModel.getSelectedExercisesList().forEach { exerciseDC ->
             viewModel.addExerciseWithSets(
                 ExerciseWithSets(
-                    exercise = exerciseDC
+                    exerciseDC = exerciseDC
                 )
             )
         }
@@ -212,7 +212,7 @@ private fun CreateRoutineScreen(
                 ExerciseCard(
                     exerciseWithSets = exerciseWithSets,
                     onDetail = {
-                        selectedExercise = exerciseWithSets.exercise
+                        selectedExercise = exerciseWithSets.exerciseDC
                         isModalSheetOpen = true
                     },
                     onDelete = {

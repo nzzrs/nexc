@@ -44,11 +44,6 @@ class WorkoutScreenViewModel(
     private val list: List<ExerciseDC>
 ) : ViewModel() {
 
-    fun getProgress(): Float {
-        return exercisesWithSets.value.sumOf { it.sets.filter { it.completed == true }.size }
-            .toFloat() / exercisesWithSets.value.sumOf { it.sets.size }
-    }
-
     private val _exercisesWithSets = MutableStateFlow<List<ExerciseWithSets>>(emptyList())
     val exercisesWithSets = _exercisesWithSets.asStateFlow()
 
@@ -56,18 +51,18 @@ class WorkoutScreenViewModel(
         val newExerciseWithSets = exerciseWithSets.copy(
             id = Random.nextInt(),
             sets = if (exerciseWithSets.sets.isEmpty()) {
-                listOf(Set(exerciseId = Random.nextInt()))
+                listOf(Set(id = Random.nextInt()))
             } else exerciseWithSets.sets
         )
         _exercisesWithSets.value += newExerciseWithSets
     }
 
-    fun addSetToExercise(index: Int) {
+    fun addSetToExercise(id: Int) {
         _exercisesWithSets.value = _exercisesWithSets.value.map { exerciseWithSets ->
-            if (exerciseWithSets.id == index) {
+            if (exerciseWithSets.id == id) {
                 exerciseWithSets.copy(
                     id = Random.nextInt(),
-                    sets = exerciseWithSets.sets + Set(exerciseId = Random.nextInt())
+                    sets = exerciseWithSets.sets + Set(id = Random.nextInt())
                 )
             } else {
                 exerciseWithSets
@@ -91,12 +86,7 @@ class WorkoutScreenViewModel(
         _exercisesWithSets.value = _exercisesWithSets.value.map { exerciseWithSets ->
             if (exerciseWithSets.id == exerciseId) {
                 val updatedSets = exerciseWithSets.sets.map { currentSet ->
-                    /*
-                    It compares "exerciseId" instead of "id" because in
-                    AddSetToExercise method a unique ID is assigned at "exerciseId".
-                    Furthermore it will be reassigned by room.
-                     */
-                    if (currentSet.exerciseId == set.exerciseId) {
+                    if (currentSet.id == set.id) {
                         when (mode) {
                             0 -> currentSet.copy(weight = value)
                             1 -> currentSet.copy(reps = value)
@@ -104,6 +94,7 @@ class WorkoutScreenViewModel(
                             3 -> currentSet.copy(completed = value == 1)
                             else -> currentSet
                         }
+
                     } else {
                         currentSet
                     }
@@ -117,9 +108,9 @@ class WorkoutScreenViewModel(
 
     /**
      * It updates [ExerciseWithSets] by assigning a [value] to one attribute based on [mode].
-     * @param exerciseId ID of the exercise [Exercise.exerciseId]
+     * @param exerciseId ID of the exercise with sets. It should be [ExerciseWithSets.exerciseId]
      * @param value The new value to assign to one attribute of [ExerciseWithSets]
-     * @param mode Defines which attribute should the value be assigned.
+     * @param mode Defines which attribute should the [value] be assigned.
      * Based on which attribute you want to change, you have to pass the corresponding value:
      *  [ExerciseWithSets.note]    -> 0;
      *  [ExerciseWithSets.setMode] -> 1;
@@ -151,6 +142,12 @@ class WorkoutScreenViewModel(
     }
 
 
+    fun getProgress(): Float {
+        return exercisesWithSets.value.sumOf { it.sets.filter { it.completed == true }.size }
+            .toFloat() / exercisesWithSets.value.sumOf { it.sets.size }
+    }
+
+
     private val workoutDao = MainApplication.workoutDatabase.getWorkoutDao()
 
     init {
@@ -159,17 +156,18 @@ class WorkoutScreenViewModel(
 
     fun getExercisesFromWorkout(workoutId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            val data = workoutDao.getExercisesFromWorkout(workoutId)
-            data.forEach { exercise ->
-                val item = list.associateBy { it.id }[exercise.exerciseId]
-                if (item != null) {
+            val exercises = workoutDao.getExercisesFromWorkout(workoutId)
+            exercises.forEach { exercise ->
+                val exerciseDC = list.associateBy { it.id }[exercise.exerciseId]
+                if (exerciseDC != null) {
                     getSetsFromExercise(exercise.id)
 
                     addExerciseWithSets(
                         ExerciseWithSets(
-                            exercise = item,
+                            exerciseDC = exerciseDC,
                             exerciseId = exercise.id,
-                            note = exercise.notes
+                            note = exercise.notes,
+                            setMode = exercise.setMode
                         )
                     )
                 }
@@ -179,11 +177,11 @@ class WorkoutScreenViewModel(
 
     fun getSetsFromExercise(exerciseId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
-            val data = workoutDao.getSetsFromExercise(exerciseId)
+            val sets = workoutDao.getSetsFromExercise(exerciseId)
             val updatedExercisesWithSets = _exercisesWithSets.value.map { exerciseWithSets ->
                 if (exerciseWithSets.exerciseId == exerciseId) {
                     //A random id is assigned to avoid conflicts in updateSet method
-                    exerciseWithSets.copy(sets = data.map { it.copy(exerciseId = Random.nextInt()) })
+                    exerciseWithSets.copy(sets = sets.map { it.copy(exerciseId = Random.nextInt()) })
                 } else {
                     exerciseWithSets
                 }
@@ -228,7 +226,7 @@ class WorkoutScreenViewModel(
     fun stopTimer() {
         isTimerRunning = false
 
-        viewModelScope.launch(Dispatchers.Main) {
+        viewModelScope.launch(Dispatchers.IO) {
             while (!isTimerRunning) {
                 pulsingText++
                 delay(600)

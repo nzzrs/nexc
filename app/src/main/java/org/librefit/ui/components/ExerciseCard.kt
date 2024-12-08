@@ -111,7 +111,7 @@ fun ExerciseCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = exerciseWithSets.exercise.name,
+                    text = exerciseWithSets.exerciseDC.name,
                     style = MaterialTheme.typography.headlineSmall,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -386,7 +386,7 @@ private fun setModeToStringId(setMode: SetMode): Int {
 private fun ExerciseCardPreview() {
     ExerciseCard(
         ExerciseWithSets(
-            exercise = ExerciseDC(
+            exerciseDC = ExerciseDC(
                 id = "",
                 name = "Exercise",
                 level = Level.INTERMEDIATE,

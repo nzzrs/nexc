@@ -42,5 +42,5 @@ data class Set(
     val reps: Int = 0,
     val elapsedTime: Int = 0,
     val completed : Boolean = false,
-    val exerciseId: Int // Foreign key reference to Exercise
+    val exerciseId: Int = 0// Foreign key reference to Exercise
 )

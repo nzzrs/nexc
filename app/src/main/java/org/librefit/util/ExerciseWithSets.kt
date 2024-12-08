@@ -6,7 +6,7 @@ import org.librefit.enums.SetMode
 data class ExerciseWithSets(
     val id: Int = 0,
     val exerciseId: Int = 0,
-    val exercise: ExerciseDC,
+    val exerciseDC: ExerciseDC,
     val sets: List<Set> = emptyList<Set>(),
     val note: String = "",
     val setMode: SetMode = SetMode.WEIGHT

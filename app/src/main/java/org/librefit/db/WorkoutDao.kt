@@ -63,9 +63,16 @@ interface WorkoutDao {
     suspend fun addWorkoutWithExercises(workout: Workout, exercises: List<ExerciseWithSets>) {
         val workoutId = addWorkout(workout).toInt()
         exercises.forEach {
-            val exerciseId = addExercise(Exercise(exerciseId = it.exercise.id, notes = it.note, workoutId = workoutId))
+            val exerciseId = addExercise(
+                Exercise(
+                    exerciseId = it.exerciseDC.id,
+                    notes = it.note,
+                    workoutId = workoutId,
+                    setMode = it.setMode
+                )
+            )
             it.sets.forEach { set ->
-                addSet(set.copy(id = 0 , exerciseId = exerciseId.toInt()))
+                addSet(set.copy(exerciseId = exerciseId.toInt()))
             }
         }
     }

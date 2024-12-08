@@ -120,7 +120,7 @@ fun WorkoutScreen(
         sharedViewModel.getSelectedExercisesList().forEach { exerciseDC ->
             viewModel.addExerciseWithSets(
                 ExerciseWithSets(
-                    exercise = exerciseDC
+                    exerciseDC = exerciseDC
                 )
             )
         }
@@ -166,7 +166,7 @@ fun WorkoutScreen(
     var isModalSheetOpen by remember { mutableStateOf(false) }
 
     /**
-     * Used to display information about the selected exercise in [ExerciseDetailModalBottomSheet]
+     * It holds [ExerciseDC] for [ExerciseDetailModalBottomSheet]
      */
     var selectedExercise by remember { mutableStateOf<ExerciseDC?>(null) }
 
@@ -284,7 +284,7 @@ fun WorkoutScreen(
                             viewModel.addSetToExercise(exerciseWithSets.id)
                         },
                         onDetail = {
-                            selectedExercise = exerciseWithSets.exercise
+                            selectedExercise = exerciseWithSets.exerciseDC
                             isModalSheetOpen = true
                         },
                         onDelete = {

@@ -39,7 +39,7 @@ import org.librefit.enums.SetMode
 )
 data class Exercise(
     @PrimaryKey(true) val id: Int = 0,
-    val exerciseId : String,
+    val exerciseId: String,
     val notes: String = "",
     val setMode: SetMode = SetMode.WEIGHT,
     val workoutId: Int // Foreign key reference to Workout

@@ -69,7 +69,6 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -87,6 +86,7 @@ import org.librefit.ui.components.ExerciseCard
 import org.librefit.ui.components.ExerciseDetailModalBottomSheet
 import org.librefit.util.ExerciseDC
 import org.librefit.util.ExerciseWithSets
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Stable
@@ -208,7 +208,12 @@ fun WorkoutScreen(
                     IconButton(
                         onClick = {
                             viewModel.saveExercisesWithWorkout(
-                                workout = Workout(title = workoutTitle),
+                                workout = Workout(
+                                    title = workoutTitle.ifEmpty {
+                                        context.getString(R.string.label_workout)
+                                    },
+                                    timeElapsed = viewModel.timeElapsed
+                                ),
                                 exercises = viewModel.getExercises()
                             )
                             navController.popBackStack()
@@ -377,5 +382,5 @@ private fun formatTime(seconds: Int): String {
     val hours = seconds / 3600
     val minutes = (seconds % 3600) / 60
     val secs = seconds % 60
-    return String.format(Locale.current.platformLocale, "%02d:%02d:%02d", hours, minutes, secs)
+    return String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, secs)
 }

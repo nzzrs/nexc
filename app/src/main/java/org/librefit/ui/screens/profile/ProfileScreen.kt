@@ -46,6 +46,9 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.librefit.R
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 
 @Composable
 fun ProfileScreen(innerPadding: PaddingValues) {
@@ -53,6 +56,10 @@ fun ProfileScreen(innerPadding: PaddingValues) {
     val viewModel: ProfileScreenViewModel = viewModel()
 
     val workoutList by viewModel.workoutList
+
+    val formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(
+        Locale.getDefault()
+    )
 
     LazyColumn(
         modifier = Modifier
@@ -82,13 +89,26 @@ fun ProfileScreen(innerPadding: PaddingValues) {
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.SpaceBetween
                     ) {
-                        Text(
-                            text = workout.title,
-                            style = MaterialTheme.typography.headlineSmall,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f)
-                        )
+                        Column(modifier = Modifier.weight(1f)) {
+                            Text(
+                                text = workout.title,
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                text = stringResource(R.string.label_finished_on) + ": " + workout.completed.format(
+                                    formatter
+                                ),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                            Text(
+                                text = stringResource(R.string.label_duration) + ": " + formatTime(
+                                    workout.timeElapsed
+                                ),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
                         IconButton(
                             onClick = {
                                 //TODO: show stats of workout
@@ -109,6 +129,14 @@ fun ProfileScreen(innerPadding: PaddingValues) {
         }
     }
 }
+
+private fun formatTime(seconds: Int): String {
+    val hours = seconds / 3600
+    val minutes = (seconds % 3600) / 60
+    val secs = seconds % 60
+    return String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, secs)
+}
+
 
 @Preview
 @Composable

@@ -47,6 +47,9 @@
     <string name="label_contributed_to">Contributed to: </string>
     <string name="label_view_gpl3_online">View online version</string>
     <string name="url_gpl3" translatable="false">https://www.gnu.org/licenses/gpl-3.0.en.html#license-text</string>
+    <string name="url_codeberg" translatable="false">https://codeberg.org/IamDg/LibreFit</string>
+    <string name="label_github" translatable="false">GitHub</string>
+    <string name="label_codeberg" translatable="false">Codeberg</string>
 
 
     <!--Create routine screen-->
@@ -93,6 +96,8 @@
     <!--Profile screen-->
     <string name="label_coming_soon">Coming soon</string>
     <string name="label_your_workouts">Your workouts</string>
+    <string name="label_finished_on">Finished on</string>
+    <string name="label_duration">Duration</string>
 
 
     <!-- Workout screen -->
@@ -183,9 +188,6 @@
 
     <!--Util-->
     <string name="label_delete">Delete</string>
-    <string name="url_codeberg" translatable="false">https://codeberg.org/IamDg/LibreFit</string>
-    <string name="label_github" translatable="false">GitHub</string>
-    <string name="label_codeberg" translatable="false">Codeberg</string>
 
 
 </resources>

@@ -26,6 +26,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import kotlinx.coroutines.flow.Flow
 import org.librefit.util.ExerciseWithSets
+import java.time.LocalDateTime
 
 @Dao
 interface WorkoutDao {
@@ -61,7 +62,11 @@ interface WorkoutDao {
 
     @Transaction
     suspend fun addWorkoutWithExercises(workout: Workout, exercises: List<ExerciseWithSets>) {
-        val workoutId = addWorkout(workout).toInt()
+        val workoutId = if (workout.routine) {
+            addWorkout(workout.copy(completed = LocalDateTime.now())).toInt()
+        } else {
+            addWorkout(workout.copy(created = LocalDateTime.now())).toInt()
+        }
         exercises.forEach {
             val exerciseId = addExercise(
                 Exercise(

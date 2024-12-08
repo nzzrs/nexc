@@ -21,11 +21,14 @@ package org.librefit.db
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
+import java.time.LocalDateTime
 
 @Entity(tableName = "workouts")
 data class Workout(
-    @PrimaryKey(true) val id : Int = 0,
-    val title : String,
-    val routine : Boolean = false
-    /*TODO: implement creation date (for routines) and completed date (for workouts)*/
+    @PrimaryKey(true) val id: Int = 0,
+    val title: String,
+    val routine: Boolean = false,
+    val timeElapsed: Int = 0,
+    val created: LocalDateTime = LocalDateTime.now(),
+    val completed: LocalDateTime = LocalDateTime.now()
 )

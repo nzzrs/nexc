@@ -132,4 +132,6 @@
     <string name="label_time">Tempo</string>
     <string name="label_weight">Peso</string>
     <string name="label_reps">Ripetizioni</string>
+    <string name="label_finished_on">Completato il</string>
+    <string name="label_duration">Durata</string>
 </resources>

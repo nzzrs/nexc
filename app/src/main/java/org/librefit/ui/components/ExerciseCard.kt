@@ -20,16 +20,20 @@
 package org.librefit.ui.components
 
 import android.util.Log
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
@@ -47,9 +51,13 @@ import androidx.compose.material3.SegmentedButton
 import androidx.compose.material3.SegmentedButtonDefaults
 import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
+import androidx.compose.material3.SwipeToDismissBox
+import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -71,36 +79,43 @@ import org.librefit.enums.SetMode
 import org.librefit.util.ExerciseDC
 import org.librefit.util.ExerciseWithSets
 import java.util.Locale
+import kotlin.math.roundToInt
 import kotlin.text.ifEmpty
 import kotlin.text.toInt
 
 /**
- * A custom card to display an [ExerciseWithSets] with a consistent design across [org.librefit.ui.screens.workout.WorkoutScreen]
- * and [org.librefit.ui.screens.createRoutine.CreateRoutineScreen]
- * @param exerciseWithSets an [ExerciseWithSets] that contains all the necessary information for the card
- * @param addSet it's performed when [CustomTextButton] with "Add set" is clicked
- * @param onDetail it's performed when [Info] icon is clicked so [ExerciseDetailModalBottomSheet] should be called
+ * A custom [ElevatedCard] to display an [ExerciseWithSets] with a consistent design across
+ * [org.librefit.ui.screens.workout.WorkoutScreen] and [org.librefit.ui.screens.createRoutine.CreateRoutineScreen]
+ * @param modifier it must be passed as [Modifier.animateItem] to animate the card in the list
+ * @param exerciseWithSets an [ExerciseWithSets] that contains all the necessary information for the
+ * card
+ * @param addSet it's performed when "Add set" [CustomTextButton] is clicked
+ * @param onDetail it's performed when [Info] icon is clicked so [ExerciseDetailModalBottomSheet]
+ * should be called
  * @param onDelete it's performed when [Delete] icon is clicked so the card should be deleted
  * @param updateSet read more at [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateSet]
  * and [org.librefit.ui.screens.createRoutine.CreateRoutineScreenViewModel.updateSet]
- * @param updateExercise read more <t> [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateExercise]
+ * @param deleteSet it's performed when user swipes the card to remove it.
+ * @param updateExercise read more at [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateExercise]
  * and [org.librefit.ui.screens.createRoutine.CreateRoutineScreenViewModel.updateExercise]
- * @param workout when true a checkbox to check [Set.completed] appears so it should be true when the card is in
- * [org.librefit.ui.screens.workout.WorkoutScreen] otherwise it should be false
+ * @param workout when `true` a checkbox appears next to each set so it should be `true` when
+ * the card is in [org.librefit.ui.screens.workout.WorkoutScreen] otherwise it should be `false`
  */
 @Composable
 fun ExerciseCard(
+    modifier: Modifier,
     exerciseWithSets: ExerciseWithSets,
     addSet: () -> Unit,
     onDetail: () -> Unit,
     onDelete: () -> Unit,
     updateSet: (Set, Int, Int) -> Unit,
-    updateExercise: (String, Int) -> Unit = { value, mode -> },
+    deleteSet: (Set) -> Unit,
+    updateExercise: (String, Int) -> Unit,
     workout: Boolean = false
 ) {
     Log.d("ExerciseCard", "Recomposition of card id: " + exerciseWithSets.id)
 
-    ElevatedCard {
+    ElevatedCard(modifier) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -150,7 +165,7 @@ fun ExerciseCard(
                     + " " + stringResource(R.string.seconds).replaceFirstChar { it.lowercase() })
             Slider(
                 value = restTime.toFloat(),
-                onValueChange = { restTime = it.toInt() },
+                onValueChange = { restTime = it.roundToInt() },
                 onValueChangeFinished = {
                     updateExercise(
                         restTime.toString(),
@@ -233,147 +248,186 @@ fun ExerciseCard(
             }
 
             //Sets
-            exerciseWithSets.sets.forEachIndexed { i, set ->
-
-                var timeValue by remember {
-                    mutableStateOf(
-                        set.elapsedTime.toString().padStart(4, '0')
-                    )
-                }
-
-
-                var repValue by remember { mutableStateOf(set.reps.toString()) }
-                var weightValue by remember { mutableStateOf(set.weight.toString()) }
-                var timeError by remember { mutableStateOf(false) }
-                var repError by remember { mutableStateOf(false) }
-                var weightError by remember { mutableStateOf(false) }
-
-                Row(
-                    modifier = Modifier
-                        .clip(
-                            RoundedCornerShape(
-                                topEndPercent = if (i == 0) 20 else 0,
-                                topStartPercent = if (i == 0) 20 else 0,
-                                bottomEndPercent = if (i == exerciseWithSets.sets.size - 1) 20 else 0,
-                                bottomStartPercent = if (i == exerciseWithSets.sets.size - 1) 20 else 0
-                            )
-                        )
-                        .background(
-                            if (set.completed) MaterialTheme.colorScheme.inversePrimary.copy(
-                                0.3f
-                            ) else Color.Transparent
-                        )
-                        .height(80.dp)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    Text(
-                        text = "${i + 1}",
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(start = 20.dp, end = 10.dp)
-                    )
-
-                    if (exerciseWithSets.setMode == SetMode.TIME) {
-                        //Time
-                        OutlinedTextField(
-                            modifier = Modifier.width(80.dp),
-                            value = String.format(
-                                Locale.getDefault(),
-                                "%s:%s",
-                                timeValue.substring(0, 2),
-                                timeValue.substring(2, 4)
-                            ),
-                            onValueChange = { string ->
-                                //It removes the double dots and the leading zeros
-                                val value = string.filter { it != ':' }.replace("^0+".toRegex(), "")
-
-                                if (value.all { it.isDigit() }) {
-                                    if (value.length > 4) {
-                                        timeError = true
-                                    } else {
-                                        timeError = false
-                                        timeValue = value.padStart(4, '0')
-                                        updateSet(
-                                            set,
-                                            timeValue.toInt(),
-                                            2
-                                        )
-                                    }
-                                }
-                            },
-                            singleLine = true,
-                            isError = timeError,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        )
-                    } else {
-                        //Reps
-                        OutlinedTextField(
-                            modifier = Modifier.width(80.dp),
-                            value = repValue,
-                            onValueChange = { string ->
-                                if (string.all { it.isDigit() }) {
-                                    if (string.length > 4) {
-                                        repError = true
-                                    } else {
-                                        repError = false
-                                        repValue = string
-                                        updateSet(
-                                            set,
-                                            repValue.ifEmpty { "0" }.toInt(),
-                                            1
-                                        )
-                                    }
-                                }
-                            },
-                            singleLine = true,
-                            isError = repError,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        )
-                        if (exerciseWithSets.setMode == SetMode.WEIGHT) {
-                            //Weight
-                            OutlinedTextField(
-                                modifier = Modifier.width(80.dp),
-                                value = weightValue,
-                                onValueChange = { string ->
-                                    if (string.all { it.isDigit() }) {
-                                        if (string.length > 4) {
-                                            weightError = true
-                                        } else {
-                                            weightValue = string
-                                            weightError = false
-                                            updateSet(
-                                                set,
-                                                weightValue.ifEmpty { "0" }.toInt(),
-                                                0
-                                            )
-                                        }
-                                    }
-                                },
-                                singleLine = true,
-                                isError = weightError,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+            val setHeight = 80
+            val animatedSetsColumnHeight = animateDpAsState(
+                targetValue = (exerciseWithSets.sets.size * setHeight).dp,
+                animationSpec = tween(600),
+                label = "animatedSetsColumnHeight",
+            )
+            LazyColumn(
+                modifier = Modifier.height(animatedSetsColumnHeight.value)
+            ) {
+                itemsIndexed(exerciseWithSets.sets) { i, set ->
+                    key(set.id) {
+                        var timeValue by remember {
+                            mutableStateOf(
+                                set.elapsedTime.toString().padStart(4, '0')
                             )
                         }
-                    }
 
+                        var repValue by remember { mutableStateOf(set.reps.toString()) }
+                        var weightValue by remember { mutableStateOf(set.weight.toString()) }
+                        var timeError by remember { mutableStateOf(false) }
+                        var repError by remember { mutableStateOf(false) }
+                        var weightError by remember { mutableStateOf(false) }
 
-
-
-
-                    if (workout) {
-                        Checkbox(
-                            checked = set.completed,
-                            onCheckedChange = { checked ->
-                                updateSet(
-                                    set,
-                                    if (checked) 1 else 0,
-                                    3
-                                )
-                            }
+                        val swipeToDismissBoxState = rememberSwipeToDismissBoxState(
+                            confirmValueChange = {
+                                when (it) {
+                                    SwipeToDismissBoxValue.Settled -> return@rememberSwipeToDismissBoxState false
+                                    else -> deleteSet(set)
+                                }
+                                return@rememberSwipeToDismissBoxState true
+                            },
+                            positionalThreshold = { it * 0.3f }
                         )
-                    }
 
+                        SwipeToDismissBox(
+                            modifier = Modifier.animateItem(),
+                            state = swipeToDismissBoxState,
+                            backgroundContent = {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .background(
+                                            when (swipeToDismissBoxState.dismissDirection) {
+                                                SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.errorContainer
+                                                SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                                                SwipeToDismissBoxValue.Settled -> Color.Transparent
+                                            }
+                                        )
+                                        .padding(start = 10.dp, end = 10.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceBetween
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = null,
+                                    )
+                                    Icon(
+                                        imageVector = Icons.Default.Delete,
+                                        contentDescription = null,
+                                    )
+                                }
+                            }
+                        ) {
+                            Row(
+                                modifier = Modifier
+                                    .clip(MaterialTheme.shapes.small)
+                                    .background(
+                                        if (set.completed) MaterialTheme.colorScheme.secondaryContainer
+                                        else MaterialTheme.colorScheme.surfaceContainerLow
+                                    )
+                                    .height(setHeight.dp)
+                                    .fillMaxWidth(),
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.SpaceAround
+                            ) {
+                                Text(
+                                    text = "${i + 1}",
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.padding(start = 20.dp, end = 10.dp)
+                                )
+
+                                if (exerciseWithSets.setMode == SetMode.TIME) {
+                                    //Time
+                                    OutlinedTextField(
+                                        modifier = Modifier.width(80.dp),
+                                        value = String.format(
+                                            Locale.getDefault(),
+                                            "%s:%s",
+                                            timeValue.substring(0, 2),
+                                            timeValue.substring(2, 4)
+                                        ),
+                                        onValueChange = { string ->
+                                            //It removes the double dots and the leading zeros
+                                            val value = string.filter { it != ':' }
+                                                .replace("^0+".toRegex(), "")
+
+                                            if (value.all { it.isDigit() }) {
+                                                if (value.length > 4) {
+                                                    timeError = true
+                                                } else {
+                                                    timeError = false
+                                                    timeValue = value.padStart(4, '0')
+                                                    updateSet(
+                                                        set,
+                                                        timeValue.toInt(),
+                                                        2
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        singleLine = true,
+                                        isError = timeError,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    )
+                                } else {
+                                    //Reps
+                                    OutlinedTextField(
+                                        modifier = Modifier.width(80.dp),
+                                        value = repValue,
+                                        onValueChange = { string ->
+                                            if (string.all { it.isDigit() }) {
+                                                if (string.length > 4) {
+                                                    repError = true
+                                                } else {
+                                                    repError = false
+                                                    repValue = string
+                                                    updateSet(
+                                                        set,
+                                                        repValue.ifEmpty { "0" }.toInt(),
+                                                        1
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        singleLine = true,
+                                        isError = repError,
+                                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                                    )
+                                    if (exerciseWithSets.setMode == SetMode.WEIGHT) {
+                                        //Weight
+                                        OutlinedTextField(
+                                            modifier = Modifier.width(80.dp),
+                                            value = weightValue,
+                                            onValueChange = { string ->
+                                                if (string.all { it.isDigit() }) {
+                                                    if (string.length > 4) {
+                                                        weightError = true
+                                                    } else {
+                                                        weightValue = string
+                                                        weightError = false
+                                                        updateSet(
+                                                            set,
+                                                            weightValue.ifEmpty { "0" }.toInt(),
+                                                            0
+                                                        )
+                                                    }
+                                                }
+                                            },
+                                            singleLine = true,
+                                            isError = weightError,
+                                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                                        )
+                                    }
+                                }
+
+                                if (workout) {
+                                    Checkbox(
+                                        checked = set.completed,
+                                        onCheckedChange = { checked ->
+                                            updateSet(
+                                                set,
+                                                if (checked) 1 else 0,
+                                                3
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -401,6 +455,7 @@ private fun setModeToStringId(setMode: SetMode): Int {
 @Composable
 private fun ExerciseCardPreview() {
     ExerciseCard(
+        Modifier,
         ExerciseWithSets(
             exerciseDC = ExerciseDC(
                 id = "",
@@ -419,6 +474,7 @@ private fun ExerciseCardPreview() {
         {},
         {},
         { i, j, k -> },
+        {},
         { i, j -> },
         false
     )

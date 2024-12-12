@@ -58,14 +58,14 @@ class WorkoutScreenViewModel(
         exercises.add(newExerciseWithSets)
     }
 
-    fun addSetToExercise(exercise: ExerciseWithSets) {
-        val index = exercises.indexOf(exercise)
+    fun addSetToExercise(index: Int) {
+        val exercise = exercises[index]
         exercises[index] = exercise.copy(sets = exercise.sets + listOf(Set(id = Random.nextInt())))
     }
 
     /**
      * It updates [Set] by assigning a [value] to one attribute based on [mode].
-     * @param exercise The [ExerciseWithSets] that has the set to update
+     * @param index The index of [ExerciseWithSets] in [exercises] that has the set to update
      * @param set [Set] to update
      * @param value The new value to assign to one attribute of [Set]
      * @param mode Defines which attribute should the value be assigned.
@@ -75,8 +75,8 @@ class WorkoutScreenViewModel(
      *  [Set.elapsedTime]   -> 2;
      *  [Set.completed]     -> 3
      */
-    fun updateSet(exercise: ExerciseWithSets, set: Set, value: Int, mode: Int) {
-        val index = exercises.indexOf(exercise)
+    fun updateSet(index: Int, set: Set, value: Int, mode: Int) {
+        val exercise = exercises[index]
         exercises[index] = exercise.copy(
             sets = exercise.sets.map {
                 if (it.id == set.id) {
@@ -92,13 +92,23 @@ class WorkoutScreenViewModel(
         )
 
         if (mode == 3 && value == 1 && exercise.restTime != 0) {
-            startRestTimer(exercise.restTime)
+            startRestTimer(exercise.restTime + 1)
         }
     }
 
     /**
+     * It deletes the set from the [ExerciseWithSets] index in the [exercises] list
+     */
+    fun deleteSet(index: Int, set: Set) {
+        val exercise = exercises[index]
+        exercises[index] = exercise.copy(
+            sets = exercise.sets.filter { it.id != set.id }
+        )
+    }
+
+    /**
      * It updates [ExerciseWithSets] by assigning a [value] to one attribute based on [mode].
-     * @param exercise The [ExerciseWithSets] to update
+     * @param index The index of [ExerciseWithSets] in [exercises] to update
      * @param value The new value to assign to one attribute of [ExerciseWithSets]
      * @param mode Defines which attribute should the [value] be assigned.
      * Based on which attribute you want to change, you have to pass the corresponding value:
@@ -106,8 +116,8 @@ class WorkoutScreenViewModel(
      *  [ExerciseWithSets.setMode]  -> 1;
      *  [ExerciseWithSets.restTime] -> 2
      */
-    fun updateExercise(exercise: ExerciseWithSets, value: String, mode: Int) {
-        val index = exercises.indexOf(exercise)
+    fun updateExercise(index: Int, value: String, mode: Int) {
+        val exercise = exercises[index]
         exercises[index] = when (mode) {
             0 -> exercise.copy(note = value.toString())
             1 -> exercise.copy(
@@ -124,8 +134,8 @@ class WorkoutScreenViewModel(
         }
     }
 
-    fun deleteExercise(exerciseWithSets: ExerciseWithSets) {
-        exercises.remove(exerciseWithSets)
+    fun deleteExercise(index: Int) {
+        exercises.removeAt(index)
     }
 
     fun isListEmpty(): Boolean {
@@ -133,9 +143,11 @@ class WorkoutScreenViewModel(
     }
 
     fun getProgress(): Float {
-        return exercises.sumOf {
-            it.sets.filter { it.completed == true }.size
-        }.toFloat() / exercises.sumOf { it.sets.size }
+        val totalSets = if (exercises.sumOf { it.sets.size } != 0) exercises.sumOf { it.sets.size }
+        else 1
+
+        return exercises.sumOf { it.sets.filter { it.completed == true }.size }
+            .toFloat() / totalSets
     }
 
 
@@ -145,7 +157,7 @@ class WorkoutScreenViewModel(
         getExercisesFromWorkout(workoutId)
     }
 
-    fun getExercisesFromWorkout(workoutId: Int) {
+    private fun getExercisesFromWorkout(workoutId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             val exercises = workoutDao.getExercisesFromWorkout(workoutId)
             exercises.forEach { exercise ->
@@ -167,7 +179,7 @@ class WorkoutScreenViewModel(
         }
     }
 
-    fun getSetsFromExercise(exerciseId: Int) {
+    private fun getSetsFromExercise(exerciseId: Int) {
         viewModelScope.launch(Dispatchers.IO) {
             val sets = workoutDao.getSetsFromExercise(exerciseId)
             val exercise = exercises.find { it.exerciseId == exerciseId }!!

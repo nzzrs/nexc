@@ -22,8 +22,8 @@ package org.librefit.ui.screens.workout
 import android.app.Activity
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
-import androidx.compose.animation.core.animateIntAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,7 +36,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -62,6 +62,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -276,36 +277,45 @@ fun WorkoutScreen(
                     }
                 }
             } else {
-                items(viewModel.exercises, key = { it.id }) { exerciseWithSets ->
-                    ExerciseCard(
-                        exerciseWithSets = exerciseWithSets,
-                        addSet = {
-                            viewModel.addSetToExercise(exerciseWithSets)
-                        },
-                        onDetail = {
-                            selectedExercise = exerciseWithSets.exerciseDC
-                            isModalSheetOpen = true
-                        },
-                        onDelete = {
-                            viewModel.deleteExercise(exerciseWithSets)
-                        },
-                        updateSet = { set, value, mode ->
-                            viewModel.updateSet(
-                                exercise = exerciseWithSets,
-                                set = set,
-                                value = value,
-                                mode = mode
-                            )
-                        },
-                        updateExercise = { value, mode ->
-                            viewModel.updateExercise(
-                                exercise = exerciseWithSets,
-                                value = value,
-                                mode = mode
-                            )
-                        },
-                        workout = true
-                    )
+                itemsIndexed(viewModel.exercises) { i, exerciseWithSets ->
+                    key(exerciseWithSets.id) {
+                        ExerciseCard(
+                            modifier = Modifier.animateItem(),
+                            exerciseWithSets = exerciseWithSets,
+                            addSet = {
+                                viewModel.addSetToExercise(i)
+                            },
+                            onDetail = {
+                                selectedExercise = exerciseWithSets.exerciseDC
+                                isModalSheetOpen = true
+                            },
+                            onDelete = {
+                                viewModel.deleteExercise(i)
+                            },
+                            updateSet = { set, value, mode ->
+                                viewModel.updateSet(
+                                    index = i,
+                                    set = set,
+                                    value = value,
+                                    mode = mode
+                                )
+                            },
+                            deleteSet = { set ->
+                                viewModel.deleteSet(
+                                    index = i,
+                                    set = set
+                                )
+                            },
+                            updateExercise = { value, mode ->
+                                viewModel.updateExercise(
+                                    index = i,
+                                    value = value,
+                                    mode = mode
+                                )
+                            },
+                            workout = true
+                        )
+                    }
                 }
             }
 
@@ -342,8 +352,8 @@ private fun BottomAppBarContent(viewModel: WorkoutScreenViewModel) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            val animatedPlayButton = animateIntAsState(
-                targetValue = if (viewModel.isChronometerRunning) 110 else 60,
+            val animatedPlayButton = animateDpAsState(
+                targetValue = (if (viewModel.isChronometerRunning) 110 else 60).dp,
                 label = "playButtonAnimation"
             )
             Box(
@@ -357,7 +367,7 @@ private fun BottomAppBarContent(viewModel: WorkoutScreenViewModel) {
                         if (viewModel.isChronometerRunning) viewModel.stopChronometer()
                         else viewModel.startChronometer()
                     },
-                    modifier = Modifier.size(animatedPlayButton.value.dp)
+                    modifier = Modifier.size(animatedPlayButton.value)
                 ) {
                     Icon(
                         imageVector = if (viewModel.isChronometerRunning)
@@ -371,7 +381,7 @@ private fun BottomAppBarContent(viewModel: WorkoutScreenViewModel) {
 
             Column(
                 modifier = Modifier
-                    .weight(0.35f)
+                    .weight(0.33f)
                     .padding(start = 15.dp),
                 verticalArrangement = Arrangement.Center,
             ) {

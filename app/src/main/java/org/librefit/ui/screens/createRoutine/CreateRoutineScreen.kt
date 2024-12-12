@@ -29,7 +29,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Done
@@ -43,6 +43,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -208,43 +209,48 @@ private fun CreateRoutineScreen(
                 }
             }
         } else {
-            items(viewModel.exercises, key = { it.id }) { exerciseWithSets ->
-                ExerciseCard(
-                    exerciseWithSets = exerciseWithSets,
-                    onDetail = {
-                        selectedExercise = exerciseWithSets.exerciseDC
-                        isModalSheetOpen = true
-                    },
-                    onDelete = {
-                        viewModel.deleteExercise(exerciseWithSets)
-                    },
-                    addSet = {
-                        viewModel.addSetToExercise(exerciseWithSets)
-                    },
-                    updateSet = { set, value, mode ->
-                        viewModel.updateSet(
-                            exercise = exerciseWithSets,
-                            set = set,
-                            value = value,
-                            mode = mode
-                        )
-                    },
-                    updateExercise = { value, mode ->
-                        viewModel.updateExercise(
-                            exercise = exerciseWithSets,
-                            value = value,
-                            mode = mode
-                        )
-                    },
-                )
+            itemsIndexed(viewModel.exercises) { i, exerciseWithSets ->
+                key(exerciseWithSets.id) {
+                    ExerciseCard(
+                        modifier = Modifier.animateItem(),
+                        exerciseWithSets = exerciseWithSets,
+                        addSet = {
+                            viewModel.addSetToExercise(i)
+                        },
+                        onDetail = {
+                            selectedExercise = exerciseWithSets.exerciseDC
+                            isModalSheetOpen = true
+                        },
+                        onDelete = {
+                            viewModel.deleteExercise(i)
+                        },
+                        updateSet = { set, value, mode ->
+                            viewModel.updateSet(
+                                index = i,
+                                set = set,
+                                value = value,
+                                mode = mode
+                            )
+                        },
+                        deleteSet = { set ->
+                            viewModel.deleteSet(
+                                index = i,
+                                set = set
+                            )
+                        },
+                        updateExercise = { value, mode ->
+                            viewModel.updateExercise(
+                                index = i,
+                                value = value,
+                                mode = mode
+                            )
+                        },
+                    )
+                }
             }
         }
         item { Spacer(Modifier.height(100.dp)) }
     }
-
-    /**
-     * Opened by info icon (in the [ExerciseCard]), it shows the details of an exercise
-     */
 
     if (isModalSheetOpen) {
         ExerciseDetailModalBottomSheet(exercise = selectedExercise!!) { isModalSheetOpen = false }

@@ -84,22 +84,28 @@ import kotlin.text.ifEmpty
 import kotlin.text.toInt
 
 /**
- * A custom [ElevatedCard] to display an [ExerciseWithSets] with a consistent design across
- * [org.librefit.ui.screens.workout.WorkoutScreen] and [org.librefit.ui.screens.createRoutine.CreateRoutineScreen]
- * @param modifier it must be passed as [Modifier.animateItem] to animate the card in the list
- * @param exerciseWithSets an [ExerciseWithSets] that contains all the necessary information for the
- * card
- * @param addSet it's performed when "Add set" [CustomTextButton] is clicked
- * @param onDetail it's performed when [Info] icon is clicked so [ExerciseDetailModalBottomSheet]
- * should be called
- * @param onDelete it's performed when [Delete] icon is clicked so the card should be deleted
- * @param updateSet read more at [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateSet]
- * and [org.librefit.ui.screens.createRoutine.CreateRoutineScreenViewModel.updateSet]
- * @param deleteSet it's performed when user swipes the card to remove it.
- * @param updateExercise read more at [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateExercise]
- * and [org.librefit.ui.screens.createRoutine.CreateRoutineScreenViewModel.updateExercise]
- * @param workout when `true` a checkbox appears next to each set so it should be `true` when
- * the card is in [org.librefit.ui.screens.workout.WorkoutScreen] otherwise it should be `false`
+ * A custom [ElevatedCard] designed to display an [ExerciseWithSets] with a uniform appearance across
+ * the app.
+ *
+ * @param modifier A [Modifier] that should be passed as [Modifier.animateItem] to enable
+ * animation for the card within the list.
+ * @param exerciseWithSets An instance of [ExerciseWithSets] containing all the relevant information
+ * required for the card display.
+ * @param addSet A lambda function invoked when the "Add set" button is clicked.
+ * @param onDetail A lambda function triggered when the [Info] icon is clicked, which should open
+ * the [ExerciseDetailModalBottomSheet].
+ * @param onDelete A lambda function executed when the [Delete] icon is clicked, it should result in
+ * the removal of the card.
+ * @param updateSet A function to update a specific set. For more details, refer to
+ * [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateSet] and
+ * [org.librefit.ui.screens.createRoutine.CreateRoutineScreenViewModel.updateSet].
+ * @param deleteSet A function called when the user swipes the card to remove it.
+ * @param updateExercise A function to update the exercise details. For further information,
+ * see [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateExercise] and
+ * [org.librefit.ui.screens.createRoutine.CreateRoutineScreenViewModel.updateExercise].
+ * @param workout A Boolean flag indicating whether a checkbox should be displayed next to each set.
+ * This should be set to `true` when the card is used in [org.librefit.ui.screens.workout.WorkoutScreen];
+ * otherwise, it should be `false`.
  */
 @Composable
 fun ExerciseCard(
@@ -433,6 +439,7 @@ fun ExerciseCard(
 
             HorizontalDivider(modifier = Modifier.padding(top = 10.dp, bottom = 10.dp))
 
+            //Add set button
             CustomTextButton(
                 text = stringResource(id = R.string.label_add_set),
                 icon = Icons.Default.AddCircle,

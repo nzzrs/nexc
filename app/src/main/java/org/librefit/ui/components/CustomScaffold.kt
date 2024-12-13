@@ -41,21 +41,26 @@ import org.librefit.R
 
 
 /**
- * A scaffold used by multiple screen to avoid boilerplate and to ensure a consistent design.
- * @param title Title to be displayed in the [TopAppBar]
- * @param navigateBack This is performed by clicking the navigation icon in the [TopAppBar] (it should be a back stack)
- * @param action This is performed by clicking the action in the [TopAppBar]
- * @param actionEnabled Controls the enabled state of the [action]
- * @param actionIcon Icon displayed in the [FloatingActionButton].
- * @param elevatedActionIcon If true, it elevates the [actionIcon] colors
- * @param actionDescription It should be passed to describe the [action]
- * @param fabAction This is performed by clicking the [FloatingActionButton]
- * @param fabIcon Icon displayed in the [FloatingActionButton]
- * @param fabDescription It should be passed to describe the [fabAction]
- * @param content content of the screen. The lambda receives a [PaddingValues] that should be
- * applied to the content root via [Modifier.padding] and [Modifier.consumeWindowInsets] to
- * properly offset top and bottom bars. If using [Modifier.verticalScroll], apply this modifier to
- * the child of the scroll, and not on the scroll itself.
+ * A reusable [Scaffold] component designed for multiple screens to minimize boilerplate code
+ * and maintain a consistent design across the application.
+ *
+ * @param title The title displayed in the [TopAppBar].
+ * @param navigateBack A callback function invoked when the navigation icon in the [TopAppBar] is clicked.
+ *                     This should typically handle back navigation.
+ * @param action A callback function executed when the action button in the [TopAppBar] is clicked.
+ * @param actionEnabled A Boolean that controls whether the action button is enabled or disabled.
+ * @param actionIcon An optional [ImageVector] representing the icon displayed in the action button.
+ * @param elevatedActionIcon A Boolean that, when true, applies elevated colors to the [actionIcon].
+ * @param actionDescription An optional string that provides a description of the action for accessibility purposes.
+ * @param fabAction A callback function executed when the [FloatingActionButton] is clicked.
+ * @param fabIcon An optional [ImageVector] representing the icon displayed in the [FloatingActionButton].
+ * @param fabDescription An optional string that provides a description of the [fabIcon] and [fabAction]
+ * for accessibility purposes. Read mode at [Icon] and [FloatingActionButton]
+ * @param content A composable lambda that defines the main content of the screen. It receives a
+ * [PaddingValues] parameter that should be applied to the content root using [Modifier.padding]
+ * and [Modifier.consumeWindowInsets] to properly offset the top and bottom bars.
+ * If using [Modifier.verticalScroll], ensure this modifier is applied to the child of the
+ * scrollable content, not the scrollable container itself.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

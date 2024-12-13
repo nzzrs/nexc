@@ -64,16 +64,23 @@ class WorkoutScreenViewModel(
     }
 
     /**
-     * It updates [Set] by assigning a [value] to one attribute based on [mode].
-     * @param index The index of [ExerciseWithSets] in [exercises] that has the set to update
-     * @param set [Set] to update
-     * @param value The new value to assign to one attribute of [Set]
-     * @param mode Defines which attribute should the value be assigned.
-     * Based on which attribute you want to change, you have to pass the corresponding value:
-     *  [Set.weight]        -> 0;
-     *  [Set.reps]          -> 1;
-     *  [Set.elapsedTime]   -> 2;
-     *  [Set.completed]     -> 3
+     * Updates a specific [Set] within an [ExerciseWithSets] by assigning a new value to one of its
+     * attributes based on the specified mode.
+     *
+     * @param index The index of the [ExerciseWithSets] in the [exercises] list that contains the
+     * set to be updated.
+     *
+     * @param set The [Set] object that needs to be updated.
+     * @param value The new value to assign to the specified attribute of the [Set].
+     * @param mode An integer that defines which attribute of the [Set] should be updated.
+     * The following modes correspond to specific attributes:
+     *  - 0: [Set.weight]
+     *  - 1: [Set.reps]
+     *  - 2: [Set.elapsedTime]
+     *  - 3: [Set.completed] (where a [value] of 1 indicates 'true')
+     *
+     * The method will update the specified attribute of the [Set] if it matches the provided [set] ID.
+     * If the [mode] is not recognized, the original [set] will remain unchanged.
      */
     fun updateSet(index: Int, set: Set, value: Int, mode: Int) {
         val exercise = exercises[index]
@@ -97,7 +104,13 @@ class WorkoutScreenViewModel(
     }
 
     /**
-     * It deletes the set from the [ExerciseWithSets] index in the [exercises] list
+     * Removes a specific set from the sets associated with an exercise in the [exercises] list.
+     *
+     * This function updates the exercise at the given [index] by filtering out the specified [set]
+     * based on its unique identifier. The modified exercise is then saved back to the [exercises] list.
+     *
+     * @param index The index of the exercise in the [exercises] list from which the set will be deleted.
+     * @param set The set to be removed, identified by its unique ID.
      */
     fun deleteSet(index: Int, set: Set) {
         val exercise = exercises[index]
@@ -107,14 +120,21 @@ class WorkoutScreenViewModel(
     }
 
     /**
-     * It updates [ExerciseWithSets] by assigning a [value] to one attribute based on [mode].
-     * @param index The index of [ExerciseWithSets] in [exercises] to update
-     * @param value The new value to assign to one attribute of [ExerciseWithSets]
-     * @param mode Defines which attribute should the [value] be assigned.
-     * Based on which attribute you want to change, you have to pass the corresponding value:
-     *  [ExerciseWithSets.note]     -> 0;
-     *  [ExerciseWithSets.setMode]  -> 1;
-     *  [ExerciseWithSets.restTime] -> 2
+     * Updates an instance of [ExerciseWithSets] by assigning a [value] to a specified attribute based on the provided [mode].
+     *
+     * @param index The index of the [ExerciseWithSets] instance in the [exercises] list that needs to be updated.
+     * @param value The new value to be assigned to the specified attribute of the [ExerciseWithSets].
+     * @param mode An integer that determines which attribute will be updated with the [value].
+     * The following modes correspond to specific attributes:
+     *  - 0: [ExerciseWithSets.note]
+     *  - 1: [ExerciseWithSets.setMode]
+     *  - 2: [ExerciseWithSets.restTime]
+     *
+     * Note: When updating [ExerciseWithSets.setMode], the [value] should be one of the following string representations:
+     *  - [SetMode.WEIGHT].name
+     *  - [SetMode.TIME].name
+     *  - [SetMode.REPS].name;
+     * If an invalid string is provided, the default value [SetMode.WEIGHT] will be assigned.
      */
     fun updateExercise(index: Int, value: String, mode: Int) {
         val exercise = exercises[index]

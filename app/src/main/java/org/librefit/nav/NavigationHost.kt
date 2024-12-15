@@ -31,15 +31,16 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import org.librefit.data.DataStoreManager
-import org.librefit.util.ExerciseDC
 import org.librefit.data.SharedViewModel
 import org.librefit.ui.screens.AddExerciseScreen
 import org.librefit.ui.screens.MainScreen
+import org.librefit.ui.screens.RequestPermissionsScreen
 import org.librefit.ui.screens.about.AboutScreen
 import org.librefit.ui.screens.about.LicenseScreen
 import org.librefit.ui.screens.createRoutine.CreateRoutineScreen
 import org.librefit.ui.screens.settings.SettingsScreen
 import org.librefit.ui.screens.workout.WorkoutScreen
+import org.librefit.util.ExerciseDC
 
 @Composable
 fun NavigationHost(exerciseList: List<ExerciseDC>, userPreferences: DataStoreManager) {
@@ -57,14 +58,8 @@ fun NavigationHost(exerciseList: List<ExerciseDC>, userPreferences: DataStoreMan
         popEnterTransition = { scaleIn(tween(300), 1.2f) },
         popExitTransition = { scaleOut(tween(300), 0.8f) + fadeOut(tween(200)) }
     ) {
-        composable<Destination.MainScreen> {
-            MainScreen(navController = navController)
-        }
-        composable<Destination.CreateRoutineScreen> {
-            CreateRoutineScreen(
-                sharedViewModel = sharedViewModel,
-                navController = navController
-            )
+        composable<Destination.AboutScreen> {
+            AboutScreen(navController = navController)
         }
         composable<Destination.AddExerciseScreen> {
             AddExerciseScreen(
@@ -73,14 +68,34 @@ fun NavigationHost(exerciseList: List<ExerciseDC>, userPreferences: DataStoreMan
                 viewModel = sharedViewModel
             )
         }
-        composable<Destination.SettingsScreen> {
-            SettingsScreen(navigateBack = { navController.popBackStack() })
+        composable<Destination.CreateRoutineScreen> {
+            CreateRoutineScreen(
+                sharedViewModel = sharedViewModel,
+                navController = navController
+            )
         }
-        composable<Destination.AboutScreen> {
-            AboutScreen(navController = navController)
+        composable<Destination.MainScreen> {
+            MainScreen(
+                navController = navController,
+                userPreferences = userPreferences
+            )
         }
         composable<Destination.LicenseScreen> {
             LicenseScreen(navigateBack = { navController.popBackStack() })
+        }
+        composable<Destination.RequestPermissionsScreen> {
+            RequestPermissionsScreen(
+                userPreferences = userPreferences,
+                workoutId = it.toRoute<Destination.RequestPermissionsScreen>().workoutId,
+                workoutTitle = it.toRoute<Destination.RequestPermissionsScreen>().workoutTitle,
+                navController = navController
+            )
+        }
+        composable<Destination.SettingsScreen> {
+            SettingsScreen(
+                navigateBack = { navController.popBackStack() },
+                userPreferences = userPreferences
+            )
         }
         composable<Destination.WorkoutScreen> {
             WorkoutScreen(

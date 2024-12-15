@@ -46,6 +46,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -54,6 +55,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
+import org.librefit.data.DataStoreManager
 import org.librefit.nav.Destination
 import org.librefit.ui.screens.home.HomeScreen
 import org.librefit.ui.screens.profile.ProfileScreen
@@ -61,7 +63,10 @@ import org.librefit.ui.screens.profile.ProfileScreen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(navController: NavHostController) {
+fun MainScreen(
+    navController: NavHostController,
+    userPreferences: DataStoreManager
+) {
 
     var expended by remember { mutableStateOf(false) }
 
@@ -159,15 +164,15 @@ fun MainScreen(navController: NavHostController) {
             }
         }
     ) { innerPadding ->
-        if (homeSelected) HomeScreen(innerPadding, navController) else ProfileScreen(
-            innerPadding
-        )
+        if (homeSelected)
+            HomeScreen(innerPadding, navController, userPreferences)
+        else ProfileScreen(innerPadding)
     }
 }
 
 @Preview
 @Composable
 fun MainScreenPreview() {
-    MainScreen(rememberNavController())
+    MainScreen(rememberNavController(), DataStoreManager(LocalContext.current))
 }
 

@@ -22,10 +22,12 @@ package org.librefit
 import android.app.Application
 import androidx.room.Room
 import org.librefit.db.WorkoutDatabase
+import org.librefit.util.NotificationHelper
 
 class MainApplication : Application() {
     companion object{
         lateinit var workoutDatabase: WorkoutDatabase
+        lateinit var notificationHelper: NotificationHelper
     }
 
     override fun onCreate() {
@@ -35,5 +37,7 @@ class MainApplication : Application() {
             WorkoutDatabase::class.java,
             WorkoutDatabase.NAME
         ).build()
+
+        notificationHelper = NotificationHelper(this)
     }
 }

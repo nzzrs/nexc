@@ -24,22 +24,28 @@ import kotlinx.serialization.Serializable
 
 sealed class Destination {
     @Serializable
-    object MainScreen
-
-    @Serializable
-    object CreateRoutineScreen
+    object AboutScreen
 
     @Serializable
     object AddExerciseScreen
 
     @Serializable
-    object SettingsScreen
+    object CreateRoutineScreen
 
     @Serializable
-    object AboutScreen
+    object MainScreen
+
+    @Serializable
+    data class RequestPermissionsScreen(
+        val workoutId: Int = 0,
+        val workoutTitle: String = ""
+    )
 
     @Serializable
     object LicenseScreen
+
+    @Serializable
+    object SettingsScreen
 
     @Serializable
     data class WorkoutScreen(

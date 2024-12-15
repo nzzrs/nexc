@@ -90,4 +90,7 @@ dependencies {
 
     //Json
     implementation(libs.gson)
+
+    //Google accompanist to handle permissions in jetpack compose
+    implementation(libs.accompanist.permissions)
 }

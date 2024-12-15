@@ -68,11 +68,9 @@ import org.librefit.ui.components.HeadlineText
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
-    navigateBack: () -> Unit
+    navigateBack: () -> Unit,
+    userPreferences: DataStoreManager
 ) {
-    val context = LocalContext.current
-
-    val userPreferences = DataStoreManager(context)
 
     val viewModel: SettingsScreenViewModel = viewModel()
 
@@ -315,5 +313,5 @@ private fun languageCodeToId(code: String): Int {
 @Preview
 @Composable
 fun SettingsScreenPreview() {
-    SettingsScreen { }
+    SettingsScreen({}, DataStoreManager(LocalContext.current))
 }

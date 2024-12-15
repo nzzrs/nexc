@@ -267,6 +267,7 @@ class WorkoutScreenViewModel(
 
     fun startRestTimer(initialValue: Int) {
         if (!isTimerRunning) {
+
             maxTimeValue = initialValue
             restTime = initialValue
             isTimerRunning = true
@@ -290,6 +291,7 @@ class WorkoutScreenViewModel(
             maxTimeValue = restTime
         }
     }
+
 
     //TODO: notification when rest time ends
 }

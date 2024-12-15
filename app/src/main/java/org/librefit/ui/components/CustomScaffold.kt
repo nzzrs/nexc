@@ -66,7 +66,7 @@ import org.librefit.R
 @Composable
 fun CustomScaffold(
     title: String,
-    navigateBack: () -> Unit = {},
+    navigateBack: () -> Unit,
     action: () -> Unit = {},
     actionEnabled: Boolean = true,
     actionIcon: ImageVector? = null,

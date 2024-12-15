@@ -41,12 +41,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -55,8 +57,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
+import org.librefit.data.DataStoreManager
 import org.librefit.db.Workout
 import org.librefit.nav.Destination
+import org.librefit.nav.checkPermissionsBeforeNavigateToWorkout
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.CustomTextButton
 
@@ -64,8 +68,14 @@ import org.librefit.ui.components.CustomTextButton
 fun HomeScreen(
     innerPadding: PaddingValues,
     navController: NavHostController,
+    userPreferences: DataStoreManager
 ) {
     val viewModel: HomeScreenViewModel = viewModel()
+
+    val context = LocalContext.current
+
+    val requestPermissionAgain =
+        userPreferences.requestPermissionsAgain.collectAsState(initial = false)
 
     val routineList by viewModel.routineList
 
@@ -104,7 +114,13 @@ fun HomeScreen(
             CustomTextButton(
                 text = stringResource(id = R.string.label_start_empty_workout),
                 icon = Icons.Default.PlayArrow,
-                onClick = { navController.navigate(Destination.WorkoutScreen()) },
+                onClick = {
+                    checkPermissionsBeforeNavigateToWorkout(
+                        requestPermissionAgain = requestPermissionAgain.value,
+                        navController = navController,
+                        appContext = context.applicationContext
+                    )
+                },
             )
         }
         item {
@@ -167,11 +183,12 @@ fun HomeScreen(
                             icon = Icons.Default.PlayArrow,
                             elevated = false
                         ) {
-                            navController.navigate(
-                                Destination.WorkoutScreen(
-                                    workoutId = routine.id,
-                                    workoutTitle = routine.title
-                                )
+                            checkPermissionsBeforeNavigateToWorkout(
+                                workoutId = routine.id,
+                                title = routine.title,
+                                requestPermissionAgain = requestPermissionAgain.value,
+                                navController = navController,
+                                appContext = context.applicationContext
                             )
                         }
                     }
@@ -198,5 +215,9 @@ fun HomeScreen(
 @Composable
 fun HomeScreenPreview() {
     val navController = rememberNavController()
-    HomeScreen(innerPadding = PaddingValues(20.dp), navController)
+    HomeScreen(
+        innerPadding = PaddingValues(20.dp),
+        navController,
+        DataStoreManager(LocalContext.current)
+    )
 }

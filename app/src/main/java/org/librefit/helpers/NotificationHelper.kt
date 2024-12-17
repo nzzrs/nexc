@@ -17,33 +17,32 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit.util
+package org.librefit.helpers
 
+import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import androidx.core.app.NotificationCompat
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import org.librefit.MainActivity
 import org.librefit.R
+import org.librefit.services.NotificationService
+import org.librefit.util.formatTime
 
 
 class NotificationHelper(context: Context) {
     companion object {
         const val CHANNEL_ID = "new_messages"
-        const val NOTIFICATION_REQUEST_CODE = 1001
+        const val NOTIFICATION_ID = 1001
     }
 
     private val appContext = context.applicationContext
 
     private var builder = NotificationCompat.Builder(appContext, CHANNEL_ID)
 
-    val pendingIntent: PendingIntent = PendingIntent.getActivity(
+    private val pendingIntentMainActivity: PendingIntent = PendingIntent.getActivity(
         appContext,
         0,
         Intent(appContext, MainActivity::class.java).apply {
@@ -60,11 +59,24 @@ class NotificationHelper(context: Context) {
     init {
         createNotificationChannels()
         builder
+            //TODO: remove hardcoded strings
             .setContentTitle("Ongoing workout")
             .setSmallIcon(R.drawable.ic_launcher_monochrome)
+            .addAction(
+                R.drawable.ic_pause,
+                "Pause",
+                createPendingIntent(NotificationService.PAUSE_CHRONOMETER)
+            )
+            .addAction(
+                android.R.drawable.ic_media_play,
+                "Resume",
+                createPendingIntent(NotificationService.START_CHRONOMETER)
+            )
             .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setContentIntent(pendingIntent)
+            .setContentIntent(pendingIntentMainActivity)
             .setAutoCancel(false)
+            .setOngoing(true)
+            .setOnlyAlertOnce(true)
     }
 
 
@@ -83,27 +95,22 @@ class NotificationHelper(context: Context) {
         notificationManager.createNotificationChannel(channel)
     }
 
-    //TODO: clear structure needed
-    fun sendNotification(
-        textTitle: String = "",
-        textContent: String = ""
-    ) {
-
-        builder.setContentText(textContent)
-
-        notificationManager.notify(NOTIFICATION_REQUEST_CODE, builder.build())
+    fun createNotification(timeInSeconds: Int): Notification {
+        return builder
+            .setContentText("Time: ${formatTime(timeInSeconds)}")
+            .build()
     }
 
-    fun startUpdatingNotification() {
-        CoroutineScope(Dispatchers.Main).launch {
-            var count = 0
-            while (true) {
-                count++
-                builder.setContentText("Updated text: $count seconds")
-                    .setOnlyAlertOnce(true)
-                notificationManager.notify(NOTIFICATION_REQUEST_CODE, builder.build())
-                delay(1000) // Wait for one second before updating again
-            }
+    private fun createPendingIntent(action: String): PendingIntent {
+        val intent = Intent(appContext, NotificationService::class.java).apply {
+            this.action = action
         }
+        return PendingIntent.getService(appContext, 0, intent, PendingIntent.FLAG_IMMUTABLE)
+    }
+
+    fun notify(timeInSeconds: Int): Notification {
+        val notification = createNotification(timeInSeconds)
+        notificationManager.notify(NOTIFICATION_ID, notification)
+        return notification
     }
 }

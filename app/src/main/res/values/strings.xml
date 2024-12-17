@@ -107,10 +107,10 @@
     <string name="before_starting_the_workout">Before starting the workout</string>
     <string name="full_experience_permissions">For the best experience in LibreFit, the following permissions have to be granted:</string>
     <string name="notifications_permission">Notifications</string>
-    <string name="notifications_permission_desc">This permission allows the app to send notifications about the ongoing workouts and rest intervals.</string>
+    <string name="notifications_permission_desc">It allows to send notifications about the ongoing workouts and rest intervals.</string>
     <string name="background_usage">Background usage</string>
-    <string name="background_usage_desc">This permission allows the app to measure time accurately and to schedule reliable notifications. The app only runs in the background during workout sessions.</string>
-    <string name="app_works_without_permissions_desc">The app will continue to work without any of these permissions allowed but timers and notifications will not be reliable.</string>
+    <string name="background_usage_desc">It allows to measure time accurately and to schedule reliable notifications. The app only runs in the background during workout sessions.</string>
+    <string name="app_works_without_permissions_desc">The app will continue to work without any of these permissions allowed but timers and notifications may not be reliable.</string>
     <string name="dont_ask_again">Don\'t ask again</string>
     <string name="skip_for_now">Skip for now</string>
     <string name="label_continue">Continue</string>

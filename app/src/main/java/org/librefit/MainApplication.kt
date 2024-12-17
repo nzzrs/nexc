@@ -22,7 +22,7 @@ package org.librefit
 import android.app.Application
 import androidx.room.Room
 import org.librefit.db.WorkoutDatabase
-import org.librefit.util.NotificationHelper
+import org.librefit.helpers.NotificationHelper
 
 class MainApplication : Application() {
     companion object{

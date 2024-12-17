@@ -7,6 +7,7 @@ import org.librefit.enums.Force
 import org.librefit.enums.Level
 import org.librefit.enums.Mechanic
 import org.librefit.enums.Muscle
+import java.util.Locale
 
 fun exerciseEnumToStringId(enum: Enum<*>?) : Int {
     return when (enum) {
@@ -80,5 +81,10 @@ fun muscleToVectorId(muscle: Muscle) : Int {
     }
 }
 
-
+fun formatTime(seconds: Int): String {
+    val hours = seconds / 3600
+    val minutes = (seconds % 3600) / 60
+    val secs = seconds % 60
+    return String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, secs)
+}
 

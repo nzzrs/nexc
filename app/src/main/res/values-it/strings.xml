@@ -118,12 +118,12 @@
     <string name="label_nothing_to_show">Ancora niente da mostrare.</string>
     <string name="before_starting_the_workout">Prima di iniziare l\'allenamento</string>
     <string name="full_experience_permissions">Per la migliore esperienza in LibreFit, devono essere concessi i seguenti permessi:</string>
-    <string name="notifications_permission_desc">Questo permesso consente all\'app di inviare notifiche sugli allenamenti in corso e sugli intervalli di riposo.</string>
-    <string name="background_usage">Notifiche affidabili</string>
-    <string name="background_usage_desc">Questo permesso consente all\'app di misurare il tempo con precisione e di programmare notifiche affidabili. L\'app viene eseguita in background solo durante le sessioni di allenamento.</string>
+    <string name="notifications_permission_desc">Consente di inviare notifiche sugli allenamenti in corso e sugli intervalli di riposo.</string>
+    <string name="background_usage">Esecuzione in background</string>
+    <string name="background_usage_desc">Consente di misurare il tempo con precisione e di programmare notifiche affidabili. L\'app viene eseguita in background solo durante le sessioni di allenamento.</string>
     <string name="dont_ask_again">Non chiedere di nuovo</string>
     <string name="skip_for_now">Salta per ora</string>
-    <string name="app_works_without_permissions_desc">L\'app continuerà a funzionare senza che nessuno di questi permessi sia concesso ma i timer e le notifiche non saranno affidabili.</string>
+    <string name="app_works_without_permissions_desc">L\'app continuerà a funzionare senza che nessuno di questi permessi sia concesso ma i timer e le notifiche potrebbero non essere affidabili.</string>
     <string name="label_continue">Continua</string>
     <string name="label_workout">Allenamento</string>
     <string name="label_navigate_back">Ritorna alla schermata precedente</string>

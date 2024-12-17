@@ -87,12 +87,13 @@ fun RequestPermissionsScreen(
 
     val context = LocalContext.current
 
+
     val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
 
 
     /**
      * A flow that continuously emits the current state of [android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS].
-     * The [org.librefit.util.NotificationHelper.isIgnoringBatteryOptimizations] method checks for permission
+     * The [org.librefit.helpers.NotificationHelper.isIgnoringBatteryOptimizations] method checks for permission
      * using [PowerManager.isIgnoringBatteryOptimizations]. Any approach better than this one are welcome
      */
     val isIgnoringBatteryOptimization = remember {

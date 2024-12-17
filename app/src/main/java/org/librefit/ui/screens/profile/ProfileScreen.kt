@@ -57,6 +57,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import org.librefit.R
 import org.librefit.db.Workout
 import org.librefit.ui.components.ConfirmDialog
+import org.librefit.util.formatTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
@@ -180,13 +181,6 @@ fun ProfileScreen(innerPadding: PaddingValues) {
             }
         }
     }
-}
-
-private fun formatTime(seconds: Int): String {
-    val hours = seconds / 3600
-    val minutes = (seconds % 3600) / 60
-    val secs = seconds % 60
-    return String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, secs)
 }
 
 

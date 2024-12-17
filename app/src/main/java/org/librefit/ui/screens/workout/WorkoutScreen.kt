@@ -90,7 +90,7 @@ import org.librefit.ui.components.ExerciseCard
 import org.librefit.ui.components.ExerciseDetailModalBottomSheet
 import org.librefit.util.ExerciseDC
 import org.librefit.util.ExerciseWithSets
-import java.util.Locale
+import org.librefit.util.formatTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Stable
@@ -103,8 +103,9 @@ fun WorkoutScreen(
     list: List<ExerciseDC>,
     sharedViewModel: SharedViewModel
 ) {
+    val context = LocalContext.current
     /*
-    This will pass "workoutId" and "list" to the view model so it can load
+    This will pass "workoutId", "list" and context to the view model so it can load
     exercises from db just one time (in initialization)
      */
     val viewModel: WorkoutScreenViewModel = viewModel(
@@ -114,7 +115,7 @@ fun WorkoutScreen(
                     "Unknown ViewModel class"
                 }
                 @Suppress("UNCHECKED_CAST")
-                return WorkoutScreenViewModel(workoutId, list) as T
+                return WorkoutScreenViewModel(workoutId, list, context) as T
             }
         }
     )
@@ -133,8 +134,6 @@ fun WorkoutScreen(
 
 
     val keepWorkoutScreenOn = userPreferences.workoutScreenOn.collectAsState(initial = true).value
-
-    val context = LocalContext.current
 
     //It keeps the screen turned on
     if (keepWorkoutScreenOn) {
@@ -352,8 +351,9 @@ private fun BottomAppBarContent(viewModel: WorkoutScreenViewModel) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
+            //TODO: size and shape doesn't follow best practises
             val animatedPlayButton = animateDpAsState(
-                targetValue = (if (viewModel.isChronometerRunning) 110 else 60).dp,
+                targetValue = (if (viewModel.isChronometerPaused) 60 else 110).dp,
                 label = "playButtonAnimation"
             )
             Box(
@@ -364,16 +364,15 @@ private fun BottomAppBarContent(viewModel: WorkoutScreenViewModel) {
                 //Play button
                 FilledIconButton(
                     onClick = {
-                        if (viewModel.isChronometerRunning) viewModel.stopChronometer()
-                        else viewModel.startChronometer()
+                        if (viewModel.isChronometerPaused) viewModel.startChronometer()
+                        else viewModel.pauseChronometer()
                     },
                     modifier = Modifier.size(animatedPlayButton.value)
                 ) {
                     Icon(
-                        imageVector = if (viewModel.isChronometerRunning)
-                            ImageVector.vectorResource(id = R.drawable.ic_pause)
-                        else Icons.Default.PlayArrow,
-                        contentDescription = stringResource(if (viewModel.isChronometerRunning) R.string.label_pause else R.string.label_play),
+                        imageVector = if (viewModel.isChronometerPaused) Icons.Default.PlayArrow else
+                            ImageVector.vectorResource(id = R.drawable.ic_pause),
+                        contentDescription = stringResource(if (viewModel.isChronometerPaused) R.string.label_pause else R.string.label_play),
                         modifier = Modifier.size(30.dp)
                     )
                 }
@@ -391,7 +390,7 @@ private fun BottomAppBarContent(viewModel: WorkoutScreenViewModel) {
                 )
                 Text(
                     text = formatTime(viewModel.timeElapsed),
-                    color = if (viewModel.pulsingTimer()) Color.Transparent else Color.Unspecified
+                    color = if (viewModel.pulsingChronometer()) Color.Transparent else Color.Unspecified
                 )
             }
 
@@ -446,11 +445,4 @@ private fun BottomAppBarContent(viewModel: WorkoutScreenViewModel) {
         }
     }
 
-}
-
-private fun formatTime(seconds: Int): String {
-    val hours = seconds / 3600
-    val minutes = (seconds % 3600) / 60
-    val secs = seconds % 60
-    return String.format(Locale.getDefault(), "%02d:%02d:%02d", hours, minutes, secs)
 }

@@ -19,6 +19,8 @@
 
 package org.librefit.ui.screens.workout
 
+import android.content.Context
+import android.content.Intent
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -34,13 +36,15 @@ import org.librefit.MainApplication
 import org.librefit.db.Set
 import org.librefit.db.Workout
 import org.librefit.enums.SetMode
+import org.librefit.services.NotificationService
 import org.librefit.util.ExerciseDC
 import org.librefit.util.ExerciseWithSets
 import kotlin.random.Random
 
 class WorkoutScreenViewModel(
     workoutId: Int,
-    private val list: List<ExerciseDC>
+    private val list: List<ExerciseDC>,
+    context: Context
 ) : ViewModel() {
     val exercises = mutableStateListOf<ExerciseWithSets>()
 
@@ -218,43 +222,67 @@ class WorkoutScreenViewModel(
 
     var timeElapsed by mutableIntStateOf(0)
         private set
-    var isChronometerRunning by mutableStateOf(true)
+    var isChronometerPaused by mutableStateOf(true)
         private set
     private var pulsingText by mutableIntStateOf(0)
 
 
+    private var appContext = context.applicationContext
+
+    val serviceIntent = Intent(appContext, NotificationService::class.java)
+
+
     init {
         startChronometer()
+        observeTimeChanges()
     }
 
-    fun startChronometer() {
-        isChronometerRunning = true
-        val startTime = System.currentTimeMillis()
-        val pastTimeElapsed = timeElapsed
-
-        viewModelScope.launch(Dispatchers.IO) {
-            while (isChronometerRunning) {
-                val currentTime = System.currentTimeMillis()
-
-                timeElapsed = (currentTime - startTime).toInt() / 1000 + pastTimeElapsed
-                delay(1000)
+    private fun observeTimeChanges() {
+        viewModelScope.launch {
+            NotificationService.timeElapsed.collect { elapsed ->
+                timeElapsed = elapsed
+            }
+            NotificationService.isPaused.collect {
+                isChronometerPaused = it
             }
         }
     }
 
-    fun stopChronometer() {
-        isChronometerRunning = false
+    fun startChronometer() {
+        val service = serviceIntent.apply {
+            action = NotificationService.START_CHRONOMETER
+        }
+        appContext.startForegroundService(service)
+
+        isChronometerPaused = false
+    }
+
+    fun pauseChronometer() {
+        val service = serviceIntent.apply {
+            action = NotificationService.PAUSE_CHRONOMETER
+        }
+        appContext.startForegroundService(service)
+
+        isChronometerPaused = true
 
         viewModelScope.launch(Dispatchers.IO) {
-            while (!isChronometerRunning) {
+            while (isChronometerPaused) {
                 pulsingText++
                 delay(600)
             }
         }
     }
 
-    fun pulsingTimer(): Boolean {
-        return !isChronometerRunning && pulsingText % 2 == 1
+    override fun onCleared() {
+        super.onCleared()
+        val service = serviceIntent.apply {
+            action = NotificationService.STOP_CHRONOMETER
+        }
+        appContext.startForegroundService(service)
+    }
+
+    fun pulsingChronometer(): Boolean {
+        return isChronometerPaused && pulsingText % 2 == 1
     }
 
 

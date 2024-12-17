@@ -185,6 +185,7 @@ fun ExerciseCard(
             Spacer(modifier = Modifier.height(10.dp))
 
             // Set mode selection
+            //TODO: display text to inform user
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround,
@@ -295,6 +296,7 @@ fun ExerciseCard(
                                 Row(
                                     modifier = Modifier
                                         .fillMaxSize()
+                                        .clip(MaterialTheme.shapes.small)
                                         .background(
                                             when (swipeToDismissBoxState.dismissDirection) {
                                                 SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.errorContainer

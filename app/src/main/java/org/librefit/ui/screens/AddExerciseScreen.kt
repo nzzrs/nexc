@@ -216,6 +216,7 @@ private fun AddExerciseScreenContent(
         ) {
             item { HorizontalDivider() }
         } else {
+            //TODO: lottie animations
             item {
                 Column(
                     modifier = Modifier

@@ -1,30 +1,47 @@
+<!--
+ ~ Copyright (c) 2024 LibreFit
+ ~
+ ~ LibreFit is free software: you can redistribute it and/or modify
+ ~ it under the terms of the GNU General Public License as published by
+ ~ the Free Software Foundation, either version 3 of the License, or
+ ~ (at your option) any later version.
+ ~
+ ~ LibreFit is distributed in the hope that it will be useful,
+ ~ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ ~ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ ~ GNU General Public License for more details.
+ ~
+ ~ You should have received a copy of the GNU General Public License
+ ~ along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
+ -->
+
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
-    android:width="48dp"
-    android:height="48dp"
-    android:viewportWidth="12.7"
-    android:viewportHeight="12.7">
+    android:width="16dp"
+    android:height="16dp"
+    android:viewportWidth="16"
+    android:viewportHeight="16">
   <path
-      android:pathData="M6.35,0L6.35,0A6.35,6.35 0,0 1,12.7 6.35L12.7,6.35A6.35,6.35 0,0 1,6.35 12.7L6.35,12.7A6.35,6.35 0,0 1,0 6.35L0,6.35A6.35,6.35 0,0 1,6.35 0z"
-      android:strokeWidth="0.229096"
+      android:pathData="M8,8m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0"
+      android:strokeWidth="0.333"
       android:fillColor="#ffffff"/>
   <path
-      android:pathData="M5.343,5.853L7.354,5.853A0.255,0.255 0,0 1,7.609 6.109L7.609,6.591A0.255,0.255 0,0 1,7.354 6.847L5.343,6.847A0.255,0.255 0,0 1,5.088 6.591L5.088,6.109A0.255,0.255 0,0 1,5.343 5.853z"
-      android:strokeWidth="0.267713"
+      android:pathData="M6.433,7.188L9.584,7.188A0.505,0.505 90.051,0 1,10.089 7.693L10.089,8.322A0.505,0.505 90.051,0 1,9.584 8.827L6.433,8.827A0.505,0.505 90.051,0 1,5.927 8.322L5.927,7.693A0.505,0.505 90.051,0 1,6.433 7.188z"
+      android:strokeWidth="0.442"
       android:fillColor="#00bcd4"/>
   <path
-      android:pathData="M8.297,3.676L8.679,3.676A0.306,0.306 0,0 1,8.985 3.982L8.985,8.718A0.306,0.306 0,0 1,8.679 9.024L8.297,9.024A0.306,0.306 0,0 1,7.991 8.718L7.991,3.982A0.306,0.306 0,0 1,8.297 3.676z"
-      android:strokeWidth="0.184457"
+      android:pathData="M11.225,3.594L11.854,3.594A0.505,0.505 90.051,0 1,12.359 4.099L12.359,11.916A0.505,0.505 90.051,0 1,11.854 12.421L11.225,12.421A0.505,0.505 90.051,0 1,10.719 11.916L10.719,4.099A0.505,0.505 90.051,0 1,11.225 3.594z"
+      android:strokeWidth="0.304"
       android:fillColor="#333333"/>
   <path
-      android:pathData="M9.446,4.669L9.822,4.669A0.308,0.308 0,0 1,10.131 4.978L10.131,7.722A0.308,0.308 0,0 1,9.822 8.031L9.446,8.031A0.308,0.308 0,0 1,9.137 7.722L9.137,4.978A0.308,0.308 0,0 1,9.446 4.669z"
-      android:strokeWidth="0.146242"
+      android:pathData="M13.118,5.234L13.746,5.234A0.505,0.505 90.051,0 1,14.252 5.739L14.252,10.277A0.505,0.505 90.051,0 1,13.746 10.783L13.118,10.783A0.505,0.505 90.051,0 1,12.612 10.277L12.612,5.739A0.505,0.505 90.051,0 1,13.118 5.234z"
+      android:strokeWidth="0.241"
       android:fillColor="#333333"/>
   <path
-      android:pathData="M4.402,3.676L4.02,3.676A0.306,0.306 135,0 0,3.715 3.982L3.715,8.718A0.306,0.306 0,0 0,4.02 9.024L4.402,9.024A0.306,0.306 0,0 0,4.708 8.718L4.708,3.982A0.306,0.306 135,0 0,4.402 3.676z"
-      android:strokeWidth="0.184457"
+      android:pathData="M4.794,3.594L4.166,3.594A0.505,0.505 89.949,0 0,3.66 4.099L3.66,11.916A0.505,0.505 89.949,0 0,4.166 12.421L4.794,12.421A0.505,0.505 89.949,0 0,5.3 11.916L5.3,4.099A0.505,0.505 89.949,0 0,4.794 3.594z"
+      android:strokeWidth="0.304"
       android:fillColor="#333333"/>
   <path
-      android:pathData="M3.247,4.685L2.865,4.685A0.306,0.306 0,0 0,2.559 4.99L2.559,7.71A0.306,0.306 0,0 0,2.865 8.015L3.247,8.015A0.306,0.306 0,0 0,3.553 7.71L3.553,4.99A0.306,0.306 0,0 0,3.247 4.685z"
-      android:strokeWidth="0.145557"
+      android:pathData="M2.887,5.259L2.258,5.259A0.505,0.505 89.949,0 0,1.753 5.765L1.753,10.251A0.505,0.505 89.949,0 0,2.258 10.756L2.887,10.756A0.505,0.505 89.949,0 0,3.392 10.251L3.392,5.765A0.505,0.505 89.949,0 0,2.887 5.259z"
+      android:strokeWidth="0.24"
       android:fillColor="#333333"/>
 </vector>

@@ -15,16 +15,35 @@
  ~ along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  -->
 
-<vector xmlns:android="http://schemas.android.com/apk/res/android" android:height="108dp" android:viewportHeight="12.7" android:viewportWidth="12.7" android:width="108dp">
-      
-    <path android:fillColor="#000000" android:pathData="M5.533,5.947L7.164,5.947A0.207,0.207 0,0 1,7.371 6.154L7.371,6.546A0.207,0.207 0,0 1,7.164 6.753L5.533,6.753A0.207,0.207 0,0 1,5.326 6.546L5.326,6.154A0.207,0.207 0,0 1,5.533 5.947z" android:strokeWidth="0.217135"/>
-      
-    <path android:fillColor="#000000" android:pathData="M7.928,4.181L8.238,4.181A0.248,0.248 0,0 1,8.486 4.429L8.486,8.271A0.248,0.248 0,0 1,8.238 8.519L7.928,8.519A0.248,0.248 0,0 1,7.68 8.271L7.68,4.429A0.248,0.248 0,0 1,7.928 4.181z" android:strokeWidth="0.149609"/>
-      
-    <path android:fillColor="#000000" android:pathData="M8.86,4.987L9.165,4.987A0.25,0.25 0,0 1,9.415 5.237L9.415,7.463A0.25,0.25 0,0 1,9.165 7.713L8.86,7.713A0.25,0.25 0,0 1,8.61 7.463L8.61,5.237A0.25,0.25 0,0 1,8.86 4.987z" android:strokeWidth="0.118613"/>
-      
-    <path android:fillColor="#000000" android:pathData="M4.769,4.181L4.46,4.181A0.248,0.248 0,0 0,4.212 4.429L4.212,8.271A0.248,0.248 0,0 0,4.46 8.519L4.769,8.519A0.248,0.248 0,0 0,5.017 8.271L5.017,4.429A0.248,0.248 0,0 0,4.769 4.181z" android:strokeWidth="0.149609"/>
-      
-    <path android:fillColor="#000000" android:pathData="M3.832,4.999L3.522,4.999A0.248,0.248 0,0 0,3.275 5.247L3.275,7.453A0.248,0.248 0,0 0,3.522 7.701L3.832,7.701A0.248,0.248 0,0 0,4.08 7.453L4.08,5.247A0.248,0.248 0,0 0,3.832 4.999z" android:strokeWidth="0.118058"/>
-    
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="48dp"
+    android:height="48dp"
+    android:viewportWidth="48"
+    android:viewportHeight="48">
+    <group
+        android:scaleX="0.67"
+        android:scaleY="0.67"
+        android:translateX="7.92"
+        android:translateY="7.92">
+        <path
+            android:pathData="M19.298,21.564L28.751,21.564A1.516,1.516 90.051,0 1,30.267 23.08L30.267,24.966A1.516,1.516 90.051,0 1,28.751 26.482L19.298,26.482A1.516,1.516 90.051,0 1,17.782 24.966L17.782,23.08A1.516,1.516 90.051,0 1,19.298 21.564z"
+            android:strokeWidth="1.326"
+            android:fillColor="#1a1a1a" />
+        <path
+            android:pathData="M33.674,10.782L35.561,10.782A1.516,1.516 90.051,0 1,37.077 12.298L37.077,35.748A1.516,1.516 90.051,0 1,35.561 37.264L33.674,37.264A1.516,1.516 90.051,0 1,32.158 35.748L32.158,12.298A1.516,1.516 90.051,0 1,33.674 10.782z"
+            android:strokeWidth="0.913"
+            android:fillColor="#1a1a1a" />
+        <path
+            android:pathData="M39.353,15.701L41.239,15.701A1.516,1.516 90.051,0 1,42.755 17.217L42.755,30.832A1.516,1.516 90.051,0 1,41.239 32.349L39.353,32.349A1.516,1.516 90.051,0 1,37.836 30.832L37.836,17.217A1.516,1.516 90.051,0 1,39.353 15.701z"
+            android:strokeWidth="0.724"
+            android:fillColor="#1a1a1a" />
+        <path
+            android:pathData="M14.383,10.782L12.497,10.782A1.516,1.516 89.949,0 0,10.981 12.298L10.981,35.748A1.516,1.516 89.949,0 0,12.497 37.264L14.383,37.264A1.516,1.516 89.949,0 0,15.899 35.748L15.899,12.298A1.516,1.516 89.949,0 0,14.383 10.782z"
+            android:strokeWidth="0.913"
+            android:fillColor="#1a1a1a" />
+        <path
+            android:pathData="M8.661,15.778L6.775,15.778A1.516,1.516 89.949,0 0,5.259 17.294L5.259,30.752A1.516,1.516 89.949,0 0,6.775 32.268L8.661,32.268A1.516,1.516 89.949,0 0,10.177 30.752L10.177,17.294A1.516,1.516 89.949,0 0,8.661 15.778z"
+            android:strokeWidth="0.721"
+            android:fillColor="#1a1a1a" />
+    </group>
 </vector>

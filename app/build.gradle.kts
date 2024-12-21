@@ -43,6 +43,7 @@ android {
             useSupportLibrary = true
         }
         resourceConfigurations += listOf("en", "it")
+        applicationIdSuffix = "app"
 
     }
 

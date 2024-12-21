@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 LibreFit
+ * Copyright (c) 2024. LibreFit
  *
  * This file is part of LibreFit
  *
@@ -66,13 +66,13 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.librefit.R
+import org.librefit.data.SharedViewModel
 import org.librefit.enums.Category
 import org.librefit.enums.Equipment
 import org.librefit.enums.Force
 import org.librefit.enums.Level
 import org.librefit.enums.Mechanic
 import org.librefit.enums.Muscle
-import org.librefit.data.SharedViewModel
 import org.librefit.util.exerciseEnumToStringId
 
 @OptIn(ExperimentalLayoutApi::class)

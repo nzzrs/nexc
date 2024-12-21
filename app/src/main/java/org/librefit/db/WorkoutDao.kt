@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 LibreFit
+ * Copyright (c) 2024. LibreFit
  *
  * This file is part of LibreFit
  *

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024 LibreFit
+ * Copyright (c) 2024. LibreFit
  *
  * This file is part of LibreFit
  *
@@ -60,8 +60,8 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.librefit.R
-import org.librefit.util.ExerciseDC
 import org.librefit.enums.Muscle
+import org.librefit.util.ExerciseDC
 import org.librefit.util.exerciseEnumToStringId
 import org.librefit.util.muscleToVectorId
 

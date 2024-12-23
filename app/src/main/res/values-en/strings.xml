@@ -102,13 +102,13 @@
     <!-- Workout screen -->
     <string name="label_nothing_to_show">Nothing to show yet.</string>
     <string name="before_starting_the_workout">Before starting the workout</string>
-    <string name="full_experience_permissions">For the best experience in LibreFit, the following permissions have to be granted:</string>
+    <string name="best_experience_permissions">For the best experience in LibreFit, the following permission has to be granted:</string>
     <string name="notifications_permission_desc">It allows to send notifications about the ongoing workouts and rest intervals.</string>
     <string name="background_usage">Background usage</string>
-    <string name="background_usage_desc">It allows to measure time accurately and to schedule reliable notifications. The app only runs in the background during workout sessions.</string>
+    <string name="background_usage_desc">Allowing background usage can prevent the app from being stopped during workout.</string>
     <string name="dont_ask_again">Don\'t ask again</string>
     <string name="skip_for_now">Skip for now</string>
-    <string name="app_works_without_permissions_desc">The app will continue to work without any of these permissions allowed but timers and notifications may not be reliable.</string>
+    <string name="app_works_without_permission">The app will continue to work even without this permission.</string>
     <string name="label_continue">Continue</string>
     <string name="label_workout">Workout</string>
     <string name="label_exit_workout">Are you sure you want to exit? Your workout won\'t be saved</string>

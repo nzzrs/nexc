@@ -23,7 +23,6 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.PowerManager
 import androidx.core.app.ActivityCompat
 import androidx.navigation.NavHostController
 
@@ -59,12 +58,7 @@ fun checkPermissionsBeforeNavigateToWorkout(
         true
     }
 
-    val pm = appContext.getSystemService(Context.POWER_SERVICE) as PowerManager
-
-    val isIgnoringBatteryOptimization = pm.isIgnoringBatteryOptimizations(appContext.packageName)
-
-    val requestPermission = (!hasNotificationPermission || !isIgnoringBatteryOptimization)
-            && requestPermissionAgain
+    val requestPermission = !hasNotificationPermission && requestPermissionAgain
 
     if (requestPermission) {
         navController.navigate(Destination.RequestPermissionsScreen(workoutId, title))

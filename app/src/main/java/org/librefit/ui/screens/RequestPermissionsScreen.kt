@@ -20,12 +20,7 @@
 package org.librefit.ui.screens
 
 import android.annotation.SuppressLint
-import android.content.Context
-import android.content.Intent
-import android.net.Uri
 import android.os.Build
-import android.os.PowerManager
-import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,7 +37,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -56,8 +50,6 @@ import androidx.navigation.compose.rememberNavController
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.data.DataStoreManager
@@ -88,24 +80,6 @@ fun RequestPermissionsScreen(
 
     val context = LocalContext.current
 
-
-    val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-
-
-    /**
-     * A flow that continuously emits the current state of [android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS].
-     * The [checkPermissionsBeforeNavigateToWorkout] method checks for permission
-     * using [PowerManager.isIgnoringBatteryOptimizations]. Any approach better than this one are welcome
-     */
-    val isIgnoringBatteryOptimization = remember {
-        flow {
-            while (true) {
-                emit(pm.isIgnoringBatteryOptimizations(context.packageName))
-                delay(1000)
-            }
-        }
-    }.collectAsState(initial = pm.isIgnoringBatteryOptimizations(context.packageName))
-
     val coroutineScope = rememberCoroutineScope()
 
     CustomScaffold(
@@ -135,7 +109,7 @@ fun RequestPermissionsScreen(
 
             item {
                 Text(
-                    text = stringResource(R.string.full_experience_permissions),
+                    text = stringResource(R.string.best_experience_permissions),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center
                 )
@@ -172,49 +146,9 @@ fun RequestPermissionsScreen(
             }
 
 
-
-
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .weight(0.9f)
-                    ) {
-                        Text(
-                            text = stringResource(R.string.background_usage),
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = stringResource(R.string.background_usage_desc),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-
-                    Checkbox(
-                        modifier = Modifier
-                            .weight(0.1f)
-                            .padding(start = 10.dp),
-                        checked = isIgnoringBatteryOptimization.value,
-                        onCheckedChange = {
-                            if (!isIgnoringBatteryOptimization.value) {
-                                val intent =
-                                    Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
-                                intent.data = Uri.parse("package:${context.packageName}")
-                                context.startActivity(intent)
-                            }
-                        }
-                    )
-
-                }
-            }
-
-
             item {
                 Text(
-                    text = stringResource(R.string.app_works_without_permissions_desc),
+                    text = stringResource(R.string.app_works_without_permission),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center
                 )
@@ -226,8 +160,7 @@ fun RequestPermissionsScreen(
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Checkbox(
-                        enabled = !(notificationPermissionState?.status?.isGranted != false
-                                && isIgnoringBatteryOptimization.value),
+                        enabled = notificationPermissionState?.status?.isGranted == false,
                         checked = !askPermissionAgain.value,
                         onCheckedChange = {
                             coroutineScope.launch {
@@ -273,8 +206,8 @@ fun RequestPermissionsScreen(
                         )
                     }
                     TextButton(
-                        enabled = ((notificationPermissionState?.status?.isGranted != false) &&
-                                isIgnoringBatteryOptimization.value) || !askPermissionAgain.value,
+                        enabled = notificationPermissionState?.status?.isGranted != false
+                                || !askPermissionAgain.value,
                         colors = ButtonDefaults.buttonColors(),
                         onClick = {
                             checkPermissionsBeforeNavigateToWorkout(

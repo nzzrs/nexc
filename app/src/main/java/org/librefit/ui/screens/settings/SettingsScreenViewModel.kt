@@ -19,11 +19,15 @@
 
 package org.librefit.ui.screens.settings
 
+import android.os.PowerManager
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.runtime.mutableStateOf
 import androidx.core.os.LocaleListCompat
 import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.librefit.data.DataStoreManager
 import org.librefit.enums.Language
@@ -38,6 +42,29 @@ class SettingsScreenViewModel : ViewModel() {
     fun changeLanguage(language: Language) {
         val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(language.code)
         AppCompatDelegate.setApplicationLocales(appLocale)
+    }
+
+    var isIgnoringBatteryOptimization = mutableStateOf(false)
+
+    /**
+     * A method that checks every second the state of [android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS].
+     * using a flow. It uses the method [PowerManager.isIgnoringBatteryOptimizations].
+     * Any approach better than this one are welcome.
+     */
+    fun checkBatteryOptimization(pm: PowerManager, packageName: String) {
+        isIgnoringBatteryOptimization.value = pm.isIgnoringBatteryOptimizations(packageName)
+        viewModelScope.launch {
+            flow {
+                while (true) {
+                    emit(pm.isIgnoringBatteryOptimizations(packageName))
+                    delay(1000)
+                }
+            }.collect { isIgnoring ->
+                if (isIgnoringBatteryOptimization.value != isIgnoring) {
+                    isIgnoringBatteryOptimization.value = isIgnoring
+                }
+            }
+        }
     }
 
     fun <T> savePreference(key: Preferences.Key<T>, value: T) {

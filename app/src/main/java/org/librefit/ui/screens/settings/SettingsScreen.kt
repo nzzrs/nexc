@@ -19,7 +19,13 @@
 
 package org.librefit.ui.screens.settings
 
+import android.annotation.SuppressLint
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
 import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -27,7 +33,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -65,6 +70,7 @@ import org.librefit.enums.ThemeMode
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
 
+@SuppressLint("BatteryLife")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -75,6 +81,14 @@ fun SettingsScreen(
     val viewModel: SettingsScreenViewModel = viewModel()
 
     viewModel.initPreferences(userPreferences)
+
+
+    val context = LocalContext.current
+
+    val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+
+    viewModel.checkBatteryOptimization(pm, context.packageName)
+
 
     var selectedLanguage by remember {
         mutableStateOf(
@@ -127,8 +141,10 @@ fun SettingsScreen(
         LazyColumn(
             modifier = Modifier
                 .padding(innerPadding)
-                .fillMaxSize()
+                .fillMaxSize(),
+            verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
+            val paddingModifier = Modifier.padding(start = 20.dp, end = 20.dp)
 
             item { HeadlineText(text = stringResource(id = R.string.label_appearance)) }
 
@@ -138,7 +154,7 @@ fun SettingsScreen(
                         Icon(
                             imageVector = ImageVector.vectorResource(id = R.drawable.ic_dark_mode),
                             contentDescription = null,
-                            modifier = Modifier.padding(start = 20.dp, end = 20.dp)
+                            modifier = paddingModifier
                         )
                         Text(
                             text = stringResource(id = R.string.label_theme),
@@ -176,7 +192,6 @@ fun SettingsScreen(
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                     Row(
                         modifier = Modifier
-                            .height(70.dp)
                             .fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
@@ -185,7 +200,7 @@ fun SettingsScreen(
                             Icon(
                                 imageVector = ImageVector.vectorResource(id = R.drawable.ic_material),
                                 contentDescription = "",
-                                modifier = Modifier.padding(start = 20.dp, end = 20.dp)
+                                modifier = paddingModifier
                             )
                             Column(verticalArrangement = Arrangement.Center) {
                                 Text(
@@ -201,6 +216,7 @@ fun SettingsScreen(
                             }
                         }
                         Switch(
+                            modifier = paddingModifier,
                             checked = materialModeOn,
                             onCheckedChange = {
                                 viewModel.savePreference(
@@ -216,7 +232,6 @@ fun SettingsScreen(
             item {
                 Row(
                     modifier = Modifier
-                        .height(70.dp)
                         .fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
@@ -228,7 +243,7 @@ fun SettingsScreen(
                         Icon(
                             imageVector = ImageVector.vectorResource(id = R.drawable.ic_keep),
                             contentDescription = "",
-                            modifier = Modifier.padding(start = 20.dp, end = 20.dp)
+                            modifier = paddingModifier
                         )
                         Column(Modifier.weight(1f)) {
                             Text(
@@ -244,6 +259,7 @@ fun SettingsScreen(
                         }
                     }
                     Switch(
+                        modifier = paddingModifier,
                         checked = keepWorkoutScreenOn,
                         onCheckedChange = {
                             viewModel.savePreference(
@@ -262,7 +278,6 @@ fun SettingsScreen(
             item {
                 Row(
                     modifier = Modifier
-                        .height(70.dp)
                         .fillMaxWidth()
                         .clickable { openPreferenceDialog = true },
                     verticalAlignment = Alignment.CenterVertically
@@ -270,7 +285,7 @@ fun SettingsScreen(
                     Icon(
                         imageVector = ImageVector.vectorResource(id = R.drawable.ic_translate),
                         contentDescription = null,
-                        modifier = Modifier.padding(start = 20.dp, end = 20.dp)
+                        modifier = paddingModifier
                     )
                     Column {
                         Text(
@@ -284,6 +299,57 @@ fun SettingsScreen(
                             overflow = TextOverflow.Ellipsis
                         )
                     }
+                }
+            }
+
+            item {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.ic_speed),
+                            contentDescription = "",
+                            modifier = paddingModifier
+                        )
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = stringResource(id = R.string.background_usage),
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Text(
+                                text = stringResource(
+                                    id = R.string.background_usage_desc
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                    }
+                    Switch(
+                        modifier = paddingModifier,
+                        checked = viewModel.isIgnoringBatteryOptimization.value,
+                        onCheckedChange = {
+                            var intent: Intent
+                            if (!viewModel.isIgnoringBatteryOptimization.value) {
+                                intent =
+                                    Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
+                                        data = Uri.parse("package:${context.packageName}")
+                                    }
+                            } else {
+                                intent =
+                                    Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS).apply {
+
+                                    }
+                            }
+                            context.startActivity(intent)
+                        }
+                    )
                 }
             }
         }

@@ -20,11 +20,13 @@
 package org.librefit.ui.components.animations
 
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.toArgb
+import androidx.compose.ui.unit.dp
 import com.airbnb.lottie.LottieProperty
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
@@ -35,8 +37,8 @@ import com.airbnb.lottie.compose.rememberLottieDynamicProperty
 import org.librefit.R
 
 @Composable
-fun PreferencesLottie() {
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.preferences_lottie))
+fun AlarmLottie() {
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.alarm_lottie))
 
     val progress by animateLottieCompositionAsState(composition)
 
@@ -44,15 +46,16 @@ fun PreferencesLottie() {
 
     val dynamicProperties = rememberLottieDynamicProperties(
         rememberLottieDynamicProperty(
-            property = LottieProperty.COLOR,
+            property = LottieProperty.STROKE_COLOR,
             value = color,
-            // Path matching everything with the name "Fill 1"
-            keyPath = arrayOf("**", "Fill 1")
+            keyPath = arrayOf("**", "Stroke 1") // Path matching everything with the name "Stroke 1"
         )
     )
 
     LottieAnimation(
-        modifier = Modifier.fillMaxWidth(0.5f),
+        modifier = Modifier
+            .fillMaxWidth(0.6f)
+            .padding(20.dp),
         composition = composition,
         progress = { progress },
         dynamicProperties = dynamicProperties,

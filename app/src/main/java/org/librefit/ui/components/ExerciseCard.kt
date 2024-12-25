@@ -23,10 +23,11 @@ import android.util.Log
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -37,23 +38,27 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SwipeToDismissBox
 import androidx.compose.material3.SwipeToDismissBoxValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextField
 import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -65,6 +70,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.KeyboardType
@@ -103,10 +110,13 @@ import kotlin.text.toInt
  * @param updateExercise A function to update the exercise details. For further information,
  * see [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateExercise] and
  * [org.librefit.ui.screens.createRoutine.CreateRoutineScreenViewModel.updateExercise].
+ * @param showInfo A lambda function executed when info icon next to "type of set" or "rest time" text
+ * is clicked. The passed parameter is used by [InfoModalBottomSheet] to show the relevant information
  * @param workout A Boolean flag indicating whether a checkbox should be displayed next to each set.
  * This should be set to `true` when the card is used in [org.librefit.ui.screens.workout.WorkoutScreen];
  * otherwise, it should be `false`.
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExerciseCard(
     modifier: Modifier,
@@ -117,6 +127,7 @@ fun ExerciseCard(
     updateSet: (Set, Int, Int) -> Unit,
     deleteSet: (Set) -> Unit,
     updateExercise: (String, Int) -> Unit,
+    showInfo: (Int) -> Unit,
     workout: Boolean = false
 ) {
     Log.d("ExerciseCard", "Recomposition of card id: " + exerciseWithSets.id)
@@ -167,9 +178,24 @@ fun ExerciseCard(
 
             //Rest timer slider
             var restTime by remember { mutableIntStateOf(exerciseWithSets.restTime) }
-            Text(
-                stringResource(R.string.rest_time) + ": " + restTime
-                    + " " + stringResource(R.string.seconds).replaceFirstChar { it.lowercase() })
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(
+                    // Refer to InfoModalBottomSheet to know the reason behind this value.
+                    // Do NOT change it.
+                    onClick = { showInfo(1) }
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Info,
+                        contentDescription = stringResource(R.string.info)
+                    )
+                }
+                Text(stringResource(R.string.rest_time) + ": " + restTime
+                        + " " + stringResource(R.string.seconds).replaceFirstChar { it.lowercase() })
+            }
             Slider(
                 value = restTime.toFloat(),
                 onValueChange = { restTime = it.roundToInt() },
@@ -183,36 +209,92 @@ fun ExerciseCard(
                 steps = 19
             )
 
-            Spacer(modifier = Modifier.height(10.dp))
+            HorizontalDivider(modifier = Modifier.padding(top = 10.dp, bottom = 10.dp))
 
             // Set mode selection
-            //TODO: add info icon to explain in detail
-            Text(stringResource(R.string.set_mode))
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceAround,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                SingleChoiceSegmentedButtonRow {
-                    SetMode.entries.forEachIndexed { index, mode ->
-                        SegmentedButton(
-                            selected = exerciseWithSets.setMode == mode,
-                            onClick = {
-                                updateExercise(mode.name, 1)
-                            },
-                            shape = SegmentedButtonDefaults.itemShape(
-                                index = index,
-                                count = SetMode.entries.size
-                            )
-                        ) {
-                            Text(
-                                text = stringResource(setModeToStringId(mode)),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                Row(
+                    modifier = Modifier.weight(0.5f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.Center
+                ) {
+                    IconButton(
+                        // Refer to InfoModalBottomSheet to know the reason behind this value.
+                        // Do NOT change it.
+                        onClick = { showInfo(2) }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = stringResource(R.string.info) + ":"
+                        )
+                    }
+                    Text(stringResource(R.string.type_of_set))
+                }
+
+
+                var expanded by remember { mutableStateOf(false) }
+
+                val focusRequester = remember { FocusRequester() }
+
+                ExposedDropdownMenuBox(
+                    expanded = expanded,
+                    onExpandedChange = { expanded = it },
+                    modifier = Modifier
+                        .padding(start = 10.dp, end = 10.dp)
+                        .weight(0.5f)
+                        .clickable {
+                            expanded = !expanded
+                            focusRequester.requestFocus()
+                        }
+                        .focusRequester(focusRequester)
+                        .focusable()
+                ) {
+                    TextField(
+                        readOnly = true,
+                        value = stringResource(setModeToStringId(exerciseWithSets.setMode)),
+                        onValueChange = {},
+                        singleLine = true,
+                        trailingIcon = {
+                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                        },
+                        modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable),
+                        colors = ExposedDropdownMenuDefaults.textFieldColors()
+                    )
+                    ExposedDropdownMenu(
+                        expanded = expanded,
+                        onDismissRequest = { expanded = false }
+                    ) {
+                        SetMode.entries.forEachIndexed { index, mode ->
+                            DropdownMenuItem(
+                                onClick = {
+                                    updateExercise(mode.name, 1)
+                                    expanded = false
+                                },
+                                text = {
+                                    Text(
+                                        text = stringResource(setModeToStringId(mode))
+                                    )
+                                },
+                                trailingIcon = if (exerciseWithSets.setMode == mode) {
+                                    {
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = stringResource(R.string.checkbox)
+                                        )
+                                    }
+                                } else null,
+                                modifier = Modifier.background(
+                                    if (exerciseWithSets.setMode == mode) MaterialTheme.colorScheme.inversePrimary.copy(
+                                        0.3f
+                                    ) else Color.Unspecified
+                                )
                             )
                         }
                     }
-
                 }
             }
 
@@ -487,6 +569,7 @@ private fun ExerciseCardPreview() {
         { i, j, k -> },
         {},
         { i, j -> },
+        {},
         false
     )
 }

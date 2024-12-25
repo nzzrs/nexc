@@ -35,36 +35,22 @@ import com.airbnb.lottie.compose.rememberLottieDynamicProperty
 import org.librefit.R
 
 @Composable
-fun AddIconLottie() {
+fun DumbbellLottie() {
     val color = MaterialTheme.colorScheme.primary.toArgb()
 
-    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.add_lottie))
+    val composition by rememberLottieComposition(LottieCompositionSpec.RawRes(R.raw.dumbbell_lottie))
 
-    val progress by animateLottieCompositionAsState(
-        composition = composition, speed = 0.7f
-    )
+    val progress by animateLottieCompositionAsState(composition)
 
     val dynamicProperties = rememberLottieDynamicProperties(
         rememberLottieDynamicProperty(
-            property = LottieProperty.COLOR,
-            value = color,
-            keyPath = arrayOf("oo", "Ellipse 1", "Fill 1") // Path layer
-        ), rememberLottieDynamicProperty(
-            property = LottieProperty.COLOR,
-            value = color,
-            keyPath = arrayOf("o11", "Ellipse 1", "Fill 1") // Path layer
-        ), rememberLottieDynamicProperty(
-            property = LottieProperty.COLOR,
-            value = color,
-            keyPath = arrayOf("o12", "Ellipse 1", "Fill 1") // Path layer
-        ), rememberLottieDynamicProperty(
-            property = LottieProperty.COLOR,
-            value = color,
-            keyPath = arrayOf("o13", "Ellipse 1", "Fill 1") // Path layer
+            property = LottieProperty.COLOR, value = color,
+            // Path matching everything with the name "Fill 1"
+            keyPath = arrayOf("**", "Fill 1")
         )
     )
     LottieAnimation(
-        modifier = Modifier.fillMaxWidth(0.4f),
+        modifier = Modifier.fillMaxWidth(0.5f),
         composition = composition,
         progress = { progress },
         dynamicProperties = dynamicProperties

@@ -63,6 +63,7 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -86,7 +87,8 @@ import org.librefit.nav.Destination
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.ExerciseCard
 import org.librefit.ui.components.ExerciseDetailModalBottomSheet
-import org.librefit.ui.components.animations.AddIconLottie
+import org.librefit.ui.components.InfoModalBottomSheet
+import org.librefit.ui.components.animations.DumbbellLottie
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.util.ExerciseDC
 import org.librefit.util.ExerciseWithSets
@@ -163,18 +165,36 @@ fun WorkoutScreen(
         )
     }
 
+    /** Holds the type of info to display with [InfoModalBottomSheet]
+     * after [ExerciseCard] calls showInfo. The possible values:
+     *  Dismiss  -> 0;
+     *  Rest time -> 1;
+     *  Set mode  -> 2;
+     */
+    var infoMode by remember { mutableIntStateOf(0) }
+
+    if (infoMode != 0) {
+        InfoModalBottomSheet(infoMode) { infoMode = 0 }
+    }
+
 
     BackHandler(enabled = !showExitDialog && !viewModel.isListEmpty()) {
         showExitDialog = true
     }
 
-    var isModalSheetOpen by remember { mutableStateOf(false) }
+
+    var isExerciseDetailsOpen by remember { mutableStateOf(false) }
 
     /**
      * It holds [ExerciseDC] for [ExerciseDetailModalBottomSheet]
      */
     var selectedExercise by remember { mutableStateOf<ExerciseDC?>(null) }
 
+    if (isExerciseDetailsOpen) {
+        ExerciseDetailModalBottomSheet(exercise = selectedExercise!!) {
+            isExerciseDetailsOpen = false
+        }
+    }
 
 
     Scaffold(
@@ -263,7 +283,7 @@ fun WorkoutScreen(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        AddIconLottie()
+                        DumbbellLottie()
                         Text(
                             text = stringResource(id = R.string.add_to_empty_workout),
                             color = MaterialTheme.colorScheme.onBackground,
@@ -282,7 +302,7 @@ fun WorkoutScreen(
                             },
                             onDetail = {
                                 selectedExercise = exerciseWithSets.exerciseDC
-                                isModalSheetOpen = true
+                                isExerciseDetailsOpen = true
                             },
                             onDelete = {
                                 viewModel.deleteExercise(i)
@@ -308,6 +328,7 @@ fun WorkoutScreen(
                                     mode = mode
                                 )
                             },
+                            showInfo = { infoMode = it },
                             workout = true
                         )
                     }
@@ -316,10 +337,6 @@ fun WorkoutScreen(
 
             item { Spacer(Modifier.height(100.dp)) }
         }
-    }
-
-    if (isModalSheetOpen) {
-        ExerciseDetailModalBottomSheet(exercise = selectedExercise!!) { isModalSheetOpen = false }
     }
 }
 

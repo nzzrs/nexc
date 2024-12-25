@@ -74,6 +74,7 @@
     <string name="add_to_empty_workout">Inizia aggiungendo un esercizio al tuo allenamento</string>
     <string name="elapsed_time">Tempo trascorso</string>
     <string name="new_workout">Nuovo allenamento</string>
+    <string name="type_of_set_desc">Ci sono tre tipologie di set:\n\n1) Set di peso: Comporta il sollevamento di un peso specifico per un numero designato di ripetizioni. È generalmente utilizzato per esercizi di bodybuilding.\n\n2) Set di ripetizioni: Questa tipologia si basa sull\'esecuzione di un certo numero di ripetizioni senza un peso specifico, tipicamente utilizzato per esercizi a corpo libero.\n\n3) Set di tempo: Questa tipologia  si basa sull\'esecuzione di un esercizio per una durata specifica. Può essere utilizzato per misurare il tempo d\'esecuzione.</string>
     <string name="details">Dettagli</string>
     <string name="force">Forza</string>
     <string name="level">Livello</string>
@@ -89,7 +90,7 @@
     <string name="cancel_dialog">Annulla</string>
     <string name="exit_dialog">Esci</string>
     <string name="rest_time">Tempo di riposo</string>
-    <string name="set_mode">Modalità set</string>
+    <string name="type_of_set">Tipologia di set</string>
     <string name="any">Qualsiasi</string>
     <string name="rest_time_is_over">Il tempo di riposo è finito!</string>
     <string name="rest">Riposo</string>
@@ -139,7 +140,7 @@
     <string name="category_plyometrics">Pliometria</string>
     <string name="equipment_dumbbell">Manubri</string>
     <string name="category_stretching">Stretching</string>
-    <string name="nothing_to_show">Ancora niente da mostrare.</string>
+    <string name="nothing_to_show">Ancora niente da mostrare</string>
     <string name="before_starting_the_workout">Prima di iniziare l\'allenamento</string>
     <string name="best_experience_permissions">Per la migliore esperienza in LibreFit, deve essere concesso il seguente permesso:</string>
     <string name="notifications_permission_desc">Consente di inviare notifiche sugli allenamenti in corso e sugli intervalli di riposo.</string>
@@ -179,4 +180,5 @@
     <string name="add_ten_seconds">+10s</string>
     <string name="done">Fatto</string>
     <string name="menu">Menu</string>
+    <string name="rest_time_desc">Il tempo di riposo indica l\'inizio del timer di riposo. Inizia a contare alla rovescia immediatamente dopo il completamento di un set. Ci sarà un avviso quando il periodo di riposo termina.</string>
 </resources>

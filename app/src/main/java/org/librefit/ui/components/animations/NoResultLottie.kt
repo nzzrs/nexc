@@ -48,27 +48,8 @@ fun NoResultLottie() {
         rememberLottieDynamicProperty(
             property = LottieProperty.COLOR,
             value = color,
-            keyPath = arrayOf("magnification glass", "Group 1", "Fill 1")
-        ),
-        rememberLottieDynamicProperty(
-            property = LottieProperty.COLOR,
-            value = color,
-            keyPath = arrayOf("face", "Group 1", "Group 1", "Fill 1")
-        ),
-        rememberLottieDynamicProperty(
-            property = LottieProperty.COLOR,
-            value = color,
-            keyPath = arrayOf("face", "Group 1", "Group 2", "Fill 1")
-        ),
-        rememberLottieDynamicProperty(
-            property = LottieProperty.COLOR,
-            value = color,
-            keyPath = arrayOf("face", "Group 2", "Group 1", "Fill 1")
-        ),
-        rememberLottieDynamicProperty(
-            property = LottieProperty.COLOR,
-            value = color,
-            keyPath = arrayOf("face", "Group 2", "Group 2", "Fill 1")
+            // Path matching everything with the name "Fill 1"
+            keyPath = arrayOf("**", "Fill 1")
         )
     )
     LottieAnimation(

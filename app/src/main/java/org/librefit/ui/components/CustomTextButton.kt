@@ -33,7 +33,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.unit.dp
 
 @Composable
 fun CustomTextButton(
@@ -59,7 +58,7 @@ fun CustomTextButton(
                 imageVector = icon,
                 contentDescription = iconDescription
             )
-            Spacer(Modifier.width(10.dp))
+            Spacer(Modifier.width(ButtonDefaults.IconSpacing))
             Text(text = text)
         }
     }

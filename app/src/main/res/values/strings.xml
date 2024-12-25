@@ -244,5 +244,7 @@
     <string name="seconds">Seconds</string>
     <string name="done">Done</string>
     <string name="menu">Menu</string>
+    <string name="add">Add</string>
+    <string name="save">Save</string>
 
 </resources>

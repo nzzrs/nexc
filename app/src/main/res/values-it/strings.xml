@@ -181,4 +181,6 @@
     <string name="done">Fatto</string>
     <string name="menu">Menu</string>
     <string name="rest_time_desc">Il tempo di riposo indica l\'inizio del timer di riposo. Inizia a contare alla rovescia immediatamente dopo il completamento di un set. Ci sarà un avviso quando il periodo di riposo termina.</string>
+    <string name="add">Aggiungi</string>
+    <string name="save">Salva</string>
 </resources>

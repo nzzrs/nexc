@@ -22,7 +22,6 @@ package org.librefit.ui.screens.workout
 import android.app.Activity
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
-import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,16 +39,15 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ProgressIndicatorDefaults
@@ -225,8 +223,7 @@ fun WorkoutScreen(
                     }
                 },
                 actions = {
-                    //TODO: replace button with text button for clarity reasons
-                    IconButton(
+                    Button(
                         onClick = {
                             viewModel.saveExercisesWithWorkout(
                                 workout = Workout(
@@ -240,12 +237,8 @@ fun WorkoutScreen(
                             navController.popBackStack()
                         },
                         enabled = !viewModel.isListEmpty(),
-                        colors = IconButtonDefaults.filledIconButtonColors()
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Done,
-                            contentDescription = stringResource(R.string.done)
-                        )
+                        Text(stringResource(R.string.done))
                     }
                 }
             )
@@ -366,11 +359,6 @@ private fun BottomAppBarContent(viewModel: WorkoutScreenViewModel) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            //TODO: size and shape doesn't follow best practises
-            val animatedPlayButton = animateDpAsState(
-                targetValue = (if (viewModel.isChronometerPaused) 60 else 110).dp,
-                label = "playButtonAnimation"
-            )
             Box(
                 modifier = Modifier
                     .weight(0.2f),
@@ -382,7 +370,7 @@ private fun BottomAppBarContent(viewModel: WorkoutScreenViewModel) {
                         if (viewModel.isChronometerPaused) viewModel.startChronometer()
                         else viewModel.pauseChronometer()
                     },
-                    modifier = Modifier.size(animatedPlayButton.value)
+                    modifier = Modifier.size(65.dp),
                 ) {
                     Icon(
                         imageVector = if (viewModel.isChronometerPaused) Icons.Default.PlayArrow else

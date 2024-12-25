@@ -32,7 +32,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -122,9 +121,8 @@ fun CreateRoutineScreen(
             )
             navController.popBackStack()
         },
-        actionIcon = Icons.Default.Done,
+        actionDescription = stringResource(R.string.save),
         actionEnabled = !viewModel.isTitleEmpty() && !viewModel.isListEmpty(),
-        elevatedActionIcon = true,
         fabIcon = Icons.Default.Add,
         fabAction = {
             navController.navigate(Destination.AddExerciseScreen)

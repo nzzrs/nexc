@@ -34,7 +34,6 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.KeyboardArrowUp
@@ -116,9 +115,8 @@ fun AddExerciseScreen(
             viewModel.addSelectedExerciseToList(selectedExercisesList)
             navigateBack()
         },
-        actionIcon = Icons.Default.Add,
+        actionDescription = stringResource(R.string.add),
         actionEnabled = selectedExercisesList.isNotEmpty(),
-        elevatedActionIcon = true,
         fabAction = {
             coroutineScope.launch {
                 lazyListState.animateScrollToItem(0)

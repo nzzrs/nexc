@@ -24,11 +24,11 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -49,9 +49,8 @@ import org.librefit.R
  *                     This should typically handle back navigation.
  * @param action A callback function executed when the action button in the [TopAppBar] is clicked.
  * @param actionEnabled A Boolean that controls whether the action button is enabled or disabled.
- * @param actionIcon An optional [ImageVector] representing the icon displayed in the action button.
- * @param elevatedActionIcon A Boolean that, when true, applies elevated colors to the [actionIcon].
- * @param actionDescription An optional string that provides a description of the action for accessibility purposes.
+ * @param actionDescription A string that provides a description of the action. It must be not null to
+ * enable the button action
  * @param fabAction A callback function executed when the [FloatingActionButton] is clicked.
  * @param fabIcon An optional [ImageVector] representing the icon displayed in the [FloatingActionButton].
  * @param fabDescription An optional string that provides a description of the [fabIcon] and [fabAction]
@@ -69,8 +68,6 @@ fun CustomScaffold(
     navigateBack: () -> Unit,
     action: () -> Unit = {},
     actionEnabled: Boolean = true,
-    actionIcon: ImageVector? = null,
-    elevatedActionIcon: Boolean = false,
     actionDescription: String? = null,
     fabAction: () -> Unit = {},
     fabIcon: ImageVector? = null,
@@ -94,16 +91,12 @@ fun CustomScaffold(
                     }
                 },
                 actions = {
-                    if (actionIcon != null) {
-                        IconButton(
+                    if (actionDescription != null) {
+                        Button(
                             onClick = action,
-                            enabled = actionEnabled,
-                            colors = if (elevatedActionIcon) IconButtonDefaults.filledIconButtonColors() else IconButtonDefaults.iconButtonColors()
+                            enabled = actionEnabled
                         ) {
-                            Icon(
-                                imageVector = actionIcon,
-                                contentDescription = actionDescription
-                            )
+                            Text(text = actionDescription)
                         }
                     }
                 },

@@ -216,6 +216,8 @@
     <string name="done">Done</string>
     <string name="menu">Menu</string>
     <string name="rest_time_desc">The rest time indicates the beginning of the rest timer. It starts counting down immediately after a set is completed. There\'s will be an alert when the rest period ends.</string>
+    <string name="add">Add</string>
+    <string name="save">Save</string>
 
 
 </resources>

@@ -32,7 +32,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.librefit.MainApplication
 import org.librefit.db.Set
-import org.librefit.db.Workout
 import org.librefit.enums.SetMode
 import org.librefit.enums.WorkoutServiceActions
 import org.librefit.services.WorkoutService
@@ -213,12 +212,6 @@ class WorkoutScreenViewModel(
         }
     }
 
-    fun saveExercisesWithWorkout(workout: Workout, exercises: List<ExerciseWithSets>) {
-        val list = exercises.toList()
-        viewModelScope.launch(Dispatchers.IO) {
-            workoutDao.addWorkoutWithExercises(workout, list)
-        }
-    }
 
 
     var timeElapsed by mutableIntStateOf(0)

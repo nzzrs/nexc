@@ -94,7 +94,7 @@ fun AddExerciseScreen(
 
     if (showExitDialog) {
         ConfirmDialog(
-            title = stringResource(R.string.exit_dialog),
+            title = stringResource(R.string.exit),
             text = stringResource(id = R.string.exit_add_exercise),
             onConfirm = {
                 navigateBack()

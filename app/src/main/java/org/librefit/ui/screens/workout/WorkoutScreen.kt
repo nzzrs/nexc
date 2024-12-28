@@ -61,7 +61,6 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -81,6 +80,7 @@ import androidx.navigation.NavHostController
 import org.librefit.R
 import org.librefit.data.DataStoreManager
 import org.librefit.db.Workout
+import org.librefit.enums.InfoMode
 import org.librefit.nav.Destination
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.ExerciseCard
@@ -91,6 +91,7 @@ import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.util.ExerciseDC
 import org.librefit.util.ExerciseWithSets
 import org.librefit.util.formatTime
+import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Stable
@@ -153,7 +154,7 @@ fun WorkoutScreen(
 
     if (showExitDialog) {
         ConfirmDialog(
-            title = stringResource(R.string.exit_dialog),
+            title = stringResource(R.string.exit),
             text = stringResource(id = R.string.exit_workout),
             onConfirm = {
                 navController.popBackStack()
@@ -163,16 +164,11 @@ fun WorkoutScreen(
         )
     }
 
-    /** Holds the type of info to display with [InfoModalBottomSheet]
-     * after [ExerciseCard] calls showInfo. The possible values:
-     *  Dismiss  -> 0;
-     *  Rest time -> 1;
-     *  Set mode  -> 2;
-     */
-    var infoMode by remember { mutableIntStateOf(0) }
 
-    if (infoMode != 0) {
-        InfoModalBottomSheet(infoMode) { infoMode = 0 }
+    var infoMode by remember { mutableStateOf(InfoMode.DISMISS) }
+
+    if (infoMode != InfoMode.DISMISS) {
+        InfoModalBottomSheet(infoMode) { infoMode = InfoMode.DISMISS }
     }
 
 
@@ -200,8 +196,7 @@ fun WorkoutScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = if (workoutTitle.isEmpty()) stringResource(R.string.new_workout)
-                        else stringResource(R.string.workout) + ": $workoutTitle",
+                        text = stringResource(R.string.workout),
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
                     )
@@ -225,16 +220,16 @@ fun WorkoutScreen(
                 actions = {
                     Button(
                         onClick = {
-                            viewModel.saveExercisesWithWorkout(
+                            sharedViewModel.setPassedData(
                                 workout = Workout(
-                                    title = workoutTitle.ifEmpty {
-                                        context.getString(R.string.workout)
-                                    },
-                                    timeElapsed = viewModel.timeElapsed
+                                    id = workoutId,
+                                    title = workoutTitle,
+                                    timeElapsed = viewModel.timeElapsed,
+                                    completed = LocalDateTime.now()
                                 ),
                                 exercises = viewModel.getExercises()
                             )
-                            navController.popBackStack()
+                            navController.navigate(Destination.BeforeSavingScreen)
                         },
                         enabled = !viewModel.isListEmpty(),
                     ) {

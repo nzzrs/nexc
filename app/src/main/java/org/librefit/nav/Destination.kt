@@ -20,6 +20,7 @@
 package org.librefit.nav
 
 import kotlinx.serialization.Serializable
+import org.librefit.enums.SuccessMessage
 
 
 sealed class Destination {
@@ -28,6 +29,9 @@ sealed class Destination {
 
     @Serializable
     object AddExerciseScreen
+
+    @Serializable
+    object BeforeSavingScreen
 
     @Serializable
     object CreateRoutineScreen
@@ -48,8 +52,13 @@ sealed class Destination {
     object SettingsScreen
 
     @Serializable
+    data class SuccessScreen(
+        val message: SuccessMessage,
+    )
+
+    @Serializable
     data class WorkoutScreen(
-        val workoutId : Int = 0,
-        val workoutTitle : String = ""
+        val workoutId: Int = 0,
+        val workoutTitle: String = ""
     )
 }

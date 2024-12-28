@@ -22,6 +22,7 @@ package org.librefit.ui.screens.shared
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import org.librefit.db.Workout
 import org.librefit.enums.Category
 import org.librefit.enums.Equipment
 import org.librefit.enums.Force
@@ -29,6 +30,7 @@ import org.librefit.enums.Level
 import org.librefit.enums.Mechanic
 import org.librefit.enums.Muscle
 import org.librefit.util.ExerciseDC
+import org.librefit.util.ExerciseWithSets
 
 class SharedViewModel : ViewModel() {
     private val selectedExercisesList = mutableStateListOf<ExerciseDC>()
@@ -112,5 +114,34 @@ class SharedViewModel : ViewModel() {
             return false
         }
         return true
+    }
+
+
+    private lateinit var passedWorkout: Workout
+    private lateinit var passedExercises: List<ExerciseWithSets>
+
+    /**
+     * It is used to pass data between [org.librefit.ui.screens.workout.WorkoutScreen] and
+     * [org.librefit.ui.screens.workout.beforeSaving.BeforeSavingScreen]
+     */
+    fun setPassedData(workout: Workout, exercises: List<ExerciseWithSets>) {
+        passedWorkout = workout
+        passedExercises = exercises
+    }
+
+    /**
+     * It is used to pass data between [org.librefit.ui.screens.workout.WorkoutScreen] and
+     * [org.librefit.ui.screens.workout.beforeSaving.BeforeSavingScreen]
+     */
+    fun getPassedWorkout(): Workout {
+        return passedWorkout
+    }
+
+    /**
+     * It is used to pass data between [org.librefit.ui.screens.workout.WorkoutScreen] and
+     * [org.librefit.ui.screens.workout.beforeSaving.BeforeSavingScreen]
+     */
+    fun getPassedExercises(): List<ExerciseWithSets> {
+        return passedExercises
     }
 }

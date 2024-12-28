@@ -38,7 +38,7 @@ class ProfileScreenViewModel : ViewModel() {
 
     private fun getWorkoutList() {
         viewModelScope.launch {
-            workoutDao.getWorkouts().collect { workouts ->
+            workoutDao.getCompletedWorkouts().collect { workouts ->
                 workoutList.value = workouts
             }
         }

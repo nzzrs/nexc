@@ -19,8 +19,10 @@
 
 package org.librefit.ui.components.animations
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
 import com.airbnb.lottie.compose.LottieAnimation
 import com.airbnb.lottie.compose.LottieCompositionSpec
 import com.airbnb.lottie.compose.animateLottieCompositionAsState
@@ -34,6 +36,7 @@ fun SuccessLottie() {
     val progress by animateLottieCompositionAsState(composition)
 
     LottieAnimation(
+        modifier = Modifier.fillMaxWidth(0.5f),
         composition = composition,
         progress = { progress }
     )

@@ -34,16 +34,15 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -58,6 +57,8 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
 import org.librefit.db.Workout
+import org.librefit.enums.InfoMode
+import org.librefit.enums.SuccessMessage
 import org.librefit.nav.Destination
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.CustomScaffold
@@ -95,7 +96,7 @@ fun CreateRoutineScreen(
 
     if (showExitDialog) {
         ConfirmDialog(
-            title = stringResource(R.string.exit_dialog),
+            title = stringResource(R.string.exit),
             text = stringResource(id = R.string.exit_create_routine),
             onConfirm = {
                 navController.popBackStack()
@@ -116,13 +117,18 @@ fun CreateRoutineScreen(
         },
         action = {
             viewModel.saveExercisesWithRoutine(
-                workout = Workout(title = viewModel.getTitle()),
+                workout = Workout(
+                    title = viewModel.getTitle(),
+                    notes = viewModel.getNotes()
+                ),
                 exercises = viewModel.exercises
             )
-            navController.popBackStack()
+            navController.navigate(Destination.SuccessScreen(SuccessMessage.ROUTINE_SAVED)) {
+                popUpTo(Destination.MainScreen) { inclusive = false }
+            }
         },
         actionDescription = stringResource(R.string.save),
-        actionEnabled = !viewModel.isTitleEmpty() && !viewModel.isListEmpty(),
+        actionEnabled = viewModel.isTitleAllowed() && !viewModel.isListEmpty(),
         fabIcon = Icons.Default.Add,
         fabAction = {
             navController.navigate(Destination.AddExerciseScreen)
@@ -152,24 +158,20 @@ private fun CreateRoutineScreen(
         ExerciseDetailModalBottomSheet(exercise = selectedExercise!!) { isModalSheetOpen = false }
     }
 
-    /** Holds the type of info to display with [InfoModalBottomSheet]
-     * after [ExerciseCard] calls showInfo. The possible values:
-     *  Dismiss   -> 0;
-     *  Rest time -> 1;
-     *  Set mode  -> 2;
-     */
-    var infoMode by remember { mutableIntStateOf(0) }
 
-    if (infoMode != 0) {
-        InfoModalBottomSheet(infoMode) { infoMode = 0 }
+    var infoMode by remember { mutableStateOf(InfoMode.DISMISS) }
+
+    if (infoMode != InfoMode.DISMISS) {
+        InfoModalBottomSheet(infoMode) { infoMode = InfoMode.DISMISS }
     }
+
 
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
             .padding(paddingValues = innerPadding)
             .padding(start = 15.dp, end = 15.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+        verticalArrangement = Arrangement.spacedBy(15.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item {
@@ -181,16 +183,15 @@ private fun CreateRoutineScreen(
                     viewModel.updateTitle(newTitle)
                 },
                 trailingIcon = {
-                    if (viewModel.isTitleEmpty() || viewModel.isTitleTooLong()) {
+                    if (!viewModel.isTitleAllowed()) {
                         Icon(
                             imageVector = Icons.Default.Warning,
                             contentDescription = stringResource(R.string.warning)
                         )
                     }
                 },
-                isError = viewModel.isTitleEmpty() || viewModel.isTitleTooLong(),
+                isError = !viewModel.isTitleAllowed(),
                 label = { Text(text = stringResource(id = R.string.title)) },
-                colors = OutlinedTextFieldDefaults.colors(),
                 supportingText = {
                     when {
                         viewModel.isTitleTooLong() -> {
@@ -203,6 +204,19 @@ private fun CreateRoutineScreen(
                     }
                 }
             )
+        }
+        item {
+            OutlinedTextField(
+                value = viewModel.getNotes(),
+                modifier = Modifier.fillMaxWidth(),
+                onValueChange = { newNotes ->
+                    viewModel.updateNotes(newNotes)
+                },
+                label = { Text(text = stringResource(id = R.string.notes)) },
+            )
+        }
+        item {
+            HorizontalDivider()
         }
         if (viewModel.isListEmpty()) {
             item {

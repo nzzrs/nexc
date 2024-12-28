@@ -47,6 +47,15 @@
     <string name="founder">Fondatore</string>
     <string name="translators">Traduttori</string>
     <string name="contributed_to">"Contribuito a: "</string>
+    <string name="unlink_routine">Scollega routine</string>
+    <string name="unlink_routine_desc">Il collegamento delle routine consente di misurare i progressi degli allenamenti nel tempo. Se si scollega un allenamento da una routine, questo non verrà cancellato e tutti gli allenamenti collegati a quella routine rimarranno invariati. Lo scollegamento avrà effetto solo sull\'allenamento corrente.</string>
+    <string name="overview">Panoramica</string>
+    <string name="statistics">Statistiche</string>
+    <string name="volume">Volume</string>
+    <string name="total_sets">Set totali</string>
+    <string name="completed_sets">Set completati</string>
+    <string name="exercises">Esercizi</string>
+    <string name="routine">Routine</string>
     <string name="start_creating_routine">Inizia aggiungendo un esercizio alla tua routine</string>
     <string name="exit_create_routine">Sei sicuro di voler uscire? La tua routine non sarà salvata</string>
     <string name="title">Titolo</string>
@@ -75,6 +84,7 @@
     <string name="elapsed_time">Tempo trascorso</string>
     <string name="new_workout">Nuovo allenamento</string>
     <string name="type_of_set_desc">Ci sono tre tipologie di set:\n\n1) Set di peso: Comporta il sollevamento di un peso specifico per un numero designato di ripetizioni. È generalmente utilizzato per esercizi di bodybuilding.\n\n2) Set di ripetizioni: Questa tipologia si basa sull\'esecuzione di un certo numero di ripetizioni senza un peso specifico, tipicamente utilizzato per esercizi a corpo libero.\n\n3) Set di tempo: Questa tipologia  si basa sull\'esecuzione di un esercizio per una durata specifica. Può essere utilizzato per misurare il tempo d\'esecuzione.</string>
+    <string name="statistics_desc">- Il tempo trascorso si riferisce alla durata totale della sessione di allenamento. È l\'unico parametro modificabile dall\'utente.\n\n- Il volume è definito come la quantità totale di peso sollevato durante un allenamento, calcolato moltiplicando per ogni serie completata il numero di ripetizioni eseguite per il peso sollevato. Un alto volume è associato a una maggiore ipertrofia muscolare e a un aumento della forza nel tempo.\n\n- Per set totali si intende il numero cumulativo di set previsti per ogni esercizio in un allenamento. Un set è un gruppo di ripetizioni consecutive eseguite senza riposo.\n\n- Set completati indica il numero di set portati a termine con successo come da scheda.</string>
     <string name="details">Dettagli</string>
     <string name="force">Forza</string>
     <string name="level">Livello</string>
@@ -88,7 +98,7 @@
     <string name="settings_general">Generale</string>
     <string name="language">Lingua</string>
     <string name="cancel_dialog">Annulla</string>
-    <string name="exit_dialog">Esci</string>
+    <string name="exit">Esci</string>
     <string name="rest_time">Tempo di riposo</string>
     <string name="type_of_set">Tipologia di set</string>
     <string name="any">Qualsiasi</string>
@@ -180,7 +190,9 @@
     <string name="add_ten_seconds">+10s</string>
     <string name="done">Fatto</string>
     <string name="menu">Menu</string>
+    <string name="routine_saved">Routine salvata</string>
     <string name="rest_time_desc">Il tempo di riposo indica l\'inizio del timer di riposo. Inizia a contare alla rovescia immediatamente dopo il completamento di un set. Ci sarà un avviso quando il periodo di riposo termina.</string>
     <string name="add">Aggiungi</string>
     <string name="save">Salva</string>
+    <string name="workout_saved">Allenamento salvato</string>
 </resources>

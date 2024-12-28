@@ -38,8 +38,10 @@ import org.librefit.ui.screens.createRoutine.CreateRoutineScreen
 import org.librefit.ui.screens.settings.SettingsScreen
 import org.librefit.ui.screens.shared.AddExerciseScreen
 import org.librefit.ui.screens.shared.SharedViewModel
+import org.librefit.ui.screens.shared.SuccessScreen
 import org.librefit.ui.screens.workout.RequestPermissionsScreen
 import org.librefit.ui.screens.workout.WorkoutScreen
+import org.librefit.ui.screens.workout.beforeSaving.BeforeSavingScreen
 import org.librefit.util.ExerciseDC
 
 @Composable
@@ -66,6 +68,12 @@ fun NavigationHost(exerciseList: List<ExerciseDC>, userPreferences: DataStoreMan
                 exerciseList = exerciseList,
                 navigateBack = { navController.popBackStack() },
                 viewModel = sharedViewModel
+            )
+        }
+        composable<Destination.BeforeSavingScreen> {
+            BeforeSavingScreen(
+                sharedViewModel = sharedViewModel,
+                navController = navController
             )
         }
         composable<Destination.CreateRoutineScreen> {
@@ -95,6 +103,12 @@ fun NavigationHost(exerciseList: List<ExerciseDC>, userPreferences: DataStoreMan
             SettingsScreen(
                 navigateBack = { navController.popBackStack() },
                 userPreferences = userPreferences
+            )
+        }
+        composable<Destination.SuccessScreen> {
+            SuccessScreen(
+                message = it.toRoute<Destination.SuccessScreen>().message,
+                navigateBack = { navController.popBackStack() }
             )
         }
         composable<Destination.WorkoutScreen> {

@@ -168,6 +168,21 @@ class CreateRoutineScreenViewModel : ViewModel() {
         return titleRoutine.length >= 30
     }
 
+    fun isTitleAllowed(): Boolean {
+        return !isTitleEmpty() && !isTitleTooLong()
+    }
+
+
+    private var notesRoutine by mutableStateOf("")
+
+    fun updateNotes(string: String) {
+        notesRoutine = string
+    }
+
+    fun getNotes(): String {
+        return notesRoutine
+    }
+
 
     private val workoutDao = MainApplication.workoutDatabase.getWorkoutDao()
 

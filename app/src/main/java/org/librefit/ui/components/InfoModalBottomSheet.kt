@@ -36,37 +36,36 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.librefit.R
+import org.librefit.enums.InfoMode
 import org.librefit.ui.components.animations.AlarmLottie
+import org.librefit.ui.components.animations.StatsLottie
 import org.librefit.ui.components.animations.TrainingLottie
 
 /** A modal bottom sheet used in [org.librefit.ui.screens.workout.WorkoutScreen] and
  * [org.librefit.ui.screens.createRoutine.CreateRoutineScreen] to explain the types of set
- * and rest time in [ExerciseCard]. The passed [infoMode] must be one of the following:
- *  Dismiss  -> 0;
- *  Rest time -> 1;
- *  Set mode  -> 2;
- *  @param onDismiss It should set [infoMode] to 0
+ * and rest time in [ExerciseCard].
+ * @param infoMode A [InfoMode] enum holding the info to display
+ * @param onDismiss A lambda function in which [infoMode] should be set to [InfoMode.DISMISS]
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun InfoModalBottomSheet(
-    infoMode: Int,
+    infoMode: InfoMode,
     onDismiss: () -> Unit
 ) {
     val title = when (infoMode) {
-        1 -> stringResource(R.string.rest_time)
-        2 -> stringResource(R.string.type_of_set)
-        else -> ""
+        InfoMode.REST_TIMER -> stringResource(R.string.rest_time)
+        InfoMode.TYPE_OF_SET -> stringResource(R.string.type_of_set)
+        InfoMode.BEFORE_SAVING_STATS -> stringResource(R.string.statistics)
+        InfoMode.DISMISS -> ""
     }
 
-    if (title == "") {
-        onDismiss
-    }
 
     val explanation = when (infoMode) {
-        1 -> stringResource(R.string.rest_time_desc)
-        2 -> stringResource(R.string.type_of_set_desc)
-        else -> ""
+        InfoMode.REST_TIMER -> stringResource(R.string.rest_time_desc)
+        InfoMode.TYPE_OF_SET -> stringResource(R.string.type_of_set_desc)
+        InfoMode.BEFORE_SAVING_STATS -> stringResource(R.string.statistics_desc)
+        InfoMode.DISMISS -> ""
     }
 
     ModalBottomSheet(
@@ -89,8 +88,10 @@ fun InfoModalBottomSheet(
                 text = explanation,
             )
             when (infoMode) {
-                1 -> AlarmLottie()
-                2 -> TrainingLottie()
+                InfoMode.REST_TIMER -> AlarmLottie()
+                InfoMode.TYPE_OF_SET -> TrainingLottie()
+                InfoMode.BEFORE_SAVING_STATS -> StatsLottie()
+                else -> {}
             }
         }
     }

@@ -28,7 +28,7 @@ import androidx.navigation.NavHostController
 
 /**
  * Navigates to the [org.librefit.ui.screens.workout.WorkoutScreen] or [org.librefit.ui.screens.workout.RequestPermissionsScreen]
- * based on the granted permissions.
+ * based on the granted permission.
  *
  * @param workoutId The ID of the [org.librefit.db.Workout] to open in [org.librefit.ui.screens.workout.WorkoutScreen].
  * @param title The title of the workout.

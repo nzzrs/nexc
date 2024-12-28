@@ -88,6 +88,7 @@ import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.db.Set
 import org.librefit.enums.Category
+import org.librefit.enums.InfoMode
 import org.librefit.enums.Level
 import org.librefit.enums.SetMode
 import org.librefit.util.ExerciseDC
@@ -118,7 +119,7 @@ import kotlin.text.toInt
  * see [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateExercise] and
  * [org.librefit.ui.screens.createRoutine.CreateRoutineScreenViewModel.updateExercise].
  * @param showInfo A lambda function executed when info icon next to "type of set" or "rest time" text
- * is clicked. The passed parameter is used by [InfoModalBottomSheet] to show the relevant information
+ * is clicked. The passed parameter is used by [InfoModalBottomSheet] to show the relevant information.
  * @param setChronometerIsRunning This should be passed only from the workout screen (so [workout]
  * must be `true`). It allows only one set timer to be running at once.
  * @param setWithRunningChronometer This should be passed only from the workout screen (so [workout]
@@ -138,7 +139,7 @@ fun ExerciseCard(
     updateSet: (Set, Int, Int) -> Unit,
     deleteSet: (Set) -> Unit,
     updateExercise: (String, Int) -> Unit,
-    showInfo: (Int) -> Unit,
+    showInfo: (InfoMode) -> Unit,
     setChronometerIsRunning: MutableState<Boolean> = mutableStateOf(false),
     setWithRunningChronometer: MutableState<Set> = mutableStateOf(Set()),
     workout: Boolean = false
@@ -197,9 +198,8 @@ fun ExerciseCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 IconButton(
-                    // Refer to InfoModalBottomSheet to know the reason behind this value.
-                    // Do NOT change it.
-                    onClick = { showInfo(1) }
+                    // Read more at InfoModalBottomSheet
+                    onClick = { showInfo(InfoMode.REST_TIMER) }
                 ) {
                     Icon(
                         imageVector = Icons.Default.Info,
@@ -238,7 +238,7 @@ fun ExerciseCard(
                     IconButton(
                         // Refer to InfoModalBottomSheet to know the reason behind this value.
                         // Do NOT change it.
-                        onClick = { showInfo(2) }
+                        onClick = { showInfo(InfoMode.TYPE_OF_SET) }
                     ) {
                         Icon(
                             imageVector = Icons.Default.Info,
@@ -487,7 +487,7 @@ fun ExerciseCard(
                                             modifier = Modifier.width(80.dp),
                                             value = formatTime(timeValue).substring(3),
                                             onValueChange = { string ->
-                                                val stringValue = string.filter { it != ':' }
+                                                val stringValue = string.filter { it.isDigit() }
 
                                                 val seconds = stringValue.toInt() % 100
                                                 val minutes = (stringValue.toInt() - seconds) / 100
@@ -499,8 +499,6 @@ fun ExerciseCard(
                                                     timeValue,
                                                     2
                                                 )
-
-
                                             },
                                             singleLine = true,
                                             isError = timeError,
@@ -513,18 +511,18 @@ fun ExerciseCard(
                                         modifier = Modifier.width(80.dp),
                                         value = repValue,
                                         onValueChange = { string ->
-                                            if (string.all { it.isDigit() }) {
-                                                if (string.length > 4) {
-                                                    repError = true
-                                                } else {
-                                                    repError = false
-                                                    repValue = string
-                                                    updateSet(
-                                                        set,
-                                                        repValue.ifEmpty { "0" }.toInt(),
-                                                        1
-                                                    )
-                                                }
+                                            val stringValue = string.filter { it.isDigit() }
+
+                                            if (string.length > 4) {
+                                                repError = true
+                                            } else {
+                                                repError = false
+                                                repValue = stringValue
+                                                updateSet(
+                                                    set,
+                                                    repValue.ifEmpty { "0" }.toInt(),
+                                                    1
+                                                )
                                             }
                                         },
                                         singleLine = true,
@@ -537,19 +535,20 @@ fun ExerciseCard(
                                             modifier = Modifier.width(80.dp),
                                             value = weightValue,
                                             onValueChange = { string ->
-                                                if (string.all { it.isDigit() }) {
-                                                    if (string.length > 4) {
-                                                        weightError = true
-                                                    } else {
-                                                        weightValue = string
-                                                        weightError = false
-                                                        updateSet(
-                                                            set,
-                                                            weightValue.ifEmpty { "0" }.toInt(),
-                                                            0
-                                                        )
-                                                    }
+                                                val stringValue = string.filter { it.isDigit() }
+
+                                                if (string.length > 4) {
+                                                    weightError = true
+                                                } else {
+                                                    weightValue = stringValue
+                                                    weightError = false
+                                                    updateSet(
+                                                        set,
+                                                        weightValue.ifEmpty { "0" }.toInt(),
+                                                        0
+                                                    )
                                                 }
+
                                             },
                                             singleLine = true,
                                             isError = weightError,

@@ -44,7 +44,7 @@ class DataStoreManager(private val context: Context) {
     }
 
     val materialMode: Flow<Boolean> = context.dataStore.data.map { preferences ->
-        preferences[materialModeKey] != false
+        preferences[materialModeKey] == true
     }
 
     val workoutScreenOn: Flow<Boolean> = context.dataStore.data.map { preferences ->

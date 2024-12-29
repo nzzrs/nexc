@@ -101,14 +101,14 @@ fun BeforeSavingScreen(
     CustomScaffold(
         title = stringResource(R.string.overview),
         navigateBack = { navController.popBackStack() },
-        action = {
+        actions = listOf {
             viewModel.saveExercisesWithWorkout()
             navController.navigate(Destination.SuccessScreen(SuccessMessage.WORKOUT_SAVED)) {
                 popUpTo(Destination.MainScreen) { inclusive = false }
             }
         },
-        actionDescription = stringResource(R.string.save),
-        actionEnabled = viewModel.isTitleAllowed()
+        actionsDescription = listOf(stringResource(R.string.save)),
+        actionsEnabled = listOf(viewModel.isTitleAllowed())
     ) { paddingValues ->
         LazyColumn(
             modifier = Modifier

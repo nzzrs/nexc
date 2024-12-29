@@ -25,10 +25,12 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -47,10 +49,16 @@ import org.librefit.R
  * @param title The title displayed in the [TopAppBar].
  * @param navigateBack A callback function invoked when the navigation icon in the [TopAppBar] is clicked.
  *                     This should typically handle back navigation.
- * @param action A callback function executed when the action button in the [TopAppBar] is clicked.
- * @param actionEnabled A Boolean that controls whether the action button is enabled or disabled.
- * @param actionDescription A string that provides a description of the action. It must be not null to
- * enable the button action
+ * @param actions A list of callback functions executed when the relative action button in the [TopAppBar] is clicked.
+ * It must be passed in order to show the action button.
+ * @param actionsEnabled A list of booleans that controls whether the relative action button is enabled or disabled.
+ * The default value is `true`.
+ * @param actionsDescription A list of strings that provides a description of the relative action.
+ * It should not be passed along with an icon from [actionsIcons].
+ * @param actionsIcons A list of icons to be displayed inside the relative action button.
+ * It should not be passed along with a description from [actionsDescription].
+ * @param actionsElevated A list of booleans that controls the color elevation of the relative action button.
+ * The default value is `true`.
  * @param fabAction A callback function executed when the [FloatingActionButton] is clicked.
  * @param fabIcon An optional [ImageVector] representing the icon displayed in the [FloatingActionButton].
  * @param fabDescription An optional string that provides a description of the [fabIcon] and [fabAction]
@@ -61,14 +69,17 @@ import org.librefit.R
  * If using [Modifier.verticalScroll], ensure this modifier is applied to the child of the
  * scrollable content, not the scrollable container itself.
  */
+@Suppress("KDocUnresolvedReference")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomScaffold(
     title: String,
     navigateBack: () -> Unit,
-    action: () -> Unit = {},
-    actionEnabled: Boolean = true,
-    actionDescription: String? = null,
+    actions: List<() -> Unit> = listOf(),
+    actionsEnabled: List<Boolean> = listOf(),
+    actionsDescription: List<String?> = listOf(),
+    actionsIcons: List<ImageVector> = listOf(),
+    actionsElevated: List<Boolean> = listOf(),
     fabAction: () -> Unit = {},
     fabIcon: ImageVector? = null,
     fabDescription: String? = null,
@@ -91,12 +102,39 @@ fun CustomScaffold(
                     }
                 },
                 actions = {
-                    if (actionDescription != null) {
-                        Button(
-                            onClick = action,
-                            enabled = actionEnabled
-                        ) {
-                            Text(text = actionDescription)
+                    actions.forEachIndexed { index, action ->
+                        val description = actionsDescription.getOrNull(index)
+
+                        val icon = actionsIcons.getOrNull(index)
+
+
+                        val enabled = actionsEnabled.getOrNull(index) != false
+
+                        if (icon != null) {
+                            IconButton(
+                                onClick = action,
+                                enabled = enabled,
+                                colors = if (actionsElevated.getOrNull(index) != false)
+                                    IconButtonDefaults.filledIconButtonColors() else
+                                    IconButtonDefaults.iconButtonColors()
+                            ) {
+                                Icon(
+                                    imageVector = icon,
+                                    contentDescription = description
+                                )
+                            }
+                        }
+                        if (description != null) {
+                            Button(
+                                onClick = action,
+                                enabled = enabled,
+                                colors = if (actionsElevated.getOrNull(index) != false)
+                                    ButtonDefaults.buttonColors() else
+                                    ButtonDefaults.textButtonColors()
+                            ) {
+                                Text(text = description)
+
+                            }
                         }
                     }
                 },

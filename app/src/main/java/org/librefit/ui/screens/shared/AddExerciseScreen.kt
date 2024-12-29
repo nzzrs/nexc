@@ -111,12 +111,12 @@ fun AddExerciseScreen(
     CustomScaffold(
         title = stringResource(id = R.string.add_exercise),
         navigateBack = navigateBack,
-        action = {
+        actions = listOf {
             viewModel.addSelectedExerciseToList(selectedExercisesList)
             navigateBack()
         },
-        actionDescription = stringResource(R.string.add),
-        actionEnabled = selectedExercisesList.isNotEmpty(),
+        actionsDescription = listOf(stringResource(R.string.add)),
+        actionsEnabled = listOf(selectedExercisesList.isNotEmpty()),
         fabAction = {
             coroutineScope.launch {
                 lazyListState.animateScrollToItem(0)

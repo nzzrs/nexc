@@ -115,7 +115,7 @@ fun CreateRoutineScreen(
                 showExitDialog = true
             }
         },
-        action = {
+        actions = listOf {
             viewModel.saveExercisesWithRoutine(
                 workout = Workout(
                     title = viewModel.getTitle(),
@@ -127,8 +127,8 @@ fun CreateRoutineScreen(
                 popUpTo(Destination.MainScreen) { inclusive = false }
             }
         },
-        actionDescription = stringResource(R.string.save),
-        actionEnabled = viewModel.isTitleAllowed() && !viewModel.isListEmpty(),
+        actionsDescription = listOf(stringResource(R.string.save)),
+        actionsEnabled = listOf(viewModel.isTitleAllowed() && !viewModel.isListEmpty()),
         fabIcon = Icons.Default.Add,
         fabAction = {
             navController.navigate(Destination.AddExerciseScreen)

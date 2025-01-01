@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024. LibreFit
+ * Copyright (c) 2024-2025. LibreFit
  *
  * This file is part of LibreFit
  *
@@ -42,7 +42,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -233,45 +232,46 @@ private fun CreateRoutineScreen(
                 }
             }
         } else {
-            itemsIndexed(viewModel.exercises) { i, exerciseWithSets ->
-                key(exerciseWithSets.id) {
-                    ExerciseCard(
-                        modifier = Modifier.animateItem(),
-                        exerciseWithSets = exerciseWithSets,
-                        addSet = {
-                            viewModel.addSetToExercise(i)
-                        },
-                        onDetail = {
-                            selectedExercise = exerciseWithSets.exerciseDC
-                            isModalSheetOpen = true
-                        },
-                        onDelete = {
-                            viewModel.deleteExercise(i)
-                        },
-                        updateSet = { set, value, mode ->
-                            viewModel.updateSet(
-                                index = i,
-                                set = set,
-                                value = value,
-                                mode = mode
-                            )
-                        },
-                        deleteSet = { set ->
-                            viewModel.deleteSet(
-                                index = i,
-                                set = set
-                            )
-                        },
-                        updateExercise = { value, mode ->
-                            viewModel.updateExercise(
-                                index = i,
-                                value = value,
-                                mode = mode
-                            )
-                        },
-                        showInfo = { infoMode = it }
-                    )
-                }
+            itemsIndexed(
+                items = viewModel.exercises,
+                key = { i, e -> e.id }
+            ) { i, exerciseWithSets ->
+                ExerciseCard(
+                    modifier = Modifier.animateItem(),
+                    exerciseWithSets = exerciseWithSets,
+                    addSet = {
+                        viewModel.addSetToExercise(i)
+                    },
+                    onDetail = {
+                        selectedExercise = exerciseWithSets.exerciseDC
+                        isModalSheetOpen = true
+                    },
+                    onDelete = {
+                        viewModel.deleteExercise(i)
+                    },
+                    updateSet = { set, value, mode ->
+                        viewModel.updateSet(
+                            index = i,
+                            set = set,
+                            value = value,
+                            mode = mode
+                        )
+                    },
+                    deleteSet = { set ->
+                        viewModel.deleteSet(
+                            index = i,
+                            set = set
+                        )
+                    },
+                    updateExercise = { value, mode ->
+                        viewModel.updateExercise(
+                            index = i,
+                            value = value,
+                            mode = mode
+                        )
+                    },
+                    showInfo = { infoMode = it }
+                )
             }
         }
         item { Spacer(Modifier.height(100.dp)) }

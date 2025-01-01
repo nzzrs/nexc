@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024. LibreFit
+ * Copyright (c) 2024-2025. LibreFit
  *
  * This file is part of LibreFit
  *
@@ -60,7 +60,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -109,7 +108,7 @@ fun WorkoutScreen(
 ) {
     val context = LocalContext.current
     /*
-    This will pass "workoutId", "list" and context to the view model so it can load
+    This will pass "workoutId", "list" and context to the view model so it can load and link
     exercises from db just one time (in initialization)
      */
     val viewModel: WorkoutScreenViewModel = viewModel(
@@ -283,48 +282,49 @@ fun WorkoutScreen(
                     }
                 }
             } else {
-                itemsIndexed(viewModel.exercises) { i, exerciseWithSets ->
-                    key(exerciseWithSets.id) {
-                        ExerciseCard(
-                            modifier = Modifier.animateItem(),
-                            exerciseWithSets = exerciseWithSets,
-                            addSet = {
-                                viewModel.addSetToExercise(i)
-                            },
-                            onDetail = {
-                                selectedExercise = exerciseWithSets.exerciseDC
-                                isExerciseDetailsOpen = true
-                            },
-                            onDelete = {
-                                viewModel.deleteExercise(i)
-                            },
-                            updateSet = { set, value, mode ->
-                                viewModel.updateSet(
-                                    index = i,
-                                    set = set,
-                                    value = value,
-                                    mode = mode
-                                )
-                            },
-                            deleteSet = { set ->
-                                viewModel.deleteSet(
-                                    index = i,
-                                    set = set
-                                )
-                            },
-                            updateExercise = { value, mode ->
-                                viewModel.updateExercise(
-                                    index = i,
-                                    value = value,
-                                    mode = mode
-                                )
-                            },
-                            showInfo = { infoMode = it },
-                            setChronometerIsRunning = viewModel.setChronometerIsRunning,
-                            setWithRunningChronometer = viewModel.setWithRunningChronometer,
-                            workout = true
-                        )
-                    }
+                itemsIndexed(
+                    items = viewModel.exercises,
+                    key = { i, exercise -> exercise.id }
+                ) { i, exerciseWithSets ->
+                    ExerciseCard(
+                        modifier = Modifier.animateItem(),
+                        exerciseWithSets = exerciseWithSets,
+                        addSet = {
+                            viewModel.addSetToExercise(i)
+                        },
+                        onDetail = {
+                            selectedExercise = exerciseWithSets.exerciseDC
+                            isExerciseDetailsOpen = true
+                        },
+                        onDelete = {
+                            viewModel.deleteExercise(i)
+                        },
+                        updateSet = { set, value, mode ->
+                            viewModel.updateSet(
+                                index = i,
+                                set = set,
+                                value = value,
+                                mode = mode
+                            )
+                        },
+                        deleteSet = { set ->
+                            viewModel.deleteSet(
+                                index = i,
+                                set = set
+                            )
+                        },
+                        updateExercise = { value, mode ->
+                            viewModel.updateExercise(
+                                index = i,
+                                value = value,
+                                mode = mode
+                            )
+                        },
+                        showInfo = { infoMode = it },
+                        setChronometerIsRunning = viewModel.setChronometerIsRunning,
+                        setWithRunningChronometer = viewModel.setWithRunningChronometer,
+                        workout = true
+                    )
                 }
             }
 

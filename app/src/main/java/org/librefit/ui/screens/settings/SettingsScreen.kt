@@ -69,6 +69,7 @@ import org.librefit.enums.Language
 import org.librefit.enums.ThemeMode
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
+import org.librefit.ui.components.bottomMargin
 
 @SuppressLint("BatteryLife")
 @OptIn(ExperimentalMaterial3Api::class)
@@ -100,17 +101,17 @@ fun SettingsScreen(
 
     val keepWorkoutScreenOn by userPreferences.workoutScreenOn.collectAsState(initial = true)
 
-    val materialModeOn by userPreferences.materialMode.collectAsState(initial = true)
+    val materialModeOn by userPreferences.materialMode.collectAsState(initial = false)
 
 
-    var openPreferenceDialog by remember { mutableStateOf(false) }
+    var showPreferenceDialog by remember { mutableStateOf(false) }
 
 
 
-    if (openPreferenceDialog) {
+    if (showPreferenceDialog) {
         AlertDialog(
             title = { Text(stringResource(id = R.string.language)) },
-            onDismissRequest = { openPreferenceDialog = false },
+            onDismissRequest = { showPreferenceDialog = false },
             confirmButton = { /*The user doesn't need to confirm*/ },
             text = {
                 LazyColumn(Modifier.heightIn(max = 200.dp)) {
@@ -279,7 +280,7 @@ fun SettingsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { openPreferenceDialog = true },
+                        .clickable { showPreferenceDialog = true },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
@@ -352,6 +353,7 @@ fun SettingsScreen(
                     )
                 }
             }
+            bottomMargin()
             //TODO: toggle to enable/disable rest timer sound
         }
     }

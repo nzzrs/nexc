@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -85,9 +84,10 @@ import org.librefit.enums.InfoMode
 import org.librefit.nav.Destination
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.ExerciseCard
-import org.librefit.ui.components.ExerciseDetailModalBottomSheet
-import org.librefit.ui.components.InfoModalBottomSheet
 import org.librefit.ui.components.animations.DumbbellLottie
+import org.librefit.ui.components.bottomMargin
+import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
+import org.librefit.ui.components.modalBottomSheets.InfoModalBottomSheet
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.util.ExerciseDC
 import org.librefit.util.ExerciseWithSets
@@ -247,7 +247,7 @@ fun WorkoutScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    navController.navigate(Destination.AddExerciseScreen)
+                    navController.navigate(Destination.ExercisesScreen)
                 }
             ) {
                 Icon(
@@ -325,7 +325,7 @@ fun WorkoutScreen(
                 }
             }
 
-            item { Spacer(Modifier.height(100.dp)) }
+            bottomMargin()
         }
     }
 

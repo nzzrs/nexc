@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -69,16 +68,17 @@ import org.librefit.MainApplication
 import org.librefit.R
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.CustomScaffold
-import org.librefit.ui.components.ExerciseDetailModalBottomSheet
 import org.librefit.ui.components.FiltersCard
 import org.librefit.ui.components.animations.NoResultLottie
+import org.librefit.ui.components.bottomMargin
+import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
 import org.librefit.util.ExerciseDC
 import org.librefit.util.exerciseEnumToStringId
 
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AddExerciseScreen(
+fun ExercisesScreen(
     navigateBack: () -> Unit,
     viewModel: SharedViewModel
 ) {
@@ -107,8 +107,7 @@ fun AddExerciseScreen(
     val coroutineScope = rememberCoroutineScope()
 
     CustomScaffold(
-        // TODO: change title
-        title = stringResource(id = R.string.add_exercise),
+        title = stringResource(id = R.string.exercises),
         navigateBack = navigateBack,
         actions = listOf {
             viewModel.addSelectedExerciseToList(selectedExercisesList)
@@ -298,9 +297,7 @@ private fun AddExerciseScreenContent(
             }
             HorizontalDivider()
         }
-        item {
-            Spacer(Modifier.height(100.dp))
-        }
+        bottomMargin()
     }
 
     // Opened by info icon (in the filtered list), it shows the details of an exercise
@@ -313,7 +310,7 @@ private fun AddExerciseScreenContent(
 @Preview
 @Composable
 private fun AddExerciseScreenPreview() {
-    AddExerciseScreen(
+    ExercisesScreen(
         {},
         viewModel()
     )

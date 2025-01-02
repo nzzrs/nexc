@@ -37,7 +37,7 @@ import org.librefit.ui.screens.about.LicenseScreen
 import org.librefit.ui.screens.createRoutine.CreateRoutineScreen
 import org.librefit.ui.screens.infoRoutine.InfoRoutineScreen
 import org.librefit.ui.screens.settings.SettingsScreen
-import org.librefit.ui.screens.shared.AddExerciseScreen
+import org.librefit.ui.screens.shared.ExercisesScreen
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.ui.screens.shared.SuccessScreen
 import org.librefit.ui.screens.workout.RequestPermissionsScreen
@@ -63,8 +63,8 @@ fun NavigationHost(userPreferences: DataStoreManager) {
         composable<Destination.AboutScreen> {
             AboutScreen(navController = navController)
         }
-        composable<Destination.AddExerciseScreen> {
-            AddExerciseScreen(
+        composable<Destination.ExercisesScreen> {
+            ExercisesScreen(
                 navigateBack = { navController.popBackStack() },
                 viewModel = sharedViewModel
             )

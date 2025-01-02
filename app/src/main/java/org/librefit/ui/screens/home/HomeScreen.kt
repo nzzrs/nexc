@@ -24,10 +24,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -60,6 +58,8 @@ import org.librefit.data.DataStoreManager
 import org.librefit.nav.Destination
 import org.librefit.nav.checkPermissionsBeforeNavigateToWorkout
 import org.librefit.ui.components.CustomTextButton
+import org.librefit.ui.components.HeadlineText
+import org.librefit.ui.components.bottomMargin
 
 @Composable
 fun HomeScreen(
@@ -82,15 +82,10 @@ fun HomeScreen(
         modifier = Modifier
             .padding(paddingValues = innerPadding)
             .padding(start = 15.dp, end = 15.dp)
-            .fillMaxSize()
+            .fillMaxSize(),
+        verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
-        item {
-            Text(
-                text = stringResource(id = R.string.quick_start),
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.headlineSmall
-            )
-        }
+
 
         item {
             //"Start empty workout" button
@@ -106,16 +101,11 @@ fun HomeScreen(
                 },
             )
         }
-        item {
-            Spacer(modifier = Modifier.height(15.dp))
-        }
+
 
         item {
-            Text(
-                text = stringResource(id = R.string.your_routines),
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.headlineSmall
-            )
+            HeadlineText(stringResource(id = R.string.your_routines))
+
         }
 
 
@@ -183,11 +173,11 @@ fun HomeScreen(
                     }
                 }
             }
+        } else {
+            //TODO: implement a default routine
         }
 
-        item {
-            Spacer(modifier = Modifier.height(10.dp))
-        }
+
 
         item {
             //"Create a workout routine" button
@@ -197,16 +187,17 @@ fun HomeScreen(
                 onClick = { navController.navigate(Destination.CreateRoutineScreen) },
             )
         }
+
+        bottomMargin()
     }
 }
 
 @Preview
 @Composable
 fun HomeScreenPreview() {
-    val navController = rememberNavController()
     HomeScreen(
         innerPadding = PaddingValues(20.dp),
-        navController,
+        rememberNavController(),
         DataStoreManager(LocalContext.current)
     )
 }

@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit.ui.components
+package org.librefit.ui.components.modalBottomSheets
 
 import android.graphics.BitmapFactory
 import androidx.compose.foundation.Image
@@ -55,6 +55,7 @@ import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.librefit.R
 import org.librefit.enums.Muscle
+import org.librefit.ui.components.HeadlineText
 import org.librefit.util.ExerciseDC
 import org.librefit.util.exerciseEnumToStringId
 import org.librefit.util.formatDetails

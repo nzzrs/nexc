@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024. LibreFit
+ * Copyright (c) 2024-2025. LibreFit
  *
  * This file is part of LibreFit
  *
@@ -52,7 +52,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import org.librefit.R
 import org.librefit.db.Workout
 import org.librefit.ui.components.ConfirmDialog
+import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.animations.EmptyLottie
+import org.librefit.ui.components.bottomMargin
 import org.librefit.util.formatTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -91,13 +93,7 @@ fun ProfileScreen(innerPadding: PaddingValues) {
             .padding(start = 15.dp, end = 15.dp)
             .fillMaxSize()
     ) {
-        item {
-            Text(
-                text = stringResource(R.string.your_workouts),
-                color = MaterialTheme.colorScheme.onBackground,
-                style = MaterialTheme.typography.headlineSmall
-            )
-        }
+        item { HeadlineText(stringResource(R.string.your_workouts)) }
 
         if (workoutList.isEmpty()) {
             item {
@@ -169,6 +165,7 @@ fun ProfileScreen(innerPadding: PaddingValues) {
                 }
             }
         }
+        bottomMargin()
     }
 }
 

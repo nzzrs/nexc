@@ -56,8 +56,9 @@ import org.librefit.R
 import org.librefit.enums.SetMode
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.CustomScaffold
-import org.librefit.ui.components.ExerciseDetailModalBottomSheet
 import org.librefit.ui.components.HeadlineText
+import org.librefit.ui.components.bottomMargin
+import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
 import org.librefit.util.ExerciseDC
 import org.librefit.util.formatDetails
 import org.librefit.util.formatTime
@@ -264,6 +265,7 @@ fun InfoRoutineScreen(
                     }
                 }
             }
+            bottomMargin()
         }
 
         // Opened by info icon next to exercise name, it shows the details of an exercise

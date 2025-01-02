@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024. LibreFit
+ * Copyright (c) 2024-2025. LibreFit
  *
  * This file is part of LibreFit
  *
@@ -69,6 +69,7 @@ import org.librefit.R
 import org.librefit.nav.Destination
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
+import org.librefit.ui.components.bottomMargin
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -78,13 +79,13 @@ fun AboutScreen(navController: NavHostController) {
 
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
-    var showDialog by remember { mutableStateOf(false) }
+    var showUrlDialog by remember { mutableStateOf(false) }
 
     var url by remember { mutableStateOf("") }
 
-    if (showDialog) {
+    if (showUrlDialog) {
         AlertDialog(
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = { showUrlDialog = false },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -92,7 +93,7 @@ fun AboutScreen(navController: NavHostController) {
                             data = Uri.parse(url)
                         }
                         context.startActivity(intent)
-                        showDialog = false
+                        showUrlDialog = false
                     }
                 ) {
                     Text(stringResource(R.string.open))
@@ -103,7 +104,7 @@ fun AboutScreen(navController: NavHostController) {
                     onClick = {
                         val clip = ClipData.newPlainText("Copied Url", url)
                         clipboardManager.setPrimaryClip(clip)
-                        showDialog = false
+                        showUrlDialog = false
                     }
                 ) {
                     Text(stringResource(R.string.copy))
@@ -214,7 +215,7 @@ fun AboutScreen(navController: NavHostController) {
                     description = stringResource(R.string.privacy_policy_desc),
                     onClick = {
                         url = context.getString(R.string.url_privacy)
-                        showDialog = true
+                        showUrlDialog = true
                     }
 
                 )
@@ -226,7 +227,7 @@ fun AboutScreen(navController: NavHostController) {
                     stringResource(R.string.website),
                     onClick = {
                         url = context.getString(R.string.url_website)
-                        showDialog = true
+                        showUrlDialog = true
                     }
                 )
             }
@@ -250,7 +251,7 @@ fun AboutScreen(navController: NavHostController) {
                     stringResource(R.string.source_code),
                     onClick = {
                         url = context.getString(R.string.url_source_code)
-                        showDialog = true
+                        showUrlDialog = true
                     }
                 )
             }
@@ -262,7 +263,7 @@ fun AboutScreen(navController: NavHostController) {
                     stringResource(R.string.source_code),
                     onClick = {
                         url = context.getString(R.string.url_codeberg)
-                        showDialog = true
+                        showUrlDialog = true
                     }
                 )
             }
@@ -279,7 +280,7 @@ fun AboutScreen(navController: NavHostController) {
                     stringResource(R.string.founder),
                     onClick = {
                         url = context.getString(R.string.url_IamDg)
-                        showDialog = true
+                        showUrlDialog = true
                     }
                 )
             }
@@ -295,10 +296,11 @@ fun AboutScreen(navController: NavHostController) {
                     stringResource(R.string.contributed_to) + stringResource(R.string.language_italian),
                     onClick = {
                         url = context.getString(R.string.url_IamDg)
-                        showDialog = true
+                        showUrlDialog = true
                     }
                 )
             }
+            bottomMargin()
         }
     }
 }

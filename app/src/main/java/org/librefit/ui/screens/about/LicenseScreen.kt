@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024. LibreFit
+ * Copyright (c) 2024-2025. LibreFit
  *
  * This file is part of LibreFit
  *
@@ -68,13 +68,13 @@ fun LicenseScreen(navigateBack: () -> Unit) {
 
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
-    var showDialog by remember { mutableStateOf(false) }
+    var showUrlDialog by remember { mutableStateOf(false) }
 
     var url = stringResource(R.string.url_gpl3)
 
-    if (showDialog) {
+    if (showUrlDialog) {
         AlertDialog(
-            onDismissRequest = { showDialog = false },
+            onDismissRequest = { showUrlDialog = false },
             confirmButton = {
                 TextButton(
                     onClick = {
@@ -82,7 +82,7 @@ fun LicenseScreen(navigateBack: () -> Unit) {
                             data = Uri.parse(url)
                         }
                         context.startActivity(intent)
-                        showDialog = false
+                        showUrlDialog = false
                     }
                 ) {
                     Text(stringResource(R.string.open))
@@ -93,7 +93,7 @@ fun LicenseScreen(navigateBack: () -> Unit) {
                     onClick = {
                         val clip = ClipData.newPlainText("Copied Url", url)
                         clipboardManager.setPrimaryClip(clip)
-                        showDialog = false
+                        showUrlDialog = false
                     }
                 ) {
                     Text(stringResource(R.string.copy))
@@ -114,7 +114,7 @@ fun LicenseScreen(navigateBack: () -> Unit) {
             CustomTextButton(
                 text = stringResource(R.string.view_online_version),
                 icon = Icons.AutoMirrored.Default.ExitToApp,
-                onClick = { showDialog = true }
+                onClick = { showUrlDialog = true }
             )
             HorizontalDivider()
             Box(

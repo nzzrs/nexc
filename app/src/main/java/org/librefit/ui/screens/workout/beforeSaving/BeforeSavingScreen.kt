@@ -22,9 +22,7 @@ package org.librefit.ui.screens.workout.beforeSaving
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardOptions
@@ -65,7 +63,8 @@ import org.librefit.nav.Destination
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
-import org.librefit.ui.components.InfoModalBottomSheet
+import org.librefit.ui.components.bottomMargin
+import org.librefit.ui.components.modalBottomSheets.InfoModalBottomSheet
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.util.formatTime
 
@@ -83,17 +82,17 @@ fun BeforeSavingScreen(
     }
 
 
-    var showDetachRoutineDialog = remember { mutableStateOf(false) }
+    var showUnlikeRoutineDialog = remember { mutableStateOf(false) }
 
-    if (showDetachRoutineDialog.value) {
+    if (showUnlikeRoutineDialog.value) {
         ConfirmDialog(
             title = stringResource(R.string.unlink_routine),
             text = stringResource(R.string.unlink_routine_desc),
             onConfirm = {
                 viewModel.detachWorkoutFromRoutine()
-                showDetachRoutineDialog.value = false
+                showUnlikeRoutineDialog.value = false
             },
-            onDismiss = { showDetachRoutineDialog.value = false }
+            onDismiss = { showUnlikeRoutineDialog.value = false }
         )
     }
 
@@ -106,23 +105,23 @@ fun BeforeSavingScreen(
 
 
     val datePickerState = rememberDatePickerState()
-    var showDatePicker by remember { mutableStateOf(false) }
+    var showDatePickerDialog by remember { mutableStateOf(false) }
 
-    if (showDatePicker == true) {
+    if (showDatePickerDialog == true) {
         DatePickerDialog(
-            onDismissRequest = { showDatePicker = false },
+            onDismissRequest = { showDatePickerDialog = false },
             confirmButton = {
                 TextButton(
                     onClick = {
                         viewModel.updateCompletedDate(datePickerState.selectedDateMillis)
-                        showDatePicker = false
+                        showDatePickerDialog = false
                     }
                 ) {
                     Text(stringResource(R.string.ok_dialog))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePicker = false }) {
+                TextButton(onClick = { showDatePickerDialog = false }) {
                     Text("Cancel")
                 }
             }
@@ -246,7 +245,7 @@ fun BeforeSavingScreen(
                         label = { Text(stringResource(R.string.label_when)) },
                         readOnly = true,
                         trailingIcon = {
-                            IconButton(onClick = { showDatePicker = !showDatePicker }) {
+                            IconButton(onClick = { showDatePickerDialog = !showDatePickerDialog }) {
                                 Icon(
                                     imageVector = Icons.Default.DateRange,
                                     contentDescription = stringResource(R.string.select_date)
@@ -371,7 +370,7 @@ fun BeforeSavingScreen(
                                 Text(stringResource(R.string.creation_date) + " : " + viewModel.getRoutineDate())
                             }
                             IconButton(
-                                onClick = { showDetachRoutineDialog.value = true }
+                                onClick = { showUnlikeRoutineDialog.value = true }
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.Delete,
@@ -382,7 +381,7 @@ fun BeforeSavingScreen(
                     }
                 }
             }
-            item { Spacer(Modifier.height(100.dp)) }
+            bottomMargin()
         }
     }
 }

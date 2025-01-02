@@ -28,13 +28,13 @@ sealed class Destination {
     object AboutScreen
 
     @Serializable
-    object AddExerciseScreen
-
-    @Serializable
     object BeforeSavingScreen
 
     @Serializable
     object CreateRoutineScreen
+
+    @Serializable
+    object ExercisesScreen
 
     @Serializable
     data class InfoRoutineScreen(

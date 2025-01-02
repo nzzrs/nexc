@@ -109,7 +109,7 @@ import kotlin.text.toInt
  * required for the card display.
  * @param addSet A lambda function invoked when the "Add set" button is clicked.
  * @param onDetail A lambda function triggered when the [Info] icon is clicked, which should open
- * the [ExerciseDetailModalBottomSheet].
+ * the [org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet].
  * @param onDelete A lambda function executed when the [Delete] icon is clicked, it should result in
  * the removal of the card.
  * @param updateSet A function to update a specific set. For more details, refer to
@@ -120,7 +120,7 @@ import kotlin.text.toInt
  * see [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateExercise] and
  * [org.librefit.ui.screens.createRoutine.CreateRoutineScreenViewModel.updateExercise].
  * @param showInfo A lambda function executed when info icon next to "type of set" or "rest time" text
- * is clicked. The passed parameter is used by [InfoModalBottomSheet] to show the relevant information.
+ * is clicked. The passed parameter is used by [org.librefit.ui.components.modalBottomSheets.InfoModalBottomSheet] to show the relevant information.
  * @param setChronometerIsRunning This should be passed only from the workout screen (so [workout]
  * must be `true`). It allows only one set timer to be running at once.
  * @param setWithRunningChronometer This should be passed only from the workout screen (so [workout]

@@ -23,10 +23,8 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -62,9 +60,10 @@ import org.librefit.nav.Destination
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.ExerciseCard
-import org.librefit.ui.components.ExerciseDetailModalBottomSheet
-import org.librefit.ui.components.InfoModalBottomSheet
 import org.librefit.ui.components.animations.DumbbellLottie
+import org.librefit.ui.components.bottomMargin
+import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
+import org.librefit.ui.components.modalBottomSheets.InfoModalBottomSheet
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.util.ExerciseDC
 import org.librefit.util.ExerciseWithSets
@@ -130,7 +129,7 @@ fun CreateRoutineScreen(
         actionsEnabled = listOf(viewModel.isTitleAllowed() && !viewModel.isListEmpty()),
         fabIcon = Icons.Default.Add,
         fabAction = {
-            navController.navigate(Destination.AddExerciseScreen)
+            navController.navigate(Destination.ExercisesScreen)
         },
         fabDescription = stringResource(R.string.add_exercise)
     ) { innerPadding ->
@@ -274,7 +273,7 @@ private fun CreateRoutineScreen(
                 )
             }
         }
-        item { Spacer(Modifier.height(100.dp)) }
+        bottomMargin()
     }
 }
 

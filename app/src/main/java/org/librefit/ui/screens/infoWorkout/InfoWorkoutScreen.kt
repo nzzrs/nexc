@@ -17,8 +17,9 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit.ui.screens.infoRoutine
+package org.librefit.ui.screens.infoWorkout
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,9 +28,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -44,6 +47,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -64,23 +68,23 @@ import org.librefit.util.formatDetails
 import org.librefit.util.formatTime
 
 @Composable
-fun InfoRoutineScreen(
+fun InfoWorkoutScreen(
     workoutId: Int = 0,
     workoutTitle: String = "",
     navController: NavHostController
 ) {
     /*
-    This will pass "workoutId" and "list" to the view model so it can load and link
+    This will pass "workoutId" to the view model so it can load and link
     exercises from db just one time (in initialization)
      */
-    val viewModel: InfoRoutineScreenViewModel = viewModel(
+    val viewModel: InfoWorkoutScreenViewModel = viewModel(
         factory = object : ViewModelProvider.Factory {
             override fun <T : ViewModel> create(modelClass: Class<T>): T {
-                require(modelClass == InfoRoutineScreenViewModel::class.java) {
+                require(modelClass == InfoWorkoutScreenViewModel::class.java) {
                     "Unknown ViewModel class"
                 }
                 @Suppress("UNCHECKED_CAST")
-                return InfoRoutineScreenViewModel(workoutId) as T
+                return InfoWorkoutScreenViewModel(workoutId) as T
             }
         }
     )
@@ -93,11 +97,26 @@ fun InfoRoutineScreen(
             title = stringResource(R.string.delete),
             text = stringResource(id = R.string.confirm_delete),
             onConfirm = {
-                viewModel.deleteRoutine()
+                viewModel.deleteWorkout()
                 showConfirmDialog = false
                 navController.popBackStack()
             },
             onDismiss = { showConfirmDialog = false }
+        )
+    }
+
+
+    var showUnlikeRoutineDialog by remember { mutableStateOf(false) }
+
+    if (showUnlikeRoutineDialog) {
+        ConfirmDialog(
+            title = stringResource(R.string.unlink_routine),
+            text = stringResource(R.string.unlink_routine_desc),
+            onConfirm = {
+                viewModel.detachWorkoutFromRoutine()
+                showUnlikeRoutineDialog = false
+            },
+            onDismiss = { showUnlikeRoutineDialog = false }
         )
     }
 
@@ -141,7 +160,6 @@ fun InfoRoutineScreen(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         if (viewModel.getNotes().isNotBlank()) {
-
                             Text(
                                 formatDetails(
                                     stringResource(R.string.notes),
@@ -150,10 +168,20 @@ fun InfoRoutineScreen(
                             )
                         }
 
+                        if (!viewModel.isRoutine()) {
+                            Text(
+                                formatDetails(
+                                    stringResource(R.string.duration),
+                                    viewModel.getElapsedTime()
+                                )
+                            )
+                        }
+
                         Text(
                             formatDetails(
-                                stringResource(R.string.creation_date),
-                                viewModel.getCreatedDate()
+                                if (viewModel.isRoutine()) stringResource(R.string.creation_date)
+                                else stringResource(R.string.label_when),
+                                viewModel.getDate()
                             )
                         )
                         Text(
@@ -168,6 +196,14 @@ fun InfoRoutineScreen(
                                 viewModel.getTotalSets()
                             )
                         )
+                        if (!viewModel.isRoutine()) {
+                            Text(
+                                formatDetails(
+                                    stringResource(R.string.completed_sets),
+                                    viewModel.getCompletedSets()
+                                )
+                            )
+                        }
                         Text(
                             formatDetails(
                                 stringResource(R.string.volume),
@@ -177,6 +213,44 @@ fun InfoRoutineScreen(
                     }
                 }
             }
+
+
+            if (viewModel.getRoutineTitle() != "") {
+                item {
+                    HeadlineText(stringResource(R.string.routine))
+                }
+                item {
+                    ElevatedCard {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.title) + " : " + viewModel.getRoutineTitle(),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(stringResource(R.string.creation_date) + " : " + viewModel.getRoutineDate())
+                            }
+                            IconButton(
+                                onClick = { showUnlikeRoutineDialog = true }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = stringResource(R.string.delete)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+
             item { HeadlineText(stringResource(R.string.exercises)) }
             items(viewModel.getExercises()) { exercise ->
                 ElevatedCard {
@@ -239,14 +313,30 @@ fun InfoRoutineScreen(
                                 } else {
                                     Text(stringResource(R.string.reps))
                                     if (setMode == SetMode.WEIGHT) {
-                                        Text(stringResource(R.string.weight))
+                                        Text(
+                                            stringResource(R.string.weight) + "(" + stringResource(
+                                                R.string.kg
+                                            ) + ")"
+                                        )
                                     }
+                                }
+                                if (!viewModel.isRoutine()) {
+                                    Icon(
+                                        imageVector = Icons.Default.Check,
+                                        contentDescription = stringResource(R.string.done)
+                                    )
                                 }
                             }
 
                             exercise.sets.forEachIndexed { index, set ->
                                 Row(
-                                    modifier = Modifier.fillMaxWidth(),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(MaterialTheme.shapes.small)
+                                        .background(
+                                            if (!viewModel.isRoutine() && set.completed) MaterialTheme.colorScheme.secondaryContainer
+                                            else MaterialTheme.colorScheme.surfaceContainerLow
+                                        ),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceAround
                                 ) {
@@ -256,8 +346,14 @@ fun InfoRoutineScreen(
                                     } else {
                                         Text("${set.reps}")
                                         if (setMode == SetMode.WEIGHT) {
-                                            Text("${set.weight} " + stringResource(R.string.kg))
+                                            Text("${set.weight}")
                                         }
+                                    }
+                                    if (!viewModel.isRoutine()) {
+                                        Checkbox(
+                                            checked = set.completed,
+                                            onCheckedChange = null
+                                        )
                                     }
                                 }
                             }
@@ -280,7 +376,7 @@ fun InfoRoutineScreen(
 @Preview
 @Composable
 private fun InfoRoutineScreenPreview() {
-    InfoRoutineScreen(
+    InfoWorkoutScreen(
         navController = rememberNavController()
     )
 }

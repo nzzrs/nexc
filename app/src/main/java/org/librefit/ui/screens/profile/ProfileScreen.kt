@@ -29,7 +29,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -38,9 +37,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -49,9 +45,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import org.librefit.R
-import org.librefit.db.Workout
-import org.librefit.ui.components.ConfirmDialog
+import org.librefit.nav.Destination
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.animations.EmptyLottie
 import org.librefit.ui.components.bottomMargin
@@ -61,7 +58,10 @@ import java.time.format.FormatStyle
 import java.util.Locale
 
 @Composable
-fun ProfileScreen(innerPadding: PaddingValues) {
+fun ProfileScreen(
+    navController: NavHostController,
+    innerPadding: PaddingValues
+) {
 
     val viewModel: ProfileScreenViewModel = viewModel()
 
@@ -71,21 +71,7 @@ fun ProfileScreen(innerPadding: PaddingValues) {
         Locale.getDefault()
     )
 
-    var selectedWorkout by remember { mutableStateOf<Workout>(Workout()) }
 
-    var showConfirmDialog by remember { mutableStateOf(false) }
-
-    if (showConfirmDialog) {
-        ConfirmDialog(
-            title = stringResource(R.string.delete),
-            text = stringResource(id = R.string.confirm_delete),
-            onConfirm = {
-                viewModel.deleteWorkout(selectedWorkout)
-                showConfirmDialog = false
-            },
-            onDismiss = { showConfirmDialog = false }
-        )
-    }
 
     LazyColumn(
         modifier = Modifier
@@ -146,20 +132,15 @@ fun ProfileScreen(innerPadding: PaddingValues) {
                         }
                         IconButton(
                             onClick = {
-                                //TODO: show stats of workout
+                                navController.navigate(
+                                    Destination.InfoRoutineScreen(
+                                        workoutId = workout.id,
+                                        workoutTitle = workout.title
+                                    )
+                                )
                             },
-                            enabled = false
                         ) {
                             Icon(Icons.Default.Info, stringResource(R.string.about))
-                        }
-                        IconButton(onClick = {
-                            selectedWorkout = workout
-                            showConfirmDialog = true
-                        }) {
-                            Icon(
-                                Icons.Default.Delete,
-                                stringResource(R.string.delete)
-                            )
                         }
                     }
                 }
@@ -173,5 +154,8 @@ fun ProfileScreen(innerPadding: PaddingValues) {
 @Preview
 @Composable
 private fun ProfileScreenPreview() {
-    ProfileScreen(innerPadding = PaddingValues(20.dp))
+    ProfileScreen(
+        navController = rememberNavController(),
+        innerPadding = PaddingValues(20.dp)
+    )
 }

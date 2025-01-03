@@ -35,7 +35,7 @@ import org.librefit.ui.screens.MainScreen
 import org.librefit.ui.screens.about.AboutScreen
 import org.librefit.ui.screens.about.LicenseScreen
 import org.librefit.ui.screens.createRoutine.CreateRoutineScreen
-import org.librefit.ui.screens.infoRoutine.InfoRoutineScreen
+import org.librefit.ui.screens.infoWorkout.InfoWorkoutScreen
 import org.librefit.ui.screens.settings.SettingsScreen
 import org.librefit.ui.screens.shared.ExercisesScreen
 import org.librefit.ui.screens.shared.SharedViewModel
@@ -82,7 +82,7 @@ fun NavigationHost(userPreferences: DataStoreManager) {
             )
         }
         composable<Destination.InfoRoutineScreen> {
-            InfoRoutineScreen(
+            InfoWorkoutScreen(
                 workoutId = it.toRoute<Destination.InfoRoutineScreen>().workoutId,
                 workoutTitle = it.toRoute<Destination.InfoRoutineScreen>().workoutTitle,
                 navController = navController

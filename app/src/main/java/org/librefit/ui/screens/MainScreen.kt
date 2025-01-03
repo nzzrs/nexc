@@ -167,7 +167,7 @@ fun MainScreen(
     ) { innerPadding ->
         if (homeSelected)
             HomeScreen(innerPadding, navController, userPreferences)
-        else ProfileScreen(innerPadding)
+        else ProfileScreen(navController, innerPadding)
     }
 }
 

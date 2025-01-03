@@ -82,17 +82,17 @@ fun BeforeSavingScreen(
     }
 
 
-    var showUnlikeRoutineDialog = remember { mutableStateOf(false) }
+    var showUnlikeRoutineDialog by remember { mutableStateOf(false) }
 
-    if (showUnlikeRoutineDialog.value) {
+    if (showUnlikeRoutineDialog) {
         ConfirmDialog(
             title = stringResource(R.string.unlink_routine),
             text = stringResource(R.string.unlink_routine_desc),
             onConfirm = {
                 viewModel.detachWorkoutFromRoutine()
-                showUnlikeRoutineDialog.value = false
+                showUnlikeRoutineDialog = false
             },
-            onDismiss = { showUnlikeRoutineDialog.value = false }
+            onDismiss = { showUnlikeRoutineDialog = false }
         )
     }
 
@@ -122,7 +122,7 @@ fun BeforeSavingScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showDatePickerDialog = false }) {
-                    Text("Cancel")
+                    Text(stringResource(R.string.cancel_dialog))
                 }
             }
         ) {
@@ -305,6 +305,41 @@ fun BeforeSavingScreen(
                 }
             }
 
+            if (viewModel.getRoutineTitle() != "") {
+                item {
+                    HeadlineText(stringResource(R.string.routine))
+                }
+                item {
+                    ElevatedCard {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.title) + " : " + viewModel.getRoutineTitle(),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                                Text(stringResource(R.string.creation_date) + " : " + viewModel.getRoutineDate())
+                            }
+                            IconButton(
+                                onClick = { showUnlikeRoutineDialog = true }
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = stringResource(R.string.delete)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
 
             item {
                 HeadlineText(stringResource(R.string.exercises))
@@ -347,40 +382,6 @@ fun BeforeSavingScreen(
                 }
             }
 
-            if (viewModel.getRoutineTitle() != "") {
-                item {
-                    HeadlineText(stringResource(R.string.routine))
-                }
-                item {
-                    ElevatedCard {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(10.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.title) + " : " + viewModel.getRoutineTitle(),
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(stringResource(R.string.creation_date) + " : " + viewModel.getRoutineDate())
-                            }
-                            IconButton(
-                                onClick = { showUnlikeRoutineDialog.value = true }
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Delete,
-                                    contentDescription = stringResource(R.string.delete)
-                                )
-                            }
-                        }
-                    }
-                }
-            }
             bottomMargin()
         }
     }

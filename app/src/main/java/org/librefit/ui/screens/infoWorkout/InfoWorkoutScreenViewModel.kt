@@ -17,38 +17,71 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit.ui.screens.infoRoutine
+package org.librefit.ui.screens.infoWorkout
 
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.librefit.MainApplication
 import org.librefit.db.Workout
 import org.librefit.enums.SetMode
 import org.librefit.util.ExerciseWithSets
+import org.librefit.util.formatTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 import kotlin.random.Random
 
-class InfoRoutineScreenViewModel(
+class InfoWorkoutScreenViewModel(
     private val workoutId: Int
 ) : ViewModel() {
-    private val routine = mutableStateOf(Workout())
+    private val workout = mutableStateOf(Workout())
 
-    fun getCreatedDate(): String {
-        return routine.value.created.format(
+    fun getDate(): String {
+        val date = if (isRoutine()) workout.value.created else workout.value.completed
+        return date.format(
             DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(
                 Locale.getDefault()
             )
         )
     }
 
+    fun getElapsedTime(): String {
+        return formatTime(workout.value.timeElapsed)
+    }
+
     fun getNotes(): String {
-        return routine.value.notes
+        return workout.value.notes
+    }
+
+    fun isRoutine(): Boolean {
+        return workout.value.routine
+    }
+
+    fun detachWorkoutFromRoutine() {
+        workout.value = workout.value.copy(
+            workoutId = System.currentTimeMillis()
+        )
+        routine.value = Workout()
+    }
+
+
+    private var routine = mutableStateOf(Workout())
+
+    fun getRoutineTitle(): String {
+        return routine.value.title
+    }
+
+    fun getRoutineDate(): String {
+        return routine.value.created.format(
+            DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(
+                Locale.getDefault()
+            )
+        )
     }
 
 
@@ -69,29 +102,21 @@ class InfoRoutineScreenViewModel(
     }
 
     fun getVolumeExercises(): String {
-        var stringValue = exercises.sumOf {
+        val value = exercises.sumOf {
             it.sets.sumOf { set ->
                 if (it.setMode == SetMode.WEIGHT) {
-                    (set.weight * set.reps).toDouble()
-                } else 0.toDouble()
+                    if (isRoutine()) {
+                        (set.weight * set.reps).toDouble()
+                    } else {
+                        if (set.completed) {
+                            (set.weight * set.reps).toDouble()
+                        } else 0.0
+                    }
+                } else 0.0
             }
-        }.toString()
-
-        val firstDotIndex = stringValue.indexOf(".")
-
-        if (firstDotIndex != -1) {
-            val beforeFirstDot = stringValue.substring(
-                0, firstDotIndex + 1
-            )
-
-            val afterFirstDot = stringValue
-                .substring(firstDotIndex + 1)
-                .take(3)
-
-            stringValue = beforeFirstDot + afterFirstDot
         }
 
-        return stringValue
+        return String.format(Locale.getDefault(), "%.3f", value)
     }
 
     fun getTotalExercises(): String {
@@ -102,12 +127,17 @@ class InfoRoutineScreenViewModel(
         return exercises.sumOf { it.sets.size }.toString()
     }
 
+    fun getCompletedSets(): String {
+        return exercises.sumOf { it.sets.filter { it.completed == true }.size }.toString()
+    }
+
+
 
     private val workoutDao = MainApplication.workoutDatabase.getWorkoutDao()
 
     init {
         getExercisesFromDB()
-        getRoutineFromDB()
+        getDataFromDB()
     }
 
     private fun getExercisesFromDB() {
@@ -133,15 +163,24 @@ class InfoRoutineScreenViewModel(
     }
 
 
-    private fun getRoutineFromDB() {
+    private fun getDataFromDB() {
         viewModelScope.launch(Dispatchers.IO) {
-            routine.value = workoutDao.getWorkout(workoutId)
+            workout.value = workoutDao.getWorkout(workoutId)
+
+            val routines = runCatching {
+                workoutDao.getRoutines().first()
+            }.getOrDefault(emptyList())
+
+
+            if (!isRoutine() && routines.any { it.workoutId == workout.value.workoutId }) {
+                routine.value = routines.find { it.workoutId == workout.value.workoutId }!!
+            }
         }
     }
 
-    fun deleteRoutine() {
+    fun deleteWorkout() {
         viewModelScope.launch(Dispatchers.IO) {
-            workoutDao.deleteWorkout(routine.value)
+            workoutDao.deleteWorkout(workout.value)
         }
     }
 }

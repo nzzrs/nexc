@@ -52,7 +52,7 @@ class BeforeSavingScreenViewModel : ViewModel() {
             it.sets.sumOf { set ->
                 if (it.setMode == SetMode.WEIGHT && set.completed) {
                     set.weight.toDouble() * set.reps
-                } else 0.toDouble()
+                } else 0.0
             }
         }.toString()
     }

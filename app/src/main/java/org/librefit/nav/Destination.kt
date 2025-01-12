@@ -34,7 +34,9 @@ sealed class Destination {
     object EditWorkoutScreen
 
     @Serializable
-    object ExercisesScreen
+    data class ExercisesScreen(
+        val addExercises: Boolean
+    )
 
     @Serializable
     object InfoRoutineScreen

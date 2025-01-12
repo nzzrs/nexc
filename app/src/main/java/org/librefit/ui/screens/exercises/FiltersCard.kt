@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit.ui.components
+package org.librefit.ui.screens.exercises
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background

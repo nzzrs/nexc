@@ -247,7 +247,7 @@ fun WorkoutScreen(
         floatingActionButton = {
             FloatingActionButton(
                 onClick = {
-                    navController.navigate(Destination.ExercisesScreen)
+                    navController.navigate(Destination.ExercisesScreen(addExercises = true))
                 }
             ) {
                 Icon(

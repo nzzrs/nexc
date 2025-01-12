@@ -143,7 +143,7 @@ fun EditScreen(
         actionsEnabled = listOf(viewModel.isTitleAllowed() && !viewModel.isListEmpty()),
         fabIcon = Icons.Default.Add,
         fabAction = {
-            navController.navigate(Destination.ExercisesScreen)
+            navController.navigate(Destination.ExercisesScreen(addExercises = true))
         },
         fabDescription = stringResource(R.string.add_exercise)
     ) { innerPadding ->

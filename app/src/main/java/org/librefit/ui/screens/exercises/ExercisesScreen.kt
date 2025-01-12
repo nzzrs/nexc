@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit.ui.screens.shared
+package org.librefit.ui.screens.exercises
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
@@ -68,10 +68,10 @@ import org.librefit.MainApplication
 import org.librefit.R
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.CustomScaffold
-import org.librefit.ui.components.FiltersCard
 import org.librefit.ui.components.animations.NoResultLottie
 import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
+import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.util.ExerciseDC
 import org.librefit.util.exerciseEnumToStringId
 
@@ -79,6 +79,7 @@ import org.librefit.util.exerciseEnumToStringId
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExercisesScreen(
+    addExercises: Boolean,
     navigateBack: () -> Unit,
     viewModel: SharedViewModel
 ) {
@@ -123,6 +124,7 @@ fun ExercisesScreen(
         fabIcon = Icons.Default.KeyboardArrowUp,
     ) { innerPadding ->
         AddExerciseScreenContent(
+            addExercises = addExercises,
             innerPadding = innerPadding,
             selectedExercisesList = selectedExercisesList,
             viewModel = viewModel,
@@ -133,6 +135,7 @@ fun ExercisesScreen(
 
 @Composable
 private fun AddExerciseScreenContent(
+    addExercises: Boolean,
     innerPadding: PaddingValues,
     selectedExercisesList: MutableList<ExerciseDC>,
     viewModel: SharedViewModel,
@@ -311,6 +314,7 @@ private fun AddExerciseScreenContent(
 @Composable
 private fun AddExerciseScreenPreview() {
     ExercisesScreen(
+        true,
         {},
         viewModel()
     )

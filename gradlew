@@ -1,7 +1,7 @@
 #!/usr/bin/env sh
 
 #
-# Copyright (c) 2024. LibreFit
+# Copyright (c) 2024-2025. LibreFit
 #
 # This file is part of LibreFit
 #

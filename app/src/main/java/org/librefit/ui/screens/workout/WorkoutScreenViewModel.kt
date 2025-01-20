@@ -53,7 +53,7 @@ class WorkoutScreenViewModel @Inject constructor(
     @ApplicationContext context: Context,
     private val userPreferences: DataStoreManager
 ) : ViewModel() {
-    // Used by set chronometer
+    // Used by set chronometer, it's allowed only one timer at a time
     var setChronometerIsRunning = mutableStateOf(false)
     var setWithRunningChronometer = mutableStateOf(Set())
 

@@ -117,7 +117,7 @@ import kotlin.text.toInt
  * @param updateSet A function to update a specific set. For more details, refer to
  * [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateSet] and
  * [org.librefit.ui.screens.edit.EditScreenViewModel.updateSet].
- * @param deleteSet A function called when the user swipes the card to remove it.
+ * @param deleteSet A function called when the user swipes the set to remove it.
  * @param updateExercise A function to update the exercise details. For further information,
  * see [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateExercise] and
  * [org.librefit.ui.screens.edit.EditScreenViewModel.updateExercise].
@@ -128,13 +128,11 @@ import kotlin.text.toInt
  * @param setWithRunningChronometer This should be passed only from the workout screen (so [workout]
  * must be `true`). It allows only one set timer to be running at once.
  * @param workout A Boolean flag indicating whether a checkbox should be displayed next to each set.
- * This should be set to `true` when the card is used in [org.librefit.ui.screens.workout.WorkoutScreen];
- * otherwise, it should be `false`.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ExerciseCard(
-    modifier: Modifier,
+    modifier: Modifier = Modifier,
     exerciseWithSets: ExerciseWithSets,
     addSet: () -> Unit,
     onDetail: () -> Unit,

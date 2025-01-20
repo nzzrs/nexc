@@ -34,6 +34,43 @@ import org.librefit.enums.WorkoutServiceActions
 import org.librefit.helpers.NotificationHelper
 import javax.inject.Inject
 
+/**
+ * A service that manages the chronometer and the rest timer during a workout session.
+ *
+ * This service is designed to run in the foreground and it's used by
+ * [org.librefit.ui.screens.workout.WorkoutScreenViewModel] to start, pause, and modify
+ * a chronometer and a rest timer.
+ *
+ * ## State Flows
+ * - [timeElapsed]: A [StateFlow] that emits the total time elapsed in seconds.
+ * - [isChronometerPaused]: A [StateFlow] that indicates whether the chronometer is currently paused.
+ * - [restTime]: A [StateFlow] that emits the remaining time for the rest timer in seconds.
+ *
+ * ## Intent Extras
+ * - [EXTRA_INITIAL_REST_TIME]: An integer extra that specifies the initial time for the rest timer.
+ * - [EXTRA_ADD_TEN_SECONDS]: A boolean extra that indicates how to modify the rest timer. When
+ *   `true` it adds ten seconds otherwise it subtracts.
+ * - [EXTRA_IS_FOCUSED]: A boolean extra that indicates whether the workout is currently focused. When
+ *   `false` the rest timer notification is sent.
+ *
+ * ## Actions
+ * The service can handle the following actions:
+ * - [WorkoutServiceActions.START_CHRONOMETER]: Starts and resumes the chronometer with [startChronometer]
+ * - [WorkoutServiceActions.PAUSE_CHRONOMETER]: Pauses the chronometer with [pauseChronometer]
+ * - [WorkoutServiceActions.START_REST_TIMER]: Starts the rest timer with the specified initial time with [startRestTimer]
+ * - [WorkoutServiceActions.MODIFY_REST_TIMER]: Modifies the rest timer by adding or subtracting ten
+ *   seconds with [modifyRestTimer].
+ * - [WorkoutServiceActions.WORKOUT_FOCUS]: Updates [isFocused] based on the focus state of [org.librefit.ui.screens.workout.WorkoutScreen].
+ * - [WorkoutServiceActions.STOP_SERVICE]: It calls [stopService] and resets all timers.
+ *
+ * ## Lifecycle
+ * - [onBind]: Returns null as this service is not bound to any component.
+ * - [onStartCommand]: Handles incoming intents and performs the corresponding actions.
+ *
+ * ## Notifications
+ * The service uses [NotificationHelper] to create and manage notifications.
+ */
+
 @AndroidEntryPoint
 class WorkoutService : Service() {
 
@@ -54,10 +91,6 @@ class WorkoutService : Service() {
 
     private var initialRestTime = 0
     private var isFocused = true
-
-    override fun onCreate() {
-        super.onCreate()
-    }
 
     override fun onBind(intent: Intent?): IBinder? {
         return null

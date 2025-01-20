@@ -73,6 +73,31 @@ interface WorkoutDao {
     @Query("SELECT * FROM sets WHERE exerciseId = :exerciseId")
     suspend fun getSetsFromExercise(exerciseId: Int): List<Set>
 
+
+    /**
+     * Adds a workout along with its associated exercises and sets to the database.
+     *
+     * A [workout] is considered "new" if its [workout].id is 0. In this case, it will be saved as a new entry.
+     * If the workout is not new, it will be updated instead.
+     *
+     * The function performs the following steps:
+     * 1. If the workout is new, it saves the workout with the current timestamp.
+     * 2. If the workout is not new, it updates the existing workout.
+     * 3. It retrieves all exercises associated with the workout from the database.
+     * 4. It deletes any exercises that are in the database but not in the provided [exercisesWithSets].
+     * 5. For each exercise in [exercisesWithSets]:
+     *    - If the exercise is new (not found in the old exercises), it adds the exercise to the database.
+     *    - If the exercise already exists, it updates the existing exercise.
+     * 6. It retrieves all sets associated with each exercise.
+     * 7. It deletes any sets that are in the database but not in the provided sets.
+     * 8. For each set in the provided sets:
+     *    - If the set already exists, it updates the set.
+     *    - If the set is new, it adds the set to the database.
+     *
+     * @param workout The workout to be added or updated.
+     * @param exercisesWithSets A list of exercises with their associated sets to be added or updated.
+     */
+
     @Transaction
     suspend fun addWorkoutWithExercises(
         workout: Workout,
@@ -97,7 +122,8 @@ interface WorkoutDao {
         val oldExercises = getExercisesFromWorkout(workoutId)
 
         // Deletes from db the exercises not found in the passed exercises
-        oldExercises.filter { e -> !exercisesWithSets.any { it.exerciseId == e.id } }
+        oldExercises
+            .filter { e -> !exercisesWithSets.any { it.exerciseId == e.id } }
             .forEach { exercise ->
                 deleteExercise(exercise)
             }

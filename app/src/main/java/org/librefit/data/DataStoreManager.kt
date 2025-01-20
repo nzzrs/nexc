@@ -33,6 +33,11 @@ private const val USER_PREFERENCES_NAME = "user_preferences"
 
 private val Context.dataStore by preferencesDataStore(name = USER_PREFERENCES_NAME)
 
+/**
+ * A manager class for handling user preferences using [androidx.datastore.core.DataStore].
+ *
+ * This class instance is provided by [org.librefit.di.DataStoreModule].
+ */
 class DataStoreManager(private val context: Context) {
     val themeModeKey = intPreferencesKey("theme_mode")
     val materialModeKey = booleanPreferencesKey("material_mode")

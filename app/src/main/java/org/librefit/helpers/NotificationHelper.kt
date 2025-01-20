@@ -36,6 +36,15 @@ import org.librefit.services.WorkoutService.Companion.EXTRA_ADD_TEN_SECONDS
 import org.librefit.util.formatTime
 
 
+/**
+ * A helper class for managing notifications during workout sessions.
+ *
+ * This class is responsible for creating and displaying notifications for ongoing workouts
+ * and timer events. It sets up notification channels, builds notification content, and
+ * handles user interactions through actions in the notifications.
+ *
+ * This class instance is provided by [org.librefit.di.NotificationModule].
+ */
 class NotificationHelper(context: Context) {
     companion object {
         const val WORKOUT_CHANNEL_ID = "WORKOUT_CHANNEL_ID"

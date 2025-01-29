@@ -53,10 +53,10 @@ fun NavigationHost() {
     NavHost(
         navController = navController,
         startDestination = Destination.MainScreen,
-        enterTransition = { scaleIn(tween(300), 0.8f) + fadeIn(tween(200)) },
-        exitTransition = { scaleOut(tween(300), 1.2f) },
-        popEnterTransition = { scaleIn(tween(300), 1.2f) },
-        popExitTransition = { scaleOut(tween(300), 0.8f) + fadeOut(tween(200)) }
+        enterTransition = { scaleIn(tween(200), 0.9f) + fadeIn(tween(100)) },
+        exitTransition = { scaleOut(tween(200), 1.1f) },
+        popEnterTransition = { scaleIn(tween(200), 1.1f) },
+        popExitTransition = { scaleOut(tween(200), 0.9f) + fadeOut(tween(100)) }
     ) {
         composable<Destination.AboutScreen> {
             AboutScreen(navController = navController)

@@ -19,12 +19,14 @@
 
 package org.librefit.ui.screens.workout
 
+import android.annotation.SuppressLint
 import android.app.Activity
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -33,6 +35,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
@@ -221,9 +224,7 @@ fun WorkoutScreen(
             )
         },
         bottomBar = {
-            BottomAppBar(
-                modifier = Modifier.height(120.dp)
-            ) {
+            BottomAppBar {
                 BottomAppBarContent(viewModel)
             }
         },
@@ -336,6 +337,8 @@ fun WorkoutScreen(
     }
 }
 
+
+@SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 private fun BottomAppBarContent(viewModel: WorkoutScreenViewModel) {
     Column(modifier = Modifier.fillMaxSize()) {
@@ -360,24 +363,32 @@ private fun BottomAppBarContent(viewModel: WorkoutScreenViewModel) {
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            Box(
+
+            BoxWithConstraints(
                 modifier = Modifier
                     .weight(0.2f),
                 contentAlignment = Alignment.Center
             ) {
+                val maxHeight = maxHeight.value
+                val maxWidth = maxWidth.value
+                val animatedWidth = animateFloatAsState(
+                    targetValue = if (viewModel.isChronometerPaused) maxHeight else maxWidth
+                )
                 //Play button
                 FilledIconButton(
                     onClick = {
                         if (viewModel.isChronometerPaused) viewModel.startChronometer()
                         else viewModel.pauseChronometer()
                     },
-                    modifier = Modifier.size(65.dp),
+                    modifier = Modifier
+                        .height(maxHeight.dp)
+                        .width(animatedWidth.value.dp)
                 ) {
                     Icon(
                         imageVector = if (viewModel.isChronometerPaused) Icons.Default.PlayArrow else
                             ImageVector.vectorResource(id = R.drawable.ic_pause),
                         contentDescription = stringResource(if (viewModel.isChronometerPaused) R.string.pause else R.string.resume),
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.fillMaxSize(0.7f)
                     )
                 }
             }

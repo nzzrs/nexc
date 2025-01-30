@@ -25,6 +25,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.librefit.db.Workout
 import org.librefit.db.WorkoutDao
@@ -82,27 +83,29 @@ class ProfileScreenViewModel @Inject constructor(
 
     private fun getWorkoutList() {
         viewModelScope.launch(Dispatchers.IO) {
-            workoutDao.getCompletedWorkouts().collect { workouts ->
-                if (workoutList != workouts) {
-                    workoutList.clear()
-                    workoutList.addAll(workouts)
+            workoutDao.getCompletedWorkouts()
+                .distinctUntilChanged()
+                .collect { workouts ->
+                    if (workoutList != workouts) {
+                        workoutList.clear()
+                        workoutList.addAll(workouts)
 
-                    volume = emptyList()
-                    reps = emptyList()
-                    workouts.forEach {
-                        var volumeData = 0f
-                        var repsData = 0
-                        workoutDao.getExercisesFromWorkout(it.id).forEach { exercise ->
-                            workoutDao.getSetsFromExercise(exercise.id).forEach { set ->
-                                volumeData += if (set.completed) set.weight * set.reps else 0f
-                                repsData += if (set.completed) set.reps else 0
+                        volume = emptyList()
+                        reps = emptyList()
+                        workouts.forEach {
+                            var volumeData = 0f
+                            var repsData = 0
+                            workoutDao.getExercisesFromWorkout(it.id).forEach { exercise ->
+                                workoutDao.getSetsFromExercise(exercise.id).forEach { set ->
+                                    volumeData += if (set.completed) set.weight * set.reps else 0f
+                                    repsData += if (set.completed) set.reps else 0
+                                }
                             }
+                            volume += volumeData
+                            reps += repsData
                         }
-                        volume += volumeData
-                        reps += repsData
                     }
                 }
-            }
         }
     }
 }

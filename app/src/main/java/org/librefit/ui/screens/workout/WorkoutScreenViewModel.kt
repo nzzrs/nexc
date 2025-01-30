@@ -32,8 +32,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.data.DataStoreManager
@@ -51,7 +50,7 @@ import kotlin.random.Random
 @HiltViewModel
 class WorkoutScreenViewModel @Inject constructor(
     @ApplicationContext context: Context,
-    private val userPreferences: DataStoreManager
+    userPreferences: DataStoreManager
 ) : ViewModel() {
     // Used by set chronometer, it's allowed only one timer at a time
     var setChronometerIsRunning = mutableStateOf(false)
@@ -229,16 +228,18 @@ class WorkoutScreenViewModel @Inject constructor(
 
     private fun observeChanges() {
         viewModelScope.launch(Dispatchers.Main) {
-            WorkoutService.timeElapsed.collect {
-                timeElapsed = it
-            }
+            WorkoutService.timeElapsed
+                .distinctUntilChanged { old, new -> old == new }
+                .collect {
+                    timeElapsed = it
+                }
         }
         viewModelScope.launch(Dispatchers.Main) {
-            WorkoutService.isChronometerPaused.collect { isPaused ->
-                if (isPaused != isChronometerPaused) {
+            WorkoutService.isChronometerPaused
+                .distinctUntilChanged { old, new -> old == new }
+                .collect { isPaused ->
                     isChronometerPaused = isPaused
                 }
-            }
         }
         viewModelScope.launch(Dispatchers.Main) {
             WorkoutService.restTime.collect { newRestTime ->
@@ -310,15 +311,5 @@ class WorkoutScreenViewModel @Inject constructor(
     }
 
 
-
-    private val _keepScreenOn = MutableStateFlow(true)
-    val keepScreenOn = _keepScreenOn.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            userPreferences.workoutScreenOn.collect { value ->
-                _keepScreenOn.value = value
-            }
-        }
-    }
+    val keepScreenOn = userPreferences.workoutScreenOn
 }

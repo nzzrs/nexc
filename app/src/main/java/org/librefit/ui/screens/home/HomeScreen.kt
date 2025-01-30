@@ -73,7 +73,7 @@ fun HomeScreen(
 
     val context = LocalContext.current
 
-    val requestPermissionAgain by viewModel.requestPermissionAgain.collectAsState()
+    val requestPermissionAgain by viewModel.requestPermissionAgain.collectAsState(initial = true)
 
     val routineList by viewModel.routineList
 

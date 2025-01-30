@@ -117,7 +117,7 @@ fun WorkoutScreen(
     }
 
 
-    val keepWorkoutScreenOn by viewModel.keepScreenOn.collectAsState()
+    val keepWorkoutScreenOn by viewModel.keepScreenOn.collectAsState(initial = true)
 
     //It keeps the screen turned on
     if (keepWorkoutScreenOn) {

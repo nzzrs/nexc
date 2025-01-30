@@ -95,11 +95,11 @@ fun SettingsScreen(
         )
     }
 
-    val selectedTheme by viewModel.themeMode.collectAsState()
+    val selectedTheme by viewModel.themeMode.collectAsState(ThemeMode.SYSTEM)
 
-    val keepWorkoutScreenOn by viewModel.keepScreenOn.collectAsState()
+    val keepWorkoutScreenOn by viewModel.keepScreenOn.collectAsState(initial = true)
 
-    val materialModeOn by viewModel.materialMode.collectAsState()
+    val materialModeOn by viewModel.materialMode.collectAsState(initial = false)
 
 
     var showPreferenceDialog by remember { mutableStateOf(false) }

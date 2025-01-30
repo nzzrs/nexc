@@ -27,45 +27,19 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.launch
 import org.librefit.data.DataStoreManager
 import org.librefit.enums.Language
-import org.librefit.enums.ThemeMode
 import javax.inject.Inject
 
 @HiltViewModel
 class SettingsScreenViewModel @Inject constructor(
     private val userPreferences: DataStoreManager
 ) : ViewModel() {
-    private val _themeMode = MutableStateFlow(ThemeMode.SYSTEM)
-    val themeMode = _themeMode.asStateFlow()
-
-    private val _materialMode = MutableStateFlow(false)
-    val materialMode = _materialMode.asStateFlow()
-
-    private val _keepScreenOn = MutableStateFlow(true)
-    val keepScreenOn = _keepScreenOn.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            userPreferences.themeMode.collect { value ->
-                _themeMode.value = value
-            }
-        }
-        viewModelScope.launch {
-            userPreferences.materialMode.collect { value ->
-                _materialMode.value = value
-            }
-        }
-        viewModelScope.launch {
-            userPreferences.workoutScreenOn.collect { value ->
-                _keepScreenOn.value = value
-            }
-        }
-    }
+    val themeMode = userPreferences.themeMode
+    val materialMode = userPreferences.materialMode
+    val keepScreenOn = userPreferences.workoutScreenOn
 
     fun changeLanguage(language: Language) {
         val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(language.code)

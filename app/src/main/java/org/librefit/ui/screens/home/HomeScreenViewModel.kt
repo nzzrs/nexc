@@ -24,8 +24,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.librefit.data.DataStoreManager
 import org.librefit.db.Workout
@@ -34,20 +33,10 @@ import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
-    private val userPreferences: DataStoreManager,
+    userPreferences: DataStoreManager,
     private val workoutDao: WorkoutDao
 ) : ViewModel() {
-    private val _requestPermissionAgain = MutableStateFlow(false)
-    val requestPermissionAgain = _requestPermissionAgain.asStateFlow()
-
-    init {
-        viewModelScope.launch {
-            userPreferences.requestPermissionsAgain.collect { value ->
-                _requestPermissionAgain.value = value
-            }
-        }
-    }
-
+    val requestPermissionAgain = userPreferences.requestPermissionsAgain
 
     var routineList: MutableState<List<Workout>> = mutableStateOf(emptyList())
 
@@ -57,9 +46,11 @@ class HomeScreenViewModel @Inject constructor(
 
     private fun getRoutinesList() {
         viewModelScope.launch {
-            workoutDao.getRoutines().collect { workouts ->
-                routineList.value = workouts
-            }
+            workoutDao.getRoutines()
+                .distinctUntilChanged()
+                .collect { workouts ->
+                    routineList.value = workouts
+                }
         }
     }
 

@@ -30,7 +30,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -208,12 +208,10 @@ private fun AddExerciseScreenContent(
         item { FiltersCard(isFilterExpanded = isFilterExpanded, viewModel = viewModel) }
 
         if (
-            exerciseList.any {
+            !exerciseList.any {
                 it.name.contains(query, ignoreCase = true) && viewModel.filterExercise(it)
             }
         ) {
-            item { HorizontalDivider() }
-        } else {
             item {
                 Column(
                     modifier = Modifier
@@ -231,78 +229,82 @@ private fun AddExerciseScreenContent(
         }
 
         //Filtered list of exercises
-        items(
+        itemsIndexed(
             items = exerciseList.filter { exercise ->
                 exercise.name.contains(query, ignoreCase = true) && viewModel.filterExercise(
                     exercise
                 )
             },
-            key = { exercise -> exercise.id }
-        ) { exercise ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .animateItem()
-                    .height(100.dp)
-                    .clickable(
-                        enabled = addExercises
-                    ) {
-                        if (selectedExercisesList.contains(exercise)) {
-                            selectedExercisesList.remove(exercise)
-                        } else {
-                            selectedExercisesList.add(exercise)
-                        }
-                    },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (addExercises) {
-                    Checkbox(
-                        modifier = Modifier.padding(start = 10.dp, end = 10.dp),
-                        checked = selectedExercisesList.contains(exercise),
-                        onCheckedChange = {
+            key = { index, exercise -> exercise.id }
+        ) { index, exercise ->
+            if (index == 0) {
+                HorizontalDivider(Modifier.animateItem())
+            } else {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .animateItem()
+                        .height(100.dp)
+                        .clickable(
+                            enabled = addExercises
+                        ) {
                             if (selectedExercisesList.contains(exercise)) {
                                 selectedExercisesList.remove(exercise)
                             } else {
                                 selectedExercisesList.add(exercise)
                             }
-                        }
-                    )
-                }
-                Column(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(start = if (addExercises) 0.dp else 20.dp),
-                    verticalArrangement = Arrangement.Center
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        text = exercise.name,
-                        style = MaterialTheme.typography.titleMedium,
-                    )
-                    Text(
-                        text = stringResource(id = exerciseEnumToStringId(exercise.category)),
-                        style = MaterialTheme.typography.bodyMedium
-                    )
-                    if (exercise.equipment != null) {
+                    if (addExercises) {
+                        Checkbox(
+                            modifier = Modifier.padding(start = 10.dp, end = 10.dp),
+                            checked = selectedExercisesList.contains(exercise),
+                            onCheckedChange = {
+                                if (selectedExercisesList.contains(exercise)) {
+                                    selectedExercisesList.remove(exercise)
+                                } else {
+                                    selectedExercisesList.add(exercise)
+                                }
+                            }
+                        )
+                    }
+                    Column(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = if (addExercises) 0.dp else 20.dp),
+                        verticalArrangement = Arrangement.Center
+                    ) {
                         Text(
-                            text = stringResource(id = exerciseEnumToStringId(exercise.equipment)),
+                            text = exercise.name,
+                            style = MaterialTheme.typography.titleMedium,
+                        )
+                        Text(
+                            text = stringResource(id = exerciseEnumToStringId(exercise.category)),
                             style = MaterialTheme.typography.bodyMedium
+                        )
+                        if (exercise.equipment != null) {
+                            Text(
+                                text = stringResource(id = exerciseEnumToStringId(exercise.equipment)),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                    IconButton(
+                        modifier = Modifier.padding(start = 10.dp, end = 10.dp),
+                        onClick = {
+                            selectedExercise = exercise
+                            isModalSheetOpen = true
+                        }
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Info,
+                            contentDescription = stringResource(R.string.details)
                         )
                     }
                 }
-                IconButton(
-                    modifier = Modifier.padding(start = 10.dp, end = 10.dp),
-                    onClick = {
-                        selectedExercise = exercise
-                        isModalSheetOpen = true
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.Info,
-                        contentDescription = stringResource(R.string.details)
-                    )
-                }
+                HorizontalDivider(Modifier.animateItem())
             }
-            HorizontalDivider(Modifier.animateItem())
         }
         bottomMargin()
     }

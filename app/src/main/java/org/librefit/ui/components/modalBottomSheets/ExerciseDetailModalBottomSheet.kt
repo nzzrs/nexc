@@ -20,20 +20,22 @@
 package org.librefit.ui.components.modalBottomSheets
 
 import android.graphics.BitmapFactory
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
@@ -41,8 +43,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
@@ -51,17 +54,19 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import org.librefit.R
 import org.librefit.enums.Muscle
 import org.librefit.ui.components.HeadlineText
+import org.librefit.ui.components.bottomMargin
 import org.librefit.util.ExerciseDC
 import org.librefit.util.exerciseEnumToStringId
 import org.librefit.util.formatDetails
 import org.librefit.util.muscleToVectorId
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationApi::class)
 @Composable
 fun ExerciseDetailModalBottomSheet(
     exercise: ExerciseDC,
@@ -70,108 +75,129 @@ fun ExerciseDetailModalBottomSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
-                .verticalScroll(rememberScrollState()),
+        LazyColumn(
+            modifier = Modifier.padding(start = 15.dp, end = 15.dp),
             verticalArrangement = Arrangement.spacedBy(10.dp)
         ) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center) {
-                Text(text = exercise.name, style = MaterialTheme.typography.headlineLarge)
+            item {
+                Text(
+                    text = exercise.name,
+                    style = MaterialTheme.typography.headlineLarge,
+                    textAlign = TextAlign.Center
+                )
             }
+            item { HorizontalDivider() }
 
-            HorizontalDivider()
+            item { AlternatingImages(exercise = exercise) }
 
-            AlternatingImages(exercise = exercise)
+            item { HorizontalDivider() }
 
-            HorizontalDivider()
+            item { HeadlineText(text = stringResource(id = R.string.details)) }
 
-            HeadlineText(text = stringResource(id = R.string.details))
-
-
-            if (exercise.force != null)
+            if (exercise.force != null) {
+                item {
+                    Text(
+                        formatDetails(
+                            stringResource(R.string.force),
+                            stringResource(exerciseEnumToStringId(exercise.force))
+                        )
+                    )
+                }
+            }
+            item {
                 Text(
-                    formatDetails(
-                        stringResource(R.string.force),
-                        stringResource(exerciseEnumToStringId(exercise.force))
+                    text = formatDetails(
+                        stringResource(R.string.level),
+                        stringResource(exerciseEnumToStringId(exercise.level))
                     )
                 )
-            Text(
-                text = formatDetails(
-                    stringResource(R.string.level),
-                    stringResource(exerciseEnumToStringId(exercise.level))
-                )
-            )
+            }
             if (exercise.mechanic != null) {
-                Text(
-                    formatDetails(
-                        stringResource(R.string.mechanic),
-                        stringResource(exerciseEnumToStringId(exercise.mechanic))
+                item {
+                    Text(
+                        formatDetails(
+                            stringResource(R.string.mechanic),
+                            stringResource(exerciseEnumToStringId(exercise.mechanic))
+                        )
                     )
-                )
+                }
             }
             if (exercise.equipment != null) {
+                item {
+                    Text(
+                        formatDetails(
+                            stringResource(R.string.equipment),
+                            stringResource(exerciseEnumToStringId(exercise.equipment))
+                        )
+                    )
+                }
+            }
+            item {
                 Text(
                     formatDetails(
-                        stringResource(R.string.equipment),
-                        stringResource(exerciseEnumToStringId(exercise.equipment))
+                        stringResource(R.string.category),
+                        stringResource(exerciseEnumToStringId(exercise.category))
                     )
                 )
             }
-            Text(
-                formatDetails(
-                    stringResource(R.string.category),
-                    stringResource(exerciseEnumToStringId(exercise.category))
-                )
-            )
-
-
             if (exercise.primaryMuscles.isNotEmpty() || exercise.secondaryMuscles.isNotEmpty()) {
-                HorizontalDivider()
-                HeadlineText(text = stringResource(id = R.string.muscles))
+                item { HorizontalDivider() }
+                item { HeadlineText(text = stringResource(id = R.string.muscles)) }
             }
 
             if (exercise.primaryMuscles.isNotEmpty()) {
-                MuscleContent(
-                    stringResource(id = R.string.primary_muscles),
-                    musclesList = exercise.primaryMuscles
-                )
+                item {
+                    MusclesSection(
+                        musclesText = stringResource(id = R.string.primary_muscles),
+                        musclesList = exercise.primaryMuscles
+                    )
+                }
             }
 
 
             if (exercise.secondaryMuscles.isNotEmpty()) {
-                MuscleContent(
-                    stringResource(id = R.string.secondary_muscles),
-                    musclesList = exercise.secondaryMuscles
+                item {
+                    MusclesSection(
+                        musclesText = stringResource(id = R.string.secondary_muscles),
+                        musclesList = exercise.secondaryMuscles
+                    )
+                }
+            }
+
+            item { HorizontalDivider() }
+
+            item { HeadlineText(text = stringResource(id = R.string.instructions)) }
+
+            item {
+                Text(
+                    text = exercise.instructions.mapIndexed { index, instruction ->
+                        "${index + 1}. $instruction"
+                    }.joinToString("\n\n")
                 )
             }
 
-            HorizontalDivider()
-
-            HeadlineText(text = stringResource(id = R.string.instructions))
-
-            Text(
-                text = exercise.instructions.mapIndexed { index, instruction ->
-                    "${index + 1}. $instruction"
-                }.joinToString("\n\n")
-            )
+            bottomMargin()
         }
     }
 }
 
 @Composable
-private fun MuscleContent(title: String, musclesList: List<Muscle>) {
-    var list = ""
-    musclesList.forEachIndexed { index, muscle ->
-        list += stringResource(exerciseEnumToStringId(muscle)) + if (index != musclesList.lastIndex) ", " else ""
-    }
-    Text(text = formatDetails(title, list))
+private fun MusclesSection(musclesText: String, musclesList: List<Muscle>) {
+    val context = LocalContext.current
+
+    Text(
+        text = formatDetails(
+            boldText = musclesText,
+            text = musclesList.joinToString(separator = ", ") {
+                context.resources.getString(exerciseEnumToStringId(it))
+            }
+        )
+    )
+
     LazyRow {
         items(musclesList) { muscle ->
-            val vector = ImageVector.vectorResource(id = muscleToVectorId(muscle))
             Image(
-                imageVector = vector,
+                imageVector = ImageVector.vectorResource(id = muscleToVectorId(muscle)),
                 contentDescription = stringResource(exerciseEnumToStringId(muscle)),
                 modifier = Modifier.size(150.dp)
             )
@@ -186,29 +212,45 @@ private fun AlternatingImages(exercise: ExerciseDC) {
     val secondBitmap =
         BitmapFactory.decodeStream(LocalContext.current.assets.open(exercise.images[1]))
 
-    // State to hold the current image bitmap
-    var currentBitmap by remember { mutableStateOf(firstBitmap) }
+    var currentBitmap by rememberSaveable { mutableStateOf(firstBitmap) }
 
-    // LaunchedEffect to change the image every second
+    var isPaused by rememberSaveable { mutableStateOf(false) }
+
+
     LaunchedEffect(Unit) {
         var i = 0
         while (true) {
             delay(1000)
-            i++
-            currentBitmap =
-                if (i % 2 == 0) firstBitmap else secondBitmap //Alternate images every second
+            if (!isPaused) {
+                i++
+                currentBitmap = if (i % 2 == 0) firstBitmap else secondBitmap
+            }
         }
     }
 
-    // Display the current image
     currentBitmap?.let {
-        Image(
-            bitmap = it.asImageBitmap(),
-            contentDescription = exercise.name,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .clip(MaterialTheme.shapes.medium)
-                .fillMaxSize()
-        )
+        Box(
+            modifier = Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.BottomEnd
+        ) {
+            Image(
+                bitmap = it.asImageBitmap(),
+                contentDescription = exercise.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.medium)
+                    .fillMaxWidth()
+            )
+            FilledIconButton(
+                modifier = Modifier.padding(5.dp),
+                onClick = { isPaused = !isPaused }
+            ) {
+                Icon(
+                    imageVector = if (isPaused) Icons.Default.PlayArrow else
+                        ImageVector.vectorResource(id = R.drawable.ic_pause),
+                    contentDescription = stringResource(if (isPaused) R.string.pause else R.string.resume),
+                )
+            }
+        }
     }
 }

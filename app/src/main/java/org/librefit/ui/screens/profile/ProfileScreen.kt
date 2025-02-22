@@ -24,7 +24,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -86,10 +85,8 @@ fun ProfileScreen(
     }
 
     LazyColumn(
-        modifier = Modifier
-            .padding(paddingValues = innerPadding)
-            .padding(start = 15.dp, end = 15.dp)
-            .fillMaxSize(),
+        contentPadding = innerPadding,
+        modifier = Modifier.padding(start = 15.dp, end = 15.dp),
         verticalArrangement = Arrangement.spacedBy(10.dp)
     ) {
         item {
@@ -170,7 +167,7 @@ fun ProfileScreen(
                     modifier = Modifier.weight(0.5f),
                     elevated = false
                 ) {
-                    //TODO: calendar view
+                    navController.navigate(Destination.CalendarScreen)
                 }
             }
         }

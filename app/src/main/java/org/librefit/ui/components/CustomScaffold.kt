@@ -46,7 +46,7 @@ import org.librefit.R
  *
  * @param title The title displayed in the [TopAppBar].
  * @param navigateBack A callback function invoked when the navigation icon in the [TopAppBar] is clicked.
- *                     This should typically handle back navigation.
+ * This should typically handle back navigation gesture.
  * @param actions A list of callback functions executed when the relative action button in the [TopAppBar] is clicked.
  * It must be passed in order to show the action button.
  * @param actionsEnabled A list of booleans that controls whether the relative action button is enabled or disabled.
@@ -61,13 +61,8 @@ import org.librefit.R
  * @param fabIcon An optional [ImageVector] representing the icon displayed in the [FloatingActionButton].
  * @param fabDescription An optional string that provides a description of the [fabIcon] and [fabAction]
  * for accessibility purposes. Read mode at [Icon] and [FloatingActionButton]
- * @param content A composable lambda that defines the main content of the screen. It receives a
- * [PaddingValues] parameter that should be applied to the content root using [Modifier.padding]
- * and [Modifier.consumeWindowInsets] to properly offset the top and bottom bars.
- * If using [Modifier.verticalScroll], ensure this modifier is applied to the child of the
- * scrollable content, not the scrollable container itself.
+ * @param content A composable lambda that defines the main content of the screen.
  */
-@Suppress("KDocUnresolvedReference")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CustomScaffold(

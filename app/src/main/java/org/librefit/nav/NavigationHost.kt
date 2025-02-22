@@ -34,6 +34,7 @@ import org.librefit.ui.screens.MainScreen
 import org.librefit.ui.screens.about.AboutScreen
 import org.librefit.ui.screens.about.LicenseScreen
 import org.librefit.ui.screens.beforeSaving.BeforeSavingScreen
+import org.librefit.ui.screens.calendar.CalendarScreen
 import org.librefit.ui.screens.editWorkout.EditWorkoutScreen
 import org.librefit.ui.screens.exercises.ExercisesScreen
 import org.librefit.ui.screens.infoWorkout.InfoWorkoutScreen
@@ -65,6 +66,12 @@ fun NavigationHost() {
         }
         composable<Destination.BeforeSavingScreen> {
             BeforeSavingScreen(
+                sharedViewModel = sharedViewModel,
+                navController = navController
+            )
+        }
+        composable<Destination.CalendarScreen> {
+            CalendarScreen(
                 sharedViewModel = sharedViewModel,
                 navController = navController
             )

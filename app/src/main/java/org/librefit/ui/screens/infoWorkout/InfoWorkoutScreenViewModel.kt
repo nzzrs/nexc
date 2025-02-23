@@ -41,12 +41,24 @@ import javax.inject.Inject
 class InfoWorkoutScreenViewModel @Inject constructor(
     private val workoutDao: WorkoutDao
 ) : ViewModel() {
+    private var initialized = false
     private val workout = mutableStateOf(Workout())
 
-    fun initializeWorkout(workout: Workout) {
-        this.workout.value = workout
-        if (isRoutine()) {
-            getAllPastWorkoutsFromDB()
+    fun initialize(
+        workout: Workout,
+        passedRoutine: Workout,
+        passedExercises: List<ExerciseWithSets>
+    ) {
+        if (!initialized) {
+            initialized = true
+            this.workout.value = workout
+            if (isRoutine()) {
+                getAllPastWorkoutsFromDB()
+            }
+
+            this.routine.value = passedRoutine
+
+            exercises.addAll(passedExercises)
         }
     }
 
@@ -77,10 +89,7 @@ class InfoWorkoutScreenViewModel @Inject constructor(
 
 
     private var routine = mutableStateOf(Workout())
-
-    fun initializeRoutine(routine: Workout) {
-        this.routine.value = routine
-    }
+    
 
     fun getRoutineTitle(): String {
         return routine.value.title
@@ -96,10 +105,6 @@ class InfoWorkoutScreenViewModel @Inject constructor(
 
 
     val exercises = mutableStateListOf<ExerciseWithSets>()
-
-    fun initializeExercises(newExercises: List<ExerciseWithSets>) {
-        exercises.addAll(newExercises)
-    }
 
     fun getVolumeExercises(): String {
         val value = exercises.sumOf {

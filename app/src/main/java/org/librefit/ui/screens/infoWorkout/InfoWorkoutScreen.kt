@@ -80,9 +80,11 @@ fun InfoWorkoutScreen(
     val viewModel: InfoWorkoutScreenViewModel = hiltViewModel()
 
     LaunchedEffect(Unit) {
-        viewModel.initializeWorkout(sharedViewModel.getPassedWorkout())
-        viewModel.initializeExercises(sharedViewModel.getPassedExercises())
-        viewModel.initializeRoutine(sharedViewModel.getPassedRoutine())
+        viewModel.initialize(
+            sharedViewModel.getPassedWorkout(),
+            sharedViewModel.getPassedRoutine(),
+            sharedViewModel.getPassedExercises()
+        )
     }
 
     var showConfirmDialog by remember { mutableStateOf(false) }

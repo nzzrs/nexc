@@ -35,6 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.data.DataStoreManager
+import org.librefit.data.ExerciseWithSets
 import org.librefit.db.Set
 import org.librefit.enums.SetMode
 import org.librefit.enums.WorkoutServiceActions
@@ -42,7 +43,6 @@ import org.librefit.services.WorkoutService
 import org.librefit.services.WorkoutService.Companion.EXTRA_ADD_TEN_SECONDS
 import org.librefit.services.WorkoutService.Companion.EXTRA_INITIAL_REST_TIME
 import org.librefit.services.WorkoutService.Companion.EXTRA_IS_FOCUSED
-import org.librefit.util.ExerciseWithSets
 import javax.inject.Inject
 import kotlin.random.Random
 

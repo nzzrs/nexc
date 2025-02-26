@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit.util
+package org.librefit.data
 
 import org.librefit.db.Set
 import org.librefit.enums.SetMode

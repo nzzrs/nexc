@@ -21,13 +21,13 @@ package org.librefit.ui.screens.exercises
 
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
+import org.librefit.data.ExerciseDC
 import org.librefit.enums.exercise.Category
 import org.librefit.enums.exercise.Equipment
 import org.librefit.enums.exercise.Force
 import org.librefit.enums.exercise.Level
 import org.librefit.enums.exercise.Mechanic
 import org.librefit.enums.exercise.Muscle
-import org.librefit.util.ExerciseDC
 
 class ExercisesScreenViewModel : ViewModel() {
     private var levelFilter = mutableStateOf<Level?>(null)

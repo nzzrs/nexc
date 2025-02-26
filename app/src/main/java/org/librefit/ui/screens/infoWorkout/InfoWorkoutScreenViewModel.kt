@@ -26,11 +26,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.librefit.data.ExerciseWithSets
 import org.librefit.db.Workout
 import org.librefit.db.WorkoutDao
 import org.librefit.enums.ChartMode
 import org.librefit.enums.SetMode
-import org.librefit.util.ExerciseWithSets
 import org.librefit.util.Formatter.formatTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle

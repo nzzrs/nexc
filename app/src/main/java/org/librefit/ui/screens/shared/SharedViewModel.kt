@@ -31,11 +31,11 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.librefit.R
-import org.librefit.data.ExerciseDeserializer
+import org.librefit.data.ExerciseDC
+import org.librefit.data.ExerciseWithSets
 import org.librefit.db.Workout
 import org.librefit.db.WorkoutDao
-import org.librefit.util.ExerciseDC
-import org.librefit.util.ExerciseWithSets
+import org.librefit.util.ExerciseDeserializer
 import javax.inject.Inject
 import kotlin.random.Random
 

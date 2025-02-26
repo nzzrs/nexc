@@ -95,7 +95,7 @@ class ProfileScreenViewModel @Inject constructor(
                         val allSets = workoutDao.getExercisesFromWorkout(workout.id)
                             .flatMap { workoutDao.getSetsFromExercise(it.id) }
                         // Calculate workoutVolume and workoutReps only from the completed sets.
-                        val (workoutVolume, workoutReps) = allSets.asSequence()
+                        val (workoutVolume, workoutReps) = allSets
                             .filter { it.completed }
                             .fold(0f to 0) { (volumeAcc, repsAcc), set ->
                                 (volumeAcc + set.weight * set.reps) to (repsAcc + set.reps)

@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit.util
+package org.librefit.data
 
 import org.librefit.enums.exercise.Category
 import org.librefit.enums.exercise.Equipment

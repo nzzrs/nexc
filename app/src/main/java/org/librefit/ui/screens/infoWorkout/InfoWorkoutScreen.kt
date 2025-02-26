@@ -54,6 +54,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
+import org.librefit.data.ExerciseDC
 import org.librefit.enums.ChartMode
 import org.librefit.nav.Destination
 import org.librefit.ui.components.ConfirmDialog
@@ -64,7 +65,6 @@ import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.charts.CustomCartesianChart
 import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
 import org.librefit.ui.screens.shared.SharedViewModel
-import org.librefit.util.ExerciseDC
 import org.librefit.util.Formatter.formatDetails
 import java.text.DecimalFormat
 

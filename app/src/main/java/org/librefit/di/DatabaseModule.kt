@@ -28,6 +28,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.librefit.db.WorkoutDao
 import org.librefit.db.WorkoutDatabase
+import org.librefit.db.WorkoutRepository
 import javax.inject.Singleton
 
 @Module
@@ -48,5 +49,11 @@ object DatabaseModule {
     @Singleton
     fun provideWorkoutDao(database: WorkoutDatabase): WorkoutDao {
         return database.getWorkoutDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideWorkoutRepository(workoutDao: WorkoutDao): WorkoutRepository {
+        return WorkoutRepository(workoutDao)
     }
 }

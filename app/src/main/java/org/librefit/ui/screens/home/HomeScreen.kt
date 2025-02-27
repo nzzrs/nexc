@@ -75,8 +75,7 @@ fun HomeScreen(
 
     val requestPermissionAgain by viewModel.requestPermissionAgain.collectAsState(initial = true)
 
-    val routineList by viewModel.routineList
-
+    val routines by viewModel.routines.collectAsState(initial = listOf())
 
 
     LazyColumn(
@@ -108,7 +107,7 @@ fun HomeScreen(
             HeadlineText(stringResource(id = R.string.your_routines))
         }
 
-        if (routineList.isEmpty()) {
+        if (routines.isEmpty()) {
             item {
                 Column(
                     modifier = Modifier
@@ -127,7 +126,7 @@ fun HomeScreen(
 
         //TODO: implement a default routine
 
-        items(routineList, key = { it.id }) { routine ->
+        items(routines, key = { it.id }) { routine ->
             ElevatedCard(
                 modifier = Modifier
                     .padding(5.dp)

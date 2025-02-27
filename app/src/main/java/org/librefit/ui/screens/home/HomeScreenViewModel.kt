@@ -19,39 +19,19 @@
 
 package org.librefit.ui.screens.home
 
-import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.launch
 import org.librefit.data.DataStoreManager
-import org.librefit.db.Workout
-import org.librefit.db.WorkoutDao
+import org.librefit.db.WorkoutRepository
 import javax.inject.Inject
 
 @HiltViewModel
 class HomeScreenViewModel @Inject constructor(
     userPreferences: DataStoreManager,
-    private val workoutDao: WorkoutDao
+    workoutRepository: WorkoutRepository
 ) : ViewModel() {
     val requestPermissionAgain = userPreferences.requestPermissionsAgain
 
-    var routineList: MutableState<List<Workout>> = mutableStateOf(emptyList())
-
-    init {
-        getRoutinesList()
-    }
-
-    private fun getRoutinesList() {
-        viewModelScope.launch {
-            workoutDao.getRoutines()
-                .distinctUntilChanged()
-                .collect { workouts ->
-                    routineList.value = workouts
-                }
-        }
-    }
+    var routines = workoutRepository.routines
 
 }

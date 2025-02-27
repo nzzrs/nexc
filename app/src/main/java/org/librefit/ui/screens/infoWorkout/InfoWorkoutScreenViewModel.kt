@@ -28,7 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.librefit.data.ExerciseWithSets
 import org.librefit.db.Workout
-import org.librefit.db.WorkoutDao
+import org.librefit.db.WorkoutRepository
 import org.librefit.enums.ChartMode
 import org.librefit.enums.SetMode
 import org.librefit.util.Formatter.formatTime
@@ -39,7 +39,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class InfoWorkoutScreenViewModel @Inject constructor(
-    private val workoutDao: WorkoutDao
+    private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
     private var initialized = false
     private val workout = mutableStateOf(Workout())
@@ -177,14 +177,14 @@ class InfoWorkoutScreenViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             if (pastWorkouts.isEmpty()) {
                 pastWorkouts.addAll(
-                    workoutDao.getAllPastWorkouts(workout.value.routineId)
+                    workoutRepository.getAllPastWorkouts(workout.value.routineId)
                 )
                 volume.clear()
                 reps.clear()
                 pastWorkouts.forEach { workout ->
                     // For each exercise, fetch its sets. Then flatten the nested list of sets into one list.
-                    val allSets = workoutDao.getExercisesFromWorkout(workout.id)
-                        .flatMap { workoutDao.getSetsFromExercise(it.id) }
+                    val allSets = workoutRepository.getExercisesFromWorkout(workout.id)
+                        .flatMap { workoutRepository.getSetsFromExercise(it.id) }
                     // Calculate workoutVolume and workoutReps only from the completed sets.
                     val (workoutVolume, workoutReps) = allSets.asSequence()
                         .filter { it.completed }
@@ -200,7 +200,7 @@ class InfoWorkoutScreenViewModel @Inject constructor(
 
     fun deleteWorkout() {
         viewModelScope.launch(Dispatchers.IO) {
-            workoutDao.deleteWorkout(workout.value)
+            workoutRepository.deleteWorkout(workout.value)
         }
     }
 
@@ -212,7 +212,7 @@ class InfoWorkoutScreenViewModel @Inject constructor(
         routine.value = Workout()
 
         viewModelScope.launch(Dispatchers.IO) {
-            workoutDao.updateWorkout(workout.value)
+            workoutRepository.updateWorkout(workout.value)
         }
     }
 }

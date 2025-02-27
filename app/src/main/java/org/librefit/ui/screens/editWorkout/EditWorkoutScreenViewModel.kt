@@ -29,14 +29,14 @@ import kotlinx.coroutines.launch
 import org.librefit.data.ExerciseWithSets
 import org.librefit.db.Set
 import org.librefit.db.Workout
-import org.librefit.db.WorkoutDao
+import org.librefit.db.WorkoutRepository
 import org.librefit.enums.SetMode
 import javax.inject.Inject
 import kotlin.random.Random
 
 @HiltViewModel
 class EditWorkoutScreenViewModel @Inject constructor(
-    private val workoutDao: WorkoutDao
+    private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
     val exercises = mutableStateListOf<ExerciseWithSets>()
 
@@ -210,7 +210,7 @@ class EditWorkoutScreenViewModel @Inject constructor(
     fun saveWorkoutWithExercisesInDB() {
         val list = exercises.toList()
         viewModelScope.launch(Dispatchers.IO) {
-            workoutDao.addWorkoutWithExercises(workout.value.copy(routine = isRoutine), list)
+            workoutRepository.addWorkoutWithExercises(workout.value.copy(routine = isRoutine), list)
         }
     }
 

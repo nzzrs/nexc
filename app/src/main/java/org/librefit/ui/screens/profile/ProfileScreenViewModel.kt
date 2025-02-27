@@ -28,7 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.librefit.db.Workout
-import org.librefit.db.WorkoutDao
+import org.librefit.db.WorkoutRepository
 import org.librefit.enums.ChartMode
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
@@ -39,7 +39,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ProfileScreenViewModel @Inject constructor(
-    private val workoutDao: WorkoutDao
+    private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
     val workoutList = mutableStateListOf<Workout>()
     private var volume = mutableStateListOf<Float>()
@@ -82,28 +82,28 @@ class ProfileScreenViewModel @Inject constructor(
 
     fun getWorkoutListFromDB() {
         viewModelScope.launch(Dispatchers.IO) {
-            workoutDao.getCompletedWorkouts()
+            workoutRepository.completedWorkouts
                 .distinctUntilChanged()
                 .collect { workouts ->
                     workoutList.clear()
                     workoutList.addAll(workouts)
 
-                    volume.clear()
-                    reps.clear()
-                    workoutList.forEach { workout ->
-                        // For each exercise, fetch its sets. Then flatten the nested list of sets into one list.
-                        val allSets = workoutDao.getExercisesFromWorkout(workout.id)
-                            .flatMap { workoutDao.getSetsFromExercise(it.id) }
-                        // Calculate workoutVolume and workoutReps only from the completed sets.
-                        val (workoutVolume, workoutReps) = allSets
-                            .filter { it.completed }
-                            .fold(0f to 0) { (volumeAcc, repsAcc), set ->
-                                (volumeAcc + set.weight * set.reps) to (repsAcc + set.reps)
-                            }
-                        volume.add(workoutVolume)
-                        reps.add(workoutReps)
-                    }
                 }
+            volume.clear()
+            reps.clear()
+            workoutList.forEach { workout ->
+                // For each exercise, fetch its sets. Then flatten the nested list of sets into one list.
+                val allSets = workoutRepository.getExercisesFromWorkout(workout.id)
+                    .flatMap { workoutRepository.getSetsFromExercise(it.id) }
+                // Calculate workoutVolume and workoutReps only from the completed sets.
+                val (workoutVolume, workoutReps) = allSets
+                    .filter { it.completed }
+                    .fold(0f to 0) { (volumeAcc, repsAcc), set ->
+                        (volumeAcc + set.weight * set.reps) to (repsAcc + set.reps)
+                    }
+                volume.add(workoutVolume)
+                reps.add(workoutReps)
+            }
         }
     }
 

@@ -79,7 +79,7 @@ interface WorkoutDao {
     /**
      * Adds a workout along with its associated exercises and sets to the database.
      *
-     * A [workout] is considered "new" if its [workout].id is 0. In this case, it will be saved as a new entry.
+     * A [workout] is considered "new" if its [Workout.id] is 0. In this case, it will be saved as a new entry.
      * If the workout is not new, it will be updated instead.
      *
      * The function performs the following steps:
@@ -92,12 +92,12 @@ interface WorkoutDao {
      *    - If the exercise already exists, it updates the existing exercise.
      * 6. It retrieves all sets associated with each exercise.
      * 7. It deletes any sets that are in the database but not in the provided sets.
-     * 8. For each set in the provided sets:
+     * 8. For each set in the provided sets ([ExerciseWithSets.sets]):
      *    - If the set already exists, it updates the set.
      *    - If the set is new, it adds the set to the database.
      *
      * @param workout The workout to be added or updated.
-     * @param exercisesWithSets A list of exercises with their associated sets to be added or updated.
+     * @param exercisesWithSets A list of [ExerciseWithSets] with their associated [Set]s to be added or updated.
      */
 
     @Transaction

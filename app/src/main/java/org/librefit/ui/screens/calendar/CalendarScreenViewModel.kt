@@ -29,7 +29,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import org.librefit.db.Workout
-import org.librefit.db.WorkoutDao
+import org.librefit.db.WorkoutRepository
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset
@@ -38,7 +38,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class CalendarScreenViewModel @Inject constructor(
-    private val workoutDao: WorkoutDao
+    private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
     val workoutList = mutableStateListOf<Workout>()
 
@@ -71,7 +71,7 @@ class CalendarScreenViewModel @Inject constructor(
 
     private fun getWorkoutListFromDB() {
         viewModelScope.launch(Dispatchers.IO) {
-            workoutDao.getCompletedWorkouts()
+            workoutRepository.completedWorkouts
                 .distinctUntilChanged()
                 .collect { workouts ->
                     workoutList.clear()

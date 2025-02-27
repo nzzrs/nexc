@@ -28,7 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.librefit.data.ExerciseWithSets
 import org.librefit.db.Workout
-import org.librefit.db.WorkoutDao
+import org.librefit.db.WorkoutRepository
 import org.librefit.enums.SetMode
 import java.time.Instant
 import java.time.LocalDateTime
@@ -40,7 +40,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class BeforeSavingScreenViewModel @Inject constructor(
-    private val workoutDao: WorkoutDao
+    private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
 
     private var exercises = mutableStateListOf<ExerciseWithSets>()
@@ -178,7 +178,7 @@ class BeforeSavingScreenViewModel @Inject constructor(
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            workoutDao.addWorkoutWithExercises(
+            workoutRepository.addWorkoutWithExercises(
                 workout = workout.value,
                 exercisesWithSets = list
             )

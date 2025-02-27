@@ -34,7 +34,7 @@ import org.librefit.R
 import org.librefit.data.ExerciseDC
 import org.librefit.data.ExerciseWithSets
 import org.librefit.db.Workout
-import org.librefit.db.WorkoutDao
+import org.librefit.db.WorkoutRepository
 import org.librefit.util.ExerciseDeserializer
 import javax.inject.Inject
 import kotlin.random.Random
@@ -42,7 +42,7 @@ import kotlin.random.Random
 @HiltViewModel
 class SharedViewModel @Inject constructor(
     @ApplicationContext context: Context,
-    private val workoutDao: WorkoutDao
+    private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
     //TODO : provide this list through Room Database (parse once)
     val exercisesList: List<ExerciseDC> = loadExercisesFromRaw(context)
@@ -122,26 +122,26 @@ class SharedViewModel @Inject constructor(
         if (workoutId != 0) {
             viewModelScope.launch(Dispatchers.IO) {
                 // Retrieves exercises from db and parse them to ExerciseWithSets
-                val exercises = workoutDao.getExercisesFromWorkout(workoutId)
+                val exercises = workoutRepository.getExercisesFromWorkout(workoutId)
                 passedExercises = exercises.map { exercise ->
                     ExerciseWithSets(
                         id = Random.nextInt(),
                         exerciseDC = exercisesList.associateBy { it.id }[exercise.exerciseId]!!,
                         exerciseId = exercise.id,
                         note = exercise.notes,
-                        sets = workoutDao.getSetsFromExercise(exercise.id),
+                        sets = workoutRepository.getSetsFromExercise(exercise.id),
                         setMode = exercise.setMode,
                         restTime = exercise.restTime
                     )
                 }
             }
             viewModelScope.launch(Dispatchers.IO) {
-                passedWorkout = workoutDao.getWorkout(workoutId)
+                passedWorkout = workoutRepository.getWorkout(workoutId)
 
                 passedRoutine = if (passedWorkout.routine) {
                     passedWorkout
                 } else {
-                    runCatching { workoutDao.getRoutines().first() }
+                    runCatching { workoutRepository.routines.first() }
                         .getOrDefault(emptyList())
                         .find { it.routineId == passedWorkout.routineId }
                         .takeIf { it?.id != passedWorkout.id } ?: Workout()

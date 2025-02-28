@@ -146,8 +146,8 @@ class InfoWorkoutScreenViewModel @Inject constructor(
         return pastWorkouts.mapIndexed { index, it ->
             when (chartMode.value) {
                 ChartMode.DURATION -> it.timeElapsed / 60f
-                ChartMode.VOLUME -> if (index < volume.lastIndex) volume[index] else 0f
-                ChartMode.REPS -> if (index < reps.lastIndex) reps[index].toFloat() else 0f
+                ChartMode.VOLUME -> volume[index]
+                ChartMode.REPS -> reps[index].toFloat()
             }
         }
     }
@@ -179,6 +179,8 @@ class InfoWorkoutScreenViewModel @Inject constructor(
                 pastWorkouts.addAll(
                     workoutRepository.getAllPastWorkouts(workout.value.routineId)
                 )
+                volume.clear()
+                reps.clear()
                 val (volumeData, repsData) = workoutRepository.getVolumeAndRepsFromWorkouts(
                     pastWorkouts
                 )

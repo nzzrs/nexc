@@ -25,7 +25,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import org.librefit.db.Workout
 import org.librefit.db.WorkoutRepository
@@ -59,8 +59,8 @@ class ProfileScreenViewModel @Inject constructor(
         return workoutList.mapIndexed { index, it ->
             when (chartMode.value) {
                 ChartMode.DURATION -> it.timeElapsed / 60f
-                ChartMode.VOLUME -> if (index < volume.lastIndex) volume[index] else 0f
-                ChartMode.REPS -> if (index < reps.lastIndex) reps[index].toFloat() else 0f
+                ChartMode.VOLUME -> if (index <= volume.lastIndex) volume[index] else 0f
+                ChartMode.REPS -> if (index <= reps.lastIndex) reps[index].toFloat() else 0f
             }
         }
     }
@@ -82,15 +82,16 @@ class ProfileScreenViewModel @Inject constructor(
 
     fun getWorkoutListFromDB() {
         viewModelScope.launch(Dispatchers.IO) {
-            workoutRepository.completedWorkouts
-                .distinctUntilChanged()
-                .collect { workouts ->
-                    workoutList.clear()
-                    workoutList.addAll(workouts)
-                }
-            val (volumeData, repsData) = workoutRepository.getVolumeAndRepsFromWorkouts(workoutList)
+            val list = workoutRepository.completedWorkouts.firstOrNull() ?: emptyList()
+
+            val (volumeData, repsData) = workoutRepository.getVolumeAndRepsFromWorkouts(list)
+            volume.clear()
+            reps.clear()
             volume.addAll(volumeData)
             reps.addAll(repsData)
+
+            workoutList.clear()
+            workoutList.addAll(list)
         }
     }
 

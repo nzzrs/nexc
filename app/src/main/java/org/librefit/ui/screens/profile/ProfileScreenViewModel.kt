@@ -87,31 +87,20 @@ class ProfileScreenViewModel @Inject constructor(
                 .collect { workouts ->
                     workoutList.clear()
                     workoutList.addAll(workouts)
-
                 }
-            volume.clear()
-            reps.clear()
-            workoutList.forEach { workout ->
-                // For each exercise, fetch its sets. Then flatten the nested list of sets into one list.
-                val allSets = workoutRepository.getExercisesFromWorkout(workout.id)
-                    .flatMap { workoutRepository.getSetsFromExercise(it.id) }
-                // Calculate workoutVolume and workoutReps only from the completed sets.
-                val (workoutVolume, workoutReps) = allSets
-                    .filter { it.completed }
-                    .fold(0f to 0) { (volumeAcc, repsAcc), set ->
-                        (volumeAcc + set.weight * set.reps) to (repsAcc + set.reps)
-                    }
-                volume.add(workoutVolume)
-                reps.add(workoutReps)
-            }
+            val (volumeData, repsData) = workoutRepository.getVolumeAndRepsFromWorkouts(workoutList)
+            volume.addAll(volumeData)
+            reps.addAll(repsData)
         }
     }
 
 
     fun getWeekStreak(): Int {
-        if (workoutList.size < 2) return 0
-
-        if (ChronoUnit.DAYS.between(workoutList.first().completed, LocalDateTime.now()) > 7) {
+        if (workoutList.size < 2 || ChronoUnit.DAYS.between(
+                workoutList.first().completed,
+                LocalDateTime.now()
+            ) > 7
+        ) {
             return 0
         }
 

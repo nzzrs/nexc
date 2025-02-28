@@ -82,4 +82,24 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
     ) {
         workoutDao.addWorkoutWithExercises(workout, exercisesWithSets)
     }
+
+    suspend fun getVolumeAndRepsFromWorkouts(workouts: List<Workout>): Pair<List<Float>, List<Int>> {
+        val volume = mutableListOf<Float>()
+        val reps = mutableListOf<Int>()
+
+        workouts.forEach { workout ->
+            val allSets = getExercisesFromWorkout(workout.id)
+                .flatMap { getSetsFromExercise(it.id) }
+                .filter { it.completed }
+
+            val (workoutVolume, workoutReps) = allSets.fold(0f to 0) { (volumeAcc, repsAcc), set ->
+                (volumeAcc + set.weight * set.reps) to (repsAcc + set.reps)
+            }
+
+            volume.add(workoutVolume)
+            reps.add(workoutReps)
+        }
+
+        return Pair(volume, reps)
+    }
 }

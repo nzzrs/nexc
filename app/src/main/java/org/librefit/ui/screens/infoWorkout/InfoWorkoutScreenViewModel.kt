@@ -179,21 +179,11 @@ class InfoWorkoutScreenViewModel @Inject constructor(
                 pastWorkouts.addAll(
                     workoutRepository.getAllPastWorkouts(workout.value.routineId)
                 )
-                volume.clear()
-                reps.clear()
-                pastWorkouts.forEach { workout ->
-                    // For each exercise, fetch its sets. Then flatten the nested list of sets into one list.
-                    val allSets = workoutRepository.getExercisesFromWorkout(workout.id)
-                        .flatMap { workoutRepository.getSetsFromExercise(it.id) }
-                    // Calculate workoutVolume and workoutReps only from the completed sets.
-                    val (workoutVolume, workoutReps) = allSets.asSequence()
-                        .filter { it.completed }
-                        .fold(0f to 0) { (volumeAcc, repsAcc), set ->
-                            (volumeAcc + set.weight * set.reps) to (repsAcc + set.reps)
-                        }
-                    volume.add(workoutVolume)
-                    reps.add(workoutReps)
-                }
+                val (volumeData, repsData) = workoutRepository.getVolumeAndRepsFromWorkouts(
+                    pastWorkouts
+                )
+                volume.addAll(volumeData)
+                reps.addAll(repsData)
             }
         }
     }

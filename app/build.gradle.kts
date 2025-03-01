@@ -127,8 +127,13 @@ dependencies {
     // M3 Compose vico charts
     implementation(libs.compose.m3)
 
-    // Dagger - Hilt
+    // Dagger - Hilt for dependency injection
     implementation(libs.hilt.android)
     ksp(libs.hilt.android.compiler)
     implementation(libs.androidx.hilt.navigation.compose)
+
+
+    // Moshi to parse json file
+    implementation(libs.moshi)
+    ksp(libs.moshi.kotlin.codegen)
 }

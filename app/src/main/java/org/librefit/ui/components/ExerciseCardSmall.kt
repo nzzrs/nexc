@@ -44,7 +44,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import org.librefit.R
-import org.librefit.data.ExerciseWithSets
+import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.enums.SetMode
 import org.librefit.util.Formatter.formatDetails
 import org.librefit.util.Formatter.formatTime

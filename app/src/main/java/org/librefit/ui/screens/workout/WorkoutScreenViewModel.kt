@@ -35,8 +35,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.data.DataStoreManager
-import org.librefit.data.ExerciseWithSets
 import org.librefit.db.Set
+import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.enums.SetMode
 import org.librefit.enums.WorkoutServiceActions
 import org.librefit.services.WorkoutService

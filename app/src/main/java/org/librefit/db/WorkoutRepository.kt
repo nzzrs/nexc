@@ -19,8 +19,8 @@
 
 package org.librefit.db
 
-import org.librefit.data.ExerciseWithSets
-import org.librefit.data.WorkoutWithExercisesAndSets
+import org.librefit.db.relations.ExerciseWithSets
+import org.librefit.db.relations.WorkoutWithExercisesAndSets
 
 /**
  * Repository class for managing workout data.

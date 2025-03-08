@@ -26,8 +26,8 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
-import org.librefit.data.ExerciseWithSets
-import org.librefit.data.WorkoutWithExercisesAndSets
+import org.librefit.db.relations.ExerciseWithSets
+import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import java.time.LocalDateTime
 
 @Dao

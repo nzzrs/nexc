@@ -31,7 +31,7 @@ import androidx.room.TypeConverters
 @TypeConverters(Converters::class)
 abstract class WorkoutDatabase : RoomDatabase() {
     companion object {
-        const val NAME = "workout_database"
+        const val NAME = "librefit_database"
     }
 
     abstract fun getWorkoutDao(): WorkoutDao

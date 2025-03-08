@@ -94,14 +94,12 @@ import androidx.core.view.HapticFeedbackConstantsCompat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.librefit.R
-import org.librefit.data.ExerciseWithSets
 import org.librefit.db.Set
+import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.enums.InfoMode
 import org.librefit.enums.SetMode
 import org.librefit.util.Formatter.formatTime
 import kotlin.math.roundToInt
-import kotlin.text.ifEmpty
-import kotlin.text.toInt
 
 /**
  * A custom [ElevatedCard] designed to display an [ExerciseWithSets] with a uniform appearance across

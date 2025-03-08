@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025. LibreFit
+ * Copyright (c) 2025. LibreFit
  *
  * This file is part of LibreFit
  *
@@ -17,16 +17,17 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit.data
+package org.librefit.db.relations
 
 import androidx.room.Embedded
 import androidx.room.Ignore
 import androidx.room.Relation
+import org.librefit.data.ExerciseDC
 import org.librefit.db.Exercise
 import org.librefit.db.Set
 
 /**
- * A data class representing an [Exercise] with its associated [Set]s.
+ * A data class representing an [org.librefit.db.Exercise] with its associated [Set]s.
  *
  * This class is used by Room to retrieve all the data associated with an exercise and
  * the sets associated with it. The actual exercise data is stored in [ExerciseDC] which is provided

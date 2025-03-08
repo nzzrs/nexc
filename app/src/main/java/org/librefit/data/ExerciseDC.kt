@@ -31,7 +31,7 @@ import org.librefit.enums.exercise.Muscle
  * This class is used to store exercises as parsed from `res/raw/exercises.json` in
  * [org.librefit.ui.screens.shared.SharedViewModel].
  * Moshi's generated adapter is used for JSON serialization and deserialization as indicated by
- * [JsonClass] annotation. The actual exercise entries in database are handled by [org.librefit.db.Exercise]
+ * [JsonClass] annotation. The actual exercise entries in database are handled by [org.librefit.db.entity.Exercise]
  *
  * The JSON schema associated with this class is defined as follows:
  *

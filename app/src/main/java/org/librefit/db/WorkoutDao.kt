@@ -26,6 +26,8 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import org.librefit.db.entity.Set
+import org.librefit.db.entity.Workout
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import java.time.LocalDateTime
@@ -33,7 +35,7 @@ import java.time.LocalDateTime
 @Dao
 interface WorkoutDao {
     /**
-     * Returns a flow that emits a stream of [Workout]s which are routines ([Workout.routine] = `true`)
+     * Returns a flow that emits a stream of [org.librefit.db.entity.Workout]s which are routines ([org.librefit.db.entity.Workout.routine] = `true`)
      */
     @Query("SELECT * FROM workouts WHERE 1 = routine ORDER BY title")
     fun getRoutines(): Flow<List<Workout>>
@@ -60,13 +62,13 @@ interface WorkoutDao {
     suspend fun deleteWorkout(workout: Workout)
 
     @Insert
-    suspend fun addExercise(exercise: Exercise): Long
+    suspend fun addExercise(exercise: org.librefit.db.entity.Exercise): Long
 
     @Update
-    suspend fun updateExercise(exercise: Exercise)
+    suspend fun updateExercise(exercise: org.librefit.db.entity.Exercise)
 
     @Delete
-    suspend fun deleteExercise(exercise: Exercise)
+    suspend fun deleteExercise(exercise: org.librefit.db.entity.Exercise)
 
     @Insert
     suspend fun addSet(set: Set)
@@ -88,7 +90,7 @@ interface WorkoutDao {
 
     /**
      * Retrieves the list of [ExerciseWithSets] associated with a specific workout.
-     * This function queries the database to fetch all exercises that belong to the given [Exercise.workoutId]
+     * This function queries the database to fetch all exercises that belong to the given [org.librefit.db.entity.Exercise.workoutId]
      */
     @Transaction
     @Query("SELECT * FROM exercises WHERE workoutId = :workoutId")

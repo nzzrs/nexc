@@ -21,17 +21,17 @@ package org.librefit.db.relations
 
 import androidx.room.Embedded
 import androidx.room.Relation
-import org.librefit.db.Exercise
-import org.librefit.db.Workout
+import org.librefit.db.entity.Exercise
+import org.librefit.db.entity.Workout
 
 /**
- * A data class representing a [org.librefit.db.Workout] and its associated [org.librefit.db.relations.ExerciseWithSets].
+ * A data class representing a [Workout] and its associated [ExerciseWithSets].
  *
  * This class is used by Room to retrieve all the data associated with an workout and
  * the exercisesWithSets associated with it.
  *
  * @property workout It contains the data associated with this [Workout] some of which is user generated.
- * @property exercisesWithSets A list of [org.librefit.db.relations.ExerciseWithSets] entities where each entry consists of an [Exercise]
+ * @property exercisesWithSets A list of [ExerciseWithSets] entities where each entry consists of an [Exercise]
  * and its related [Set]s.
  */
 data class WorkoutWithExercisesAndSets(
@@ -41,5 +41,5 @@ data class WorkoutWithExercisesAndSets(
         parentColumn = "id",
         entityColumn = "workoutId"
     )
-    val exercisesWithSets: List<org.librefit.db.relations.ExerciseWithSets>
+    val exercisesWithSets: List<ExerciseWithSets>
 )

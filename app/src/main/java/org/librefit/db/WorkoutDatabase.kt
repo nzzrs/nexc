@@ -22,9 +22,11 @@ package org.librefit.db
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import org.librefit.db.entity.Set
+import org.librefit.db.entity.Workout
 
 @Database(
-    entities = [Workout::class, Exercise::class, Set::class],
+    entities = [Workout::class, org.librefit.db.entity.Exercise::class, Set::class],
     version = 1,
     exportSchema = false
 )

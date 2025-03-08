@@ -23,11 +23,11 @@ import androidx.room.Embedded
 import androidx.room.Ignore
 import androidx.room.Relation
 import org.librefit.data.ExerciseDC
-import org.librefit.db.Exercise
-import org.librefit.db.Set
+import org.librefit.db.entity.Exercise
+import org.librefit.db.entity.Set
 
 /**
- * A data class representing an [org.librefit.db.Exercise] with its associated [Set]s.
+ * A data class representing an [Exercise] with its associated [Set]s.
  *
  * This class is used by Room to retrieve all the data associated with an exercise and
  * the sets associated with it. The actual exercise data is stored in [ExerciseDC] which is provided

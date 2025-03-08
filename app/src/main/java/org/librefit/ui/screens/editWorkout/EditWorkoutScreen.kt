@@ -56,7 +56,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
 import org.librefit.data.ExerciseDC
-import org.librefit.db.Exercise
+import org.librefit.db.entity.Exercise
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.enums.InfoMode
 import org.librefit.enums.SuccessMessage

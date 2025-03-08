@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025. LibreFit
+ * Copyright (c) 2025. LibreFit
  *
  * This file is part of LibreFit
  *
@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit.db
+package org.librefit.db.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -54,13 +54,13 @@ import kotlin.random.Random
             entity = Exercise::class,
             parentColumns = ["id"],
             childColumns = ["exerciseId"],
-            onDelete = ForeignKey.CASCADE
+            onDelete = ForeignKey.Companion.CASCADE
         )
     ],
     indices = [Index(value = ["exerciseId"])]
 )
 data class Set(
-    @PrimaryKey(true) val id: Long = Random.nextLong() + System.currentTimeMillis(),
+    @PrimaryKey(true) val id: Long = Random.Default.nextLong() + System.currentTimeMillis(),
     val weight: Float = 0f,
     val reps: Int = 0,
     val elapsedTime: Int = 0,

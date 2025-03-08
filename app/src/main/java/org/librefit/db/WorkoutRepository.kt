@@ -19,6 +19,7 @@
 
 package org.librefit.db
 
+import org.librefit.db.entity.Workout
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 

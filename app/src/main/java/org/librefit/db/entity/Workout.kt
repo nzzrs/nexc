@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025. LibreFit
+ * Copyright (c) 2025. LibreFit
  *
  * This file is part of LibreFit
  *
@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit.db
+package org.librefit.db.entity
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey
@@ -47,7 +47,7 @@ import kotlin.random.Random
 @Entity(tableName = "workouts")
 data class Workout(
     @PrimaryKey(true) val id: Long = 0,
-    val routineId: Long = Random.nextLong() + System.currentTimeMillis(),
+    val routineId: Long = Random.Default.nextLong() + System.currentTimeMillis(),
     val notes: String = "",
     val title: String = "",
     val routine: Boolean = false,

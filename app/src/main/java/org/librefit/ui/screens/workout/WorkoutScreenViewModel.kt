@@ -35,7 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.data.DataStoreManager
-import org.librefit.db.Set
+import org.librefit.db.entity.Set
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.enums.SetMode
 import org.librefit.enums.WorkoutServiceActions
@@ -147,11 +147,11 @@ class WorkoutScreenViewModel @Inject constructor(
      * @param value The new value to be assigned to the specified attribute of the [ExerciseWithSets].
      * @param mode An integer that determines which attribute will be updated with the [value].
      * The following modes correspond to specific attributes:
-     *  - 0: [org.librefit.db.Exercise.notes]
-     *  - 1: [org.librefit.db.Exercise.setMode]
-     *  - 2: [org.librefit.db.Exercise.restTime]
+     *  - 0: [org.librefit.db.entity.Exercise.notes]
+     *  - 1: [org.librefit.db.entity.Exercise.setMode]
+     *  - 2: [org.librefit.db.entity.Exercise.restTime]
      *
-     * Note: When updating [org.librefit.db.Exercise.setMode], the [value] should be one of the following string representations:
+     * Note: When updating [org.librefit.db.entity.Exercise.setMode], the [value] should be one of the following string representations:
      *  - [SetMode.WEIGHT].name
      *  - [SetMode.TIME].name
      *  - [SetMode.REPS].name;

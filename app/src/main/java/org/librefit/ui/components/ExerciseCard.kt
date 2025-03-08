@@ -94,7 +94,7 @@ import androidx.core.view.HapticFeedbackConstantsCompat
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.librefit.R
-import org.librefit.db.Set
+import org.librefit.db.entity.Set
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.enums.InfoMode
 import org.librefit.enums.SetMode

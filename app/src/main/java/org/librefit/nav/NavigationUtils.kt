@@ -31,7 +31,7 @@ import org.librefit.ui.screens.shared.SharedViewModel
  * Navigates to the [org.librefit.ui.screens.workout.WorkoutScreen] or [org.librefit.ui.screens.requestPermission.RequestPermissionScreen]
  * based on the granted permission.
  *
- * @param workoutId The ID of the [org.librefit.db.Workout] to open in [org.librefit.ui.screens.workout.WorkoutScreen].
+ * @param workoutId The ID of the [org.librefit.db.entity.Workout] to open in [org.librefit.ui.screens.workout.WorkoutScreen].
  * @param requestPermissionAgain Flag indicating whether to request permissions again (default is false).
  * @param sharedViewModel It loads the exercises from the routine/workouts. See [SharedViewModel.getDataFromDB]
  * @param navController The NavHostController used for navigation.

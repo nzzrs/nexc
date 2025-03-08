@@ -26,11 +26,11 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.librefit.db.WorkoutRepository
 import org.librefit.db.entity.Set
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
+import org.librefit.db.repository.WorkoutRepository
 import org.librefit.enums.SetMode
 import javax.inject.Inject
 

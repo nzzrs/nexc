@@ -32,9 +32,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.data.ExerciseDC
-import org.librefit.db.WorkoutRepository
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.ExerciseWithSets
+import org.librefit.db.repository.WorkoutRepository
 import javax.inject.Inject
 
 @HiltViewModel

@@ -28,8 +28,8 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
-import org.librefit.db.WorkoutRepository
 import org.librefit.db.entity.Workout
+import org.librefit.db.repository.WorkoutRepository
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneOffset

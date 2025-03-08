@@ -19,22 +19,20 @@
 
 package org.librefit.db
 
-import androidx.room.Database
-import androidx.room.RoomDatabase
-import androidx.room.TypeConverters
-import org.librefit.db.entity.Set
-import org.librefit.db.entity.Workout
+import androidx.room.TypeConverter
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
-@Database(
-    entities = [Workout::class, org.librefit.db.entity.Exercise::class, Set::class],
-    version = 1,
-    exportSchema = false
-)
-@TypeConverters(Converters::class)
-abstract class WorkoutDatabase : RoomDatabase() {
-    companion object {
-        const val NAME = "librefit_database"
+class Converter {
+    private val formatter: DateTimeFormatter = DateTimeFormatter.ISO_LOCAL_DATE_TIME
+
+    @TypeConverter
+    fun fromLocalDateTime(dateTime: LocalDateTime?): String? {
+        return dateTime?.format(formatter)
     }
 
-    abstract fun getWorkoutDao(): WorkoutDao
+    @TypeConverter
+    fun toLocalDateTime(dateTimeString: String?): LocalDateTime? {
+        return dateTimeString?.let { LocalDateTime.parse(it, formatter) }
+    }
 }

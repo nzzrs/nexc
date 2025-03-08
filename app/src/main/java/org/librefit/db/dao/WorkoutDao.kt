@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025. LibreFit
+ * Copyright (c) 2025. LibreFit
  *
  * This file is part of LibreFit
  *
@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit.db
+package org.librefit.db.dao
 
 import androidx.room.Dao
 import androidx.room.Delete
@@ -26,6 +26,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
+import org.librefit.db.entity.Exercise
 import org.librefit.db.entity.Set
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.ExerciseWithSets
@@ -62,13 +63,13 @@ interface WorkoutDao {
     suspend fun deleteWorkout(workout: Workout)
 
     @Insert
-    suspend fun addExercise(exercise: org.librefit.db.entity.Exercise): Long
+    suspend fun addExercise(exercise: Exercise): Long
 
     @Update
-    suspend fun updateExercise(exercise: org.librefit.db.entity.Exercise)
+    suspend fun updateExercise(exercise: Exercise)
 
     @Delete
-    suspend fun deleteExercise(exercise: org.librefit.db.entity.Exercise)
+    suspend fun deleteExercise(exercise: Exercise)
 
     @Insert
     suspend fun addSet(set: Set)
@@ -80,7 +81,7 @@ interface WorkoutDao {
     suspend fun deleteSet(set: Set)
 
     /**
-     * Retrieves the list of completed [WorkoutWithExercisesAndSets]s which are not routines so
+     * Retrieves the list of completed [org.librefit.db.relations.WorkoutWithExercisesAndSets]s which are not routines so
      * those who have [Workout.routine] = `false`.
      */
     @Transaction
@@ -89,8 +90,8 @@ interface WorkoutDao {
 
 
     /**
-     * Retrieves the list of [ExerciseWithSets] associated with a specific workout.
-     * This function queries the database to fetch all exercises that belong to the given [org.librefit.db.entity.Exercise.workoutId]
+     * Retrieves the list of [org.librefit.db.relations.ExerciseWithSets] associated with a specific workout.
+     * This function queries the database to fetch all exercises that belong to the given [Exercise.workoutId]
      */
     @Transaction
     @Query("SELECT * FROM exercises WHERE workoutId = :workoutId")

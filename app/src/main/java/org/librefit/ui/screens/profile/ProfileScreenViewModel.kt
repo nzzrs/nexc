@@ -26,8 +26,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.librefit.db.WorkoutRepository
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
+import org.librefit.db.repository.WorkoutRepository
 import org.librefit.enums.ChartMode
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter

@@ -26,8 +26,8 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.AudioAttributes
-import android.net.Uri
 import androidx.core.app.NotificationCompat
+import androidx.core.net.toUri
 import org.librefit.MainActivity
 import org.librefit.R
 import org.librefit.enums.WorkoutServiceActions
@@ -115,7 +115,7 @@ class NotificationHelper(context: Context) {
         }
 
         workoutChannel.setSound(
-            Uri.parse("android.resource://${appContext.packageName}/raw/system_notification"),
+            "android.resource://${appContext.packageName}/raw/system_notification".toUri(),
             AudioAttributes.Builder()
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION)
@@ -134,7 +134,7 @@ class NotificationHelper(context: Context) {
         }
 
         timerChannel.setSound(
-            Uri.parse("android.resource://${appContext.packageName}/raw/alert_notification"),
+            "android.resource://${appContext.packageName}/raw/alert_notification".toUri(),
             AudioAttributes.Builder()
                 .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
                 .setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT)

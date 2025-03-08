@@ -22,7 +22,7 @@ package org.librefit.ui.screens.home
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
 import org.librefit.data.DataStoreManager
-import org.librefit.db.WorkoutRepository
+import org.librefit.db.repository.WorkoutRepository
 import javax.inject.Inject
 
 @HiltViewModel

@@ -42,11 +42,9 @@ class ProfileScreenViewModel @Inject constructor(
 ) : ViewModel() {
     val workoutsWithExercises = mutableStateListOf<WorkoutWithExercisesAndSets>()
 
-    val longFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(
-        Locale.getDefault()
-    )
 
-    val shortFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(
+    val shortFormatter: DateTimeFormatter? =
+        DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(
         Locale.getDefault()
     )
 

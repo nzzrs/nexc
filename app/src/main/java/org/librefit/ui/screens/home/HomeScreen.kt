@@ -31,13 +31,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -47,18 +53,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
+import org.librefit.db.entity.Workout
 import org.librefit.nav.Destination
 import org.librefit.nav.checkPermissionsBeforeNavigateToWorkout
 import org.librefit.ui.components.CustomButton
+import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.screens.shared.SharedViewModel
@@ -71,12 +81,30 @@ fun HomeScreen(
 ) {
     val viewModel: HomeScreenViewModel = hiltViewModel()
 
-    val context = LocalContext.current
+
 
     val requestPermissionAgain by viewModel.requestPermissionAgain.collectAsState(initial = true)
 
     val routines by viewModel.routines.collectAsState(initial = listOf())
 
+    HomeScreenContent(
+        innerPadding = innerPadding,
+        navController = navController,
+        requestPermissionAgain = requestPermissionAgain,
+        updateWorkoutId = sharedViewModel::updateWorkoutId,
+        routines = routines
+    )
+}
+
+@Composable
+private fun HomeScreenContent(
+    innerPadding: PaddingValues,
+    navController: NavHostController,
+    requestPermissionAgain: Boolean,
+    updateWorkoutId: (Long) -> Unit,
+    routines: List<Workout>
+) {
+    val context = LocalContext.current
 
     LazyColumn(
         modifier = Modifier
@@ -95,9 +123,9 @@ fun HomeScreen(
                     checkPermissionsBeforeNavigateToWorkout(
                         requestPermissionAgain = requestPermissionAgain,
                         navController = navController,
-                        sharedViewModel = sharedViewModel,
                         appContext = context.applicationContext
                     )
+                    updateWorkoutId(0)
                 },
             )
         }
@@ -132,7 +160,7 @@ fun HomeScreen(
                     .padding(5.dp)
                     .clip(CardDefaults.elevatedShape)
                     .clickable {
-                        sharedViewModel.updateWorkoutId(routine.id)
+                        updateWorkoutId(routine.id)
                         navController.navigate(Destination.InfoWorkoutScreen)
                     }
             ) {
@@ -155,7 +183,7 @@ fun HomeScreen(
                         )
                         IconButton(
                             onClick = {
-                                sharedViewModel.updateWorkoutId(routine.id)
+                                updateWorkoutId(routine.id)
                                 navController.navigate(Destination.InfoWorkoutScreen)
                             }
                         ) {
@@ -171,12 +199,11 @@ fun HomeScreen(
                         elevated = false
                     ) {
                         checkPermissionsBeforeNavigateToWorkout(
-                            workoutId = routine.id,
                             requestPermissionAgain = requestPermissionAgain,
                             navController = navController,
-                            sharedViewModel = sharedViewModel,
                             appContext = context.applicationContext
                         )
+                        updateWorkoutId(routine.id)
                     }
                 }
             }
@@ -190,9 +217,43 @@ fun HomeScreen(
 @Preview
 @Composable
 fun HomeScreenPreview() {
-    HomeScreen(
-        innerPadding = PaddingValues(20.dp),
-        rememberNavController(),
-        viewModel()
-    )
+    CustomScaffold(
+        title = buildAnnotatedString {
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                append(stringResource(id = R.string.app_name).removeRange(5, 8))
+            }
+            append(stringResource(id = R.string.app_name).removeRange(0, 5))
+        },
+        actions = listOf {},
+        actionsIcons = listOf(Icons.Default.Settings),
+        actionsElevated = listOf(false),
+        fabIcon = Icons.Default.Add,
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = true,
+                    onClick = { },
+                    icon = { Icon(Icons.Default.Home, stringResource(R.string.home)) },
+                    label = { Text(stringResource(R.string.home)) }
+                )
+                NavigationBarItem(
+                    selected = false,
+                    onClick = { },
+                    icon = { Icon(Icons.Outlined.Person, stringResource(R.string.profile)) },
+                    label = { Text(stringResource(R.string.profile)) }
+                )
+            }
+        }
+    ) {
+        HomeScreenContent(
+            innerPadding = it,
+            navController = rememberNavController(),
+            updateWorkoutId = {},
+            requestPermissionAgain = false,
+            routines = listOf(
+                Workout(id = 1, title = "Workout 1"),
+                Workout(id = 2, title = "Workout 2")
+            ),
+        )
+    }
 }

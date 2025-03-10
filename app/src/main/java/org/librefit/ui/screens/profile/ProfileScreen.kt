@@ -30,39 +30,53 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.DateRange
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.delay
 import org.librefit.R
+import org.librefit.db.entity.Workout
+import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.enums.ChartMode
 import org.librefit.nav.Destination
 import org.librefit.ui.components.CustomButton
+import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.animations.EmptyLottie
 import org.librefit.ui.components.animations.StreakLottie
@@ -71,6 +85,9 @@ import org.librefit.ui.components.charts.CustomCartesianChart
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.util.Formatter.formatTime
 import java.text.DecimalFormat
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 
 @Composable
 fun ProfileScreen(
@@ -84,6 +101,31 @@ fun ProfileScreen(
         viewModel.getWorkoutListFromDB()
     }
 
+    ProfileScreenContent(
+        innerPadding = innerPadding,
+        navController = navController,
+        weekStreak = viewModel.getWeekStreak(),
+        yAxisDataChart = viewModel.getYAxisDataChart(),
+        xAxisDataChart = viewModel.getXAxisDataChart(),
+        workoutsWithExercises = viewModel.workoutsWithExercises,
+        chartMode = viewModel.getChartMode(),
+        updateChartMode = viewModel::updateChartMode,
+        updateWorkoutId = sharedViewModel::updateWorkoutId,
+    )
+}
+
+@Composable
+private fun ProfileScreenContent(
+    innerPadding: PaddingValues,
+    navController: NavHostController,
+    weekStreak: Int,
+    yAxisDataChart: List<Float>,
+    xAxisDataChart: List<String>,
+    chartMode: ChartMode,
+    workoutsWithExercises: SnapshotStateList<WorkoutWithExercisesAndSets>,
+    updateChartMode: (ChartMode) -> Unit,
+    updateWorkoutId: (Long) -> Unit
+) {
     LazyColumn(
         contentPadding = innerPadding,
         modifier = Modifier.padding(start = 15.dp, end = 15.dp),
@@ -108,7 +150,7 @@ fun ProfileScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Box(modifier = Modifier.weight(0.25f)) {
-                        StreakLottie(viewModel.getWeekStreak() + clicks.intValue)
+                        StreakLottie(weekStreak + clicks.intValue)
                     }
                     Column(
                         modifier = Modifier.weight(0.75f),
@@ -116,7 +158,7 @@ fun ProfileScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = stringResource(R.string.week_streak) + " " + viewModel.getWeekStreak(),
+                            text = stringResource(R.string.week_streak) + " " + weekStreak,
                             style = MaterialTheme.typography.titleLarge
                         )
                     }
@@ -174,17 +216,17 @@ fun ProfileScreen(
 
         item { HeadlineText(stringResource(R.string.overview)) }
 
-        if (viewModel.getYAxisDataChart().isNotEmpty()) {
+        if (yAxisDataChart.isNotEmpty()) {
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(ChartMode.entries) { chartMode ->
+                    items(ChartMode.entries) { mode ->
                         FilterChip(
-                            selected = viewModel.getChartMode() == chartMode,
-                            onClick = { viewModel.updateChartMode(chartMode) },
+                            selected = chartMode == mode,
+                            onClick = { updateChartMode(mode) },
                             label = {
                                 Text(
                                     stringResource(
-                                        when (chartMode) {
+                                        when (mode) {
                                             ChartMode.DURATION -> R.string.duration
                                             ChartMode.VOLUME -> R.string.volume
                                             ChartMode.REPS -> R.string.reps
@@ -193,7 +235,7 @@ fun ProfileScreen(
                                 )
                             },
                             leadingIcon = {
-                                if (viewModel.getChartMode() == chartMode) {
+                                if (chartMode == mode) {
                                     Icon(
                                         imageVector = Icons.Default.Check,
                                         contentDescription = null
@@ -207,13 +249,13 @@ fun ProfileScreen(
 
             item {
                 CustomCartesianChart(
-                    format = when (viewModel.getChartMode()) {
+                    format = when (chartMode) {
                         ChartMode.DURATION -> DecimalFormat("# " + stringResource(R.string.min))
                         ChartMode.VOLUME -> DecimalFormat("#.## " + stringResource(R.string.kg))
                         ChartMode.REPS -> DecimalFormat()
                     },
-                    yAxisData = viewModel.getYAxisDataChart(),
-                    xAxisLabels = viewModel.getXAxisDataChart(),
+                    yAxisData = yAxisDataChart,
+                    xAxisLabels = xAxisDataChart,
                     columns = true
                 )
             }
@@ -237,7 +279,7 @@ fun ProfileScreen(
         }
 
         items(
-            items = viewModel.workoutsWithExercises.map { it.workout },
+            items = workoutsWithExercises.map { it.workout },
             key = { it.id }
         ) { workout ->
             ElevatedCard {
@@ -260,7 +302,11 @@ fun ProfileScreen(
                             )
                             Text(
                                 text = stringResource(R.string.finished_on) + ": "
-                                        + workout.completed.format(viewModel.longFormatter),
+                                        + workout.completed.format(
+                                    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(
+                                        Locale.getDefault()
+                                    )
+                                ),
                                 style = MaterialTheme.typography.bodyMedium
                             )
                             Text(
@@ -271,7 +317,7 @@ fun ProfileScreen(
                         }
                         IconButton(
                             onClick = {
-                                sharedViewModel.updateWorkoutId(workout.id)
+                                updateWorkoutId(workout.id)
                                 navController.navigate(Destination.InfoWorkoutScreen)
                             },
                         ) {
@@ -289,9 +335,48 @@ fun ProfileScreen(
 @Preview
 @Composable
 private fun ProfileScreenPreview() {
-    ProfileScreen(
-        navController = rememberNavController(),
-        innerPadding = PaddingValues(20.dp),
-        sharedViewModel = viewModel()
-    )
+    CustomScaffold(
+        title = buildAnnotatedString {
+            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                append(stringResource(id = R.string.app_name).removeRange(5, 8))
+            }
+            append(stringResource(id = R.string.app_name).removeRange(0, 5))
+        },
+        actions = listOf {},
+        actionsIcons = listOf(Icons.Default.Settings),
+        actionsElevated = listOf(false),
+        fabIcon = Icons.Default.Add,
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    selected = false,
+                    onClick = { },
+                    icon = { Icon(Icons.Outlined.Home, stringResource(R.string.home)) },
+                    label = { Text(stringResource(R.string.home)) }
+                )
+                NavigationBarItem(
+                    selected = true,
+                    onClick = { },
+                    icon = { Icon(Icons.Default.Person, stringResource(R.string.profile)) },
+                    label = { Text(stringResource(R.string.profile)) }
+                )
+            }
+        }
+    ) {
+        ProfileScreenContent(
+            innerPadding = it,
+            navController = rememberNavController(),
+            weekStreak = 90,
+            yAxisDataChart = listOf(2f, 1f, 3f, 2f, 4f),
+            xAxisDataChart = listOf(),
+            chartMode = ChartMode.DURATION,
+            workoutsWithExercises = remember {
+                mutableStateListOf(
+                    WorkoutWithExercisesAndSets(Workout(title = "Workout 1"), listOf())
+                )
+            },
+            updateChartMode = {},
+            updateWorkoutId = {},
+        )
+    }
 }

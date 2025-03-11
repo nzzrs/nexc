@@ -20,8 +20,10 @@
 package org.librefit.ui.components.charts
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -30,6 +32,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.patrykandpatrick.vico.compose.cartesian.CartesianChartHost
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberBottom
@@ -57,11 +60,8 @@ import com.patrykandpatrick.vico.core.cartesian.marker.DefaultCartesianMarker
 import com.patrykandpatrick.vico.core.common.data.ExtraStore
 import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
 import com.patrykandpatrick.vico.core.common.shape.CorneredShape
+import org.librefit.ui.components.CustomScaffold
 import java.text.DecimalFormat
-import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import java.util.Locale
 
 /**
  * A custom [com.patrykandpatrick.vico.core.cartesian.CartesianChart]
@@ -71,14 +71,21 @@ import java.util.Locale
  * @param xAxisLabels A list of strings containing the labels of the corresponding Y axis value.
  * Leave empty to use the default label (ordinal numeration)
  * @param columns When `false`, the chart becomes a line chart.
+ *
+ * @throws IllegalArgumentException when [yAxisData] is empty
  */
 @Composable
 fun CustomCartesianChart(
-    format: DecimalFormat,
+    format: DecimalFormat = DecimalFormat(),
     yAxisData: List<Float>,
     xAxisLabels: List<String> = listOf(),
     columns: Boolean = false
 ) {
+    //TODO: pass a map instead of lists
+    require(yAxisData.isNotEmpty()) {
+        "Y axis data must not be empty. Vico library doesn't support it"
+    }
+
     val labelListKey = ExtraStore.Key<List<String>>()
     val modelProducer = remember { CartesianChartModelProducer() }
     LaunchedEffect(yAxisData) {
@@ -129,19 +136,20 @@ fun CustomCartesianChart(
                     pointSpacing = 64.dp
                 ),
                 marker = rememberMarker(
-                    DefaultCartesianMarker.ValueFormatter.default(format)
+                    valueFormatter = DefaultCartesianMarker.ValueFormatter.default(format)
                 ),
                 startAxis = VerticalAxis.rememberStart(
-                    valueFormatter = CartesianValueFormatter.decimal(format)
+                    valueFormatter = remember(format) { CartesianValueFormatter.decimal(format) }
                 ),
                 bottomAxis = HorizontalAxis.rememberBottom(
-                    valueFormatter = CartesianValueFormatter { context, x, _ ->
-                        context.model.extraStore.getOrNull(labelListKey)?.get(x.toInt())
-                            ?: LocalDateTime.now().format(
-                                DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(
-                                    Locale.getDefault()
-                                )
-                            )
+                    valueFormatter = remember(yAxisData, xAxisLabels) {
+                        if (xAxisLabels.isNotEmpty())
+                            CartesianValueFormatter { context, x, _ ->
+                                context.model.extraStore.getOrNull(labelListKey)?.get(x.toInt())
+                                    ?: xAxisLabels.getOrNull(yAxisData.indexOf(x.toFloat()))
+                                    ?: xAxisLabels.first()
+                            }
+                        else CartesianValueFormatter.decimal()
                     }
                 ),
             ),
@@ -152,12 +160,27 @@ fun CustomCartesianChart(
             ),
             modelProducer = modelProducer,
         ) {
-            Box(Modifier
-                .fillMaxWidth()
-                .height(200.dp), Alignment.Center) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp),
+                contentAlignment = Alignment.Center
+            ) {
                 CircularProgressIndicator()
             }
         }
 
+    }
+}
+
+@Preview
+@Composable
+private fun CustomCartesianChartPreview() {
+    CustomScaffold {
+        Column(Modifier.padding(it)) {
+            CustomCartesianChart(
+                yAxisData = listOf(1f, 3f, 2f, 1f, 2f, 1f, 4f, 0f)
+            )
+        }
     }
 }

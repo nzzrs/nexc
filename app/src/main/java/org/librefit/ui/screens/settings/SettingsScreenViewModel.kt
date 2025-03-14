@@ -75,22 +75,22 @@ class SettingsScreenViewModel @Inject constructor(
      *  - 1: material you
      *  - 2: keep screen on during workout
      */
-    fun <T> savePreference(key: Int, value: T) {
+    fun savePreference(key: Int, value: Int) {
         viewModelScope.launch {
             when (key) {
                 0 -> userPreferences.savePreference(
                     key = userPreferences.themeModeKey,
-                    value = value as Int
+                    value = value
                 )
 
                 1 -> userPreferences.savePreference(
                     key = userPreferences.materialModeKey,
-                    value = value as Boolean
+                    value = value == 1
                 )
 
                 2 -> userPreferences.savePreference(
                     key = userPreferences.keepOnWorkoutScreenKey,
-                    value = value as Boolean
+                    value = value == 1
                 )
             }
 

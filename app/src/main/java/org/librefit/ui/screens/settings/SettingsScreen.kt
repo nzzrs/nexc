@@ -49,6 +49,7 @@ import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -78,7 +79,6 @@ import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.bottomMargin
 
-@SuppressLint("BatteryLife")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
@@ -108,14 +108,14 @@ fun SettingsScreen(
     val materialModeOn by viewModel.materialMode.collectAsState(initial = false)
 
 
-    var showPreferenceDialog by remember { mutableStateOf(false) }
+    var showPreferenceDialog = remember { mutableStateOf(false) }
 
 
 
-    if (showPreferenceDialog) {
+    if (showPreferenceDialog.value) {
         AlertDialog(
             title = { Text(stringResource(id = R.string.language)) },
-            onDismissRequest = { showPreferenceDialog = false },
+            onDismissRequest = { showPreferenceDialog.value = false },
             confirmButton = { /*The user doesn't need to confirm*/ },
             text = {
                 LazyColumn(Modifier.heightIn(max = 200.dp)) {
@@ -139,6 +139,32 @@ fun SettingsScreen(
         )
     }
 
+    SettingsScreenContent(
+        selectedTheme = selectedTheme,
+        materialModeOn = materialModeOn,
+        showPreferenceDialog = showPreferenceDialog,
+        selectedLanguage = selectedLanguage,
+        keepWorkoutScreenOn = keepWorkoutScreenOn,
+        isIgnoringBatteryOptimization = viewModel.isIgnoringBatteryOptimization.value,
+        navController = navController,
+        savePreference = viewModel::savePreference
+    )
+}
+
+@SuppressLint("BatteryLife")
+@Composable
+private fun SettingsScreenContent(
+    selectedTheme: ThemeMode,
+    materialModeOn: Boolean,
+    showPreferenceDialog: MutableState<Boolean>,
+    selectedLanguage: String,
+    keepWorkoutScreenOn: Boolean,
+    isIgnoringBatteryOptimization: Boolean,
+    navController: NavHostController,
+    savePreference: (Int, Int) -> Unit
+) {
+    val context = LocalContext.current
+
     val view = LocalView.current
 
     CustomScaffold(
@@ -149,12 +175,11 @@ fun SettingsScreen(
         actionsElevated = listOf(false),
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .padding(innerPadding)
-                .fillMaxSize(),
+            contentPadding = innerPadding,
+            modifier = Modifier.fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            val paddingModifier = Modifier.padding(start = 20.dp, end = 20.dp)
+            val iconPaddingModifier = Modifier.padding(start = 20.dp, end = 20.dp)
 
             item { HeadlineText(text = stringResource(id = R.string.appearance)) }
 
@@ -164,7 +189,7 @@ fun SettingsScreen(
                         Icon(
                             imageVector = ImageVector.vectorResource(id = R.drawable.ic_dark_mode),
                             contentDescription = stringResource(R.string.theme),
-                            modifier = paddingModifier
+                            modifier = iconPaddingModifier
                         )
                         Text(
                             text = stringResource(id = R.string.theme),
@@ -182,10 +207,7 @@ fun SettingsScreen(
                                     selected = selectedTheme == mode,
                                     onClick = {
                                         view.performHapticFeedback(HapticFeedbackConstantsCompat.TOGGLE_ON)
-                                        viewModel.savePreference(
-                                            key = 0,
-                                            value = index
-                                        )
+                                        savePreference(0, index)
                                     },
                                     shape = SegmentedButtonDefaults.itemShape(
                                         index = index,
@@ -211,7 +233,7 @@ fun SettingsScreen(
                             Icon(
                                 imageVector = ImageVector.vectorResource(id = R.drawable.ic_material),
                                 contentDescription = stringResource(R.string.material_you),
-                                modifier = paddingModifier
+                                modifier = iconPaddingModifier
                             )
                             Column(verticalArrangement = Arrangement.Center) {
                                 Text(
@@ -227,17 +249,14 @@ fun SettingsScreen(
                             }
                         }
                         Switch(
-                            modifier = paddingModifier,
+                            modifier = iconPaddingModifier,
                             checked = materialModeOn,
                             onCheckedChange = {
                                 view.performHapticFeedback(
                                     if (it) HapticFeedbackConstantsCompat.TOGGLE_ON
                                     else HapticFeedbackConstantsCompat.TOGGLE_OFF
                                 )
-                                viewModel.savePreference(
-                                    key = 1,
-                                    value = it
-                                )
+                                savePreference(1, if (it) 1 else 0)
                             }
                         )
                     }
@@ -251,13 +270,13 @@ fun SettingsScreen(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { showPreferenceDialog = true },
+                        .clickable { showPreferenceDialog.value = true },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Icon(
                         imageVector = ImageVector.vectorResource(id = R.drawable.ic_translate),
                         contentDescription = stringResource(R.string.translate),
-                        modifier = paddingModifier
+                        modifier = iconPaddingModifier
                     )
                     Column {
                         Text(
@@ -276,8 +295,7 @@ fun SettingsScreen(
 
             item {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -288,7 +306,7 @@ fun SettingsScreen(
                         Icon(
                             imageVector = ImageVector.vectorResource(id = R.drawable.ic_keep),
                             contentDescription = stringResource(R.string.keep_screen_on),
-                            modifier = paddingModifier
+                            modifier = iconPaddingModifier
                         )
                         Column(Modifier.weight(1f)) {
                             Text(
@@ -304,17 +322,14 @@ fun SettingsScreen(
                         }
                     }
                     Switch(
-                        modifier = paddingModifier,
+                        modifier = iconPaddingModifier,
                         checked = keepWorkoutScreenOn,
                         onCheckedChange = {
                             view.performHapticFeedback(
                                 if (it) HapticFeedbackConstantsCompat.TOGGLE_ON
                                 else HapticFeedbackConstantsCompat.TOGGLE_OFF
                             )
-                            viewModel.savePreference(
-                                key = 2,
-                                value = it
-                            )
+                            savePreference(2, if (it) 1 else 0)
                         }
                     )
                 }
@@ -322,8 +337,7 @@ fun SettingsScreen(
 
             item {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth(),
+                    modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
@@ -334,7 +348,7 @@ fun SettingsScreen(
                         Icon(
                             imageVector = ImageVector.vectorResource(R.drawable.ic_speed),
                             contentDescription = stringResource(R.string.background_usage),
-                            modifier = paddingModifier
+                            modifier = iconPaddingModifier
                         )
                         Column(Modifier.weight(1f)) {
                             Text(
@@ -350,8 +364,8 @@ fun SettingsScreen(
                         }
                     }
                     Switch(
-                        modifier = paddingModifier,
-                        checked = viewModel.isIgnoringBatteryOptimization.value,
+                        modifier = iconPaddingModifier,
+                        checked = isIgnoringBatteryOptimization,
                         onCheckedChange = {
                             view.performHapticFeedback(
                                 if (it) HapticFeedbackConstantsCompat.TOGGLE_ON
@@ -359,7 +373,7 @@ fun SettingsScreen(
                             )
 
                             var intent: Intent
-                            if (!viewModel.isIgnoringBatteryOptimization.value) {
+                            if (!isIgnoringBatteryOptimization) {
                                 intent =
                                     Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
                                         data = "package:${context.packageName}".toUri()
@@ -402,5 +416,14 @@ private fun languageCodeToId(code: String): Int {
 @Preview
 @Composable
 fun SettingsScreenPreview() {
-    SettingsScreen(rememberNavController())
+    SettingsScreenContent(
+        selectedTheme = ThemeMode.LIGHT,
+        materialModeOn = false,
+        showPreferenceDialog = remember { mutableStateOf(false) },
+        selectedLanguage = "en",
+        keepWorkoutScreenOn = true,
+        isIgnoringBatteryOptimization = false,
+        savePreference = { _, _ -> },
+        navController = rememberNavController()
+    )
 }

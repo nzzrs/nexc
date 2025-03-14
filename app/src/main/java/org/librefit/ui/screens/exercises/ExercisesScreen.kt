@@ -122,25 +122,24 @@ fun ExercisesScreen(
         },
         fabIcon = Icons.Default.KeyboardArrowUp,
     ) { innerPadding ->
-        AddExerciseScreenContent(
+        ExercisesScreenContent(
             addExercises = addExercises,
             innerPadding = innerPadding,
             selectedExercisesList = selectedExercisesList,
             listState = lazyListState,
-            sharedViewModel = sharedViewModel
+            exerciseList = sharedViewModel.exercisesList
         )
     }
 }
 
 @Composable
-private fun AddExerciseScreenContent(
+private fun ExercisesScreenContent(
     addExercises: Boolean,
     innerPadding: PaddingValues,
     selectedExercisesList: MutableList<ExerciseDC>,
     listState: LazyListState,
-    sharedViewModel: SharedViewModel
+    exerciseList: List<ExerciseDC>,
 ) {
-    val exerciseList = sharedViewModel.exercisesList
 
     val viewModel: ExercisesScreenViewModel = viewModel()
 
@@ -150,7 +149,7 @@ private fun AddExerciseScreenContent(
     /**
      * Holds the information to show in [ExerciseDetailModalBottomSheet]
      */
-    var selectedExercise by remember { mutableStateOf<ExerciseDC?>(null) }
+    var selectedExercise by remember { mutableStateOf<ExerciseDC>(ExerciseDC()) }
 
     var isModalSheetOpen by remember { mutableStateOf(false) }
 
@@ -230,6 +229,7 @@ private fun AddExerciseScreenContent(
         }
 
         //Filtered list of exercises
+        // TODO: fuzzy search
         itemsIndexed(
             items = exerciseList.filter { exercise ->
                 exercise.name.contains(query, ignoreCase = true) && viewModel.filterExercise(
@@ -313,17 +313,27 @@ private fun AddExerciseScreenContent(
 
     // Opened by info icon (in the filtered list), it shows the details of an exercise
     if (isModalSheetOpen) {
-        ExerciseDetailModalBottomSheet(exercise = selectedExercise!!) { isModalSheetOpen = false }
+        ExerciseDetailModalBottomSheet(exercise = selectedExercise) { isModalSheetOpen = false }
     }
 }
 
 
 @Preview
 @Composable
-private fun AddExerciseScreenPreview() {
-    ExercisesScreen(
-        true,
-        {},
-        viewModel()
-    )
+private fun ExercisesScreenPreview() {
+    val addExercises = false
+    CustomScaffold(
+        title = AnnotatedString(stringResource(id = R.string.exercises)),
+        navigateBack = {},
+        actions = if (addExercises) listOf {} else listOf(),
+        actionsDescription = listOf(stringResource(R.string.add))
+    ) {
+        ExercisesScreenContent(
+            addExercises = false,
+            innerPadding = it,
+            selectedExercisesList = remember { mutableStateListOf() },
+            listState = rememberLazyListState(),
+            exerciseList = listOf(ExerciseDC(name = "Exercise 1")),
+        )
+    }
 }

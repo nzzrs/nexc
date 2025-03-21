@@ -182,9 +182,9 @@ private fun EditWorkoutScreen(
 
 
     LazyColumn(
+        contentPadding = innerPadding,
         modifier = Modifier
             .fillMaxSize()
-            .padding(paddingValues = innerPadding)
             .padding(start = 15.dp, end = 15.dp),
         verticalArrangement = Arrangement.spacedBy(15.dp),
         horizontalAlignment = Alignment.CenterHorizontally

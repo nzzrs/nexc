@@ -107,8 +107,8 @@ private fun HomeScreenContent(
     val context = LocalContext.current
 
     LazyColumn(
+        contentPadding = innerPadding,
         modifier = Modifier
-            .padding(paddingValues = innerPadding)
             .padding(start = 15.dp, end = 15.dp)
             .fillMaxSize(),
         verticalArrangement = Arrangement.spacedBy(10.dp)

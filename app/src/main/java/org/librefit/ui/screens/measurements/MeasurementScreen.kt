@@ -19,10 +19,49 @@
 
 package org.librefit.ui.screens.measurements
 
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import org.librefit.R
+import org.librefit.ui.components.CustomScaffold
+import org.librefit.ui.components.charts.CustomCartesianChart
 
 @Composable
-fun MeasurementScreen() {
+fun MeasurementScreen(
+    navigateBack: () -> Unit
+) {
     val viewModel: MeasurementScreenViewModel = hiltViewModel()
+
+    MeasurementScreenContent(
+        navigateBack = navigateBack
+    )
+}
+
+@Composable
+private fun MeasurementScreenContent(
+    navigateBack: () -> Unit
+) {
+    CustomScaffold(
+        title = AnnotatedString(stringResource(R.string.measurements)),
+        navigateBack = navigateBack
+    ) { innerPadding ->
+        LazyColumn(contentPadding = innerPadding) {
+            item {
+                CustomCartesianChart(
+                    yAxisData = listOf(1f, 2f, 3f, 1f)
+                )
+            }
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun MeasurementScreenPreview() {
+    MeasurementScreenContent(
+        navigateBack = {}
+    )
 }

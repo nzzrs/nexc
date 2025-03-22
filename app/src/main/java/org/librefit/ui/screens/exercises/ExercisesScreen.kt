@@ -65,6 +65,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastAny
 import androidx.compose.ui.util.fastFilter
+import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.viewmodel.compose.viewModel
 import kotlinx.coroutines.launch
 import org.librefit.R
@@ -213,7 +214,7 @@ private fun ExercisesScreenContent(
                 viewModel.fuzzySearch(
                     it.name,
                     query
-                ) > 50 && viewModel.isExerciseEligible(it)
+                ) > 60 && viewModel.isExerciseEligible(it)
             }
         ) {
             item {
@@ -235,10 +236,14 @@ private fun ExercisesScreenContent(
         //Filtered list of exercises sorted by matching score
         itemsIndexed(
             items = exerciseList
-                .map { it to viewModel.fuzzySearch(it.name, query) }
-                .fastFilter { it.second > 50 && viewModel.isExerciseEligible(it.first) }
-                .sortedByDescending { it.second }
-                .map { it.first },
+                .fastMap { exercise -> exercise to viewModel.fuzzySearch(exercise.name, query) }
+                .fastFilter { (exercise, score) ->
+                    score > 60 && viewModel.isExerciseEligible(
+                        exercise
+                    )
+                }
+                .sortedByDescending { (_, score) -> score }
+                .fastMap { (exercise, _) -> exercise },
             key = { index, exercise -> exercise.id }
         ) { index, exercise ->
             if (index == 0) {

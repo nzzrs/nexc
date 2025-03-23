@@ -54,6 +54,9 @@ sealed class Destination {
     object RequestPermissionScreen
 
     @Serializable
+    object LibrariesScreen
+
+    @Serializable
     object LicenseScreen
 
     @Serializable

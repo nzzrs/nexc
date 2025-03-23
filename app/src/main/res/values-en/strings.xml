@@ -61,6 +61,7 @@
     <!--Create routine screen-->
     <string name="contributed_to">"Contributed to: "</string>
     <string name="version">Version</string>
+    <string name="libraries">Libraries</string>
     <string name="unlink_routine">Unlink routine</string>
     <string name="unlink_routine_desc">Linking routines allows to measure progress of workouts over time. If you unlink a workout from a routine, it will not be deleted, and any workout linked to that routine will remain unchanged. The unlink will only affect the current workout.</string>
     <string name="overview">Overview</string>

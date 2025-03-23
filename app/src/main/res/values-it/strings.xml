@@ -49,6 +49,7 @@
     <string name="translators">Traduttori</string>
     <string name="contributed_to">"Contribuito a: "</string>
     <string name="version">Versione</string>
+    <string name="libraries">Librerie</string>
     <string name="unlink_routine">Scollega routine</string>
     <string name="unlink_routine_desc">Il collegamento delle routine consente di misurare i progressi degli allenamenti nel tempo. Se si scollega un allenamento da una routine, questo non verrà cancellato e tutti gli allenamenti collegati a quella routine rimarranno invariati. Lo scollegamento avrà effetto solo sull\'allenamento corrente.</string>
     <string name="overview">Panoramica</string>

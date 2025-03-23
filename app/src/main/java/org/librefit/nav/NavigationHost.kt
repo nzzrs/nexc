@@ -32,6 +32,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import org.librefit.ui.screens.MainScreen
 import org.librefit.ui.screens.about.AboutScreen
+import org.librefit.ui.screens.about.LibrariesScreen
 import org.librefit.ui.screens.about.LicenseScreen
 import org.librefit.ui.screens.beforeSaving.BeforeSavingScreen
 import org.librefit.ui.screens.calendar.CalendarScreen
@@ -86,7 +87,7 @@ fun NavigationHost() {
         composable<Destination.ExercisesScreen> {
             ExercisesScreen(
                 addExercises = it.toRoute<Destination.ExercisesScreen>().addExercises,
-                navigateBack = { navController.popBackStack() },
+                navigateBack = navController::popBackStack,
                 sharedViewModel = sharedViewModel
             )
         }
@@ -103,10 +104,13 @@ fun NavigationHost() {
             )
         }
         composable<Destination.MeasurementScreen> {
-            MeasurementScreen { navController.popBackStack() }
+            MeasurementScreen(navigateBack = navController::popBackStack)
+        }
+        composable<Destination.LibrariesScreen> {
+            LibrariesScreen(navigateBack = navController::popBackStack)
         }
         composable<Destination.LicenseScreen> {
-            LicenseScreen(navigateBack = { navController.popBackStack() })
+            LicenseScreen(navigateBack = navController::popBackStack)
         }
         composable<Destination.RequestPermissionScreen> {
             RequestPermissionScreen(
@@ -121,7 +125,7 @@ fun NavigationHost() {
         composable<Destination.SuccessScreen> {
             SuccessScreen(
                 message = it.toRoute<Destination.SuccessScreen>().message,
-                navigateBack = { navController.popBackStack() }
+                navigateBack = navController::popBackStack
             )
         }
         composable<Destination.WorkoutScreen> {

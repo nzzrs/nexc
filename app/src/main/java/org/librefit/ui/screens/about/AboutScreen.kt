@@ -79,13 +79,11 @@ fun AboutScreen(navController: NavHostController) {
 
     val clipboardManager = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
 
-    var showUrlDialog by remember { mutableStateOf(false) }
-
     var url by remember { mutableStateOf("") }
 
-    if (showUrlDialog) {
+    if (url != "") {
         AlertDialog(
-            onDismissRequest = { showUrlDialog = false },
+            onDismissRequest = { url = "" },
             title = { Text(stringResource(R.string.link)) },
             confirmButton = {
                 TextButton(
@@ -94,7 +92,7 @@ fun AboutScreen(navController: NavHostController) {
                             data = url.toUri()
                         }
                         context.startActivity(intent)
-                        showUrlDialog = false
+                        url = ""
                     }
                 ) {
                     Text(stringResource(R.string.open))
@@ -105,7 +103,7 @@ fun AboutScreen(navController: NavHostController) {
                     onClick = {
                         val clip = ClipData.newPlainText("Website url", url)
                         clipboardManager.setPrimaryClip(clip)
-                        showUrlDialog = false
+                        url = ""
                     }
                 ) {
                     Text(stringResource(R.string.copy))
@@ -156,7 +154,7 @@ fun AboutScreen(navController: NavHostController) {
             item {
                 val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
                 val version = pInfo?.versionName.toString()
-                Text(stringResource(R.string.version) + ": " + version)
+                Text(stringResource(R.string.version) + ": $version")
             }
 
             item {
@@ -205,7 +203,6 @@ fun AboutScreen(navController: NavHostController) {
                     description = stringResource(R.string.privacy_policy_desc),
                     onClick = {
                         url = context.getString(R.string.url_privacy)
-                        showUrlDialog = true
                     }
 
                 )
@@ -217,7 +214,6 @@ fun AboutScreen(navController: NavHostController) {
                     stringResource(R.string.website),
                     onClick = {
                         url = context.getString(R.string.url_website)
-                        showUrlDialog = true
                     }
                 )
             }
@@ -241,7 +237,16 @@ fun AboutScreen(navController: NavHostController) {
                     stringResource(R.string.source_code),
                     onClick = {
                         url = context.getString(R.string.url_source_code)
-                        showUrlDialog = true
+                    }
+                )
+            }
+
+            item {
+                AboutItem(
+                    ImageVector.vectorResource(R.drawable.ic_library),
+                    stringResource(R.string.libraries),
+                    onClick = {
+                        navController.navigate(Destination.LibrariesScreen)
                     }
                 )
             }
@@ -258,7 +263,6 @@ fun AboutScreen(navController: NavHostController) {
                     stringResource(R.string.founder),
                     onClick = {
                         url = context.getString(R.string.url_IamDg)
-                        showUrlDialog = true
                     }
                 )
             }
@@ -274,7 +278,6 @@ fun AboutScreen(navController: NavHostController) {
                     stringResource(R.string.contributed_to) + stringResource(R.string.language_italian),
                     onClick = {
                         url = context.getString(R.string.url_IamDg)
-                        showUrlDialog = true
                     }
                 )
             }
@@ -313,7 +316,7 @@ private fun AboutItem(
                     text = text,
                     style = MaterialTheme.typography.titleMedium
                 )
-                if (description.isNotEmpty()) {
+                if (description.isNotBlank()) {
                     Text(
                         text = description,
                         style = MaterialTheme.typography.bodyMedium

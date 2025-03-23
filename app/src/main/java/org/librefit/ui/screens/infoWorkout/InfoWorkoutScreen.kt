@@ -57,7 +57,7 @@ import androidx.navigation.compose.rememberNavController
 import org.librefit.R
 import org.librefit.data.ExerciseDC
 import org.librefit.enums.ChartMode
-import org.librefit.nav.Destination
+import org.librefit.nav.Route
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.ExerciseCardSmall
@@ -131,7 +131,7 @@ fun InfoWorkoutScreen(
         navigateBack = { navController.popBackStack() },
         actions = listOf(
             {
-                navController.navigate(Destination.EditWorkoutScreen)
+                navController.navigate(Route.EditWorkoutScreen)
             },
             {
                 showConfirmDialog = true

@@ -74,7 +74,7 @@ import org.librefit.R
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.enums.ChartMode
-import org.librefit.nav.Destination
+import org.librefit.nav.Route
 import org.librefit.ui.components.CustomButton
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
@@ -185,7 +185,7 @@ private fun ProfileScreenContent(
                     modifier = Modifier.weight(0.5f),
                     elevated = false
                 ) {
-                    navController.navigate(Destination.ExercisesScreen(addExercises = false))
+                    navController.navigate(Route.ExercisesScreen(addExercises = false))
                 }
             }
         }
@@ -201,7 +201,7 @@ private fun ProfileScreenContent(
                     modifier = Modifier.weight(0.5f),
                     elevated = false
                 ) {
-                    navController.navigate(Destination.MeasurementScreen)
+                    navController.navigate(Route.MeasurementScreen)
                 }
                 CustomButton(
                     text = stringResource(R.string.calendar),
@@ -209,7 +209,7 @@ private fun ProfileScreenContent(
                     modifier = Modifier.weight(0.5f),
                     elevated = false
                 ) {
-                    navController.navigate(Destination.CalendarScreen)
+                    navController.navigate(Route.CalendarScreen)
                 }
             }
         }
@@ -318,7 +318,7 @@ private fun ProfileScreenContent(
                         IconButton(
                             onClick = {
                                 updateWorkoutId(workout.id)
-                                navController.navigate(Destination.InfoWorkoutScreen)
+                                navController.navigate(Route.InfoWorkoutScreen)
                             },
                         ) {
                             Icon(Icons.Default.Info, stringResource(R.string.about))

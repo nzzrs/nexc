@@ -66,7 +66,7 @@ import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
-import org.librefit.nav.Destination
+import org.librefit.nav.Route
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.bottomMargin
@@ -225,7 +225,7 @@ fun AboutScreen(navController: NavHostController) {
                     stringResource(R.string.license),
                     description = stringResource(R.string.license_desc),
                     onClick = {
-                        navController.navigate(Destination.LicenseScreen)
+                        navController.navigate(Route.LicenseScreen)
                     }
                 )
             }
@@ -246,7 +246,7 @@ fun AboutScreen(navController: NavHostController) {
                     ImageVector.vectorResource(R.drawable.ic_library),
                     stringResource(R.string.libraries),
                     onClick = {
-                        navController.navigate(Destination.LibrariesScreen)
+                        navController.navigate(Route.LibrariesScreen)
                     }
                 )
             }

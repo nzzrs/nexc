@@ -47,7 +47,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
-import org.librefit.nav.Destination
+import org.librefit.nav.Route
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.screens.home.HomeScreen
 import org.librefit.ui.screens.profile.ProfileScreen
@@ -70,12 +70,12 @@ fun MainScreen(
             }
             append(stringResource(id = R.string.app_name).removeRange(0, 5))
         },
-        actions = listOf { navController.navigate(Destination.SettingsScreen) },
+        actions = listOf { navController.navigate(Route.SettingsScreen) },
         actionsIcons = listOf(Icons.Default.Settings),
         actionsElevated = listOf(false),
         fabAction = {
             sharedViewModel.updateWorkoutId(0)
-            navController.navigate(Destination.EditWorkoutScreen)
+            navController.navigate(Route.EditWorkoutScreen)
         },
         fabIcon = if (homeSelected) Icons.Default.Add else null,
         fabDescription = stringResource(R.string.create_routine),

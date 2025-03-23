@@ -57,10 +57,10 @@ fun checkPermissionsBeforeNavigateToWorkout(
     val requestPermission = !hasNotificationPermission && requestPermissionAgain
 
     if (requestPermission) {
-        navController.navigate(Destination.RequestPermissionScreen)
+        navController.navigate(Route.RequestPermissionScreen)
     } else {
-        navController.navigate(Destination.WorkoutScreen) {
-            popUpTo(Destination.RequestPermissionScreen) { inclusive = true }
+        navController.navigate(Route.WorkoutScreen) {
+            popUpTo(Route.RequestPermissionScreen) { inclusive = true }
         }
     }
 }

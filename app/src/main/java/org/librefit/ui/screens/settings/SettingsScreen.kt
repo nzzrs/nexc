@@ -74,7 +74,7 @@ import androidx.navigation.compose.rememberNavController
 import org.librefit.R
 import org.librefit.enums.Language
 import org.librefit.enums.ThemeMode
-import org.librefit.nav.Destination
+import org.librefit.nav.Route
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.bottomMargin
@@ -170,7 +170,7 @@ private fun SettingsScreenContent(
     CustomScaffold(
         title = AnnotatedString(stringResource(id = R.string.settings)),
         navigateBack = { navController.popBackStack() },
-        actions = listOf { navController.navigate(Destination.AboutScreen) },
+        actions = listOf { navController.navigate(Route.AboutScreen) },
         actionsIcons = listOf(Icons.Default.Info),
         actionsElevated = listOf(false),
     ) { innerPadding ->

@@ -57,78 +57,78 @@ fun NavigationHost() {
 
     NavHost(
         navController = navController,
-        startDestination = Destination.MainScreen,
+        startDestination = Route.MainScreen,
         enterTransition = { scaleIn(tween(300), 0.9f) + fadeIn(tween(200)) },
         exitTransition = { scaleOut(tween(300), 1.1f) },
         popEnterTransition = { scaleIn(tween(300), 1.1f) },
         popExitTransition = { scaleOut(tween(300), 0.9f) + fadeOut(tween(200)) }
     ) {
-        composable<Destination.AboutScreen> {
+        composable<Route.AboutScreen> {
             AboutScreen(navController = navController)
         }
-        composable<Destination.BeforeSavingScreen> {
+        composable<Route.BeforeSavingScreen> {
             BeforeSavingScreen(
                 sharedViewModel = sharedViewModel,
                 navController = navController
             )
         }
-        composable<Destination.CalendarScreen> {
+        composable<Route.CalendarScreen> {
             CalendarScreen(
                 sharedViewModel = sharedViewModel,
                 navController = navController
             )
         }
-        composable<Destination.EditWorkoutScreen> {
+        composable<Route.EditWorkoutScreen> {
             EditWorkoutScreen(
                 sharedViewModel = sharedViewModel,
                 navController = navController
             )
         }
-        composable<Destination.ExercisesScreen> {
+        composable<Route.ExercisesScreen> {
             ExercisesScreen(
-                addExercises = it.toRoute<Destination.ExercisesScreen>().addExercises,
+                addExercises = it.toRoute<Route.ExercisesScreen>().addExercises,
                 navigateBack = navController::popBackStack,
                 sharedViewModel = sharedViewModel
             )
         }
-        composable<Destination.InfoWorkoutScreen> {
+        composable<Route.InfoWorkoutScreen> {
             InfoWorkoutScreen(
                 sharedViewModel = sharedViewModel,
                 navController = navController
             )
         }
-        composable<Destination.MainScreen> {
+        composable<Route.MainScreen> {
             MainScreen(
                 navController = navController,
                 sharedViewModel = sharedViewModel
             )
         }
-        composable<Destination.MeasurementScreen> {
+        composable<Route.MeasurementScreen> {
             MeasurementScreen(navigateBack = navController::popBackStack)
         }
-        composable<Destination.LibrariesScreen> {
+        composable<Route.LibrariesScreen> {
             LibrariesScreen(navigateBack = navController::popBackStack)
         }
-        composable<Destination.LicenseScreen> {
+        composable<Route.LicenseScreen> {
             LicenseScreen(navigateBack = navController::popBackStack)
         }
-        composable<Destination.RequestPermissionScreen> {
+        composable<Route.RequestPermissionScreen> {
             RequestPermissionScreen(
                 navController = navController
             )
         }
-        composable<Destination.SettingsScreen> {
+        composable<Route.SettingsScreen> {
             SettingsScreen(
                 navController = navController
             )
         }
-        composable<Destination.SuccessScreen> {
+        composable<Route.SuccessScreen> {
             SuccessScreen(
-                message = it.toRoute<Destination.SuccessScreen>().message,
+                message = it.toRoute<Route.SuccessScreen>().message,
                 navigateBack = navController::popBackStack
             )
         }
-        composable<Destination.WorkoutScreen> {
+        composable<Route.WorkoutScreen> {
             WorkoutScreen(
                 navController = navController,
                 sharedViewModel = sharedViewModel

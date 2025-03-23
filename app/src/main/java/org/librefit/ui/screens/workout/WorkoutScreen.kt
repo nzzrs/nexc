@@ -78,7 +78,7 @@ import org.librefit.data.ExerciseDC
 import org.librefit.db.entity.Exercise
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.enums.InfoMode
-import org.librefit.nav.Destination
+import org.librefit.nav.Route
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.ExerciseCard
@@ -191,13 +191,13 @@ fun WorkoutScreen(
                 ),
                 exercises = viewModel.getExercises(),
             )
-            navController.navigate(Destination.BeforeSavingScreen)
+            navController.navigate(Route.BeforeSavingScreen)
         },
         actionsEnabled = listOf(!viewModel.isListEmpty()),
         actionsDescription = listOf(stringResource(R.string.done)),
         fabIcon = Icons.Default.Add,
         fabAction = {
-            navController.navigate(Destination.ExercisesScreen(addExercises = true))
+            navController.navigate(Route.ExercisesScreen(addExercises = true))
         },
         fabDescription = stringResource(R.string.add_exercise),
         bottomBar = {

@@ -60,7 +60,7 @@ import androidx.navigation.NavHostController
 import org.librefit.R
 import org.librefit.enums.InfoMode
 import org.librefit.enums.SuccessMessage
-import org.librefit.nav.Destination
+import org.librefit.nav.Route
 import org.librefit.ui.components.ConfirmDialog
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
@@ -138,8 +138,8 @@ fun BeforeSavingScreen(
         navigateBack = { navController.popBackStack() },
         actions = listOf {
             viewModel.saveExercisesWithWorkout()
-            navController.navigate(Destination.SuccessScreen(SuccessMessage.WORKOUT_SAVED)) {
-                popUpTo(Destination.MainScreen) { inclusive = false }
+            navController.navigate(Route.SuccessScreen(SuccessMessage.WORKOUT_SAVED)) {
+                popUpTo(Route.MainScreen) { inclusive = false }
             }
         },
         actionsDescription = listOf(stringResource(R.string.save)),

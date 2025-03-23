@@ -23,7 +23,7 @@ import kotlinx.serialization.Serializable
 import org.librefit.enums.SuccessMessage
 
 
-sealed class Destination {
+sealed class Route {
     @Serializable
     object AboutScreen
 

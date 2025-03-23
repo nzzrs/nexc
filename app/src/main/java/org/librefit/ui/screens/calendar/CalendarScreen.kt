@@ -48,7 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import org.librefit.R
-import org.librefit.nav.Destination
+import org.librefit.nav.Route
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.animations.EmptyLottie
@@ -143,7 +143,7 @@ fun CalendarScreen(
                             IconButton(
                                 onClick = {
                                     sharedViewModel.updateWorkoutId(workout.id)
-                                    navController.navigate(Destination.InfoWorkoutScreen)
+                                    navController.navigate(Route.InfoWorkoutScreen)
                                 },
                             ) {
                                 Icon(Icons.Default.Info, stringResource(R.string.about))

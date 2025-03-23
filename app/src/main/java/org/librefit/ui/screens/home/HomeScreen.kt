@@ -65,7 +65,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
 import org.librefit.db.entity.Workout
-import org.librefit.nav.Destination
+import org.librefit.nav.Route
 import org.librefit.nav.checkPermissionsBeforeNavigateToWorkout
 import org.librefit.ui.components.CustomButton
 import org.librefit.ui.components.CustomScaffold
@@ -161,7 +161,7 @@ private fun HomeScreenContent(
                     .clip(CardDefaults.elevatedShape)
                     .clickable {
                         updateWorkoutId(routine.id)
-                        navController.navigate(Destination.InfoWorkoutScreen)
+                        navController.navigate(Route.InfoWorkoutScreen)
                     }
             ) {
                 Column(
@@ -184,7 +184,7 @@ private fun HomeScreenContent(
                         IconButton(
                             onClick = {
                                 updateWorkoutId(routine.id)
-                                navController.navigate(Destination.InfoWorkoutScreen)
+                                navController.navigate(Route.InfoWorkoutScreen)
                             }
                         ) {
                             Icon(

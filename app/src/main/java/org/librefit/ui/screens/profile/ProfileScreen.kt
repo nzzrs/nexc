@@ -71,6 +71,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.delay
 import org.librefit.R
+import org.librefit.data.ChartData
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.enums.ChartMode
@@ -105,8 +106,7 @@ fun ProfileScreen(
         innerPadding = innerPadding,
         navController = navController,
         weekStreak = viewModel.getWeekStreak(),
-        yAxisDataChart = viewModel.getYAxisDataChart(),
-        xAxisDataChart = viewModel.getXAxisDataChart(),
+        listChartData = viewModel.getListChartData(),
         workoutsWithExercises = viewModel.workoutsWithExercises,
         chartMode = viewModel.getChartMode(),
         updateChartMode = viewModel::updateChartMode,
@@ -119,8 +119,7 @@ private fun ProfileScreenContent(
     innerPadding: PaddingValues,
     navController: NavHostController,
     weekStreak: Int,
-    yAxisDataChart: List<Float>,
-    xAxisDataChart: List<String>,
+    listChartData: List<ChartData>,
     chartMode: ChartMode,
     workoutsWithExercises: SnapshotStateList<WorkoutWithExercisesAndSets>,
     updateChartMode: (ChartMode) -> Unit,
@@ -216,7 +215,7 @@ private fun ProfileScreenContent(
 
         item { HeadlineText(stringResource(R.string.overview)) }
 
-        if (yAxisDataChart.isNotEmpty()) {
+        if (listChartData.isNotEmpty()) {
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(ChartMode.entries) { mode ->
@@ -254,8 +253,7 @@ private fun ProfileScreenContent(
                         ChartMode.VOLUME -> DecimalFormat("#.## " + stringResource(R.string.kg))
                         ChartMode.REPS -> DecimalFormat()
                     },
-                    yAxisData = yAxisDataChart,
-                    xAxisLabels = xAxisDataChart,
+                    listChartData = listChartData,
                     columns = true
                 )
             }
@@ -367,8 +365,7 @@ private fun ProfileScreenPreview() {
             innerPadding = it,
             navController = rememberNavController(),
             weekStreak = 90,
-            yAxisDataChart = listOf(2f, 1f, 3f, 2f, 4f),
-            xAxisDataChart = listOf(),
+            listChartData = listOf(2f, 1f, 3f, 2f, 4f).map { ChartData(it) },
             chartMode = ChartMode.DURATION,
             workoutsWithExercises = remember {
                 mutableStateListOf(

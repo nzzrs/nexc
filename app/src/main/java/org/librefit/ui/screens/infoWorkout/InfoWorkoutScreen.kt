@@ -208,7 +208,7 @@ fun InfoWorkoutScreen(
                 }
             }
 
-            if (viewModel.getYAxisDataChart().size > 1) {
+            if (viewModel.getListChartData().size > 1) {
                 item { HeadlineText(stringResource(R.string.past_workouts)) }
 
                 item {
@@ -248,8 +248,7 @@ fun InfoWorkoutScreen(
                             ChartMode.VOLUME -> DecimalFormat("#.## " + stringResource(R.string.kg))
                             ChartMode.REPS -> DecimalFormat()
                         },
-                        yAxisData = viewModel.getYAxisDataChart(),
-                        xAxisLabels = viewModel.getXAxisDataChart()
+                        listChartData = viewModel.getListChartData()
                     )
                 }
             }

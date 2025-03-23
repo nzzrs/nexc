@@ -26,6 +26,7 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.librefit.data.ChartData
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
@@ -143,24 +144,21 @@ class InfoWorkoutScreenViewModel @Inject constructor(
     )
     private var chartMode = mutableStateOf(ChartMode.DURATION)
 
-    fun getYAxisDataChart(): List<Float> {
+    fun getListChartData(): List<ChartData> {
         return completedWorkoutsWithExercises.mapIndexed { index, it ->
-            when (chartMode.value) {
-                ChartMode.DURATION -> it.workout.timeElapsed / 60f
-                ChartMode.VOLUME -> it.exercisesWithSets.sumOf {
-                    it.sets.filter { it.completed }.sumOf { it.weight.toDouble() * it.reps }
-                }
+            ChartData(
+                yValue = when (chartMode.value) {
+                    ChartMode.DURATION -> it.workout.timeElapsed / 60f
+                    ChartMode.VOLUME -> it.exercisesWithSets.sumOf {
+                        it.sets.filter { it.completed }.sumOf { it.weight.toDouble() * it.reps }
+                    }
 
-                ChartMode.REPS -> it.exercisesWithSets.sumOf {
-                    it.sets.filter { it.completed }.sumOf { it.reps }
-                }
-            }.toFloat()
-        }
-    }
-
-    fun getXAxisDataChart(): List<String> {
-        return completedWorkoutsWithExercises.map { it ->
-            it.workout.completed.format(shortFormatter).toString()
+                    ChartMode.REPS -> it.exercisesWithSets.sumOf {
+                        it.sets.filter { it.completed }.sumOf { it.reps }
+                    }
+                }.toFloat(),
+                xValue = it.workout.completed.format(shortFormatter)
+            )
         }
     }
 

@@ -60,6 +60,7 @@ import com.patrykandpatrick.vico.core.cartesian.marker.DefaultCartesianMarker
 import com.patrykandpatrick.vico.core.common.data.ExtraStore
 import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
 import com.patrykandpatrick.vico.core.common.shape.CorneredShape
+import org.librefit.data.ChartData
 import org.librefit.ui.components.CustomScaffold
 import java.text.DecimalFormat
 
@@ -67,24 +68,24 @@ import java.text.DecimalFormat
  * A custom [com.patrykandpatrick.vico.core.cartesian.CartesianChart]
  *
  * @param format It is used by [VerticalAxis] to display Y axis values following the provided format
- * @param yAxisData A list of float containing the actual values of the chart, it must be not empty.
- * @param xAxisLabels A list of strings containing the labels of the corresponding Y axis value.
- * Leave empty to use the default label (ordinal numeration)
+ * @param listChartData A list of [org.librefit.data.ChartData] containing the actual values of the chart, it must be not empty.
+ *
  * @param columns When `false`, the chart becomes a line chart.
  *
- * @throws IllegalArgumentException when [yAxisData] is empty
+ * @throws IllegalArgumentException when [listChartData] is empty
  */
 @Composable
 fun CustomCartesianChart(
     format: DecimalFormat = DecimalFormat(),
-    yAxisData: List<Float>,
-    xAxisLabels: List<String> = listOf(),
+    listChartData: List<ChartData>,
     columns: Boolean = false
 ) {
-    //TODO: pass a map instead of lists
-    require(yAxisData.isNotEmpty()) {
-        "Y axis data must not be empty. Vico library doesn't support it"
+    require(listChartData.isNotEmpty()) {
+        "Chart data must not be empty."
     }
+
+    val yAxisData = listChartData.map { it.yValue }
+    val xAxisLabels = listChartData.map { it.xValue }
 
     val labelListKey = ExtraStore.Key<List<String>>()
     val modelProducer = remember { CartesianChartModelProducer() }
@@ -95,7 +96,7 @@ fun CustomCartesianChart(
             } else {
                 lineSeries { series(yAxisData) }
             }
-            if (xAxisLabels.isNotEmpty()) {
+            if (xAxisLabels.all { it.isNotBlank() }) {
                 extras { it[labelListKey] = xAxisLabels }
             }
         }
@@ -143,7 +144,7 @@ fun CustomCartesianChart(
                 ),
                 bottomAxis = HorizontalAxis.rememberBottom(
                     valueFormatter = remember(yAxisData, xAxisLabels) {
-                        if (xAxisLabels.isNotEmpty())
+                        if (xAxisLabels.all { it.isNotBlank() })
                             CartesianValueFormatter { context, x, _ ->
                                 context.model.extraStore.getOrNull(labelListKey)?.get(x.toInt())
                                     ?: xAxisLabels.getOrNull(yAxisData.indexOf(x.toFloat()))
@@ -179,7 +180,7 @@ private fun CustomCartesianChartPreview() {
     CustomScaffold {
         Column(Modifier.padding(it)) {
             CustomCartesianChart(
-                yAxisData = listOf(1f, 3f, 2f, 1f, 2f, 1f, 4f, 0f)
+                listChartData = listOf(1f, 2f, -1f).map(::ChartData)
             )
         }
     }

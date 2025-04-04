@@ -72,6 +72,7 @@ import org.librefit.enums.exercise.Force
 import org.librefit.enums.exercise.Level
 import org.librefit.enums.exercise.Mechanic
 import org.librefit.enums.exercise.Muscle
+import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.exerciseEnumToStringId
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -260,5 +261,7 @@ private fun ItemFilter(
 @Preview
 @Composable
 fun FiltersCardPreview() {
-    FiltersCard(remember { mutableStateOf(true) }, viewModel())
+    LibreFitTheme(false, true) {
+        FiltersCard(remember { mutableStateOf(true) }, viewModel())
+    }
 }

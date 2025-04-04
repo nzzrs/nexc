@@ -202,8 +202,8 @@ fun CustomCartesianChart(
 @Preview
 @Composable
 private fun CustomCartesianChartPreview() {
-    val emptyChart = true
-    LibreFitTheme(true, true) {
+    val emptyChart = false
+    LibreFitTheme(false, true) {
         CustomCartesianChart(
             listChartData = if (emptyChart) emptyList() else listOf<Float>(
                 1f,
@@ -211,7 +211,9 @@ private fun CustomCartesianChartPreview() {
                 2f,
                 4f,
                 2f,
-                5f
+                5f,
+                1f,
+                3f
             ).map(::ChartData),
             columns = false
         )

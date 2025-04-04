@@ -24,7 +24,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -79,6 +78,7 @@ import org.librefit.ui.components.animations.NoResultLottie
 import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
 import org.librefit.ui.screens.shared.SharedViewModel
+import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.exerciseEnumToStringId
 
 
@@ -111,42 +111,32 @@ fun ExercisesScreen(
 
     val lazyListState = rememberLazyListState()
 
-    val coroutineScope = rememberCoroutineScope()
 
-    CustomScaffold(
-        title = AnnotatedString(stringResource(id = R.string.exercises)),
-        navigateBack = navigateBack,
+    ExercisesScreenContent(
+        addExercises = addExercises,
+        selectedExercisesList = selectedExercisesList,
+        lazyListState = lazyListState,
+        exerciseList = sharedViewModel.exercisesList,
         actions = if (addExercises) listOf {
             sharedViewModel.addSelectedExerciseToList(selectedExercisesList)
             navigateBack()
         } else listOf(),
-        actionsDescription = listOf(stringResource(R.string.add)),
-        actionsEnabled = listOf(selectedExercisesList.isNotEmpty()),
-        fabAction = {
-            coroutineScope.launch {
-                lazyListState.animateScrollToItem(0)
-            }
-        },
-        fabIcon = Icons.Default.KeyboardArrowUp,
-    ) { innerPadding ->
-        ExercisesScreenContent(
-            addExercises = addExercises,
-            innerPadding = innerPadding,
-            selectedExercisesList = selectedExercisesList,
-            listState = lazyListState,
-            exerciseList = sharedViewModel.exercisesList
-        )
-    }
+        navigateBack = navigateBack,
+    )
+
 }
 
 @Composable
 private fun ExercisesScreenContent(
     addExercises: Boolean,
-    innerPadding: PaddingValues,
     selectedExercisesList: MutableList<ExerciseDC>,
-    listState: LazyListState,
+    lazyListState: LazyListState,
     exerciseList: List<ExerciseDC>,
+    actions: List<() -> Unit>,
+    navigateBack: () -> Unit
 ) {
+
+    val coroutineScope = rememberCoroutineScope()
 
     val viewModel: ExercisesScreenViewModel = viewModel()
 
@@ -165,168 +155,187 @@ private fun ExercisesScreenContent(
      */
     val query by viewModel.query.collectAsState()
 
-    // Centers the LazyColumn on the screen and restricts its maximum width to 600.dp.
-    // This prevents the content from stretching too wide on larger (landscape) screens
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        LazyColumn(
-            contentPadding = innerPadding,
-            modifier = Modifier.widthIn(max = 600.dp),
-            state = listState
+    CustomScaffold(
+        title = AnnotatedString(stringResource(id = R.string.exercises)),
+        navigateBack = navigateBack,
+        actions = actions,
+        actionsDescription = listOf(stringResource(R.string.add)),
+        actionsEnabled = listOf(selectedExercisesList.isNotEmpty()),
+        fabAction = {
+            coroutineScope.launch {
+                lazyListState.animateScrollToItem(0)
+            }
+        },
+        fabIcon = Icons.Default.KeyboardArrowUp,
+    ) { innerPadding ->
+        // Centers the LazyColumn on the screen and restricts its maximum width to 600.dp.
+        // This prevents the content from stretching too wide on larger (landscape) screens
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter
         ) {
-            // Search bar
-            item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                ) {
-                    TextField(
-                        value = query,
+            LazyColumn(
+                contentPadding = innerPadding,
+                modifier = Modifier.widthIn(max = 600.dp),
+                state = lazyListState
+            ) {
+                // Search bar
+                item {
+                    Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 10.dp, end = 10.dp),
-                        onValueChange = viewModel::updateQuery,
-                        shape = RoundedCornerShape(40.dp),
-                        leadingIcon = {
-                            Icon(
-                                imageVector = Icons.Default.Search,
-                                contentDescription = stringResource(R.string.search_exercise_field)
-                            )
-                        },
-                        trailingIcon = {
-                            if (query.isNotEmpty()) {
-                                IconButton(onClick = { viewModel.updateQuery("") }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Close,
-                                        contentDescription = stringResource(R.string.delete)
-                                    )
-                                }
-                            }
-                        },
-                        label = { Text(text = stringResource(id = R.string.search_exercise_field)) },
-                        singleLine = true,
-                        colors = TextFieldDefaults.colors(
-                            focusedIndicatorColor = Color.Transparent,
-                            unfocusedIndicatorColor = Color.Transparent,
-                            disabledIndicatorColor = Color.Transparent
-                        )
-                    )
-                }
-            }
-
-            // Card to let the user filter the exercises list
-            item { FiltersCard(isFilterExpanded = isFilterExpanded, viewModel = viewModel) }
-
-            if (
-                !exerciseList.fastAny {
-                    viewModel.fuzzySearch(
-                        it.name,
-                        query
-                    ) > 60 && viewModel.isExerciseEligible(it)
-                }
-            ) {
-                item {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.Center
                     ) {
-                        NoResultLottie()
-                        Text(
-                            text = stringResource(id = R.string.no_exercise_found),
-                            color = MaterialTheme.colorScheme.onBackground
+                        TextField(
+                            value = query,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(start = 10.dp, end = 10.dp),
+                            onValueChange = viewModel::updateQuery,
+                            shape = RoundedCornerShape(40.dp),
+                            leadingIcon = {
+                                Icon(
+                                    imageVector = Icons.Default.Search,
+                                    contentDescription = stringResource(R.string.search_exercise_field)
+                                )
+                            },
+                            trailingIcon = {
+                                if (query.isNotEmpty()) {
+                                    IconButton(onClick = { viewModel.updateQuery("") }) {
+                                        Icon(
+                                            imageVector = Icons.Default.Close,
+                                            contentDescription = stringResource(R.string.delete)
+                                        )
+                                    }
+                                }
+                            },
+                            label = { Text(text = stringResource(id = R.string.search_exercise_field)) },
+                            singleLine = true,
+                            colors = TextFieldDefaults.colors(
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                                disabledIndicatorColor = Color.Transparent
+                            )
                         )
                     }
                 }
-            }
 
-            //Filtered list of exercises sorted by matching score
-            itemsIndexed(
-                items = exerciseList
-                    .fastMap { exercise -> exercise to viewModel.fuzzySearch(exercise.name, query) }
-                    .fastFilter { (exercise, score) ->
-                        score > 60 && viewModel.isExerciseEligible(
-                            exercise
-                        )
+                // Card to let the user filter the exercises list
+                item { FiltersCard(isFilterExpanded = isFilterExpanded, viewModel = viewModel) }
+
+                if (
+                    !exerciseList.fastAny {
+                        viewModel.fuzzySearch(
+                            it.name,
+                            query
+                        ) > 60 && viewModel.isExerciseEligible(it)
                     }
-                    .sortedByDescending { (_, score) -> score }
-                    .fastMap { (exercise, _) -> exercise },
-                key = { index, exercise -> exercise.id }
-            ) { index, exercise ->
-                if (index == 0) {
-                    HorizontalDivider(Modifier.animateItem())
-                }
-
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .animateItem()
-                        .height(100.dp)
-                        .clickable(
-                            enabled = addExercises
-                        ) {
-                            if (selectedExercisesList.contains(exercise)) {
-                                selectedExercisesList.remove(exercise)
-                            } else {
-                                selectedExercisesList.add(exercise)
-                            }
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    if (addExercises) {
-                        Checkbox(
-                            modifier = Modifier.padding(start = 10.dp, end = 10.dp),
-                            checked = selectedExercisesList.contains(exercise),
-                            onCheckedChange = {
+                    item {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            NoResultLottie()
+                            Text(
+                                text = stringResource(id = R.string.no_exercise_found),
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
+                }
+
+                //Filtered list of exercises sorted by matching score
+                itemsIndexed(
+                    items = exerciseList
+                        .fastMap { exercise ->
+                            exercise to viewModel.fuzzySearch(
+                                exercise.name,
+                                query
+                            )
+                        }
+                        .fastFilter { (exercise, score) ->
+                            score > 60 && viewModel.isExerciseEligible(
+                                exercise
+                            )
+                        }
+                        .sortedByDescending { (_, score) -> score }
+                        .fastMap { (exercise, _) -> exercise },
+                    key = { index, exercise -> exercise.id }
+                ) { index, exercise ->
+                    if (index == 0) {
+                        HorizontalDivider(Modifier.animateItem())
+                    }
+
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .animateItem()
+                            .height(100.dp)
+                            .clickable(
+                                enabled = addExercises
+                            ) {
                                 if (selectedExercisesList.contains(exercise)) {
                                     selectedExercisesList.remove(exercise)
                                 } else {
                                     selectedExercisesList.add(exercise)
                                 }
-                            }
-                        )
-                    }
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(start = if (addExercises) 0.dp else 20.dp),
-                        verticalArrangement = Arrangement.Center
+                            },
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Text(
-                            text = exercise.name,
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        Text(
-                            text = stringResource(exerciseEnumToStringId(exercise.category)),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                        if (exercise.equipment != null) {
+                        if (addExercises) {
+                            Checkbox(
+                                modifier = Modifier.padding(start = 10.dp, end = 10.dp),
+                                checked = selectedExercisesList.contains(exercise),
+                                onCheckedChange = {
+                                    if (selectedExercisesList.contains(exercise)) {
+                                        selectedExercisesList.remove(exercise)
+                                    } else {
+                                        selectedExercisesList.add(exercise)
+                                    }
+                                }
+                            )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = if (addExercises) 0.dp else 20.dp),
+                            verticalArrangement = Arrangement.Center
+                        ) {
                             Text(
-                                text = stringResource(exerciseEnumToStringId(exercise.equipment)),
+                                text = exercise.name,
+                                style = MaterialTheme.typography.titleMedium,
+                            )
+                            Text(
+                                text = stringResource(exerciseEnumToStringId(exercise.category)),
                                 style = MaterialTheme.typography.bodyMedium
+                            )
+                            if (exercise.equipment != null) {
+                                Text(
+                                    text = stringResource(exerciseEnumToStringId(exercise.equipment)),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+                        IconButton(
+                            modifier = Modifier.padding(start = 10.dp, end = 10.dp),
+                            onClick = {
+                                selectedExercise = exercise
+                                isModalSheetOpen = true
+                            }
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Info,
+                                contentDescription = stringResource(R.string.details)
                             )
                         }
                     }
-                    IconButton(
-                        modifier = Modifier.padding(start = 10.dp, end = 10.dp),
-                        onClick = {
-                            selectedExercise = exercise
-                            isModalSheetOpen = true
-                        }
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Info,
-                            contentDescription = stringResource(R.string.details)
-                        )
-                    }
-                }
-                HorizontalDivider(Modifier.animateItem())
+                    HorizontalDivider(Modifier.animateItem())
 
+                }
+                bottomMargin()
             }
-            bottomMargin()
         }
     }
 
@@ -337,22 +346,17 @@ private fun ExercisesScreenContent(
 }
 
 
-@Preview(device = "spec:width=1280dp,height=800dp,dpi=240")
+@Preview
 @Composable
 private fun ExercisesScreenPreview() {
-    val addExercises = false
-    CustomScaffold(
-        title = AnnotatedString(stringResource(id = R.string.exercises)),
-        navigateBack = {},
-        actions = if (addExercises) listOf {} else listOf(),
-        actionsDescription = listOf(stringResource(R.string.add))
-    ) {
+    LibreFitTheme(false, true) {
         ExercisesScreenContent(
             addExercises = false,
-            innerPadding = it,
             selectedExercisesList = remember { mutableStateListOf() },
-            listState = rememberLazyListState(),
+            lazyListState = rememberLazyListState(),
             exerciseList = List(0) { ExerciseDC(id = "$it", name = "Exercise $it") },
+            actions = listOf {},
+            navigateBack = {}
         )
     }
 }

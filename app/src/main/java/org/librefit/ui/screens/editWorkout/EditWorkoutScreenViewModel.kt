@@ -40,10 +40,6 @@ class EditWorkoutScreenViewModel @Inject constructor(
 ) : ViewModel() {
     val exercisesWithSets = mutableStateListOf<ExerciseWithSets>()
 
-    fun getExercises(): List<ExerciseWithSets> {
-        return exercisesWithSets.toList()
-    }
-
     fun addExerciseWithSets(exerciseWithSets: ExerciseWithSets) {
         exercisesWithSets.add(exerciseWithSets)
     }
@@ -153,9 +149,6 @@ class EditWorkoutScreenViewModel @Inject constructor(
         exercisesWithSets.removeAt(index)
     }
 
-    fun isListEmpty(): Boolean {
-        return exercisesWithSets.isEmpty()
-    }
 
     private var initialized = false
     private val workout = mutableStateOf(Workout())
@@ -181,10 +174,6 @@ class EditWorkoutScreenViewModel @Inject constructor(
         return workout.value
     }
 
-    fun getTitle(): String {
-        return workout.value.title
-    }
-
     fun updateTitle(string: String) {
         workout.value = workout.value.copy(title = string)
     }
@@ -197,16 +186,8 @@ class EditWorkoutScreenViewModel @Inject constructor(
         return workout.value.title.length >= 30
     }
 
-    fun isTitleAllowed(): Boolean {
-        return !isTitleEmpty() && !isTitleTooLong()
-    }
-
     fun updateNotes(string: String) {
         workout.value = workout.value.copy(notes = string)
-    }
-
-    fun getNotes(): String {
-        return workout.value.notes
     }
 
 

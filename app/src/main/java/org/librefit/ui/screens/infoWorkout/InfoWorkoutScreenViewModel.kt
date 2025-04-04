@@ -33,7 +33,6 @@ import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.db.repository.WorkoutRepository
 import org.librefit.enums.ChartMode
 import org.librefit.enums.SetMode
-import org.librefit.util.Formatter.formatTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
@@ -44,7 +43,7 @@ class InfoWorkoutScreenViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
     private var initialized = false
-    private val workout = mutableStateOf(Workout())
+    val workout = mutableStateOf(Workout())
 
     fun initialize(
         workout: Workout,
@@ -64,9 +63,6 @@ class InfoWorkoutScreenViewModel @Inject constructor(
         }
     }
 
-    fun getWorkoutTitle(): String {
-        return workout.value.title
-    }
 
     fun getDate(): String {
         val date = if (isRoutine()) workout.value.created else workout.value.completed
@@ -77,33 +73,15 @@ class InfoWorkoutScreenViewModel @Inject constructor(
         )
     }
 
-    fun getElapsedTime(): String {
-        return formatTime(workout.value.timeElapsed)
-    }
 
-    fun getNotes(): String {
-        return workout.value.notes
-    }
 
     fun isRoutine(): Boolean {
         return workout.value.routine
     }
 
 
-    private var routine = mutableStateOf(Workout())
+    var routine = mutableStateOf(Workout())
 
-
-    fun getRoutineTitle(): String {
-        return routine.value.title
-    }
-
-    fun getRoutineDate(): String {
-        return routine.value.created.format(
-            DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(
-                Locale.getDefault()
-            )
-        )
-    }
 
 
     val exercises = mutableStateListOf<ExerciseWithSets>()
@@ -126,22 +104,12 @@ class InfoWorkoutScreenViewModel @Inject constructor(
         return String.format(Locale.getDefault(), "%.2f", value)
     }
 
-    fun getTotalExercises(): String {
-        return exercises.size.toString()
-    }
 
-    fun getTotalSets(): String {
-        return exercises.sumOf { it.sets.size }.toString()
-    }
-
-    fun getCompletedSets(): String {
-        return exercises.sumOf { it.sets.filter { it.completed == true }.size }.toString()
-    }
-
-
-    val shortFormatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(
+    val shortFormatter: DateTimeFormatter? =
+        DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(
         Locale.getDefault()
     )
+
     private var chartMode = mutableStateOf(ChartMode.DURATION)
 
     fun getListChartData(): List<ChartData> {

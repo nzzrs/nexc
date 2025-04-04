@@ -74,6 +74,7 @@ import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.screens.shared.SharedViewModel
+import org.librefit.ui.theme.LibreFitTheme
 
 @Composable
 fun HomeScreen(
@@ -223,46 +224,48 @@ private fun HomeScreenContent(
     }
 }
 
-@Preview(device = "spec:parent=pixel_5,orientation=landscape")
+@Preview
 @Composable
 fun HomeScreenPreview() {
-    CustomScaffold(
-        title = buildAnnotatedString {
-            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                append(stringResource(id = R.string.app_name).removeRange(5, 8))
+    LibreFitTheme(false, true) {
+        CustomScaffold(
+            title = buildAnnotatedString {
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                    append(stringResource(id = R.string.app_name).removeRange(5, 8))
+                }
+                append(stringResource(id = R.string.app_name).removeRange(0, 5))
+            },
+            actions = listOf {},
+            actionsIcons = listOf(Icons.Default.Settings),
+            actionsElevated = listOf(false),
+            fabIcon = Icons.Default.Add,
+            bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = true,
+                        onClick = { },
+                        icon = { Icon(Icons.Default.Home, stringResource(R.string.home)) },
+                        label = { Text(stringResource(R.string.home)) }
+                    )
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = { },
+                        icon = { Icon(Icons.Outlined.Person, stringResource(R.string.profile)) },
+                        label = { Text(stringResource(R.string.profile)) }
+                    )
+                }
             }
-            append(stringResource(id = R.string.app_name).removeRange(0, 5))
-        },
-        actions = listOf {},
-        actionsIcons = listOf(Icons.Default.Settings),
-        actionsElevated = listOf(false),
-        fabIcon = Icons.Default.Add,
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = true,
-                    onClick = { },
-                    icon = { Icon(Icons.Default.Home, stringResource(R.string.home)) },
-                    label = { Text(stringResource(R.string.home)) }
-                )
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { },
-                    icon = { Icon(Icons.Outlined.Person, stringResource(R.string.profile)) },
-                    label = { Text(stringResource(R.string.profile)) }
-                )
-            }
+        ) {
+            HomeScreenContent(
+                innerPadding = it,
+                navController = rememberNavController(),
+                updateWorkoutId = {},
+                requestPermissionAgain = false,
+                routines = listOf(
+                    Workout(id = 1, title = "Workout 1"),
+                    Workout(id = 2, title = "Workout 2")
+                ),
+            )
         }
-    ) {
-        HomeScreenContent(
-            innerPadding = it,
-            navController = rememberNavController(),
-            updateWorkoutId = {},
-            requestPermissionAgain = false,
-            routines = listOf(
-                Workout(id = 1, title = "Workout 1"),
-                Workout(id = 2, title = "Workout 2")
-            ),
-        )
     }
 }

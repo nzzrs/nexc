@@ -28,6 +28,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import org.librefit.R
 import org.librefit.ui.components.CustomScaffold
+import org.librefit.ui.theme.LibreFitTheme
 
 @Composable
 fun LibrariesScreen(navigateBack: () -> Unit) {
@@ -37,6 +38,7 @@ fun LibrariesScreen(navigateBack: () -> Unit) {
     ) {
         LibrariesContainer(
             contentPadding = it,
+            showDescription = true,
             modifier = Modifier.fillMaxSize()
         )
     }
@@ -45,5 +47,7 @@ fun LibrariesScreen(navigateBack: () -> Unit) {
 @Preview
 @Composable
 private fun LibrariesScreenPreview() {
-    LibrariesScreen { }
+    LibreFitTheme(false, true) {
+        LibrariesScreen { }
+    }
 }

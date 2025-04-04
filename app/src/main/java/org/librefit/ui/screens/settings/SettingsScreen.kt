@@ -80,6 +80,7 @@ import org.librefit.nav.Route
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.bottomMargin
+import org.librefit.ui.theme.LibreFitTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -422,17 +423,19 @@ private fun languageCodeToId(code: String): Int {
     return result
 }
 
-@Preview(device = "spec:width=673dp,height=841dp,orientation=landscape")
+@Preview
 @Composable
 fun SettingsScreenPreview() {
-    SettingsScreenContent(
-        selectedTheme = ThemeMode.LIGHT,
-        materialModeOn = false,
-        showPreferenceDialog = remember { mutableStateOf(false) },
-        selectedLanguage = "en",
-        keepWorkoutScreenOn = true,
-        isIgnoringBatteryOptimization = false,
-        savePreference = { _, _ -> },
-        navController = rememberNavController()
-    )
+    LibreFitTheme(false, true) {
+        SettingsScreenContent(
+            selectedTheme = ThemeMode.DARK,
+            materialModeOn = false,
+            showPreferenceDialog = remember { mutableStateOf(false) },
+            selectedLanguage = "en",
+            keepWorkoutScreenOn = true,
+            isIgnoringBatteryOptimization = false,
+            savePreference = { _, _ -> },
+            navController = rememberNavController()
+        )
+    }
 }

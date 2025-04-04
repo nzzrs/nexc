@@ -58,6 +58,7 @@ import org.librefit.R
 import org.librefit.nav.checkPermissionsBeforeNavigateToWorkout
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.animations.PreferencesLottie
+import org.librefit.ui.theme.LibreFitTheme
 
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -238,14 +239,14 @@ private fun RequestPermissionsScreenContent(
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
-@Preview(device = "spec:width=1280dp,height=800dp,dpi=240")
+@Preview
 @Composable
 private fun RequestPermissionsScreenPreview() {
-    RequestPermissionsScreenContent(
-        navController = rememberNavController(),
-        requestPermissionAgain = true,
-        notificationPermissionState = null
-    ) {
-
+    LibreFitTheme(false, true) {
+        RequestPermissionsScreenContent(
+            navController = rememberNavController(),
+            requestPermissionAgain = true,
+            notificationPermissionState = null
+        ) {}
     }
 }

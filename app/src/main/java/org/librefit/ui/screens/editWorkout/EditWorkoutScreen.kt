@@ -23,7 +23,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -53,13 +52,16 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import org.librefit.R
 import org.librefit.data.ExerciseDC
 import org.librefit.db.entity.Exercise
+import org.librefit.db.entity.Set
+import org.librefit.db.entity.Workout
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.enums.InfoMode
+import org.librefit.enums.SetMode
 import org.librefit.enums.SuccessMessage
 import org.librefit.nav.Route
 import org.librefit.ui.components.ConfirmDialog
@@ -70,6 +72,7 @@ import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
 import org.librefit.ui.components.modalBottomSheets.InfoModalBottomSheet
 import org.librefit.ui.screens.shared.SharedViewModel
+import org.librefit.ui.theme.LibreFitTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -88,20 +91,59 @@ fun EditWorkoutScreen(
         viewModel.initialize(
             workout = sharedViewModel.getPassedWorkout(),
             newExercises = sharedViewModel.getPassedExercises(),
-            routine = sharedViewModel.getPassedRoutine()
+            routine = sharedViewModel.getPassedRoutine(),
         )
     }
 
+    EditWorkoutScreenContent(
+        navController = navController,
+        typeOfEdit = viewModel.getTypeOfEdit(),
+        exercisesWithSets = viewModel.exercisesWithSets,
+        workout = viewModel.getWorkout(),
+        isTitleTooLong = viewModel.isTitleTooLong(),
+        isTitleEmpty = viewModel.isTitleEmpty(),
+        setPassedData = sharedViewModel::setPassedData,
+        updateTitle = viewModel::updateTitle,
+        updateNotes = viewModel::updateNotes,
+        addSetToExercise = viewModel::addSetToExercise,
+        deleteExercise = viewModel::deleteExercise,
+        updateSet = viewModel::updateSet,
+        deleteSet = viewModel::deleteSet,
+        updateExercise = viewModel::updateExercise,
+        saveWorkoutWithExercisesInDB = viewModel::saveWorkoutWithExercisesInDB
+    )
+
+}
+
+@Composable
+private fun EditWorkoutScreenContent(
+    navController: NavHostController,
+    typeOfEdit: Boolean?,
+    exercisesWithSets: List<ExerciseWithSets>,
+    workout: Workout,
+    isTitleTooLong: Boolean,
+    isTitleEmpty: Boolean,
+    setPassedData: (Workout?, List<ExerciseWithSets>) -> Unit,
+    updateTitle: (String) -> Unit,
+    updateNotes: (String) -> Unit,
+    addSetToExercise: (Int) -> Unit,
+    deleteExercise: (Int) -> Unit,
+    updateSet: (Int, Set, Float, Int) -> Unit,
+    deleteSet: (Int, Set) -> Unit,
+    updateExercise: (Int, String, Int) -> Unit,
+    saveWorkoutWithExercisesInDB: () -> Unit
+) {
+
     var showExitDialog by remember { mutableStateOf(false) }
 
-    BackHandler(enabled = !showExitDialog && !viewModel.isListEmpty()) {
+    BackHandler(enabled = !showExitDialog && exercisesWithSets.isNotEmpty()) {
         showExitDialog = true
     }
 
     if (showExitDialog) {
         ConfirmDialog(
             title = stringResource(R.string.exit),
-            text = if (viewModel.getTypeOfEdit() == false) stringResource(id = R.string.exit_workout)
+            text = if (typeOfEdit == false) stringResource(id = R.string.exit_workout)
             else stringResource(id = R.string.exit_create_routine),
             onConfirm = {
                 navController.popBackStack()
@@ -110,59 +152,6 @@ fun EditWorkoutScreen(
             onDismiss = { showExitDialog = false }
         )
     }
-
-    CustomScaffold(
-        title = AnnotatedString(
-            when (viewModel.getTypeOfEdit()) {
-                null -> stringResource(R.string.create_routine)
-                true -> stringResource(R.string.edit_routine)
-                false -> stringResource(R.string.edit_workout)
-            }
-        ),
-        navigateBack = {
-            if (viewModel.isListEmpty()) {
-                navController.popBackStack()
-            } else {
-                showExitDialog = true
-            }
-        },
-        actions = listOf {
-            if (viewModel.getTypeOfEdit() == false) {
-                sharedViewModel.setPassedData(
-                    workout = viewModel.getWorkout(),
-                    exercises = viewModel.getExercises(),
-                )
-                navController.navigate(Route.BeforeSavingScreen)
-            } else {
-                viewModel.saveWorkoutWithExercisesInDB()
-                navController.navigate(Route.SuccessScreen(SuccessMessage.ROUTINE_SAVED)) {
-                    popUpTo(Route.MainScreen) { inclusive = false }
-                }
-            }
-        },
-        actionsDescription = listOf(
-            if (viewModel.getTypeOfEdit() == false) stringResource(R.string.done)
-            else stringResource(R.string.save)
-        ),
-        actionsEnabled = listOf(viewModel.isTitleAllowed() && !viewModel.isListEmpty()),
-        fabIcon = Icons.Default.Add,
-        fabAction = {
-            navController.navigate(Route.ExercisesScreen(addExercises = true))
-        },
-        fabDescription = stringResource(R.string.add_exercise)
-    ) { innerPadding ->
-        EditWorkoutScreenContent(
-            innerPadding = innerPadding,
-            viewModel = viewModel //TODO: remove view model as parameter
-        )
-    }
-}
-
-@Composable
-private fun EditWorkoutScreenContent(
-    innerPadding: PaddingValues,
-    viewModel: EditWorkoutScreenViewModel
-) {
 
     /**
      * Used to display information about the selected exercise in [ExerciseDetailModalBottomSheet]
@@ -181,124 +170,145 @@ private fun EditWorkoutScreenContent(
         InfoModalBottomSheet(infoMode) { infoMode = InfoMode.DISMISS }
     }
 
-
-    // Centers the LazyColumn on the screen and restricts its maximum width to 600.dp.
-    // This prevents the content from stretching too wide on larger (landscape) screens
-    Box(
-        modifier = Modifier.fillMaxSize(),
-        contentAlignment = Alignment.TopCenter
-    ) {
-        LazyColumn(
-            contentPadding = innerPadding,
-            modifier = Modifier
-                .padding(start = 15.dp, end = 15.dp)
-                .widthIn(max = 600.dp),
-            verticalArrangement = Arrangement.spacedBy(15.dp),
-            horizontalAlignment = Alignment.CenterHorizontally
+    CustomScaffold(
+        title = AnnotatedString(
+            when (typeOfEdit) {
+                null -> stringResource(R.string.create_routine)
+                true -> stringResource(R.string.edit_routine)
+                false -> stringResource(R.string.edit_workout)
+            }
+        ),
+        navigateBack = {
+            if (exercisesWithSets.isEmpty()) {
+                navController.popBackStack()
+            } else {
+                showExitDialog = true
+            }
+        },
+        actions = listOf {
+            if (typeOfEdit == false) {
+                setPassedData(workout, exercisesWithSets)
+                navController.navigate(Route.BeforeSavingScreen)
+            } else {
+                saveWorkoutWithExercisesInDB()
+                navController.navigate(Route.SuccessScreen(SuccessMessage.ROUTINE_SAVED)) {
+                    popUpTo(Route.MainScreen) { inclusive = false }
+                }
+            }
+        },
+        actionsDescription = listOf(
+            if (typeOfEdit == false) stringResource(R.string.done)
+            else stringResource(R.string.save)
+        ),
+        actionsEnabled = listOf(!isTitleEmpty && !isTitleTooLong && exercisesWithSets.isNotEmpty()),
+        fabIcon = Icons.Default.Add,
+        fabAction = {
+            navController.navigate(Route.ExercisesScreen(addExercises = true))
+        },
+        fabDescription = stringResource(R.string.add_exercise)
+    ) { innerPadding ->
+        // Centers the LazyColumn on the screen and restricts its maximum width to 600.dp.
+        // This prevents the content from stretching too wide on larger (landscape) screens
+        Box(
+            modifier = Modifier.fillMaxSize(),
+            contentAlignment = Alignment.TopCenter
         ) {
-            item {
-                OutlinedTextField(
-                    value = viewModel.getTitle(),
-                    modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    onValueChange = { newTitle ->
-                        viewModel.updateTitle(newTitle)
-                    },
-                    trailingIcon = {
-                        if (!viewModel.isTitleAllowed()) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = stringResource(R.string.warning)
+            LazyColumn(
+                contentPadding = innerPadding,
+                modifier = Modifier
+                    .padding(start = 15.dp, end = 15.dp)
+                    .widthIn(max = 600.dp),
+                verticalArrangement = Arrangement.spacedBy(15.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                item {
+                    OutlinedTextField(
+                        value = workout.title,
+                        modifier = Modifier.fillMaxWidth(),
+                        singleLine = true,
+                        onValueChange = { newTitle ->
+                            updateTitle(newTitle)
+                        },
+                        trailingIcon = {
+                            if (isTitleTooLong || isTitleEmpty) {
+                                Icon(
+                                    imageVector = Icons.Default.Warning,
+                                    contentDescription = stringResource(R.string.warning)
+                                )
+                            }
+                        },
+                        isError = isTitleTooLong || isTitleEmpty,
+                        label = { Text(text = stringResource(id = R.string.title)) },
+                        supportingText = {
+                            when {
+                                isTitleTooLong -> {
+                                    Text(stringResource(R.string.title_length_exceeded_30))
+                                }
+
+                                isTitleEmpty -> {
+                                    Text(stringResource(R.string.title_cannot_be_empty))
+                                }
+                            }
+                        }
+                    )
+                }
+                item {
+                    OutlinedTextField(
+                        value = workout.notes,
+                        modifier = Modifier.fillMaxWidth(),
+                        onValueChange = { newNotes ->
+                            updateNotes(newNotes)
+                        },
+                        label = { Text(text = stringResource(id = R.string.notes)) },
+                    )
+                }
+                item {
+                    HorizontalDivider()
+                }
+                if (exercisesWithSets.isEmpty()) {
+                    item {
+                        Column(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            DumbbellLottie()
+                            Text(
+                                text = stringResource(id = R.string.start_adding_exercises),
+                                color = MaterialTheme.colorScheme.onBackground,
+                                textAlign = TextAlign.Center
                             )
                         }
-                    },
-                    isError = !viewModel.isTitleAllowed(),
-                    label = { Text(text = stringResource(id = R.string.title)) },
-                    supportingText = {
-                        when {
-                            viewModel.isTitleTooLong() -> {
-                                Text(stringResource(R.string.title_length_exceeded_30))
-                            }
-
-                            viewModel.isTitleEmpty() -> {
-                                Text(stringResource(R.string.title_cannot_be_empty))
-                            }
-                        }
                     }
-                )
-            }
-            item {
-                OutlinedTextField(
-                    value = viewModel.getNotes(),
-                    modifier = Modifier.fillMaxWidth(),
-                    onValueChange = { newNotes ->
-                        viewModel.updateNotes(newNotes)
-                    },
-                    label = { Text(text = stringResource(id = R.string.notes)) },
-                )
-            }
-            item {
-                HorizontalDivider()
-            }
-            if (viewModel.isListEmpty()) {
-                item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        DumbbellLottie()
-                        Text(
-                            text = stringResource(id = R.string.start_adding_exercises),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            textAlign = TextAlign.Center
+                } else {
+                    itemsIndexed(
+                        items = exercisesWithSets,
+                        key = { i, e -> e.exercise.id }
+                    ) { i, exerciseWithSets ->
+                        ExerciseCard(
+                            modifier = Modifier.animateItem(),
+                            exerciseWithSets = exerciseWithSets,
+                            addSet = { addSetToExercise },
+                            onDetail = {
+                                selectedExercise = exerciseWithSets.exerciseDC
+                                isModalSheetOpen = true
+                            },
+                            onDelete = { deleteExercise },
+                            updateSet = { set, value, mode ->
+                                updateSet(i, set, value, mode)
+                            },
+                            deleteSet = { set ->
+                                deleteSet(i, set)
+                            },
+                            updateExercise = { value, mode ->
+                                updateExercise(i, value, mode)
+                            },
+                            showInfo = { infoMode = it },
+                            workout = typeOfEdit == false
                         )
                     }
                 }
-            } else {
-                itemsIndexed(
-                    items = viewModel.exercisesWithSets,
-                    key = { i, e -> e.exercise.id }
-                ) { i, exerciseWithSets ->
-                    ExerciseCard(
-                        modifier = Modifier.animateItem(),
-                        exerciseWithSets = exerciseWithSets,
-                        addSet = {
-                            viewModel.addSetToExercise(i)
-                        },
-                        onDetail = {
-                            selectedExercise = exerciseWithSets.exerciseDC
-                            isModalSheetOpen = true
-                        },
-                        onDelete = {
-                            viewModel.deleteExercise(i)
-                        },
-                        updateSet = { set, value, mode ->
-                            viewModel.updateSet(
-                                index = i,
-                                set = set,
-                                value = value,
-                                mode = mode
-                            )
-                        },
-                        deleteSet = { set ->
-                            viewModel.deleteSet(
-                                index = i,
-                                set = set
-                            )
-                        },
-                        updateExercise = { value, mode ->
-                            viewModel.updateExercise(
-                                index = i,
-                                value = value,
-                                mode = mode
-                            )
-                        },
-                        showInfo = { infoMode = it },
-                        workout = viewModel.getTypeOfEdit() == false
-                    )
-                }
+                bottomMargin()
             }
-            bottomMargin()
         }
     }
 }
@@ -306,5 +316,35 @@ private fun EditWorkoutScreenContent(
 @Preview
 @Composable
 private fun EditWorkoutScreenPreview() {
-    EditWorkoutScreenContent(PaddingValues(), viewModel())
+    /**
+     * Returns `null` when a new routine is created, `true` when a routine is edited and `false` when
+     * a past workout is edited
+     */
+    val typeOfEdit = false
+
+    LibreFitTheme(false, true) {
+        EditWorkoutScreenContent(
+            navController = rememberNavController(),
+            typeOfEdit = typeOfEdit,
+            exercisesWithSets = listOf(
+                ExerciseWithSets(
+                    exercise = Exercise(restTime = 90, setMode = SetMode.REPS),
+                    exerciseDC = ExerciseDC(name = "Name exercise"),
+                    sets = listOf(Set(), Set(completed = true))
+                )
+            ),
+            workout = Workout(title = "Title workout", notes = "This is a note"),
+            isTitleTooLong = false,
+            isTitleEmpty = false,
+            setPassedData = { _, _ -> },
+            updateTitle = { _ -> },
+            updateNotes = { _ -> },
+            addSetToExercise = { _ -> },
+            deleteExercise = { _ -> },
+            updateSet = { _, _, _, _ -> },
+            deleteSet = { _, _ -> },
+            updateExercise = { _, _, _ -> },
+            saveWorkoutWithExercisesInDB = { },
+        )
+    }
 }

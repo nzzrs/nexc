@@ -42,10 +42,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.librefit.R
+import org.librefit.data.ExerciseDC
+import org.librefit.db.entity.Set
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.enums.SetMode
+import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatDetails
 import org.librefit.util.Formatter.formatTime
 
@@ -182,5 +186,18 @@ fun ExerciseCardSmall(
                 }
             }
         }
+    }
+}
+
+@Preview
+@Composable
+private fun ExerciseCardSmallPreview() {
+    LibreFitTheme(false, true) {
+        ExerciseCardSmall(
+            exerciseWithSets = ExerciseWithSets(
+                exerciseDC = ExerciseDC(name = "Name exercise"),
+                sets = listOf(Set(completed = true), Set(), Set())
+            ),
+        ) { }
     }
 }

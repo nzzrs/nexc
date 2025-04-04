@@ -54,11 +54,14 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
+import org.librefit.data.ChartData
 import org.librefit.data.ExerciseDC
+import org.librefit.db.entity.Set
+import org.librefit.db.entity.Workout
+import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.enums.ChartMode
 import org.librefit.nav.Route
 import org.librefit.ui.components.ConfirmDialog
@@ -69,8 +72,13 @@ import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.charts.CustomCartesianChart
 import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
 import org.librefit.ui.screens.shared.SharedViewModel
+import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatDetails
+import org.librefit.util.Formatter.formatTime
 import java.text.DecimalFormat
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+import java.util.Locale
 
 @Composable
 fun InfoWorkoutScreen(
@@ -87,6 +95,35 @@ fun InfoWorkoutScreen(
         )
     }
 
+    InfoWorkoutScreenContent(
+        navController = navController,
+        workout = viewModel.workout.value,
+        routine = viewModel.routine.value,
+        workoutDate = viewModel.getDate(),
+        volumeExercises = viewModel.getVolumeExercises(),
+        chartMode = viewModel.getChartMode(),
+        exercises = viewModel.exercises,
+        listChartData = viewModel.getListChartData(),
+        deleteWorkout = viewModel::deleteWorkout,
+        updateChartMode = viewModel::updateChartMode,
+        detachWorkoutFromRoutine = viewModel::detachWorkoutFromRoutine,
+    )
+}
+
+@Composable
+private fun InfoWorkoutScreenContent(
+    navController: NavHostController,
+    workout: Workout,
+    routine: Workout,
+    workoutDate: String,
+    volumeExercises: String,
+    chartMode: ChartMode,
+    exercises: List<ExerciseWithSets>,
+    listChartData: List<ChartData>,
+    deleteWorkout: () -> Unit,
+    detachWorkoutFromRoutine: () -> Unit,
+    updateChartMode: (ChartMode) -> Unit
+) {
     var showConfirmDialog by remember { mutableStateOf(false) }
 
     if (showConfirmDialog) {
@@ -94,7 +131,7 @@ fun InfoWorkoutScreen(
             title = stringResource(R.string.delete),
             text = stringResource(id = R.string.confirm_delete),
             onConfirm = {
-                viewModel.deleteWorkout()
+                deleteWorkout()
                 showConfirmDialog = false
                 navController.popBackStack()
             },
@@ -110,7 +147,7 @@ fun InfoWorkoutScreen(
             title = stringResource(R.string.unlink_routine),
             text = stringResource(R.string.unlink_routine_desc),
             onConfirm = {
-                viewModel.detachWorkoutFromRoutine()
+                detachWorkoutFromRoutine()
                 showUnlikeRoutineDialog = false
             },
             onDismiss = { showUnlikeRoutineDialog = false }
@@ -126,7 +163,7 @@ fun InfoWorkoutScreen(
     var isModalSheetOpen by remember { mutableStateOf(false) }
 
     CustomScaffold(
-        title = AnnotatedString(viewModel.getWorkoutTitle()),
+        title = AnnotatedString(workout.title),
         navigateBack = { navController.popBackStack() },
         actions = listOf(
             {
@@ -160,74 +197,76 @@ fun InfoWorkoutScreen(
                                 .padding(20.dp),
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
-                            if (viewModel.getNotes().isNotBlank()) {
+                            if (workout.notes.isNotBlank()) {
                                 Text(
                                     formatDetails(
                                         stringResource(R.string.notes),
-                                        viewModel.getNotes()
+                                        workout.notes
                                     )
                                 )
                             }
 
-                            if (!viewModel.isRoutine()) {
+                            if (!workout.routine) {
                                 Text(
                                     formatDetails(
                                         stringResource(R.string.duration),
-                                        viewModel.getElapsedTime()
+                                        formatTime(workout.timeElapsed)
                                     )
                                 )
                             }
 
                             Text(
                                 formatDetails(
-                                    if (viewModel.isRoutine()) stringResource(R.string.creation_date)
+                                    if (workout.routine) stringResource(R.string.creation_date)
                                     else stringResource(R.string.label_when),
-                                    viewModel.getDate()
+                                    workoutDate
                                 )
                             )
                             Text(
                                 formatDetails(
                                     stringResource(R.string.exercises),
-                                    viewModel.getTotalExercises()
+                                    exercises.size.toString()
                                 )
                             )
                             Text(
                                 formatDetails(
                                     stringResource(R.string.total_sets),
-                                    viewModel.getTotalSets()
+                                    exercises.sumOf { it.sets.size }.toString()
                                 )
                             )
-                            if (!viewModel.isRoutine()) {
+                            if (!workout.routine) {
                                 Text(
                                     formatDetails(
                                         stringResource(R.string.completed_sets),
-                                        viewModel.getCompletedSets()
+                                        exercises.sumOf {
+                                            it.sets.filter { it.completed == true }.size
+                                        }.toString()
                                     )
                                 )
                             }
                             Text(
                                 formatDetails(
                                     stringResource(R.string.volume),
-                                    viewModel.getVolumeExercises() + " " + stringResource(R.string.kg)
+                                    volumeExercises + " " + stringResource(R.string.kg)
                                 )
                             )
                         }
                     }
                 }
 
-                if (viewModel.getListChartData().size > 1) {
+                if (listChartData.size > 1) {
                     item { HeadlineText(stringResource(R.string.past_workouts)) }
 
                     item {
                         LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                            items(ChartMode.entries) { chartMode ->
+                            items(ChartMode.entries) {
                                 FilterChip(
-                                    selected = viewModel.getChartMode() == chartMode,
-                                    onClick = { viewModel.updateChartMode(chartMode) },
+                                    selected = chartMode == it,
+                                    onClick = { updateChartMode(it) },
                                     label = {
                                         Text(
                                             stringResource(
-                                                id = when (chartMode) {
+                                                id = when (it) {
                                                     ChartMode.DURATION -> R.string.duration
                                                     ChartMode.VOLUME -> R.string.volume
                                                     ChartMode.REPS -> R.string.reps
@@ -236,7 +275,7 @@ fun InfoWorkoutScreen(
                                         )
                                     },
                                     leadingIcon = {
-                                        if (viewModel.getChartMode() == chartMode) {
+                                        if (chartMode == it) {
                                             Icon(
                                                 imageVector = Icons.Default.Check,
                                                 contentDescription = null
@@ -250,18 +289,18 @@ fun InfoWorkoutScreen(
 
                     item {
                         CustomCartesianChart(
-                            format = when (viewModel.getChartMode()) {
+                            format = when (chartMode) {
                                 ChartMode.DURATION -> DecimalFormat("# " + stringResource(R.string.min))
                                 ChartMode.VOLUME -> DecimalFormat("#.## " + stringResource(R.string.kg))
                                 ChartMode.REPS -> DecimalFormat()
                             },
-                            listChartData = viewModel.getListChartData()
+                            listChartData = listChartData
                         )
                     }
                 }
 
 
-                if (viewModel.getRoutineTitle() != "" && !viewModel.isRoutine()) {
+                if (routine.title != "" && !workout.routine) {
                     item {
                         HeadlineText(stringResource(R.string.routine))
                     }
@@ -279,10 +318,18 @@ fun InfoWorkoutScreen(
                                     verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.title) + " : " + viewModel.getRoutineTitle(),
+                                        text = stringResource(R.string.title) + " : " + routine.title,
                                         style = MaterialTheme.typography.titleMedium
                                     )
-                                    Text(stringResource(R.string.creation_date) + " : " + viewModel.getRoutineDate())
+                                    Text(
+                                        stringResource(R.string.creation_date) + " : " +
+                                                routine.created.format(
+                                                    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
+                                                        .withLocale(
+                                                            Locale.getDefault()
+                                                        )
+                                                )
+                                    )
                                 }
                                 IconButton(
                                     onClick = { showUnlikeRoutineDialog = true }
@@ -299,8 +346,8 @@ fun InfoWorkoutScreen(
 
 
                 item { HeadlineText(stringResource(R.string.exercises)) }
-                items(viewModel.exercises) { exercise ->
-                    ExerciseCardSmall(exercise, viewModel.isRoutine()) {
+                items(exercises) { exercise ->
+                    ExerciseCardSmall(exercise, workout.routine) {
                         selectedExercise = exercise.exerciseDC
                         isModalSheetOpen = true
                     }
@@ -320,8 +367,24 @@ fun InfoWorkoutScreen(
 @Preview
 @Composable
 private fun InfoRoutineScreenPreview() {
-    InfoWorkoutScreen(
-        navController = rememberNavController(),
-        sharedViewModel = viewModel()
-    )
+    LibreFitTheme(false, true) {
+        InfoWorkoutScreenContent(
+            navController = rememberNavController(),
+            deleteWorkout = {},
+            workout = Workout(title = "Title workout"),
+            routine = Workout(title = "Title routine"),
+            workoutDate = "DD/MM/YY",
+            volumeExercises = "100",
+            chartMode = ChartMode.REPS,
+            exercises = listOf(
+                ExerciseWithSets(
+                    exerciseDC = ExerciseDC(name = "Name exercise"),
+                    sets = listOf(Set(), Set())
+                )
+            ),
+            listChartData = listOf<Float>(1f, 2f).map(::ChartData),
+            detachWorkoutFromRoutine = {},
+            updateChartMode = {},
+        )
+    }
 }

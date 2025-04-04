@@ -86,6 +86,7 @@ import org.librefit.ui.components.animations.StreakLottie
 import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.charts.CustomCartesianChart
 import org.librefit.ui.screens.shared.SharedViewModel
+import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatTime
 import java.text.DecimalFormat
 import java.time.format.DateTimeFormatter
@@ -344,47 +345,49 @@ private fun ProfileScreenContent(
 @Preview
 @Composable
 private fun ProfileScreenPreview() {
-    CustomScaffold(
-        title = buildAnnotatedString {
-            withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
-                append(stringResource(id = R.string.app_name).removeRange(5, 8))
-            }
-            append(stringResource(id = R.string.app_name).removeRange(0, 5))
-        },
-        actions = listOf {},
-        actionsIcons = listOf(Icons.Default.Settings),
-        actionsElevated = listOf(false),
-        fabIcon = Icons.Default.Add,
-        bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = false,
-                    onClick = { },
-                    icon = { Icon(Icons.Outlined.Home, stringResource(R.string.home)) },
-                    label = { Text(stringResource(R.string.home)) }
-                )
-                NavigationBarItem(
-                    selected = true,
-                    onClick = { },
-                    icon = { Icon(Icons.Default.Person, stringResource(R.string.profile)) },
-                    label = { Text(stringResource(R.string.profile)) }
-                )
-            }
-        }
-    ) {
-        ProfileScreenContent(
-            innerPadding = it,
-            navController = rememberNavController(),
-            weekStreak = 90,
-            listChartData = listOf<Float>().map(::ChartData),
-            chartMode = ChartMode.DURATION,
-            workoutsWithExercises = remember {
-                mutableStateListOf(
-                    WorkoutWithExercisesAndSets(Workout(title = "Workout 1"), listOf())
-                )
+    LibreFitTheme(false, true) {
+        CustomScaffold(
+            title = buildAnnotatedString {
+                withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
+                    append(stringResource(id = R.string.app_name).removeRange(5, 8))
+                }
+                append(stringResource(id = R.string.app_name).removeRange(0, 5))
             },
-            updateChartMode = {},
-            updateWorkoutId = {},
-        )
+            actions = listOf {},
+            actionsIcons = listOf(Icons.Default.Settings),
+            actionsElevated = listOf(false),
+            fabIcon = Icons.Default.Add,
+            bottomBar = {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = false,
+                        onClick = { },
+                        icon = { Icon(Icons.Outlined.Home, stringResource(R.string.home)) },
+                        label = { Text(stringResource(R.string.home)) }
+                    )
+                    NavigationBarItem(
+                        selected = true,
+                        onClick = { },
+                        icon = { Icon(Icons.Default.Person, stringResource(R.string.profile)) },
+                        label = { Text(stringResource(R.string.profile)) }
+                    )
+                }
+            }
+        ) {
+            ProfileScreenContent(
+                innerPadding = it,
+                navController = rememberNavController(),
+                weekStreak = 90,
+                listChartData = listOf<Float>().map(::ChartData),
+                chartMode = ChartMode.DURATION,
+                workoutsWithExercises = remember {
+                    mutableStateListOf(
+                        WorkoutWithExercisesAndSets(Workout(title = "Workout 1"), listOf())
+                    )
+                },
+                updateChartMode = {},
+                updateWorkoutId = {},
+            )
+        }
     }
 }

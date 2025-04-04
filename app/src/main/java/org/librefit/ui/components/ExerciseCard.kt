@@ -99,6 +99,7 @@ import org.librefit.db.entity.Set
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.enums.InfoMode
 import org.librefit.enums.SetMode
+import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatTime
 import kotlin.math.roundToInt
 
@@ -698,26 +699,29 @@ private fun setModeToStringId(setMode: SetMode): Int {
 private fun ExerciseCardPreview() {
     val timerRunning = remember { mutableStateOf(false) }
     val set = remember { mutableStateOf(Set()) }
-    ExerciseCard(
-        Modifier,
-        ExerciseWithSets(
-            exercise = Exercise(
-                notes = "This is a test note!",
-                restTime = 90,
-                setMode = SetMode.TIME
+
+    LibreFitTheme(false, true) {
+        ExerciseCard(
+            Modifier,
+            ExerciseWithSets(
+                exercise = Exercise(
+                    notes = "This is a note!",
+                    restTime = 90,
+                    setMode = SetMode.TIME
+                ),
+                sets = listOf(Set(completed = true), Set(elapsedTime = 100)),
+                exerciseDC = ExerciseDC(name = "Exercise name")
             ),
-            sets = listOf(Set(), Set()),
-            exerciseDC = ExerciseDC(name = "Test exercise")
-        ),
-        {},
-        {},
-        {},
-        { i, j, k -> },
-        {},
-        { i, j -> },
-        {},
-        timerRunning,
-        set,
-        workout = true
-    )
+            {},
+            {},
+            {},
+            { _, _, _ -> },
+            {},
+            { _, _ -> },
+            {},
+            timerRunning,
+            set,
+            workout = true
+        )
+    }
 }

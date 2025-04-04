@@ -32,6 +32,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -47,17 +48,22 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import org.librefit.R
+import org.librefit.db.entity.Workout
 import org.librefit.nav.Route
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.animations.EmptyLottie
 import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.screens.shared.SharedViewModel
+import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatTime
+import java.time.LocalDateTime
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,6 +78,24 @@ fun CalendarScreen(
         selectableDates = viewModel.getSelectableDatesFromWorkouts()
     )
 
+    CalendarScreenContent(
+        navController = navController,
+        datePickerState = datePickerState,
+        getWorkoutsFromDate = viewModel::getWorkoutsFromDate,
+        updateWorkoutId = sharedViewModel::updateWorkoutId,
+        getTimeFromLocalDateTime = viewModel::getTimeFromLocalDateTime
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CalendarScreenContent(
+    navController: NavHostController,
+    datePickerState: DatePickerState,
+    getWorkoutsFromDate: (Long?) -> List<Workout>,
+    updateWorkoutId: (Long) -> Unit,
+    getTimeFromLocalDateTime: (LocalDateTime) -> String
+) {
     CustomScaffold(
         title = AnnotatedString(stringResource(R.string.calendar)),
         navigateBack = { navController.popBackStack() }
@@ -99,7 +123,7 @@ fun CalendarScreen(
 
                 item { HeadlineText(stringResource(R.string.your_workouts)) }
 
-                if (viewModel.getWorkoutsFromDate(datePickerState.selectedDateMillis).isEmpty()) {
+                if (getWorkoutsFromDate(datePickerState.selectedDateMillis).isEmpty()) {
                     item {
                         Column(
                             modifier = Modifier
@@ -116,7 +140,7 @@ fun CalendarScreen(
                     }
                 }
 
-                items(viewModel.getWorkoutsFromDate(datePickerState.selectedDateMillis)) { workout ->
+                items(getWorkoutsFromDate(datePickerState.selectedDateMillis)) { workout ->
                     ElevatedCard {
                         Column(
                             modifier = Modifier
@@ -145,7 +169,7 @@ fun CalendarScreen(
 
                                     Text(
                                         text = stringResource(R.string.label_when) + ": "
-                                                + viewModel.getTimeFromLocalDateTime(workout.completed),
+                                                + getTimeFromLocalDateTime(workout.completed),
                                         style = MaterialTheme.typography.bodyMedium,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
@@ -153,7 +177,7 @@ fun CalendarScreen(
                                 }
                                 IconButton(
                                     onClick = {
-                                        sharedViewModel.updateWorkoutId(workout.id)
+                                        updateWorkoutId(workout.id)
                                         navController.navigate(Route.InfoWorkoutScreen)
                                     },
                                 ) {
@@ -167,5 +191,20 @@ fun CalendarScreen(
                 bottomMargin()
             }
         }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Preview
+@Composable
+private fun CalendarScreenPreview() {
+    LibreFitTheme(false, true) {
+        CalendarScreenContent(
+            navController = rememberNavController(),
+            datePickerState = rememberDatePickerState(),
+            getWorkoutsFromDate = { listOf(Workout(title = "Name workout")) },
+            updateWorkoutId = {},
+            getTimeFromLocalDateTime = { "10:10" }
+        )
     }
 }

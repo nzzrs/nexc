@@ -72,6 +72,7 @@ import org.librefit.nav.Route
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.bottomMargin
+import org.librefit.ui.theme.LibreFitTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -337,8 +338,10 @@ private fun AboutItem(
 }
 
 
-@Preview(device = "spec:width=673dp,height=841dp,orientation=landscape")
+@Preview
 @Composable
 private fun AboutScreenPreview() {
-    AboutScreen(rememberNavController())
+    LibreFitTheme(false, true) {
+        AboutScreen(rememberNavController())
+    }
 }

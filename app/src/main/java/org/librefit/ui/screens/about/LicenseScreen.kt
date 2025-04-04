@@ -49,11 +49,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import org.librefit.R
 import org.librefit.ui.components.CustomButton
 import org.librefit.ui.components.CustomScaffold
+import org.librefit.ui.theme.LibreFitTheme
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +65,9 @@ fun LicenseScreen(navigateBack: () -> Unit) {
     val context = LocalContext.current
 
     LaunchedEffect(Unit) {
-        licenseText.value = loadLicenseText(context)
+        licenseText.value = context.resources.openRawResource(R.raw.license)
+            .bufferedReader()
+            .use { it.readText() }
     }
 
 
@@ -132,7 +136,10 @@ fun LicenseScreen(navigateBack: () -> Unit) {
     }
 }
 
-private fun loadLicenseText(context: Context): String {
-    val inputStream = context.resources.openRawResource(R.raw.license)
-    return inputStream.bufferedReader().use { it.readText() }
+@Preview
+@Composable
+private fun LicenseScreenPreview() {
+    LibreFitTheme(false, true) {
+        LicenseScreen { }
+    }
 }

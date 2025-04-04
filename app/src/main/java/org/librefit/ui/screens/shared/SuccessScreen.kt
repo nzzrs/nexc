@@ -45,6 +45,7 @@ import org.librefit.R
 import org.librefit.enums.SuccessMessage
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.animations.SuccessLottie
+import org.librefit.ui.theme.LibreFitTheme
 
 @OptIn(ExperimentalLayoutApi::class)
 @SuppressLint("UnusedBoxWithConstraintsScope")
@@ -117,5 +118,7 @@ private fun LazyListScope.successScreenContent(
 @Preview
 @Composable
 private fun SuccessScreenPreview() {
-    SuccessScreen(SuccessMessage.WORKOUT_SAVED) { }
+    LibreFitTheme(false, true) {
+        SuccessScreen(SuccessMessage.WORKOUT_SAVED) { }
+    }
 }

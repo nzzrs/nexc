@@ -224,7 +224,7 @@ private fun ProfileScreenContent(
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(ChartMode.entries) { mode ->
                         FilterChip(
-                            selected = chartMode == mode,
+                            selected = chartMode == mode && listChartData.isNotEmpty(),
                             onClick = { updateChartMode(mode) },
                             label = {
                                 Text(
@@ -238,7 +238,7 @@ private fun ProfileScreenContent(
                                 )
                             },
                             leadingIcon = {
-                                if (chartMode == mode) {
+                                if (chartMode == mode && listChartData.isNotEmpty()) {
                                     Icon(
                                         modifier = Modifier.size(FilterChipDefaults.IconSize),
                                         imageVector = ImageVector.vectorResource(R.drawable.ic_check),

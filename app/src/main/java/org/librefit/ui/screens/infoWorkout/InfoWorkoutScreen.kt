@@ -264,7 +264,7 @@ private fun InfoWorkoutScreenContent(
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         items(ChartMode.entries) {
                             FilterChip(
-                                selected = chartMode == it,
+                                selected = chartMode == it && listChartData.isNotEmpty(),
                                 onClick = { updateChartMode(it) },
                                 label = {
                                     Text(
@@ -278,7 +278,7 @@ private fun InfoWorkoutScreenContent(
                                     )
                                 },
                                 leadingIcon = {
-                                    if (chartMode == it) {
+                                    if (chartMode == it && listChartData.isNotEmpty()) {
                                         Icon(
                                             modifier = Modifier.size(FilterChipDefaults.IconSize),
                                             imageVector = ImageVector.vectorResource(R.drawable.ic_check),

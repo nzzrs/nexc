@@ -41,6 +41,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.librefit.R
+import org.librefit.ui.theme.LibreFitTheme
 
 @Composable
 fun CustomButton(
@@ -49,6 +50,7 @@ fun CustomButton(
     icon: ImageVector,
     iconDescription: String? = null,
     elevated: Boolean = true,
+    enabled: Boolean = true,
     onClick: () -> Unit
 ) {
     Button(
@@ -58,6 +60,7 @@ fun CustomButton(
             containerColor = MaterialTheme.colorScheme.secondaryContainer,
             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
         ),
+        enabled = enabled
     ) {
         Row(
             horizontalArrangement = Arrangement.Center,
@@ -84,8 +87,10 @@ fun CustomButton(
 @Preview
 @Composable
 fun CustomTextButtonPreview() {
-    CustomButton(
-        text = stringResource(R.string.start_routine),
-        icon = Icons.Default.PlayArrow
-    ) { }
+    LibreFitTheme(false, true) {
+        CustomButton(
+            text = stringResource(R.string.start_routine),
+            icon = Icons.Default.PlayArrow
+        ) { }
+    }
 }

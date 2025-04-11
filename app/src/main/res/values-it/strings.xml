@@ -210,4 +210,13 @@
     <string name="save">Salva</string>
     <string name="workout_saved">Allenamento salvato</string>
     <string name="start_creating_routine">Inizia creando una nuova routine</string>
+    <string name="privacy">Privacy</string>
+    <string name="privacy_notice">Nota sulla privacy</string>
+    <string name="privacy_notice_summary">LibreFit è stato progettato tenendo conto della privacy come priorità assoluta. **Non è richiesta alcuna connessione a internet**. Le autorizzazioni sono facoltative e nessuna è in grado di raccogliere dati.</string>
+    <string name="privacy_notice_optional_perm">Autorizzazioni opzionali</string>
+    <string name="privacy_notice_notification_perm">**Notifiche**: Questa autorizzazione consente all\'app di inviare notifiche sulle le sessioni di allenamento in corso e avvisi al termine dei periodi di riposo.</string>
+    <string name="privacy_notice_battery_perm">**Ignora l\'ottimizzazione della batteria**: Questa autorizzazione permette all\'app di essere più resiliente a politiche di risparmio energetico aggressive, che potrebbero causare la chiusura forzata della stessa durante un allenamento.</string>
+    <string name="privacy_notice_default_perm">Autorizzazione concessa di default</string>
+    <string name="privacy_notice_foreground_perm">**Servizio in primo piano**: Questa autorizzazione viene concessa automaticamente quando si installa LibreFit e gli consente di funzionare in primo piano durante un allenamento.</string>
+
 </resources>

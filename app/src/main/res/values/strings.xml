@@ -114,18 +114,6 @@
     <string name="past_workouts">Past workouts</string>
 
 
-    <!--Profile screen-->
-    <string name="coming_soon">Coming soon</string>
-    <string name="your_workouts">Your workouts</string>
-    <string name="finished_on">Finished on</string>
-    <string name="duration">Duration</string>
-    <string name="nothing_to_show">Nothing to show yet</string>
-    <string name="measurements">Measurements</string>
-    <string name="calendar">Calendar</string>
-    <string name="min">min</string>
-    <string name="week_streak">Week streak:</string>
-
-
     <!--Permission request screen-->
     <string name="before_starting_the_workout">Before starting the workout</string>
     <string name="best_experience_permissions">For the best experience in LibreFit, the following permission has to be granted:</string>
@@ -138,6 +126,28 @@
     <string name="skip_for_now">Skip for now</string>
     <string name="label_continue">Continue</string>
 
+
+    <!--Profile screen-->
+    <string name="coming_soon">Coming soon</string>
+    <string name="your_workouts">Your workouts</string>
+    <string name="finished_on">Finished on</string>
+    <string name="duration">Duration</string>
+    <string name="nothing_to_show">Nothing to show yet</string>
+    <string name="measurements">Measurements</string>
+    <string name="calendar">Calendar</string>
+    <string name="min">min</string>
+    <string name="week_streak">Week streak:</string>
+
+
+    <!-- Privacy screen-->
+    <string name="privacy">Privacy</string>
+    <string name="privacy_notice">Privacy notice</string>
+    <string name="privacy_notice_summary">LibreFit is designed with privacy as a top priority. **No internet connection is required**. Permissions are optional and none are able to collect data.</string>
+    <string name="privacy_notice_optional_perm">Optional permissions</string>
+    <string name="privacy_notice_notification_perm">**Notifications**: This permission allows the app to send notifications about your ongoing workout sessions and alerts when rest periods are over.</string>
+    <string name="privacy_notice_battery_perm">**Ignore Battery Optimization**: This permission allows the app to be more resilient to aggressive power-saving policies, which could cause the app to be forcibly shut down during a workout.</string>
+    <string name="privacy_notice_default_perm">Permission granted by default</string>
+    <string name="privacy_notice_foreground_perm">**Foreground Service**: This permission is automatically granted when LibreFit is installed and this allows it to run in the foreground during a workout.</string>
 
     <!-- Workout screen -->
     <string name="workout">Workout</string>

@@ -246,5 +246,14 @@
     <string name="edit_routine">Edit routine</string>
     <string name="start_creating_routine">Start by creating a new routine</string>
 
+    <string name="privacy">Privacy</string>
+    <string name="privacy_notice">Privacy notice</string>
+    <string name="privacy_notice_summary">LibreFit is designed with privacy as a top priority. **No internet connection is required**. Permissions are optional and none are able to collect data.</string>
+    <string name="privacy_notice_optional_perm">Optional permissions</string>
+    <string name="privacy_notice_notification_perm">**Notifications**: This permission allows the app to send notifications about your ongoing workout sessions and alerts when rest periods are over.</string>
+    <string name="privacy_notice_battery_perm">**Ignore Battery Optimization**: This permission allows the app to be more resilient to aggressive power-saving policies, which could cause the app to be forcibly shut down during a workout.</string>
+    <string name="privacy_notice_default_perm">Permission granted by default</string>
+    <string name="privacy_notice_foreground_perm">**Foreground Service**: This permission is automatically granted when LibreFit is installed and this allows it to run in the foreground during a workout.</string>
+
 
 </resources>

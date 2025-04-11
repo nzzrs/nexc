@@ -34,6 +34,7 @@ import org.librefit.ui.screens.MainScreen
 import org.librefit.ui.screens.about.AboutScreen
 import org.librefit.ui.screens.about.LibrariesScreen
 import org.librefit.ui.screens.about.LicenseScreen
+import org.librefit.ui.screens.about.PrivacyScreen
 import org.librefit.ui.screens.beforeSaving.BeforeSavingScreen
 import org.librefit.ui.screens.calendar.CalendarScreen
 import org.librefit.ui.screens.editWorkout.EditWorkoutScreen
@@ -105,6 +106,9 @@ fun NavigationHost() {
         }
         composable<Route.MeasurementScreen> {
             MeasurementScreen(navigateBack = navController::popBackStack)
+        }
+        composable<Route.PrivacyScreen> {
+            PrivacyScreen { navController.popBackStack() }
         }
         composable<Route.LibrariesScreen> {
             LibrariesScreen(navigateBack = navController::popBackStack)

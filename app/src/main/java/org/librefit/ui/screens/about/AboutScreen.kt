@@ -165,10 +165,10 @@ fun AboutScreen(navController: NavHostController) {
                 item {
                     AboutItem(
                         ImageVector.vectorResource(R.drawable.ic_policy),
-                        stringResource(R.string.privacy_policy),
+                        stringResource(R.string.privacy),
                         description = stringResource(R.string.privacy_policy_desc),
                         onClick = {
-                            url.value = context.getString(R.string.url_privacy)
+                            navController.navigate(Route.PrivacyScreen)
                         }
 
                     )

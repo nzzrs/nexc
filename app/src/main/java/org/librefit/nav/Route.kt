@@ -51,6 +51,9 @@ sealed class Route {
     object MeasurementScreen
 
     @Serializable
+    object PrivacyScreen
+
+    @Serializable
     object RequestPermissionScreen
 
     @Serializable

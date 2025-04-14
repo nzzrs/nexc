@@ -68,7 +68,6 @@ import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.dialogs.ConfirmDialog
-import org.librefit.ui.components.modalBottomSheets.InfoModalBottomSheet
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatTime
@@ -103,13 +102,6 @@ fun BeforeSavingScreen(
     }
 
 
-    val infoMode = remember { mutableStateOf(InfoMode.DISMISS) }
-
-    if (infoMode.value != InfoMode.DISMISS) {
-        InfoModalBottomSheet(infoMode.value) { infoMode.value = InfoMode.DISMISS }
-    }
-
-
     val datePickerState = rememberDatePickerState()
     val showDatePickerDialog = remember { mutableStateOf(false) }
 
@@ -139,7 +131,6 @@ fun BeforeSavingScreen(
 
     BeforeSavingScreenContent(
         navController = navController,
-        infoMode = infoMode,
         showUnlikeRoutineDialog = showUnlikeRoutineDialog,
         showDatePickerDialog = showDatePickerDialog,
         exercises = viewModel.getExercises(),
@@ -164,7 +155,6 @@ fun BeforeSavingScreen(
 @Composable
 fun BeforeSavingScreenContent(
     navController: NavHostController,
-    infoMode: MutableState<InfoMode>,
     showUnlikeRoutineDialog: MutableState<Boolean>,
     showDatePickerDialog: MutableState<Boolean>,
     exercises: List<ExerciseWithSets>,
@@ -247,29 +237,7 @@ fun BeforeSavingScreenContent(
                     )
                 }
                 item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 20.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        Text(
-                            text = stringResource(R.string.statistics),
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                        IconButton(
-                            onClick = {
-                                infoMode.value = InfoMode.BEFORE_SAVING_STATS
-                            }
-                        ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.ic_info),
-                                contentDescription = stringResource(R.string.info)
-                            )
-                        }
-                    }
+                    HeadlineText(stringResource(R.string.statistics), InfoMode.BEFORE_SAVING_STATS)
                 }
 
                 item {
@@ -453,7 +421,6 @@ private fun BeforeSavingScreenPreview() {
     LibreFitTheme(false, true) {
         BeforeSavingScreenContent(
             navController = rememberNavController(),
-            infoMode = remember { mutableStateOf(InfoMode.DISMISS) },
             showUnlikeRoutineDialog = remember { mutableStateOf(false) },
             showDatePickerDialog = remember { mutableStateOf(false) },
             exercises = listOf(

@@ -29,7 +29,7 @@ import kotlinx.coroutines.launch
 import org.librefit.data.ChartData
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.db.repository.WorkoutRepository
-import org.librefit.enums.ChartMode
+import org.librefit.enums.WorkoutChart
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -49,18 +49,18 @@ class ProfileScreenViewModel @Inject constructor(
         Locale.getDefault()
     )
 
-    private var chartMode = mutableStateOf(ChartMode.DURATION)
+    private var workoutChart = mutableStateOf(WorkoutChart.DURATION)
 
     fun getListChartData(): List<ChartData> {
         return workoutsWithExercises.mapIndexed { index, it ->
             ChartData(
-                yValue = when (chartMode.value) {
-                    ChartMode.DURATION -> it.workout.timeElapsed / 60f
-                    ChartMode.VOLUME -> it.exercisesWithSets.sumOf {
+                yValue = when (workoutChart.value) {
+                    WorkoutChart.DURATION -> it.workout.timeElapsed / 60f
+                    WorkoutChart.VOLUME -> it.exercisesWithSets.sumOf {
                         it.sets.filter { it.completed }.sumOf { it.weight.toDouble() * it.reps }
                     }
 
-                    ChartMode.REPS -> it.exercisesWithSets.sumOf {
+                    WorkoutChart.REPS -> it.exercisesWithSets.sumOf {
                         it.sets.filter { it.completed }.sumOf { it.reps }
                     }
                 }.toFloat(),
@@ -69,12 +69,12 @@ class ProfileScreenViewModel @Inject constructor(
         }
     }
 
-    fun updateChartMode(value: ChartMode) {
-        chartMode.value = value
+    fun updateChartMode(value: WorkoutChart) {
+        workoutChart.value = value
     }
 
-    fun getChartMode(): ChartMode {
-        return chartMode.value
+    fun getChartMode(): WorkoutChart {
+        return workoutChart.value
     }
 
 

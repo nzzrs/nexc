@@ -62,7 +62,7 @@ import org.librefit.data.ExerciseDC
 import org.librefit.db.entity.Set
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.ExerciseWithSets
-import org.librefit.enums.ChartMode
+import org.librefit.enums.WorkoutChart
 import org.librefit.nav.Route
 import org.librefit.ui.components.CustomScaffold
 import org.librefit.ui.components.ExerciseCardSmall
@@ -102,7 +102,7 @@ fun InfoWorkoutScreen(
         routine = viewModel.routine.value,
         workoutDate = viewModel.getDate(),
         volumeExercises = viewModel.getVolumeExercises(),
-        chartMode = viewModel.getChartMode(),
+        workoutChart = viewModel.getChartMode(),
         exercises = viewModel.exercises,
         listChartData = viewModel.getListChartData(),
         deleteWorkout = viewModel::deleteWorkout,
@@ -118,12 +118,12 @@ private fun InfoWorkoutScreenContent(
     routine: Workout,
     workoutDate: String,
     volumeExercises: String,
-    chartMode: ChartMode,
+    workoutChart: WorkoutChart,
     exercises: List<ExerciseWithSets>,
     listChartData: List<ChartData>,
     deleteWorkout: () -> Unit,
     detachWorkoutFromRoutine: () -> Unit,
-    updateChartMode: (ChartMode) -> Unit
+    updateChartMode: (WorkoutChart) -> Unit
 ) {
     var showConfirmDialog by remember { mutableStateOf(false) }
 
@@ -262,23 +262,23 @@ private fun InfoWorkoutScreenContent(
 
                 item {
                     LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        items(ChartMode.entries) {
+                        items(WorkoutChart.entries) {
                             FilterChip(
-                                selected = chartMode == it && listChartData.isNotEmpty(),
+                                selected = workoutChart == it && listChartData.isNotEmpty(),
                                 onClick = { updateChartMode(it) },
                                 label = {
                                     Text(
                                         stringResource(
                                             id = when (it) {
-                                                ChartMode.DURATION -> R.string.duration
-                                                ChartMode.VOLUME -> R.string.volume
-                                                ChartMode.REPS -> R.string.reps
+                                                WorkoutChart.DURATION -> R.string.duration
+                                                WorkoutChart.VOLUME -> R.string.volume
+                                                WorkoutChart.REPS -> R.string.reps
                                             }
                                         )
                                     )
                                 },
                                 leadingIcon = {
-                                    if (chartMode == it && listChartData.isNotEmpty()) {
+                                    if (workoutChart == it && listChartData.isNotEmpty()) {
                                         Icon(
                                             modifier = Modifier.size(FilterChipDefaults.IconSize),
                                             imageVector = ImageVector.vectorResource(R.drawable.ic_check),
@@ -294,10 +294,10 @@ private fun InfoWorkoutScreenContent(
 
                 item {
                     CustomCartesianChart(
-                        format = when (chartMode) {
-                            ChartMode.DURATION -> DecimalFormat("# " + stringResource(R.string.min))
-                            ChartMode.VOLUME -> DecimalFormat("#.## " + stringResource(R.string.kg))
-                            ChartMode.REPS -> DecimalFormat()
+                        format = when (workoutChart) {
+                            WorkoutChart.DURATION -> DecimalFormat("# " + stringResource(R.string.min))
+                            WorkoutChart.VOLUME -> DecimalFormat("#.## " + stringResource(R.string.kg))
+                            WorkoutChart.REPS -> DecimalFormat()
                         },
                         listChartData = listChartData
                     )
@@ -379,7 +379,7 @@ private fun InfoRoutineScreenPreview() {
             routine = Workout(title = "Title routine"),
             workoutDate = "DD/MM/YY",
             volumeExercises = "100",
-            chartMode = ChartMode.REPS,
+            workoutChart = WorkoutChart.REPS,
             exercises = listOf(
                 ExerciseWithSets(
                     exerciseDC = ExerciseDC(name = "Name exercise"),

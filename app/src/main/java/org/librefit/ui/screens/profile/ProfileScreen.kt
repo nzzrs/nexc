@@ -69,7 +69,7 @@ import org.librefit.R
 import org.librefit.data.ChartData
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
-import org.librefit.enums.ChartMode
+import org.librefit.enums.WorkoutChart
 import org.librefit.nav.Route
 import org.librefit.ui.components.CustomButton
 import org.librefit.ui.components.CustomScaffold
@@ -105,7 +105,7 @@ fun ProfileScreen(
         weekStreak = viewModel.getWeekStreak(),
         listChartData = viewModel.getListChartData(),
         workoutsWithExercises = viewModel.workoutsWithExercises,
-        chartMode = viewModel.getChartMode(),
+        workoutChart = viewModel.getChartMode(),
         updateChartMode = viewModel::updateChartMode,
         updateWorkoutId = sharedViewModel::updateWorkoutId,
     )
@@ -117,9 +117,9 @@ private fun ProfileScreenContent(
     navController: NavHostController,
     weekStreak: Int,
     listChartData: List<ChartData>,
-    chartMode: ChartMode,
+    workoutChart: WorkoutChart,
     workoutsWithExercises: SnapshotStateList<WorkoutWithExercisesAndSets>,
-    updateChartMode: (ChartMode) -> Unit,
+    updateChartMode: (WorkoutChart) -> Unit,
     updateWorkoutId: (Long) -> Unit
 ) {
 
@@ -222,23 +222,23 @@ private fun ProfileScreenContent(
             item { HeadlineText(stringResource(R.string.overview)) }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    items(ChartMode.entries) { mode ->
+                    items(WorkoutChart.entries) { mode ->
                         FilterChip(
-                            selected = chartMode == mode && listChartData.isNotEmpty(),
+                            selected = workoutChart == mode && listChartData.isNotEmpty(),
                             onClick = { updateChartMode(mode) },
                             label = {
                                 Text(
                                     stringResource(
                                         when (mode) {
-                                            ChartMode.DURATION -> R.string.duration
-                                            ChartMode.VOLUME -> R.string.volume
-                                            ChartMode.REPS -> R.string.reps
+                                            WorkoutChart.DURATION -> R.string.duration
+                                            WorkoutChart.VOLUME -> R.string.volume
+                                            WorkoutChart.REPS -> R.string.reps
                                         }
                                     )
                                 )
                             },
                             leadingIcon = {
-                                if (chartMode == mode && listChartData.isNotEmpty()) {
+                                if (workoutChart == mode && listChartData.isNotEmpty()) {
                                     Icon(
                                         modifier = Modifier.size(FilterChipDefaults.IconSize),
                                         imageVector = ImageVector.vectorResource(R.drawable.ic_check),
@@ -254,10 +254,10 @@ private fun ProfileScreenContent(
 
             item {
                 CustomCartesianChart(
-                    format = when (chartMode) {
-                        ChartMode.DURATION -> DecimalFormat("# " + stringResource(R.string.min))
-                        ChartMode.VOLUME -> DecimalFormat("#.## " + stringResource(R.string.kg))
-                        ChartMode.REPS -> DecimalFormat()
+                    format = when (workoutChart) {
+                        WorkoutChart.DURATION -> DecimalFormat("# " + stringResource(R.string.min))
+                        WorkoutChart.VOLUME -> DecimalFormat("#.## " + stringResource(R.string.kg))
+                        WorkoutChart.REPS -> DecimalFormat()
                     },
                     listChartData = listChartData,
                     columns = true
@@ -388,7 +388,7 @@ private fun ProfileScreenPreview() {
                 navController = rememberNavController(),
                 weekStreak = 90,
                 listChartData = (0..10).map { ChartData(Random.nextFloat()) },
-                chartMode = ChartMode.DURATION,
+                workoutChart = WorkoutChart.DURATION,
                 workoutsWithExercises = remember {
                     mutableStateListOf(
                         WorkoutWithExercisesAndSets(Workout(title = "Workout 1"), listOf())

@@ -164,6 +164,9 @@
     <string name="calendar">Calendario</string>
     <string name="min">min</string>
     <string name="week_streak">Serie di settimane:</string>
+    <string name="lean_mass">Massa magra</string>
+    <string name="past_measurement">Misurazioni passate</string>
+    <string name="new_measurement">Nuova misurazione</string>
     <string name="before_starting_the_workout">Prima di iniziare l\'allenamento</string>
     <string name="best_experience_permissions">Per la migliore esperienza in LibreFit, deve essere concesso il seguente permesso:</string>
     <string name="notifications_permission_desc">Consente di inviare notifiche sugli allenamenti in corso e sugli intervalli di riposo.</string>
@@ -218,5 +221,7 @@
     <string name="privacy_notice_battery_perm">**Ignora l\'ottimizzazione della batteria**: Questa autorizzazione permette all\'app di essere più resiliente a politiche di risparmio energetico aggressive, che potrebbero causare la chiusura forzata della stessa durante un allenamento.</string>
     <string name="privacy_notice_default_perm">Autorizzazione concessa di default</string>
     <string name="privacy_notice_foreground_perm">**Servizio in primo piano**: Questa autorizzazione viene concessa automaticamente quando si installa LibreFit e gli consente di funzionare in primo piano durante un allenamento.</string>
+    <string name="body_weight">Peso corporeo</string>
+    <string name="fat_mass">Massa grassa</string>
 
 </resources>

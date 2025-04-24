@@ -122,6 +122,9 @@
     <string name="calendar">Calendar</string>
     <string name="min">min</string>
     <string name="week_streak">Week streak:</string>
+    <string name="lean_mass">Lean mass</string>
+    <string name="past_measurement">Past measurement</string>
+    <string name="new_measurement">New measurement</string>
     <string name="before_starting_the_workout">Before starting the workout</string>
     <string name="best_experience_permissions">For the best experience in LibreFit, the following permission has to be granted:</string>
     <string name="notifications_permission_desc">It allows to send notifications about the ongoing workouts and rest intervals.</string>
@@ -254,6 +257,8 @@
     <string name="privacy_notice_battery_perm">**Ignore Battery Optimization**: This permission allows the app to be more resilient to aggressive power-saving policies, which could cause the app to be forcibly shut down during a workout.</string>
     <string name="privacy_notice_default_perm">Permission granted by default</string>
     <string name="privacy_notice_foreground_perm">**Foreground Service**: This permission is automatically granted when LibreFit is installed and this allows it to run in the foreground during a workout.</string>
+    <string name="body_weight">Body weight</string>
+    <string name="fat_mass">Fat mass</string>
 
 
 </resources>

@@ -114,6 +114,14 @@
     <string name="past_workouts">Past workouts</string>
 
 
+    <!--Measurement screen-->
+    <string name="body_weight">Body weight</string>
+    <string name="fat_mass">Fat mass</string>
+    <string name="lean_mass">Lean mass</string>
+    <string name="past_measurement">Past measurement</string>
+    <string name="new_measurement">New measurement</string>
+
+
     <!--Permission request screen-->
     <string name="before_starting_the_workout">Before starting the workout</string>
     <string name="best_experience_permissions">For the best experience in LibreFit, the following permission has to be granted:</string>

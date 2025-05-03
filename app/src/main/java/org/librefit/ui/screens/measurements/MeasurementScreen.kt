@@ -512,8 +512,10 @@ private fun MeasurementScreenContent(
                                                 onClick = {
                                                     idMeasurement.longValue = it.id
                                                     bodyWeight = it.bodyWeight.toString()
-                                                    leanMass = it.muscleMassPercentage.toString()
-                                                    fatMass = it.bodyFatPercentage.toString()
+                                                    leanMass = it.muscleMassPercentage
+                                                        .toString().takeIf { it != "0.0" } ?: ""
+                                                    fatMass = it.bodyFatPercentage
+                                                        .toString().takeIf { it != "0.0" } ?: ""
                                                     notes = it.notes
                                                     date.value = it.date
                                                 }

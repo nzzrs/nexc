@@ -163,7 +163,7 @@ private fun ExercisesScreenContent(
         },
         fabIcon = ImageVector.vectorResource(R.drawable.ic_keyboard_double_arrow_up),
     ) { innerPadding ->
-        CustomLazyColumn(innerPadding) {
+        CustomLazyColumn(innerPadding, 0.dp, 0.dp) {
             // Search bar
             item {
                 Row(
@@ -174,7 +174,7 @@ private fun ExercisesScreenContent(
                         value = query,
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(start = 10.dp, end = 10.dp),
+                            .padding(start = 15.dp, end = 15.dp),
                         onValueChange = viewModel::updateQuery,
                         shape = RoundedCornerShape(40.dp),
                         leadingIcon = {

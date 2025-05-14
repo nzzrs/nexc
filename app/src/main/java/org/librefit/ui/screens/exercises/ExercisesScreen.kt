@@ -41,6 +41,7 @@ import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
@@ -132,6 +133,18 @@ private fun ExercisesScreenContent(
 
     val lazyListState = rememberLazyListState()
 
+    val isAtTop by remember {
+        derivedStateOf {
+            lazyListState.firstVisibleItemIndex == 0 && lazyListState.firstVisibleItemScrollOffset == 0
+        }
+    }
+
+    val scrollToTop: () -> Unit = {
+        coroutineScope.launch {
+            lazyListState.animateScrollToItem(0)
+        }
+    }
+
 
     var isFilterExpanded = rememberSaveable { mutableStateOf(false) }
 
@@ -153,11 +166,7 @@ private fun ExercisesScreenContent(
         actions = actions,
         actionsDescription = listOf(stringResource(R.string.add)),
         actionsEnabled = listOf(selectedExercisesList.isNotEmpty()),
-        fabAction = {
-            coroutineScope.launch {
-                lazyListState.animateScrollToItem(0)
-            }
-        },
+        fabAction = if (isAtTop) null else scrollToTop,
         fabIcon = ImageVector.vectorResource(R.drawable.ic_keyboard_double_arrow_up),
     ) { innerPadding ->
         CustomLazyColumn(innerPadding, 0.dp, 0.dp, lazyListState) {
@@ -334,7 +343,7 @@ private fun ExercisesScreenPreview() {
         ExercisesScreenContent(
             addExercises = false,
             selectedExercisesList = remember { mutableStateListOf() },
-            exerciseList = List(0) { ExerciseDC(id = "$it", name = "Exercise $it") },
+            exerciseList = List(20) { ExerciseDC(id = "$it", name = "Exercise $it") },
             actions = listOf {},
             navigateBack = {}
         )

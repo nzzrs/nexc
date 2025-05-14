@@ -45,13 +45,16 @@ import androidx.compose.ui.unit.dp
  * The lambda [content] supplies the content of the list using the [LazyListScope].
  *
  * @param innerPadding Padding values to be applied around the content. It usually comes from [CustomScaffold]
+ * @param verticalSpacing The spacing applied between the items in [LazyColumn]
+ * @param startEndPadding The padding applied in the start and in the end of [LazyColumn]
  * @param content A lambda with receiver of type [LazyListScope] used to populate the lazy list.
  */
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun CustomLazyColumn(
     innerPadding: PaddingValues = PaddingValues(),
-    verticalPadding: Dp = 10.dp,
+    verticalSpacing: Dp = 10.dp,
+    startEndPadding: Dp = 15.dp,
     content: LazyListScope.() -> Unit
 ) {
     BoxWithConstraints(
@@ -62,14 +65,14 @@ fun CustomLazyColumn(
         //Apply padding only when width is greater than 600.dp (i.e. when screen is in landscape mode)
         val optionalPadding = if (maxWidth < threshold.dp) 0f else (maxWidth.value - threshold) / 2
         LazyColumn(
-            modifier = Modifier.padding(start = 15.dp, end = 15.dp),
+            modifier = Modifier.padding(start = startEndPadding, end = startEndPadding),
             contentPadding = PaddingValues(
                 top = innerPadding.calculateTopPadding(),
                 start = innerPadding.calculateLeftPadding(LayoutDirection.Ltr) + optionalPadding.dp,
                 end = innerPadding.calculateRightPadding(LayoutDirection.Ltr) + optionalPadding.dp,
                 bottom = innerPadding.calculateBottomPadding()
             ),
-            verticalArrangement = Arrangement.spacedBy(verticalPadding),
+            verticalArrangement = Arrangement.spacedBy(verticalSpacing),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             content()

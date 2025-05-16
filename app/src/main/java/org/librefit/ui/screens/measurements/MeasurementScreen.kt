@@ -82,6 +82,7 @@ import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.charts.CustomCartesianChart
 import org.librefit.ui.components.dialogs.ConfirmDialog
 import org.librefit.ui.theme.LibreFitTheme
+import org.librefit.util.Formatter.formatDetails
 import java.text.DecimalFormat
 import java.time.Instant
 import java.time.LocalDateTime
@@ -455,17 +456,17 @@ private fun MeasurementScreenContent(
             }
 
             items(measurements, key = { it.id }) {
-                var isExpanded by rememberSaveable { mutableStateOf(false) }
-
                 ElevatedCard(Modifier.animateItem()) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
                             .padding(15.dp),
+                        verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
                             Column(
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
@@ -477,67 +478,69 @@ private fun MeasurementScreenContent(
                                 )
                                 Text(
                                     text = "${it.bodyWeight} " + stringResource(R.string.kg),
-                                    style = MaterialTheme.typography.titleLarge
+                                    style = MaterialTheme.typography.displaySmall
                                 )
                             }
-                            IconButton(
-                                onClick = { isExpanded = !isExpanded }
-                            ) {
-                                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)
+                            Row {
+                                IconButton(
+                                    onClick = {
+                                        idMeasurement.longValue = it.id
+                                        bodyWeight = it.bodyWeight.toString()
+                                        leanMass = it.muscleMassPercentage
+                                            .toString().takeIf { it != "0.0" } ?: ""
+                                        fatMass = it.bodyFatPercentage
+                                            .toString().takeIf { it != "0.0" } ?: ""
+                                        notes = it.notes
+                                        date.value = it.date
+                                        measurementCardState.value =
+                                            MeasurementCardState.EDIT
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(R.drawable.ic_edit),
+                                        contentDescription = null
+                                    )
+                                }
+                                IconButton(
+                                    onClick = {
+                                        showConfirmDialog.value = true
+                                        idMeasurement.longValue = it.id
+                                    }
+                                ) {
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(R.drawable.ic_delete),
+                                        contentDescription = null
+                                    )
+                                }
                             }
                         }
-                        AnimatedVisibility(visible = isExpanded) {
-                            Column {
-                                HorizontalDivider(Modifier.padding(top = 10.dp, bottom = 10.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.SpaceBetween
-                                ) {
-                                    Column(
-                                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                                    ) {
-                                        if (it.muscleMassPercentage != 0f) {
-                                            Text(stringResource(R.string.lean_mass) + ": ${it.muscleMassPercentage} %")
-                                        }
-                                        if (it.bodyFatPercentage != 0f) {
-                                            Text(stringResource(R.string.fat_mass) + ": ${it.bodyFatPercentage} %")
-                                        }
-                                    }
-                                    Row {
-                                        IconButton(
-                                            onClick = {
-                                                idMeasurement.longValue = it.id
-                                                bodyWeight = it.bodyWeight.toString()
-                                                leanMass = it.muscleMassPercentage
-                                                    .toString().takeIf { it != "0.0" } ?: ""
-                                                fatMass = it.bodyFatPercentage
-                                                    .toString().takeIf { it != "0.0" } ?: ""
-                                                notes = it.notes
-                                                date.value = it.date
-                                                measurementCardState.value =
-                                                    MeasurementCardState.EDIT
-                                            }
-                                        ) {
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(R.drawable.ic_edit),
-                                                contentDescription = null
-                                            )
-                                        }
-                                        IconButton(
-                                            onClick = {
-                                                showConfirmDialog.value = true
-                                                idMeasurement.longValue = it.id
-                                            }
-                                        ) {
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(R.drawable.ic_delete),
-                                                contentDescription = null
-                                            )
-                                        }
-                                    }
-                                }
 
-                            }
+                        if (it.muscleMassPercentage != 0f || it.bodyFatPercentage != 0f) {
+                            HorizontalDivider()
+                        }
+
+                        if (it.muscleMassPercentage != 0f) {
+                            Text(
+                                formatDetails(
+                                    stringResource(R.string.lean_mass),
+                                    it.muscleMassPercentage.toString() + " %"
+                                )
+                            )
+                        }
+                        if (it.bodyFatPercentage != 0f) {
+                            Text(
+                                formatDetails(
+                                    stringResource(R.string.fat_mass),
+                                    it.bodyFatPercentage.toString() + " %"
+                                )
+                            )
+                        }
+
+                        if (it.notes != "") {
+                            HorizontalDivider()
+                            Text(
+                                formatDetails(stringResource(R.string.notes), it.notes)
+                            )
                         }
                     }
                 }
@@ -597,9 +600,12 @@ private fun MeasurementScreenPreview() {
         .map {
             Measurement(
                 id = it.toLong(),
+                notes = if (Random.nextBoolean()) "This is the note of the ${it + 1}° measurement" else "",
                 bodyWeight = Random.nextLong(60, 80).toFloat(),
-                bodyFatPercentage = Random.nextLong(10, 80).toFloat() / 100,
-                muscleMassPercentage = Random.nextLong(20, 80).toFloat() / 100,
+                bodyFatPercentage = if (Random.nextBoolean()) Random.nextLong(10, 80)
+                    .toFloat() else 0f,
+                muscleMassPercentage = if (Random.nextBoolean()) Random.nextLong(20, 80)
+                    .toFloat() else 0f,
                 date = LocalDateTime.ofEpochSecond(
                     Random.nextLong(fromEpochSecond, toEpochSecond),
                     0,

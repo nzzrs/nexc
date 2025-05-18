@@ -33,6 +33,7 @@ import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.db.repository.WorkoutRepository
 import org.librefit.enums.SetMode
 import javax.inject.Inject
+import kotlin.random.Random
 
 @HiltViewModel
 class EditWorkoutScreenViewModel @Inject constructor(
@@ -45,9 +46,9 @@ class EditWorkoutScreenViewModel @Inject constructor(
     }
 
     fun addSetToExercise(index: Int) {
-        val exerciseWithSets = exercisesWithSets[index]
-        exercisesWithSets[index] = exerciseWithSets
-            .copy(sets = exerciseWithSets.sets + listOf(Set()))
+        val exercise = exercisesWithSets[index]
+        val newSet = exercise.sets.last().copy(id = Random.Default.nextLong())
+        exercisesWithSets[index] = exercise.copy(sets = exercise.sets + newSet)
     }
 
     /**

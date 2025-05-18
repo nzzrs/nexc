@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
@@ -54,10 +55,13 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -69,6 +73,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.data.ChartData
 import org.librefit.db.entity.Measurement
@@ -221,11 +226,15 @@ private fun MeasurementScreenContent(
     }
 
 
+    val focusRequester = remember { FocusRequester() }
+    val lazyListState = rememberLazyListState()
+    val coroutineScope = rememberCoroutineScope()
+
     LibreFitScaffold(
         title = AnnotatedString(stringResource(R.string.measurements)),
         navigateBack = navigateBack
     ) { innerPadding ->
-        LibreFitLazyColumn(innerPadding) {
+        LibreFitLazyColumn(innerPadding, lazyListState = lazyListState) {
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                     items(MeasurementChart.entries) { mode ->
@@ -269,7 +278,7 @@ private fun MeasurementScreenContent(
             }
 
 
-            // Add new measurement card
+            // Add/edit measurement card
             item {
                 var isExpanded by rememberSaveable { mutableStateOf(false) }
 
@@ -303,7 +312,9 @@ private fun MeasurementScreenContent(
                         }
 
                         OutlinedTextField(
-                            modifier = Modifier.fillMaxWidth(),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .focusRequester(focusRequester),
                             value = bodyWeight,
                             label = { Text(text = stringResource(R.string.body_weight) + " *") },
                             suffix = { Text(stringResource(R.string.kg)) },
@@ -497,6 +508,12 @@ private fun MeasurementScreenContent(
                                         date.value = it.date
                                         measurementCardState.value =
                                             MeasurementCardState.EDIT
+
+
+                                        coroutineScope.launch {
+                                            lazyListState.animateScrollToItem(index = 0)
+                                            focusRequester.requestFocus()
+                                        }
                                     }
                                 ) {
                                     Icon(

@@ -60,6 +60,7 @@ fun SuccessScreen(
         ) {
             if (maxHeight > maxWidth) {
                 LazyColumn(
+                    contentPadding = innerPadding,
                     modifier = Modifier
                         .width(maxWidth)
                         .height(maxHeight),

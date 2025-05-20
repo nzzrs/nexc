@@ -178,6 +178,7 @@ fun WorkoutScreen(
         title = AnnotatedString(stringResource(R.string.workout)),
         navigateBack = {
             if (viewModel.isListEmpty()) {
+                viewModel.stopWorkoutService()
                 navController.popBackStack()
             } else {
                 showConfirmDialog = true

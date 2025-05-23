@@ -21,6 +21,8 @@ package org.librefit.ui.screens.about
 
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -28,10 +30,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import org.librefit.R
 import org.librefit.ui.components.LibreFitScaffold
+import org.librefit.ui.components.dialogs.UrlActionDialog
 import org.librefit.ui.theme.LibreFitTheme
 
 @Composable
 fun LibrariesScreen(navigateBack: () -> Unit) {
+    val url = remember { mutableStateOf("") }
+
+    if (url.value != "") {
+        UrlActionDialog(url)
+    }
+
     LibreFitScaffold(
         title = AnnotatedString(stringResource(R.string.libraries)),
         navigateBack = navigateBack
@@ -39,7 +48,10 @@ fun LibrariesScreen(navigateBack: () -> Unit) {
         LibrariesContainer(
             contentPadding = it,
             showDescription = true,
-            modifier = Modifier.fillMaxSize()
+            modifier = Modifier.fillMaxSize(),
+            onLibraryClick = {
+                url.value = it.website ?: ""
+            }
         )
     }
 }

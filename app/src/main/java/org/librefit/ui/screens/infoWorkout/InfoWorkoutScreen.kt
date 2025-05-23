@@ -65,7 +65,7 @@ import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.bottomMargin
-import org.librefit.ui.components.charts.CustomCartesianChart
+import org.librefit.ui.components.charts.LibreFitCartesianChart
 import org.librefit.ui.components.dialogs.ConfirmDialog
 import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
 import org.librefit.ui.screens.shared.SharedViewModel
@@ -286,7 +286,7 @@ private fun InfoWorkoutScreenContent(
                     }
                 }
                 item {
-                    CustomCartesianChart(
+                    LibreFitCartesianChart(
                         format = when (workoutChart) {
                             WorkoutChart.DURATION -> DecimalFormat("# " + stringResource(R.string.min))
                             WorkoutChart.VOLUME -> DecimalFormat("#.## " + stringResource(R.string.kg))

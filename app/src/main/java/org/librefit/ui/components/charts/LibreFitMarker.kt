@@ -41,7 +41,7 @@ import com.patrykandpatrick.vico.core.common.shape.CorneredShape
  * A custom [CartesianMarker] to display information while tapping a chart
  */
 @Composable
-fun rememberMarker(
+fun rememberLibreFitMarker(
     valueFormatter: DefaultCartesianMarker.ValueFormatter =
         DefaultCartesianMarker.ValueFormatter.default(),
     showIndicator: Boolean = true,

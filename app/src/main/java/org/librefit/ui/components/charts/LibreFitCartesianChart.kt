@@ -73,6 +73,8 @@ import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
 import com.patrykandpatrick.vico.core.common.shape.CorneredShape
 import org.librefit.R
 import org.librefit.data.ChartData
+import org.librefit.ui.components.LibreFitLazyColumn
+import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.theme.LibreFitTheme
 import java.text.DecimalFormat
 import kotlin.random.Random
@@ -89,7 +91,7 @@ import kotlin.random.Random
  *
  */
 @Composable
-fun CustomCartesianChart(
+fun LibreFitCartesianChart(
     format: DecimalFormat = DecimalFormat(),
     listChartData: List<ChartData>,
     columns: Boolean = false
@@ -157,7 +159,7 @@ fun CustomCartesianChart(
                                 ),
                                 pointSpacing = 64.dp
                             ),
-                            marker = rememberMarker(
+                            marker = rememberLibreFitMarker(
                                 valueFormatter = DefaultCartesianMarker.ValueFormatter.default(
                                     format
                                 )
@@ -221,9 +223,15 @@ fun CustomCartesianChart(
 @Composable
 private fun CustomCartesianChartPreview() {
     LibreFitTheme(false, true) {
-        CustomCartesianChart(
-            listChartData = (0..10).map { ChartData(Random.nextFloat()) },
-            columns = false
-        )
+        LibreFitScaffold {
+            LibreFitLazyColumn(innerPadding = it) {
+                item {
+                    LibreFitCartesianChart(
+                        listChartData = (0..10).map { ChartData(Random.nextFloat()) },
+                        columns = false
+                    )
+                }
+            }
+        }
     }
 }

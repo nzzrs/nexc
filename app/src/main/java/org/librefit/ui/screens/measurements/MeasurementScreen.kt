@@ -85,7 +85,7 @@ import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.animations.EmptyLottie
 import org.librefit.ui.components.bottomMargin
-import org.librefit.ui.components.charts.CustomCartesianChart
+import org.librefit.ui.components.charts.LibreFitCartesianChart
 import org.librefit.ui.components.dialogs.ConfirmDialog
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatDetails
@@ -267,7 +267,7 @@ private fun MeasurementScreenContent(
             }
 
             item {
-                CustomCartesianChart(
+                LibreFitCartesianChart(
                     format = when (measurementChart) {
                         MeasurementChart.BODY_WEIGHT -> DecimalFormat("# " + stringResource(R.string.kg))
                         MeasurementChart.FAT_MASS -> DecimalFormat("0' %'")

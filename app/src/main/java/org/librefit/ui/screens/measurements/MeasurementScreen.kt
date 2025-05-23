@@ -59,6 +59,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
@@ -222,6 +223,8 @@ private fun MeasurementScreenContent(
     }
 
 
+    val focusManager = LocalFocusManager.current
+
     val focusRequester = remember { FocusRequester() }
     val lazyListState = rememberLazyListState()
     val coroutineScope = rememberCoroutineScope()
@@ -286,9 +289,12 @@ private fun MeasurementScreenContent(
                             suffix = { Text(stringResource(R.string.kg)) },
                             isError = bodyWeight.isBlank(),
                             singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Number,
+                                showKeyboardOnFocus = true
+                            ),
                             onValueChange = {
-                                bodyWeight = processFloatValue(it, 0f, 200f)
+                                bodyWeight = processFloatValue(it, 300f)
                             }
                         )
                         AnimatedVisibility(visible = isExpanded) {
@@ -317,7 +323,7 @@ private fun MeasurementScreenContent(
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     onValueChange = {
-                                        fatMass = processFloatValue(it, 0f, 100f)
+                                        fatMass = processFloatValue(it, 100f)
                                     }
                                 )
 
@@ -339,7 +345,7 @@ private fun MeasurementScreenContent(
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     onValueChange = {
-                                        leanMass = processFloatValue(it, 0f, 100f)
+                                        leanMass = processFloatValue(it, 100f)
                                     }
                                 )
                                 OutlinedTextField(
@@ -397,6 +403,8 @@ private fun MeasurementScreenContent(
 
                                 measurementCardState.value = MeasurementCardState.NEW
 
+                                focusManager.clearFocus()
+
                                 trigger++
                             }
                             AnimatedVisibility(measurementCardState.value == MeasurementCardState.EDIT) {
@@ -404,6 +412,7 @@ private fun MeasurementScreenContent(
                                     modifier = Modifier.weight(1f),
                                     onClick = {
                                         measurementCardState.value = MeasurementCardState.NEW
+                                        focusManager.clearFocus()
                                     }
                                 ) {
                                     Icon(ImageVector.vectorResource(R.drawable.ic_cancel), null)
@@ -537,7 +546,7 @@ private fun MeasurementScreenContent(
     }
 }
 
-private fun processFloatValue(string: String, min: Float, max: Float): String {
+private fun processFloatValue(string: String, max: Float): String {
     if (string.isBlank()) return ""
 
     val stringValue = string
@@ -565,7 +574,7 @@ private fun processFloatValue(string: String, min: Float, max: Float): String {
 
     if (value == ".") value = "0"
 
-    return value.toFloat().coerceIn(min, max).toString()
+    return value.toFloat().coerceAtMost(maximumValue = max).toString()
 }
 
 @Preview(locale = "it")

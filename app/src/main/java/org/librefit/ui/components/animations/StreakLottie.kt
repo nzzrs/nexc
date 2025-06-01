@@ -37,7 +37,9 @@ import org.librefit.R
 
 @Composable
 fun StreakLottie(streak: Int) {
-    val primaryColor = MaterialTheme.colorScheme.primary.toArgb()
+    val primaryColor = MaterialTheme.colorScheme.primary
+        .copy(alpha = 0.5f + 0.5f * (streak / 52f))
+        .toArgb()
 
     val inversePrimaryColor = MaterialTheme.colorScheme.inversePrimary.toArgb()
 

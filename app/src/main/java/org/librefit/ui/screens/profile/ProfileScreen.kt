@@ -19,9 +19,16 @@
 
 package org.librefit.ui.screens.profile
 
+import android.annotation.SuppressLint
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -39,15 +46,22 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.SpanStyle
@@ -122,38 +136,7 @@ private fun ProfileScreenContent(
 
     LibreFitLazyColumn(innerPadding) {
         item {
-            var clicks = rememberSaveable { mutableIntStateOf(0) }
-
-            LaunchedEffect(Unit) {
-                while (true) {
-                    delay(500)
-                    clicks.intValue = clicks.intValue.dec().coerceAtLeast(0)
-                }
-            }
-            OutlinedCard(
-                onClick = {
-                    clicks.intValue++
-                }
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Box(modifier = Modifier.weight(0.25f)) {
-                        StreakLottie(weekStreak + clicks.intValue)
-                    }
-                    Column(
-                        modifier = Modifier.weight(0.75f),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            text = stringResource(R.string.week_streak) + " " + weekStreak,
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                    }
-                }
-            }
+            StreakCard(weekStreak)
         }
 
         item {
@@ -300,6 +283,100 @@ private fun ProfileScreenContent(
             }
         }
         bottomMargin()
+    }
+}
+
+@SuppressLint("UnusedBoxWithConstraintsScope")
+@Composable
+fun StreakCard(weekStreak: Int) {
+    /**
+     * It counts how many times the user clicks the card. Higher the value, higher the speed animations
+     * It decreased of 1 every second until reaching 0.
+     */
+    var clicks = rememberSaveable { mutableIntStateOf(0) }
+
+    LaunchedEffect(Unit) {
+        while (true) {
+            delay(1000)
+            clicks.intValue = clicks.intValue.coerceIn(1, 40) - 1
+        }
+    }
+
+    val speed = weekStreak.coerceIn(0, 52) + clicks.intValue
+
+    var animationProgress by rememberSaveable { mutableFloatStateOf(0f) }
+
+    // It animates the transition applying the current speed every time it changes
+    LaunchedEffect(speed) {
+        while (true) {
+            animate(
+                initialValue = animationProgress,
+                targetValue = animationProgress + 1f,
+                animationSpec = tween(
+                    durationMillis = (32000 / (speed + 1)).coerceIn(1000, 15000),
+                    easing = LinearEasing
+                )
+            ) { value, _ ->
+                animationProgress = value
+            }
+        }
+    }
+
+    BoxWithConstraints {
+        val spaceMaxWidth = with(LocalDensity.current) { maxWidth.toPx() }
+        val spaceMaxHeight = with(LocalDensity.current) { maxHeight.toPx() }
+
+        val shimmerWidthPercentage = 0.3f
+
+        val translateAnim = if (speed == 0) 0f else {
+            (animationProgress % 1f) * spaceMaxWidth * (1 + shimmerWidthPercentage)
+        }
+
+        val brush = Brush.linearGradient(
+            listOf(
+                Color.Unspecified,
+                MaterialTheme.colorScheme.primary.copy(alpha = 0.5f + 0.5f * (speed / 52f)),
+                Color.Unspecified
+            ),
+            start = Offset(
+                translateAnim - (spaceMaxWidth * shimmerWidthPercentage),
+                spaceMaxHeight
+            ),
+            end = Offset(translateAnim, spaceMaxHeight)
+        )
+
+        OutlinedCard(
+            modifier = Modifier
+                .border(
+                    border = BorderStroke(
+                        width = (if (speed < 17) 1 else if (speed < 34) 2 else 3).dp,
+                        brush = brush
+                    ),
+                    shape = CardDefaults.outlinedShape
+                ),
+            onClick = {
+                clicks.intValue = clicks.intValue.coerceIn(0, 39) + 1
+            }
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(modifier = Modifier.weight(0.25f)) {
+                    StreakLottie(speed)
+                }
+                Column(
+                    modifier = Modifier.weight(0.75f),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(R.string.week_streak) + " " + weekStreak,
+                        style = MaterialTheme.typography.titleLarge
+                    )
+                }
+            }
+        }
     }
 }
 

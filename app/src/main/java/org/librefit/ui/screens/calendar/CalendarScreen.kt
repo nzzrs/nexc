@@ -84,7 +84,6 @@ fun CalendarScreen(
     key(yearRange.value) {
 
         val datePickerState = rememberDatePickerState(
-            initialSelectedDateMillis = System.currentTimeMillis(),
             selectableDates = viewModel.getSelectableDatesFromWorkouts(),
             yearRange = yearRange.value
         )

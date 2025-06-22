@@ -22,19 +22,18 @@ package org.librefit.ui.screens.profile
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.librefit.data.ChartData
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.db.repository.WorkoutRepository
 import org.librefit.enums.chart.WorkoutChart
+import org.librefit.helpers.ChartDataHelper
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import java.time.temporal.ChronoUnit
-import java.util.Locale
 import javax.inject.Inject
 
 @HiltViewModel
@@ -43,30 +42,17 @@ class ProfileScreenViewModel @Inject constructor(
 ) : ViewModel() {
     val workoutsWithExercises = mutableStateListOf<WorkoutWithExercisesAndSets>()
 
-
-    val shortFormatter: DateTimeFormatter? =
-        DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(
-        Locale.getDefault()
-    )
-
     private var workoutChart = mutableStateOf(WorkoutChart.DURATION)
 
-    fun getListChartData(): List<ChartData> {
-        return workoutsWithExercises.mapIndexed { index, it ->
-            ChartData(
-                yValue = when (workoutChart.value) {
-                    WorkoutChart.DURATION -> it.workout.timeElapsed / 60f
-                    WorkoutChart.VOLUME -> it.exercisesWithSets.sumOf {
-                        it.sets.filter { it.completed }.sumOf { it.weight.toDouble() * it.reps }
-                    }
+    private val _listChartData = MutableStateFlow<List<ChartData>>(emptyList())
+    val listChartData = _listChartData.asStateFlow()
 
-                    WorkoutChart.REPS -> it.exercisesWithSets.sumOf {
-                        it.sets.filter { it.completed }.sumOf { it.reps }
-                    }
-                }.toFloat(),
-                xValue = it.workout.completed.format(shortFormatter)
-            )
-        }
+    @Inject
+    lateinit var chartDataHelper: ChartDataHelper
+
+    suspend fun fetchListChartData() = coroutineScope {
+        _listChartData.value =
+            chartDataHelper.fetchListChartData(workoutChart.value, workoutsWithExercises)
     }
 
     fun updateChartMode(value: WorkoutChart) {
@@ -78,8 +64,8 @@ class ProfileScreenViewModel @Inject constructor(
     }
 
 
-    fun getWorkoutListFromDB() {
-        viewModelScope.launch(Dispatchers.IO) {
+    suspend fun fetchWorkoutListFromDB() = coroutineScope {
+        launch {
             val workoutsFromDb = workoutRepository.getCompletedWorkoutsWithExercisesAndSets()
             if (workoutsWithExercises != workoutsFromDb) {
                 workoutsWithExercises.clear()

@@ -34,6 +34,7 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -82,6 +83,12 @@ fun InfoWorkoutScreen(
 ) {
     val viewModel: InfoWorkoutScreenViewModel = hiltViewModel()
 
+    val listChartData = viewModel.listChartData.collectAsState()
+
+    LaunchedEffect(Unit, viewModel.getChartMode(), viewModel.exercises.size) {
+        viewModel.fetchListChartData()
+    }
+
     LaunchedEffect(Unit) {
         viewModel.initialize(
             sharedViewModel.getPassedWorkout(),
@@ -98,7 +105,7 @@ fun InfoWorkoutScreen(
         volumeExercises = viewModel.getVolumeExercises(),
         workoutChart = viewModel.getChartMode(),
         exercises = viewModel.exercises,
-        listChartData = viewModel.getListChartData(),
+        listChartData = listChartData.value,
         deleteWorkout = viewModel::deleteWorkout,
         updateChartMode = viewModel::updateChartMode,
         detachWorkoutFromRoutine = viewModel::detachWorkoutFromRoutine,

@@ -22,6 +22,7 @@ package org.librefit.db.repository
 import kotlinx.coroutines.flow.Flow
 import org.librefit.db.dao.MeasurementDao
 import org.librefit.db.entity.Measurement
+import java.time.LocalDateTime
 
 /**
  * Repository class for managing measurements data.
@@ -50,5 +51,9 @@ class MeasurementRepository(private val measurementDao: MeasurementDao) {
 
     fun getAllMeasurements(): Flow<List<Measurement>> {
         return measurementDao.getAllMeasurements()
+    }
+
+    suspend fun getBodyWeightByCutoff(cutoff: LocalDateTime): Measurement? {
+        return measurementDao.getLastMeasurementByCutoff(cutoff)
     }
 }

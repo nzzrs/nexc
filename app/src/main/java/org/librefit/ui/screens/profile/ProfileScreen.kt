@@ -46,6 +46,7 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
@@ -53,7 +54,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -106,15 +106,21 @@ fun ProfileScreen(
 ) {
     val viewModel: ProfileScreenViewModel = hiltViewModel()
 
+    val listChartData = viewModel.listChartData.collectAsState()
+
     LaunchedEffect(Unit) {
-        viewModel.getWorkoutListFromDB()
+        viewModel.fetchWorkoutListFromDB()
+    }
+
+    LaunchedEffect(Unit, viewModel.getChartMode(), viewModel.workoutsWithExercises.size) {
+        viewModel.fetchListChartData()
     }
 
     ProfileScreenContent(
         innerPadding = innerPadding,
         navController = navController,
         weekStreak = viewModel.getWeekStreak(),
-        listChartData = viewModel.getListChartData(),
+        listChartData = listChartData.value,
         workoutsWithExercises = viewModel.workoutsWithExercises,
         workoutChart = viewModel.getChartMode(),
         updateChartMode = viewModel::updateChartMode,
@@ -129,7 +135,7 @@ private fun ProfileScreenContent(
     weekStreak: Int,
     listChartData: List<ChartData>,
     workoutChart: WorkoutChart,
-    workoutsWithExercises: SnapshotStateList<WorkoutWithExercisesAndSets>,
+    workoutsWithExercises: List<WorkoutWithExercisesAndSets>,
     updateChartMode: (WorkoutChart) -> Unit,
     updateWorkoutId: (Long) -> Unit
 ) {

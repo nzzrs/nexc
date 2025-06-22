@@ -25,6 +25,7 @@ import androidx.room.Query
 import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import org.librefit.db.entity.Measurement
+import java.time.LocalDateTime
 
 @Dao
 interface MeasurementDao {
@@ -39,4 +40,7 @@ interface MeasurementDao {
 
     @Query("SELECT * FROM measurements ORDER BY date DESC")
     fun getAllMeasurements(): Flow<List<Measurement>>
+
+    @Query("SELECT * FROM measurements WHERE date <= :cutoff ORDER BY date DESC")
+    suspend fun getLastMeasurementByCutoff(cutoff: LocalDateTime): Measurement?
 }

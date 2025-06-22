@@ -40,6 +40,25 @@ class ChartDataHelper @Inject constructor(
             Locale.getDefault()
         )
 
+    /**
+     * It returns a list of [ChartData] corresponding to the given [workoutChart] type
+     * for each workout in [workoutsWithExercises].
+     *
+     * Each entry’s X-value is the formatted completion date of the workout, and Y-value is:
+     *  - [WorkoutChart.DURATION]: total minutes elapsed in the workout
+     *  - [WorkoutChart.VOLUME] : total volume lifted, computed as sum(weight * reps) for completed sets.
+     *      When an exercise’s set mode is [SetMode.REPS], the user’s body weight at the time
+     *      of the workout is added to the plate weight.
+     *  - [WorkoutChart.REPS]: total number of reps completed in the workout
+     *
+     * This function concurrently:
+     *  1. Retrieves the latest user’s [org.librefit.db.entity.Measurement.bodyWeight] at each workout’s completion date.
+     *  2. Builds the corresponding [ChartData] items.
+     *
+     * @param workoutChart The metric to chart (duration, volume, or reps).
+     * @param workoutsWithExercises A list of workouts paired with their exercises and sets.
+     * @return A list of [ChartData]
+     */
     suspend fun fetchListChartData(
         workoutChart: WorkoutChart,
         workoutsWithExercises: List<WorkoutWithExercisesAndSets>
@@ -47,7 +66,7 @@ class ChartDataHelper @Inject constructor(
         val bodyWeights = workoutsWithExercises
             .map {
                 async {
-                    measurementRepository.getBodyWeightByCutoff(it.workout.completed)?.bodyWeight
+                    measurementRepository.getLastMeasurementByCutoff(it.workout.completed)?.bodyWeight
                         ?: 0f
                 }
             }

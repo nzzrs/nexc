@@ -17,8 +17,6 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:Suppress("KDocUnresolvedReference")
-
 package org.librefit.ui.components
 
 import androidx.compose.animation.core.animateDpAsState
@@ -77,6 +75,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -99,14 +98,14 @@ import kotlin.math.roundToInt
  * A custom [ElevatedCard] designed to display an [ExerciseWithSets] with a uniform appearance across
  * the app.
  *
- * @param modifier A [Modifier] that should be passed as [Modifier.animateItem] to enable
+ * @param modifier A [Modifier] that should be passed as `Modifier.animateItem` to enable
  * animation for the card within the list.
  * @param exerciseWithSets An instance of [ExerciseWithSets] containing all the relevant information
  * required for the card display.
  * @param addSet A lambda function invoked when the "Add set" button is clicked.
- * @param onDetail A lambda function triggered when the [Info] icon is clicked, which should open
+ * @param onDetail A lambda function triggered when the *Info* icon is clicked, which should open
  * the [org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet].
- * @param onDelete A lambda function executed when the [Delete] icon is clicked, it should result in
+ * @param onDelete A lambda function executed when the *Delete* icon is clicked, it should result in
  * the removal of the card.
  * @param updateSet A function to update a specific set. For more details, refer to
  * [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateSet] and
@@ -153,7 +152,8 @@ fun ExerciseCard(
             ) {
                 Text(
                     text = exerciseWithSets.exerciseDC.name,
-                    style = MaterialTheme.typography.headlineSmall,
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
@@ -344,7 +344,6 @@ fun ExerciseCard(
                             color = MaterialTheme.colorScheme.secondary
                         )
                     }
-                    //TODO: add toggle to apply body weight
                 }
                 if (workout) {
                     Icon(

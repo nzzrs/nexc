@@ -53,7 +53,7 @@ class MeasurementRepository(private val measurementDao: MeasurementDao) {
         return measurementDao.getAllMeasurements()
     }
 
-    suspend fun getBodyWeightByCutoff(cutoff: LocalDateTime): Measurement? {
+    suspend fun getLastMeasurementByCutoff(cutoff: LocalDateTime): Measurement? {
         return measurementDao.getLastMeasurementByCutoff(cutoff)
     }
 }

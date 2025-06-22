@@ -19,7 +19,6 @@
 
 package org.librefit.ui.screens.profile
 
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -40,7 +39,9 @@ import javax.inject.Inject
 class ProfileScreenViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
-    val workoutsWithExercises = mutableStateListOf<WorkoutWithExercisesAndSets>()
+    private var _workoutsWithExercises =
+        MutableStateFlow<List<WorkoutWithExercisesAndSets>>(emptyList())
+    val workoutsWithExercises = _workoutsWithExercises.asStateFlow()
 
     private var workoutChart = mutableStateOf(WorkoutChart.DURATION)
 
@@ -52,7 +53,7 @@ class ProfileScreenViewModel @Inject constructor(
 
     suspend fun fetchListChartData() = coroutineScope {
         _listChartData.value =
-            chartDataHelper.fetchListChartData(workoutChart.value, workoutsWithExercises)
+            chartDataHelper.fetchListChartData(workoutChart.value, workoutsWithExercises.value)
     }
 
     fun updateChartMode(value: WorkoutChart) {
@@ -68,28 +69,27 @@ class ProfileScreenViewModel @Inject constructor(
         launch {
             val workoutsFromDb = workoutRepository.getCompletedWorkoutsWithExercisesAndSets()
             if (workoutsWithExercises != workoutsFromDb) {
-                workoutsWithExercises.clear()
-                workoutsWithExercises.addAll(workoutsFromDb)
+                _workoutsWithExercises.value = workoutsFromDb
             }
         }
     }
 
 
     fun getWeekStreak(): Int {
-        if (workoutsWithExercises.size < 2 || ChronoUnit.DAYS.between(
-                workoutsWithExercises.first().workout.completed,
+        if (workoutsWithExercises.value.size < 2 || ChronoUnit.DAYS.between(
+                workoutsWithExercises.value.first().workout.completed,
                 LocalDateTime.now()
             ) > 7
         ) {
             return 0
         }
 
-        var index = workoutsWithExercises.lastIndex
+        var index = workoutsWithExercises.value.lastIndex
 
-        for (i in 0 until workoutsWithExercises.size - 1) {
+        for (i in 0 until workoutsWithExercises.value.size - 1) {
             if (ChronoUnit.DAYS.between(
-                    workoutsWithExercises[i + 1].workout.completed,
-                    workoutsWithExercises[i].workout.completed
+                    workoutsWithExercises.value[i + 1].workout.completed,
+                    workoutsWithExercises.value[i].workout.completed
                 ) > 7
             ) {
                 index = i
@@ -98,7 +98,7 @@ class ProfileScreenViewModel @Inject constructor(
         }
 
         return ChronoUnit.WEEKS.between(
-            workoutsWithExercises[index].workout.completed,
+            workoutsWithExercises.value[index].workout.completed,
             LocalDateTime.now()
         ).toInt()
     }

@@ -108,11 +108,13 @@ fun ProfileScreen(
 
     val listChartData = viewModel.listChartData.collectAsState()
 
+    val workoutsWithExercises = viewModel.workoutsWithExercises.collectAsState()
+
     LaunchedEffect(Unit) {
         viewModel.fetchWorkoutListFromDB()
     }
 
-    LaunchedEffect(Unit, viewModel.getChartMode(), viewModel.workoutsWithExercises.size) {
+    LaunchedEffect(Unit, viewModel.getChartMode(), workoutsWithExercises.value) {
         viewModel.fetchListChartData()
     }
 
@@ -121,7 +123,7 @@ fun ProfileScreen(
         navController = navController,
         weekStreak = viewModel.getWeekStreak(),
         listChartData = listChartData.value,
-        workoutsWithExercises = viewModel.workoutsWithExercises,
+        workoutsWithExercises = workoutsWithExercises.value,
         workoutChart = viewModel.getChartMode(),
         updateChartMode = viewModel::updateChartMode,
         updateWorkoutId = sharedViewModel::updateWorkoutId,

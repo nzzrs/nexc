@@ -85,7 +85,13 @@ fun InfoWorkoutScreen(
 
     val listChartData = viewModel.listChartData.collectAsState()
 
-    LaunchedEffect(Unit, viewModel.getChartMode(), viewModel.exercises.size) {
+    val workout = viewModel.workout.collectAsState()
+
+    val routine = viewModel.routine.collectAsState()
+
+    val exercises = viewModel.exercises.collectAsState()
+
+    LaunchedEffect(Unit, viewModel.getChartMode(), exercises.value) {
         viewModel.fetchListChartData()
     }
 
@@ -99,12 +105,12 @@ fun InfoWorkoutScreen(
 
     InfoWorkoutScreenContent(
         navController = navController,
-        workout = viewModel.workout.value,
-        routine = viewModel.routine.value,
+        workout = workout.value,
+        routine = routine.value,
         workoutDate = viewModel.getDate(),
         volumeExercises = viewModel.getVolumeExercises(),
         workoutChart = viewModel.getChartMode(),
-        exercises = viewModel.exercises,
+        exercises = exercises.value,
         listChartData = listChartData.value,
         deleteWorkout = viewModel::deleteWorkout,
         updateChartMode = viewModel::updateChartMode,

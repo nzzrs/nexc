@@ -47,7 +47,9 @@ class InfoWorkoutScreenViewModel @Inject constructor(
     private val workoutRepository: WorkoutRepository
 ) : ViewModel() {
     private var initialized = false
-    val workout = mutableStateOf(Workout())
+
+    private var _workout = MutableStateFlow<Workout>(Workout())
+    val workout = _workout.asStateFlow()
 
     fun initialize(
         workout: Workout,
@@ -56,14 +58,14 @@ class InfoWorkoutScreenViewModel @Inject constructor(
     ) {
         if (!initialized) {
             initialized = true
-            this.workout.value = workout
+            _workout.value = workout
             if (isRoutine()) {
                 fetchCompletedWorkoutsFromDB()
             }
 
-            this.routine.value = passedRoutine
+            _routine.value = passedRoutine
 
-            exercises.addAll(passedExercises)
+            _exercises.value = passedExercises
         }
     }
 
@@ -84,14 +86,15 @@ class InfoWorkoutScreenViewModel @Inject constructor(
     }
 
 
-    var routine = mutableStateOf(Workout())
+    private var _routine = MutableStateFlow<Workout>(Workout())
+    val routine = _routine.asStateFlow()
 
 
-
-    val exercises = mutableStateListOf<ExerciseWithSets>()
+    private var _exercises = MutableStateFlow<List<ExerciseWithSets>>(emptyList())
+    val exercises = _exercises.asStateFlow()
 
     fun getVolumeExercises(): String {
-        val value = exercises.sumOf {
+        val value = exercises.value.sumOf {
             it.sets.sumOf { set ->
                 if (it.exercise.setMode == SetMode.WEIGHT) {
                     if (isRoutine()) {
@@ -152,11 +155,11 @@ class InfoWorkoutScreenViewModel @Inject constructor(
     }
 
     fun detachWorkoutFromRoutine() {
-        workout.value = workout.value.copy(
+        _workout.value = workout.value.copy(
             routineId = System.currentTimeMillis()
         )
 
-        routine.value = Workout()
+        _routine.value = Workout()
 
         viewModelScope.launch(Dispatchers.IO) {
             workoutRepository.updateWorkout(workout.value)

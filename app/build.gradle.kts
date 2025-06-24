@@ -31,12 +31,12 @@ plugins {
 
 android {
     namespace = "org.librefit"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "org.librefit"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
 
@@ -64,9 +64,6 @@ android {
         sourceCompatibility = VERSION_17
         targetCompatibility = VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-    }
     buildFeatures {
         compose = true
     }
@@ -76,6 +73,13 @@ android {
         }
     }
 }
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+    }
+}
+
 
 dependencies {
 

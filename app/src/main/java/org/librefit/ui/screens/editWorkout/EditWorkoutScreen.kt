@@ -306,7 +306,7 @@ private fun EditWorkoutScreenPreview() {
             typeOfEdit = typeOfEdit,
             exercisesWithSets = listOf(
                 ExerciseWithSets(
-                    exercise = Exercise(restTime = 90, setMode = SetMode.REPS),
+                    exercise = Exercise(restTime = 90, setMode = SetMode.BODYWEIGHT),
                     exerciseDC = ExerciseDC(name = "Name exercise"),
                     sets = listOf(Set(), Set(completed = true))
                 )

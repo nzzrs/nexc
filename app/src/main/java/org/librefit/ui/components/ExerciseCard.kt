@@ -686,7 +686,7 @@ private fun setModeToStringId(setMode: SetMode): Int {
     return when (setMode) {
         SetMode.LOAD_ONLY -> R.string.load_only
         SetMode.LOAD_AND_BODY_WEIGHT -> R.string.load_and_body_weight
-        SetMode.REPS -> R.string.reps
+        SetMode.BODYWEIGHT -> R.string.bodyweight
         SetMode.DURATION -> R.string.duration
     }
 }

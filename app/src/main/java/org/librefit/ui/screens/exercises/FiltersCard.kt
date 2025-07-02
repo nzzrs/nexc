@@ -60,7 +60,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import org.librefit.R
 import org.librefit.enums.exercise.Category
 import org.librefit.enums.exercise.Equipment
@@ -75,7 +74,8 @@ import org.librefit.util.Formatter.exerciseEnumToStringId
 @Composable
 fun FiltersCard(
     isFilterExpanded: MutableState<Boolean>,
-    viewModel: ExercisesScreenViewModel
+    updateFilter: (Enum<*>?, Int) -> Unit,
+    getFilter: (Int) -> Enum<*>?
 ) {
     var iconRotation by rememberSaveable { mutableFloatStateOf(0f) }
 
@@ -159,10 +159,8 @@ fun FiltersCard(
                         ItemFilter(
                             title = stringResource(titles[i]),
                             options = options[i],
-                            changeEnum = {
-                                viewModel.updateFilter(it, i)
-                            },
-                            enumFilterValue = viewModel.getFilter(i)
+                            changeEnum = { updateFilter(it, i) },
+                            enumFilterValue = getFilter(i)
                         )
                     }
                 }
@@ -257,7 +255,11 @@ private fun ItemFilter(
 @Preview
 @Composable
 fun FiltersCardPreview() {
-    LibreFitTheme(false, true) {
-        FiltersCard(remember { mutableStateOf(true) }, viewModel())
+    LibreFitTheme(dynamicColor = false, darkTheme = true) {
+        FiltersCard(
+            remember { mutableStateOf(true) },
+            updateFilter = { _, _ -> },
+            getFilter = { x -> null },
+        )
     }
 }

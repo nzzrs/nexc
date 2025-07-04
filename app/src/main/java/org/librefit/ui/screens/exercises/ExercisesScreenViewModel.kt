@@ -23,6 +23,7 @@ import androidx.compose.ui.util.fastFilter
 import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -35,8 +36,12 @@ import kotlinx.coroutines.flow.stateIn
 import org.librefit.data.ExerciseDC
 import org.librefit.enums.exercise.FilterValue
 import org.librefit.util.fuzzySearch.FuzzySearch
+import javax.inject.Inject
 
-class ExercisesScreenViewModel : ViewModel() {
+@HiltViewModel
+class ExercisesScreenViewModel @Inject constructor(
+    exercisesList: List<ExerciseDC>
+) : ViewModel() {
     private val _query = MutableStateFlow("")
     val query = _query.asStateFlow()
 
@@ -44,23 +49,15 @@ class ExercisesScreenViewModel : ViewModel() {
         _query.value = newQuery
     }
 
-    private val _exerciseList = MutableStateFlow<List<ExerciseDC>>(emptyList())
-    private val exerciseList = _exerciseList.asStateFlow()
-
-    fun setExerciseList(exerciseList: List<ExerciseDC>) {
-        _exerciseList.value = exerciseList
-    }
-
     private var _filterValue = MutableStateFlow(FilterValue())
     var filterValue = _filterValue.asStateFlow()
 
     val filteredExerciseList: StateFlow<List<ExerciseDC>> =
         combine(
-            exerciseList,
             query,
             filterValue
-        ) { rawList, q, _ ->
-            rawList
+        ) { q, _ ->
+            exercisesList
                 .fastMap { e -> e to fuzzySearch(e.name, q) }
                 .fastFilter { (e, score) -> score > 60 && filterExercise(e) }
                 .sortedByDescending { it.second }
@@ -71,7 +68,7 @@ class ExercisesScreenViewModel : ViewModel() {
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),
-                initialValue = exerciseList.value
+                initialValue = exercisesList
             )
 
     /**

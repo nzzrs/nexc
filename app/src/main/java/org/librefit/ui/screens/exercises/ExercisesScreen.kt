@@ -39,7 +39,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -58,7 +57,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.data.ExerciseDC
@@ -102,11 +101,7 @@ fun ExercisesScreen(
     }
 
 
-    val viewModel: ExercisesScreenViewModel = viewModel()
-
-    LaunchedEffect(sharedViewModel.exercisesList) {
-        viewModel.setExerciseList(sharedViewModel.exercisesList)
-    }
+    val viewModel: ExercisesScreenViewModel = hiltViewModel()
 
     val filteredExerciseList by viewModel.filteredExerciseList.collectAsState()
 

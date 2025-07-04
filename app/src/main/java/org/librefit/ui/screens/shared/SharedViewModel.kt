@@ -19,18 +19,13 @@
 
 package org.librefit.ui.screens.shared
 
-import android.content.Context
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.squareup.moshi.Moshi
-import com.squareup.moshi.Types
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
-import org.librefit.R
 import org.librefit.data.ExerciseDC
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.ExerciseWithSets
@@ -39,27 +34,9 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SharedViewModel @Inject constructor(
-    @ApplicationContext context: Context,
-    private val workoutRepository: WorkoutRepository
+    private val workoutRepository: WorkoutRepository,
+    private val exercisesList: List<ExerciseDC>
 ) : ViewModel() {
-    //TODO : provide this list through Room Database (parse once)
-    val exercisesList: List<ExerciseDC> = loadExercisesFromRaw(context)
-
-    private fun loadExercisesFromRaw(context: Context): List<ExerciseDC> {
-        val jsonFile = context.resources.openRawResource(R.raw.exercises).bufferedReader().use {
-            it.readText()
-        }
-
-        val moshi = Moshi.Builder().build()
-        val listType = Types.newParameterizedType(List::class.java, ExerciseDC::class.java)
-        val adapter = moshi.adapter<List<ExerciseDC>>(listType)
-
-        // ExerciseDC adapter is auto generated. All entries of all
-        // enums must be annotated with @Json with its corresponding value in json file
-        val exercises = adapter.fromJson(jsonFile)!!
-
-        return exercises
-    }
 
 
     private val selectedExercisesList = mutableStateListOf<ExerciseDC>()

@@ -78,8 +78,7 @@ import kotlin.random.Random
 
 @Composable
 fun InfoWorkoutScreen(
-    navController: NavHostController,
-    workoutId: Long
+    navController: NavHostController
 ) {
     val viewModel: InfoWorkoutScreenViewModel = hiltViewModel()
 

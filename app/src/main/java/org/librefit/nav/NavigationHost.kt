@@ -86,8 +86,7 @@ fun NavigationHost() {
         composable<Route.EditWorkoutScreen> {
             EditWorkoutScreen(
                 sharedViewModel = sharedViewModel,
-                navController = navController,
-                workoutId = it.toRoute<Route.EditWorkoutScreen>().workoutId
+                navController = navController
             )
         }
         composable<Route.ExercisesScreen> {
@@ -99,8 +98,7 @@ fun NavigationHost() {
         }
         composable<Route.InfoWorkoutScreen> {
             InfoWorkoutScreen(
-                navController = navController,
-                workoutId = it.toRoute<Route.InfoWorkoutScreen>().workoutId
+                navController = navController
             )
         }
         composable<Route.MainScreen> {

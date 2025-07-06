@@ -71,8 +71,7 @@ import org.librefit.ui.theme.LibreFitTheme
 @Composable
 fun EditWorkoutScreen(
     sharedViewModel: SharedViewModel,
-    navController: NavHostController,
-    workoutId: Long
+    navController: NavHostController
 ) {
     val viewModel: EditWorkoutScreenViewModel = hiltViewModel()
 

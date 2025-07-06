@@ -47,6 +47,14 @@ class WorkoutRepository(private val workoutDao: WorkoutDao) {
         return workoutDao.getWorkout(id)
     }
 
+    suspend fun getWorkoutWithExercisesAndSets(workoutID: Long): WorkoutWithExercisesAndSets {
+        return workoutDao.getWorkoutWithExercisesAndSets(id = workoutID)
+    }
+
+    suspend fun getRoutineFromRoutineID(routineId: Long): Workout {
+        return workoutDao.getRoutineFromRoutineID(routineId) ?: Workout()
+    }
+
     suspend fun updateWorkout(workout: Workout) {
         workoutDao.updateWorkout(workout)
     }

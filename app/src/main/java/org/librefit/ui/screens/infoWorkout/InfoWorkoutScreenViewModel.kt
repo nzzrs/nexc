@@ -19,8 +19,8 @@
 
 package org.librefit.ui.screens.infoWorkout
 
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -29,6 +29,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.librefit.data.ChartData
+import org.librefit.data.ExerciseDC
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
@@ -39,34 +40,53 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 import javax.inject.Inject
+import kotlin.random.Random
 
 @HiltViewModel
 class InfoWorkoutScreenViewModel @Inject constructor(
-    private val workoutRepository: WorkoutRepository
+    savedStateHandle: SavedStateHandle,
+    private val exercisesList: List<ExerciseDC>,
+    private val workoutRepository: WorkoutRepository,
+    private val dataHelper: DataHelper
 ) : ViewModel() {
-    private var initialized = false
+    companion object {
+        private const val WORKOUT_ID_KEY = "workoutId"
+    }
 
-    private var _workout = MutableStateFlow(Workout())
-    val workout = _workout.asStateFlow()
+    private val workoutId = savedStateHandle.get<Long>(WORKOUT_ID_KEY) ?: 0L
 
-    fun initialize(
-        workout: Workout,
-        passedRoutine: Workout,
-        passedExercises: List<ExerciseWithSets>
-    ) {
-        if (!initialized) {
-            initialized = true
-            _workout.value = workout
-            if (isRoutine()) {
-                fetchCompletedWorkoutsFromDB()
+    init {
+        require(workoutId != 0L) { "workoutId must be not equal to 0" }
+
+        viewModelScope.launch(Dispatchers.IO) {
+            val workoutWithExercisesAndSets =
+                workoutRepository.getWorkoutWithExercisesAndSets(workoutId)
+
+            _workout.value = workoutWithExercisesAndSets.workout
+
+            _exercises.value = workoutWithExercisesAndSets.exercisesWithSets.map {
+                it.apply {
+                    val exDC = exercisesList.find { e -> e.id == it.exercise.exerciseId }!!
+                    it.exercise = it.exercise.copy(exerciseId = exDC.id)
+                    it.exerciseDC = exDC
+                }
             }
 
-            _routine.value = passedRoutine
+            if (isRoutine()) {
+                _routine.value = workout.value
 
-            _exercises.value = passedExercises
+                //If the workout is a routine, then retrieve all past completed workout associated with it
+                _completedWorkoutsWithExercises.value = workoutRepository
+                    .getCompletedWorkoutsWithExercisesAndSetsFromRoutine(routineId = workout.value.routineId)
+            } else {
+                _routine.value = workoutRepository.getRoutineFromRoutineID(workout.value.routineId)
+            }
         }
     }
 
+
+    private var _workout = MutableStateFlow(Workout())
+    val workout = _workout.asStateFlow()
 
     fun getDate(): String {
         val date = if (isRoutine()) workout.value.created else workout.value.completed
@@ -77,11 +97,29 @@ class InfoWorkoutScreenViewModel @Inject constructor(
         )
     }
 
-
-
     fun isRoutine(): Boolean {
         return workout.value.routine
     }
+
+    fun deleteWorkout() {
+        viewModelScope.launch(Dispatchers.IO) {
+            workoutRepository.deleteWorkout(workout.value)
+        }
+    }
+
+    fun detachWorkoutFromRoutine() {
+        _workout.value = workout.value.copy(
+            routineId = Random.Default.nextLong() + System.currentTimeMillis()
+        )
+
+        _routine.value = Workout()
+
+        viewModelScope.launch(Dispatchers.IO) {
+            workoutRepository.updateWorkout(workout.value)
+        }
+    }
+
+
 
 
     private var _routine = MutableStateFlow(Workout())
@@ -91,8 +129,6 @@ class InfoWorkoutScreenViewModel @Inject constructor(
     private var _exercises = MutableStateFlow<List<ExerciseWithSets>>(emptyList())
     val exercises = _exercises.asStateFlow()
 
-    @Inject
-    lateinit var dataHelper: DataHelper
 
     suspend fun getVolumeExercises(): String {
         val volume = dataHelper.fetchVolumeFromWorkout(
@@ -103,6 +139,10 @@ class InfoWorkoutScreenViewModel @Inject constructor(
     }
 
 
+    private val _completedWorkoutsWithExercises =
+        MutableStateFlow<List<WorkoutWithExercisesAndSets>>(emptyList())
+    private val completedWorkoutsWithExercises = _completedWorkoutsWithExercises.asStateFlow()
+
     private var workoutChart = mutableStateOf(WorkoutChart.DURATION)
 
     private val _listChartData = MutableStateFlow<List<ChartData>>(emptyList())
@@ -112,7 +152,7 @@ class InfoWorkoutScreenViewModel @Inject constructor(
     suspend fun fetchListChartData() {
         _listChartData.value = dataHelper.fetchListChartData(
             workoutChart = workoutChart.value,
-            workoutsWithExercises = completedWorkoutsWithExercises
+            workoutsWithExercises = completedWorkoutsWithExercises.value
         )
     }
 
@@ -124,34 +164,4 @@ class InfoWorkoutScreenViewModel @Inject constructor(
         return workoutChart.value
     }
 
-    /**
-     * All the completed [WorkoutWithExercisesAndSets] linked to [routine] by [Workout.routineId]
-     */
-    private var completedWorkoutsWithExercises = mutableStateListOf<WorkoutWithExercisesAndSets>()
-
-    fun fetchCompletedWorkoutsFromDB() {
-        viewModelScope.launch(Dispatchers.IO) {
-            completedWorkoutsWithExercises.addAll(
-                workoutRepository.getCompletedWorkoutsWithExercisesAndSetsFromRoutine(workout.value.routineId)
-            )
-        }
-    }
-
-    fun deleteWorkout() {
-        viewModelScope.launch(Dispatchers.IO) {
-            workoutRepository.deleteWorkout(workout.value)
-        }
-    }
-
-    fun detachWorkoutFromRoutine() {
-        _workout.value = workout.value.copy(
-            routineId = System.currentTimeMillis()
-        )
-
-        _routine.value = Workout()
-
-        viewModelScope.launch(Dispatchers.IO) {
-            workoutRepository.updateWorkout(workout.value)
-        }
-    }
 }

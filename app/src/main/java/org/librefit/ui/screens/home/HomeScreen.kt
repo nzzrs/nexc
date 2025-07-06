@@ -77,7 +77,6 @@ fun HomeScreen(
     val viewModel: HomeScreenViewModel = hiltViewModel()
 
 
-
     val requestPermissionAgain by viewModel.requestPermissionAgain.collectAsState(initial = true)
 
     val routines by viewModel.routines.collectAsState(initial = listOf())
@@ -148,8 +147,7 @@ private fun HomeScreenContent(
                     .padding(5.dp)
                     .clip(CardDefaults.elevatedShape)
                     .clickable {
-                        updateWorkoutId(routine.id)
-                        navController.navigate(Route.InfoWorkoutScreen)
+                        navController.navigate(Route.InfoWorkoutScreen(workoutId = routine.id))
                     }
             ) {
                 Column(
@@ -171,8 +169,7 @@ private fun HomeScreenContent(
                         )
                         IconButton(
                             onClick = {
-                                updateWorkoutId(routine.id)
-                                navController.navigate(Route.InfoWorkoutScreen)
+                                navController.navigate(Route.InfoWorkoutScreen(workoutId = routine.id))
                             }
                         ) {
                             Icon(

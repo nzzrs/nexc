@@ -62,7 +62,6 @@ import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.animations.EmptyLottie
 import org.librefit.ui.components.bottomMargin
-import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatTime
 import java.time.LocalDateTime
@@ -70,7 +69,6 @@ import java.time.LocalDateTime
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(
-    sharedViewModel: SharedViewModel,
     navController: NavHostController
 ) {
     val viewModel: CalendarScreenViewModel = hiltViewModel()
@@ -92,7 +90,6 @@ fun CalendarScreen(
             navController = navController,
             datePickerState = datePickerState,
             getWorkoutsFromDate = viewModel::getWorkoutsFromDate,
-            updateWorkoutId = sharedViewModel::updateWorkoutId,
             getTimeFromLocalDateTime = viewModel::getTimeFromLocalDateTime
         )
     }
@@ -104,7 +101,6 @@ private fun CalendarScreenContent(
     navController: NavHostController,
     datePickerState: DatePickerState,
     getWorkoutsFromDate: (Long?) -> List<Workout>,
-    updateWorkoutId: (Long) -> Unit,
     getTimeFromLocalDateTime: (LocalDateTime) -> String
 ) {
     LibreFitScaffold(
@@ -176,8 +172,7 @@ private fun CalendarScreenContent(
                             }
                             IconButton(
                                 onClick = {
-                                    updateWorkoutId(workout.id)
-                                    navController.navigate(Route.InfoWorkoutScreen)
+                                    navController.navigate(Route.InfoWorkoutScreen(workoutId = workout.id))
                                 },
                             ) {
                                 Icon(
@@ -204,7 +199,6 @@ private fun CalendarScreenPreview() {
             navController = rememberNavController(),
             datePickerState = rememberDatePickerState(),
             getWorkoutsFromDate = { listOf(Workout(title = "Name workout")) },
-            updateWorkoutId = {},
             getTimeFromLocalDateTime = { "10:10" }
         )
     }

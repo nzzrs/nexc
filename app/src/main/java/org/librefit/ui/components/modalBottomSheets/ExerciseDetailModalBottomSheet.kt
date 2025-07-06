@@ -200,7 +200,6 @@ private fun MusclesSection(musclesText: String, musclesList: List<Muscle>) {
         )
     )
 
-    //TODO: instead of showing an image for each muscle, show multiple muscles in a single image
     LazyRow {
         items(musclesList) { muscle ->
             Image(

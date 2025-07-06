@@ -42,7 +42,9 @@ sealed class Route {
     )
 
     @Serializable
-    object InfoWorkoutScreen
+    data class InfoWorkoutScreen(
+        val workoutId: Long
+    )
 
     @Serializable
     object MainScreen

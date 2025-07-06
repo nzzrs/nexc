@@ -75,7 +75,6 @@ fun NavigationHost() {
         }
         composable<Route.CalendarScreen> {
             CalendarScreen(
-                sharedViewModel = sharedViewModel,
                 navController = navController
             )
         }
@@ -94,8 +93,8 @@ fun NavigationHost() {
         }
         composable<Route.InfoWorkoutScreen> {
             InfoWorkoutScreen(
-                sharedViewModel = sharedViewModel,
-                navController = navController
+                navController = navController,
+                workoutId = it.toRoute<Route.InfoWorkoutScreen>().workoutId
             )
         }
         composable<Route.MainScreen> {

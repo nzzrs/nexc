@@ -89,7 +89,6 @@ import org.librefit.ui.components.animations.EmptyLottie
 import org.librefit.ui.components.animations.StreakLottie
 import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.charts.LibreFitCartesianChart
-import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatTime
 import java.text.DecimalFormat
@@ -101,8 +100,7 @@ import kotlin.random.Random
 @Composable
 fun ProfileScreen(
     innerPadding: PaddingValues,
-    navController: NavHostController,
-    sharedViewModel: SharedViewModel
+    navController: NavHostController
 ) {
     val viewModel: ProfileScreenViewModel = hiltViewModel()
 
@@ -125,8 +123,7 @@ fun ProfileScreen(
         listChartData = listChartData.value,
         workoutsWithExercises = workoutsWithExercises.value,
         workoutChart = viewModel.getChartMode(),
-        updateChartMode = viewModel::updateChartMode,
-        updateWorkoutId = sharedViewModel::updateWorkoutId,
+        updateChartMode = viewModel::updateChartMode
     )
 }
 
@@ -138,8 +135,7 @@ private fun ProfileScreenContent(
     listChartData: List<ChartData>,
     workoutChart: WorkoutChart,
     workoutsWithExercises: List<WorkoutWithExercisesAndSets>,
-    updateChartMode: (WorkoutChart) -> Unit,
-    updateWorkoutId: (Long) -> Unit
+    updateChartMode: (WorkoutChart) -> Unit
 ) {
 
     LibreFitLazyColumn(innerPadding) {
@@ -238,8 +234,7 @@ private fun ProfileScreenContent(
                     .padding(5.dp)
                     .clip(CardDefaults.elevatedShape)
                     .clickable {
-                        updateWorkoutId(workout.id)
-                        navController.navigate(Route.InfoWorkoutScreen)
+                        navController.navigate(Route.InfoWorkoutScreen(workoutId = workout.id))
                     }
             ) {
                 Column(
@@ -277,8 +272,7 @@ private fun ProfileScreenContent(
                         }
                         IconButton(
                             onClick = {
-                                updateWorkoutId(workout.id)
-                                navController.navigate(Route.InfoWorkoutScreen)
+                                navController.navigate(Route.InfoWorkoutScreen(workoutId = workout.id))
                             },
                         ) {
                             Icon(
@@ -301,7 +295,7 @@ fun StreakCard(weekStreak: Int) {
      * It counts how many times the user clicks the card. Higher the value, higher the speed animations
      * It decreased of 1 every second until reaching 0.
      */
-    var clicks = rememberSaveable { mutableIntStateOf(0) }
+    val clicks = rememberSaveable { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
         while (true) {
@@ -445,7 +439,6 @@ private fun ProfileScreenPreview() {
                     )
                 },
                 updateChartMode = {},
-                updateWorkoutId = {},
             )
         }
     }

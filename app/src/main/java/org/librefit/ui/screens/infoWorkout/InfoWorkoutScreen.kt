@@ -67,7 +67,6 @@ import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.charts.LibreFitCartesianChart
 import org.librefit.ui.components.dialogs.ConfirmDialog
 import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
-import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatDetails
 import org.librefit.util.Formatter.formatTime
@@ -79,8 +78,8 @@ import kotlin.random.Random
 
 @Composable
 fun InfoWorkoutScreen(
-    sharedViewModel: SharedViewModel,
-    navController: NavHostController
+    navController: NavHostController,
+    workoutId: Long = 0L
 ) {
     val viewModel: InfoWorkoutScreenViewModel = hiltViewModel()
 
@@ -102,13 +101,6 @@ fun InfoWorkoutScreen(
         volume.value = viewModel.getVolumeExercises()
     }
 
-    LaunchedEffect(Unit) {
-        viewModel.initialize(
-            sharedViewModel.getPassedWorkout(),
-            sharedViewModel.getPassedRoutine(),
-            sharedViewModel.getPassedExercises()
-        )
-    }
 
     InfoWorkoutScreenContent(
         navController = navController,

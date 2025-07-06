@@ -53,6 +53,12 @@ interface WorkoutDao {
     @Query("SELECT * FROM workouts WHERE id = :id")
     fun getWorkout(id: Long): Workout
 
+    @Query("SELECT * FROM workouts WHERE id = :id")
+    suspend fun getWorkoutWithExercisesAndSets(id: Long): WorkoutWithExercisesAndSets
+
+    @Query("SELECT * FROM workouts WHERE routine AND routineId = :routineId")
+    suspend fun getRoutineFromRoutineID(routineId: Long): Workout?
+
     @Insert
     suspend fun addWorkout(workout: Workout): Long
 

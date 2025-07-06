@@ -176,14 +176,14 @@ private fun ItemFilter(
     ) {
         Text(
             text = stringResource(
-                id = when (propertyFilterValue) {
-                    is Level -> R.string.level
-                    is Force -> R.string.force
-                    is Mechanic -> R.string.mechanic
-                    is Muscle -> R.string.mechanic
-                    is Equipment -> R.string.equipment
-                    is Category -> R.string.category
-                    null -> R.string.any
+                id = when (enumType) {
+                    Level::class -> R.string.level
+                    Force::class -> R.string.force
+                    Mechanic::class -> R.string.mechanic
+                    Muscle::class -> R.string.mechanic
+                    Equipment::class -> R.string.equipment
+                    Category::class -> R.string.category
+                    else -> R.string.any
                 }
             )
         )

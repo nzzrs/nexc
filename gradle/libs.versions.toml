@@ -16,8 +16,8 @@ hiltAndroid = "2.56.2"
 hiltNavigationCompose = "1.2.0"
 moshi = "1.15.2"
 moshiKotlinCodegen = "1.15.2"
-aboutLibraries = "12.2.3"
-aboutlibrariesComposeM3 = "12.2.3"
+aboutLibraries = "12.2.4"
+aboutlibrariesComposeM3 = "12.2.4"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.16.0" }
@@ -38,7 +38,7 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
-navigation-compose = { module = "androidx.navigation:navigation-compose", version = "2.9.0" }
+navigation-compose = { module = "androidx.navigation:navigation-compose", version = "2.9.1" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.9.0" }
 androidx-datastore-core-android = { group = "androidx.datastore", name = "datastore-core-android", version.ref = "datastore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }

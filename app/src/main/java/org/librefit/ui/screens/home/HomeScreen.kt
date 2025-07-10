@@ -19,6 +19,8 @@
 
 package org.librefit.ui.screens.home
 
+import android.Manifest
+import android.os.Build
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -43,7 +45,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.SpanStyle
@@ -56,10 +57,12 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.isGranted
+import com.google.accompanist.permissions.rememberPermissionState
 import org.librefit.R
 import org.librefit.db.entity.Workout
 import org.librefit.nav.Route
-import org.librefit.nav.checkPermissionsBeforeNavigateToWorkout
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.LibreFitButton
 import org.librefit.ui.components.LibreFitLazyColumn
@@ -68,6 +71,7 @@ import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.ui.theme.LibreFitTheme
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun HomeScreen(
     innerPadding: PaddingValues,
@@ -79,14 +83,37 @@ fun HomeScreen(
 
     val requestPermissionAgain by viewModel.requestPermissionAgain.collectAsState(initial = true)
 
+    val notificationPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        rememberPermissionState(
+            Manifest.permission.POST_NOTIFICATIONS
+        )
+    } else {
+        //Permission granted by default below Tiramisu
+        null
+    }
+
     val routines by viewModel.routines.collectAsState(initial = listOf())
 
     HomeScreenContent(
         innerPadding = innerPadding,
         navController = navController,
-        requestPermissionAgain = requestPermissionAgain,
+        routines = routines,
         updateWorkoutId = sharedViewModel::updateWorkoutId,
-        routines = routines
+        navigateToRoutine = { workoutId ->
+            val hasNotificationPermission = notificationPermissionState?.status?.isGranted == true
+
+            val requestPermission = !hasNotificationPermission && requestPermissionAgain
+
+            if (requestPermission) {
+                navController.navigate(Route.RequestPermissionScreen(workoutId = workoutId))
+            } else {
+                navController.navigate(Route.WorkoutScreen) {
+                    popUpTo(Route.RequestPermissionScreen(workoutId = workoutId)) {
+                        inclusive = true
+                    }
+                }
+            }
+        }
     )
 }
 
@@ -94,11 +121,10 @@ fun HomeScreen(
 private fun HomeScreenContent(
     innerPadding: PaddingValues,
     navController: NavHostController,
-    requestPermissionAgain: Boolean,
+    routines: List<Workout>,
     updateWorkoutId: (Long) -> Unit,
-    routines: List<Workout>
+    navigateToRoutine: (Long) -> Unit
 ) {
-    val context = LocalContext.current
 
     LibreFitLazyColumn(innerPadding) {
         item {
@@ -107,11 +133,7 @@ private fun HomeScreenContent(
                 text = stringResource(id = R.string.start_empty_workout),
                 icon = ImageVector.vectorResource(R.drawable.ic_play_arrow),
                 onClick = {
-                    checkPermissionsBeforeNavigateToWorkout(
-                        requestPermissionAgain = requestPermissionAgain,
-                        navController = navController,
-                        appContext = context.applicationContext
-                    )
+                    navigateToRoutine(0)
                     updateWorkoutId(0)
                 },
             )
@@ -183,11 +205,7 @@ private fun HomeScreenContent(
                         icon = ImageVector.vectorResource(R.drawable.ic_play_arrow),
                         elevated = false
                     ) {
-                        checkPermissionsBeforeNavigateToWorkout(
-                            requestPermissionAgain = requestPermissionAgain,
-                            navController = navController,
-                            appContext = context.applicationContext
-                        )
+                        navigateToRoutine(routine.id)
                         updateWorkoutId(routine.id)
                     }
                 }
@@ -202,7 +220,7 @@ private fun HomeScreenContent(
 @Preview
 @Composable
 fun HomeScreenPreview() {
-    LibreFitTheme(false, true) {
+    LibreFitTheme(dynamicColor = false, darkTheme = true) {
         LibreFitScaffold(
             title = buildAnnotatedString {
                 withStyle(style = SpanStyle(color = MaterialTheme.colorScheme.primary)) {
@@ -245,8 +263,8 @@ fun HomeScreenPreview() {
                 innerPadding = it,
                 navController = rememberNavController(),
                 updateWorkoutId = {},
-                requestPermissionAgain = false,
-                routines = (0..5).map { Workout(id = it.toLong(), title = "Workout $it") },
+                routines = (0..5).map { i -> Workout(id = i.toLong(), title = "Workout $i") },
+                navigateToRoutine = {}
             )
         }
     }

@@ -61,7 +61,9 @@ sealed class Route {
     object PrivacyScreen
 
     @Serializable
-    object RequestPermissionScreen
+    data class RequestPermissionScreen(
+        val workoutId: Long
+    )
 
     @Serializable
     object LibrariesScreen

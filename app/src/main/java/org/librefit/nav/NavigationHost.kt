@@ -121,7 +121,8 @@ fun NavigationHost() {
         }
         composable<Route.RequestPermissionScreen> {
             RequestPermissionScreen(
-                navController = navController
+                navController = navController,
+                workoutId = it.toRoute<Route.RequestPermissionScreen>().workoutId
             )
         }
         composable<Route.SettingsScreen> {

@@ -38,7 +38,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
@@ -51,17 +50,19 @@ import com.google.accompanist.permissions.PermissionState
 import com.google.accompanist.permissions.isGranted
 import com.google.accompanist.permissions.rememberPermissionState
 import org.librefit.R
-import org.librefit.nav.checkPermissionsBeforeNavigateToWorkout
+import org.librefit.nav.Route
 import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.animations.PreferencesLottie
 import org.librefit.ui.theme.LibreFitTheme
+import kotlin.random.Random
 
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun RequestPermissionScreen(
-    navController: NavHostController
+    navController: NavHostController,
+    workoutId: Long
 ) {
     val viewModel: RequestPermissionScreenViewModel = hiltViewModel()
 
@@ -79,10 +80,14 @@ fun RequestPermissionScreen(
     RequestPermissionsScreenContent(
         navController = navController,
         requestPermissionAgain = requestPermissionAgain,
-        notificationPermissionState = notificationPermissionState
-    ) {
-        viewModel.saveRequestPermissionAgainPreference(it)
-    }
+        notificationPermissionState = notificationPermissionState,
+        saveRequestPermissionAgainPreference = viewModel::saveRequestPermissionAgainPreference,
+        navigateToWorkoutScreen = {
+            navController.navigate(Route.WorkoutScreen) {
+                popUpTo(Route.RequestPermissionScreen(workoutId = workoutId)) { inclusive = true }
+            }
+        }
+    )
 }
 
 @OptIn(ExperimentalPermissionsApi::class)
@@ -91,10 +96,9 @@ private fun RequestPermissionsScreenContent(
     navController: NavHostController,
     requestPermissionAgain: Boolean,
     notificationPermissionState: PermissionState?,
-    saveRequestPermissionAgainPreference: (Boolean) -> Unit
+    saveRequestPermissionAgainPreference: (Boolean) -> Unit,
+    navigateToWorkoutScreen: () -> Unit
 ) {
-    val context = LocalContext.current
-
 
     LibreFitScaffold(
         navigateBack = { navController.popBackStack() }
@@ -189,10 +193,7 @@ private fun RequestPermissionsScreenContent(
                     TextButton(
                         onClick = {
                             saveRequestPermissionAgainPreference(true)
-                            checkPermissionsBeforeNavigateToWorkout(
-                                navController = navController,
-                                appContext = context.applicationContext
-                            )
+                            navigateToWorkoutScreen()
                         }
                     ) {
                         Text(
@@ -205,10 +206,7 @@ private fun RequestPermissionsScreenContent(
                                 || !requestPermissionAgain,
                         colors = ButtonDefaults.buttonColors(),
                         onClick = {
-                            checkPermissionsBeforeNavigateToWorkout(
-                                navController = navController,
-                                appContext = context.applicationContext
-                            )
+                            navigateToWorkoutScreen()
                         }
                     ) {
                         Text(
@@ -226,11 +224,13 @@ private fun RequestPermissionsScreenContent(
 @Preview
 @Composable
 private fun RequestPermissionsScreenPreview() {
-    LibreFitTheme(false, true) {
+    LibreFitTheme(dynamicColor = false, darkTheme = true) {
         RequestPermissionsScreenContent(
             navController = rememberNavController(),
-            requestPermissionAgain = true,
-            notificationPermissionState = null
-        ) {}
+            requestPermissionAgain = Random.nextBoolean(),
+            notificationPermissionState = null,
+            saveRequestPermissionAgainPreference = {},
+            navigateToWorkoutScreen = {}
+        )
     }
 }

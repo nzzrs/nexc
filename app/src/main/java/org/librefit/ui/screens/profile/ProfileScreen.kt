@@ -203,7 +203,8 @@ private fun ProfileScreenContent(
                 listChartData = listChartData,
                 useColumns = true,
                 chartMode = workoutChart,
-                updateChartMode = { updateChartMode(it as WorkoutChart) }
+                updateChartMode = { updateChartMode(it as WorkoutChart) },
+                navController = navController
             )
         }
 

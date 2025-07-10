@@ -268,7 +268,8 @@ private fun InfoWorkoutScreenContent(
                         },
                         listChartData = listChartData,
                         chartMode = workoutChart,
-                        updateChartMode = { updateChartMode(it as WorkoutChart) }
+                        updateChartMode = { updateChartMode(it as WorkoutChart) },
+                        navController = navController
                     )
                 }
             }

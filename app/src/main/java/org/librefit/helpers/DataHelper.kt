@@ -91,7 +91,8 @@ class DataHelper @Inject constructor(
                                 exe.sets.filter { it.completed }.sumOf { it.reps }
                             }
                         }.toFloat(),
-                        xValue = it.workout.completed.format(shortFormatter)
+                        xValue = it.workout.completed.format(shortFormatter),
+                        workoutId = it.workout.id
                     )
                 }
             }

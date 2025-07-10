@@ -66,7 +66,7 @@ fun RequestPermissionScreen(
 ) {
     val viewModel: RequestPermissionScreenViewModel = hiltViewModel()
 
-    val requestPermissionAgain by viewModel.requestPermissionAgain.collectAsState(initial = true)
+    val requestPermissionAgain by viewModel.requestPermissionAgain.collectAsState()
 
     val notificationPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(

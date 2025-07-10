@@ -20,10 +20,8 @@
 package org.librefit.ui.screens.settings
 
 import android.annotation.SuppressLint
-import android.content.Context
 import android.content.Intent
 import android.os.Build
-import android.os.PowerManager
 import android.provider.Settings
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.clickable
@@ -84,27 +82,22 @@ fun SettingsScreen(
     val viewModel: SettingsScreenViewModel = hiltViewModel()
 
 
-    val context = LocalContext.current
-
-    val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-
-    viewModel.checkBatteryOptimization(pm, context.packageName)
-
-
     var selectedLanguage by remember {
         mutableStateOf(
             AppCompatDelegate.getApplicationLocales().toLanguageTags().substringBefore("-")
         )
     }
 
-    val selectedTheme by viewModel.themeMode.collectAsState(ThemeMode.SYSTEM)
+    val selectedTheme by viewModel.themeMode.collectAsState()
 
-    val keepWorkoutScreenOn by viewModel.keepScreenOn.collectAsState(initial = true)
+    val keepWorkoutScreenOn by viewModel.keepScreenOn.collectAsState()
 
-    val materialModeOn by viewModel.materialMode.collectAsState(initial = false)
+    val materialModeOn by viewModel.materialMode.collectAsState()
+
+    val isIgnoringBatteryOptimization by viewModel.isIgnoringBatteryOptimization.collectAsState()
 
 
-    var showPreferenceDialog = remember { mutableStateOf(false) }
+    val showPreferenceDialog = remember { mutableStateOf(false) }
 
 
 
@@ -141,7 +134,7 @@ fun SettingsScreen(
         showPreferenceDialog = showPreferenceDialog,
         selectedLanguage = selectedLanguage,
         keepWorkoutScreenOn = keepWorkoutScreenOn,
-        isIgnoringBatteryOptimization = viewModel.isIgnoringBatteryOptimization.value,
+        isIgnoringBatteryOptimization = isIgnoringBatteryOptimization,
         navController = navController,
         savePreference = viewModel::savePreference
     )
@@ -202,7 +195,17 @@ private fun SettingsScreenContent(
                                         index = index,
                                         count = ThemeMode.entries.size
                                     )
-                                ) { Text(stringResource(id = themeModeToId(mode))) }
+                                ) {
+                                    Text(
+                                        stringResource(
+                                            id = when (mode) {
+                                                ThemeMode.SYSTEM -> R.string.follow_system
+                                                ThemeMode.LIGHT -> R.string.theme_light
+                                                ThemeMode.DARK -> R.string.theme_dark
+                                            }
+                                        )
+                                    )
+                                }
                             }
 
                         }
@@ -383,15 +386,6 @@ private fun SettingsScreenContent(
 }
 
 
-private fun themeModeToId(themeMode: ThemeMode): Int {
-    val id = when (themeMode) {
-        ThemeMode.SYSTEM -> R.string.follow_system
-        ThemeMode.LIGHT -> R.string.theme_light
-        ThemeMode.DARK -> R.string.theme_dark
-    }
-    return id
-}
-
 private fun languageCodeToId(code: String): Int {
     val result = when (code) {
         "en" -> R.string.language_english_nt
@@ -405,7 +399,7 @@ private fun languageCodeToId(code: String): Int {
 @Preview
 @Composable
 fun SettingsScreenPreview() {
-    LibreFitTheme(false, true) {
+    LibreFitTheme(dynamicColor = false, darkTheme = true) {
         SettingsScreenContent(
             selectedTheme = ThemeMode.DARK,
             materialModeOn = false,

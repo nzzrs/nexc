@@ -81,7 +81,7 @@ fun HomeScreen(
     val viewModel: HomeScreenViewModel = hiltViewModel()
 
 
-    val requestPermissionAgain by viewModel.requestPermissionAgain.collectAsState(initial = true)
+    val requestPermissionAgain by viewModel.requestPermissionAgain.collectAsState()
 
     val notificationPermissionState = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         rememberPermissionState(
@@ -92,7 +92,7 @@ fun HomeScreen(
         null
     }
 
-    val routines by viewModel.routines.collectAsState(initial = listOf())
+    val routines by viewModel.routines.collectAsState()
 
     HomeScreenContent(
         innerPadding = innerPadding,

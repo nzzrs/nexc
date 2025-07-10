@@ -19,55 +19,74 @@
 
 package org.librefit.ui.screens.settings
 
+import android.content.Context
 import android.os.PowerManager
 import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.runtime.mutableStateOf
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.librefit.data.DataStoreManager
 import org.librefit.enums.Language
+import org.librefit.enums.ThemeMode
 import javax.inject.Inject
 
 @HiltViewModel
 class SettingsScreenViewModel @Inject constructor(
-    private val userPreferences: DataStoreManager
+    private val userPreferences: DataStoreManager,
+    @ApplicationContext context: Context
 ) : ViewModel() {
     val themeMode = userPreferences.themeMode
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = ThemeMode.SYSTEM
+        )
     val materialMode = userPreferences.materialMode
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = false
+        )
     val keepScreenOn = userPreferences.workoutScreenOn
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = true
+        )
 
     fun changeLanguage(language: Language) {
         val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(language.code)
         AppCompatDelegate.setApplicationLocales(appLocale)
     }
 
-    var isIgnoringBatteryOptimization = mutableStateOf(false)
 
-    /**
-     * A method that checks every second the state of [android.Manifest.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS].
-     * using a flow. It uses the method [PowerManager.isIgnoringBatteryOptimizations].
-     * Any approach better than this one are welcome.
-     */
-    fun checkBatteryOptimization(pm: PowerManager, packageName: String) {
-        isIgnoringBatteryOptimization.value = pm.isIgnoringBatteryOptimizations(packageName)
-        viewModelScope.launch {
-            flow {
-                while (true) {
-                    emit(pm.isIgnoringBatteryOptimizations(packageName))
-                    delay(1000)
-                }
-            }.collect { isIgnoring ->
-                if (isIgnoringBatteryOptimization.value != isIgnoring) {
-                    isIgnoringBatteryOptimization.value = isIgnoring
-                }
+    val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+
+    val isIgnoringBatteryOptimization: StateFlow<Boolean> =
+        flow {
+            while (true) {
+                emit(pm.isIgnoringBatteryOptimizations(context.packageName))
+                delay(500)
             }
         }
-    }
+            .distinctUntilChanged()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = pm.isIgnoringBatteryOptimizations(context.packageName)
+            )
+
+
+
 
     /**
      * Pass the corresponding [key] value to save:

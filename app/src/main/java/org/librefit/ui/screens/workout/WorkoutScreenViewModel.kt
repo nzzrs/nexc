@@ -31,6 +31,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.data.DataStoreManager
@@ -219,7 +221,7 @@ class WorkoutScreenViewModel @Inject constructor(
             if (exercisesWithSets.sumOf { it.sets.size } != 0) exercisesWithSets.sumOf { it.sets.size }
         else 1
 
-        return exercisesWithSets.sumOf { it.sets.filter { it.completed == true }.size }
+        return exercisesWithSets.sumOf { ex -> ex.sets.filter { it.completed }.size }
             .toFloat() / totalSets
     }
 
@@ -293,4 +295,9 @@ class WorkoutScreenViewModel @Inject constructor(
 
 
     val keepScreenOn = userPreferences.workoutScreenOn
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = true
+        )
 }

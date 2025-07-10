@@ -20,7 +20,11 @@
 package org.librefit.ui.screens.home
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.stateIn
 import org.librefit.data.DataStoreManager
 import org.librefit.db.repository.WorkoutRepository
 import javax.inject.Inject
@@ -30,8 +34,18 @@ class HomeScreenViewModel @Inject constructor(
     userPreferences: DataStoreManager,
     workoutRepository: WorkoutRepository
 ) : ViewModel() {
-    val requestPermissionAgain = userPreferences.requestPermissionsAgain
+    val requestPermissionAgain: StateFlow<Boolean> = userPreferences.requestPermissionsAgain
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = true
+        )
 
-    var routines = workoutRepository.routines
+    val routines = workoutRepository.routines
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5_000),
+            initialValue = emptyList()
+        )
 
 }

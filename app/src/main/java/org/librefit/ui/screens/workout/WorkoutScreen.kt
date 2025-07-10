@@ -104,7 +104,7 @@ fun WorkoutScreen(
     val timeElapsed by viewModel.timeElapsed.collectAsState()
 
 
-    val keepWorkoutScreenOn by viewModel.keepScreenOn.collectAsState(initial = true)
+    val keepWorkoutScreenOn by viewModel.keepScreenOn.collectAsState()
 
     //It keeps the screen turned on
     if (keepWorkoutScreenOn) {
@@ -159,7 +159,7 @@ fun WorkoutScreen(
     /**
      * It holds [ExerciseDC] for [ExerciseDetailModalBottomSheet]
      */
-    var selectedExercise by remember { mutableStateOf<ExerciseDC>(ExerciseDC()) }
+    var selectedExercise by remember { mutableStateOf(ExerciseDC()) }
 
     if (isExerciseDetailsOpen) {
         ExerciseDetailModalBottomSheet(exercise = selectedExercise) {

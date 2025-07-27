@@ -35,8 +35,8 @@ import kotlin.random.Random
  *
  * @property id The unique identifier for the exercise. It is auto-generated and serves as the primary key.
  * It is used as key identifier in lazy columns too.
- * @property exerciseId It stores [org.librefit.data.ExerciseDC.id] so [org.librefit.ui.screens.shared.SharedViewModel]
- * is able to retrieve [org.librefit.data.ExerciseDC] and provide it to [org.librefit.db.relations.ExerciseWithSets]
+ * @property exerciseId It stores [org.librefit.data.ExerciseDC.id] in order to be able to retrieve
+ * [org.librefit.data.ExerciseDC] and provide it to [org.librefit.db.relations.ExerciseWithSets]
  * @property notes A user note editable by the user in [org.librefit.ui.screens.workout.WorkoutScreen]
  * and [org.librefit.ui.screens.editWorkout.EditWorkoutScreen]
  * @property setMode The mode of the exercise set editable by the user in

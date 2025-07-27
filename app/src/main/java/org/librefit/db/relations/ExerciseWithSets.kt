@@ -32,7 +32,7 @@ import org.librefit.db.entity.Set
  *
  * This class is used by Room to retrieve all the data associated with an exercise and
  * the sets associated with it. The actual exercise data is stored in [ExerciseDC] which is provided
- * by [org.librefit.ui.screens.shared.SharedViewModel] based on [Exercise.exerciseId]
+ * by [org.librefit.di.ExerciseDatasetModule] based on [Exercise.exerciseId]
  *
  * @property exercise It contains the user related data associated with this [Exercise].
  * @property sets The list of [Set] associated with the [exercise] containing all the user related data.

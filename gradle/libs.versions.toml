@@ -4,7 +4,7 @@ datastore = "1.1.7"
 kotlin = "2.2.0"
 junit = "4.13.2"
 espressoCore = "3.6.1"
-composeBom = "2025.06.01"
+composeBom = "2025.07.00"
 roomVersion = "2.7.2"
 appcompat = "1.7.1"
 ksp = "2.2.0-2.0.2"
@@ -12,7 +12,7 @@ accompanistPermissions = "0.37.3"
 lottieCompose = "6.6.7"
 coreSplashscreen = "1.0.1"
 composeM3 = "2.1.3"
-hiltAndroid = "2.56.2"
+hiltAndroid = "2.57"
 hiltNavigationCompose = "1.2.0"
 moshi = "1.15.2"
 moshiKotlinCodegen = "1.15.2"
@@ -28,7 +28,7 @@ androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version = "1.2.1" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
-androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version = "2.9.1" }
+androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version = "2.9.2" }
 androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version = "1.10.1" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
@@ -38,7 +38,7 @@ androidx-ui-tooling-preview = { group = "androidx.compose.ui", name = "ui-toolin
 androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-manifest" }
 androidx-ui-test-junit4 = { group = "androidx.compose.ui", name = "ui-test-junit4" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
-navigation-compose = { module = "androidx.navigation:navigation-compose", version = "2.9.1" }
+navigation-compose = { module = "androidx.navigation:navigation-compose", version = "2.9.2" }
 kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version = "1.9.0" }
 androidx-datastore-core-android = { group = "androidx.datastore", name = "datastore-core-android", version.ref = "datastore" }
 androidx-appcompat = { group = "androidx.appcompat", name = "appcompat", version.ref = "appcompat" }

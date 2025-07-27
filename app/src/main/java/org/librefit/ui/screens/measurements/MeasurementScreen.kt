@@ -43,11 +43,8 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableLongState
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -85,6 +82,7 @@ import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.charts.LibreFitCartesianChart
 import org.librefit.ui.components.dialogs.ConfirmDialog
 import org.librefit.ui.theme.LibreFitTheme
+import org.librefit.util.Formatter
 import org.librefit.util.Formatter.formatDetails
 import java.text.DecimalFormat
 import java.time.Instant
@@ -104,36 +102,49 @@ fun MeasurementScreen(
 ) {
     val viewModel: MeasurementScreenViewModel = hiltViewModel()
 
-    LaunchedEffect(Unit) {
-        viewModel.getMeasurementsFromDB()
-    }
+    val measurements by viewModel.measurements.collectAsState()
 
+    val listChartData by viewModel.listChartData.collectAsState()
 
-    val date = rememberSaveable { mutableStateOf(LocalDateTime.now()) }
+    val measurementChart by viewModel.measurementChart.collectAsState()
+
+    val bodyweight by viewModel.bodyWeight.collectAsState()
+
+    val leanMass by viewModel.leanMass.collectAsState()
+
+    val fatMass by viewModel.fatMass.collectAsState()
+
+    val notes by viewModel.notes.collectAsState()
+
+    val measurementCardState by viewModel.measurementCardState.collectAsState()
+
+    val date by viewModel.date.collectAsState()
 
     val datePickerState = rememberDatePickerState()
-    val showDatePickerDialog = remember { mutableStateOf(false) }
+    var showDatePickerDialog by remember { mutableStateOf(false) }
 
-    if (showDatePickerDialog.value == true) {
+    if (showDatePickerDialog) {
         DatePickerDialog(
-            onDismissRequest = { showDatePickerDialog.value = false },
+            onDismissRequest = { showDatePickerDialog = false },
             confirmButton = {
                 TextButton(
                     onClick = {
-                        date.value = LocalDateTime.ofInstant(
-                            Instant.ofEpochMilli(
-                                datePickerState.selectedDateMillis ?: System.currentTimeMillis()
-                            ),
-                            ZoneId.systemDefault()
+                        viewModel.updateDate(
+                            newValue = LocalDateTime.ofInstant(
+                                Instant.ofEpochMilli(
+                                    datePickerState.selectedDateMillis ?: System.currentTimeMillis()
+                                ),
+                                ZoneId.systemDefault()
+                            )
                         )
-                        showDatePickerDialog.value = false
+                        showDatePickerDialog = false
                     }
                 ) {
                     Text(stringResource(R.string.ok_dialog))
                 }
             },
             dismissButton = {
-                TextButton(onClick = { showDatePickerDialog.value = false }) {
+                TextButton(onClick = { showDatePickerDialog = false }) {
                     Text(stringResource(R.string.cancel_dialog))
                 }
             }
@@ -142,40 +153,48 @@ fun MeasurementScreen(
         }
     }
 
-    val measurementCardState = rememberSaveable { mutableStateOf(MeasurementCardState.NEW) }
+    var showConfirmDialog by remember { mutableStateOf(false) }
 
-    val idMeasurement = rememberSaveable { mutableLongStateOf(0L) }
+    var idMeasurementToDelete by remember { mutableLongStateOf(0L) }
 
-    val showConfirmDialog = remember { mutableStateOf(false) }
-
-    if (showConfirmDialog.value) {
+    if (showConfirmDialog) {
         ConfirmDialog(
             title = stringResource(R.string.delete_measurement_question),
             text = stringResource(R.string.delete_measurement_text),
             confirmText = stringResource(R.string.delete),
             onConfirm = {
-                viewModel.deleteMeasurementById(idMeasurement.longValue)
-                idMeasurement.longValue = 0L
-                showConfirmDialog.value = false
-                measurementCardState.value = MeasurementCardState.NEW
+                viewModel.deleteMeasurementById(idMeasurementToDelete)
+                showConfirmDialog = false
             },
             onDismiss = {
-                showConfirmDialog.value = false
+                showConfirmDialog = false
             }
         )
     }
 
     MeasurementScreenContent(
-        measurements = viewModel.measurements,
-        listChartData = viewModel.getListChartData(),
-        idMeasurement = idMeasurement,
+        measurements = measurements,
+        listChartData = listChartData,
         date = date,
-        showDatePickerDialog = showDatePickerDialog,
-        showConfirmDialog = showConfirmDialog,
         measurementCardState = measurementCardState,
+        bodyweight = bodyweight,
+        fatMass = fatMass,
+        leanMass = leanMass,
+        notes = notes,
+        measurementChart = measurementChart,
+        updateBodyweight = viewModel::updateBodyweight,
+        updateFatMass = viewModel::updateFatMass,
+        updateLeanMass = viewModel::updateLeanMass,
+        updateNotes = viewModel::updateNotes,
+        showDatePickerDialog = { showDatePickerDialog = true },
+        showConfirmDialog = {
+            showConfirmDialog = true
+            idMeasurementToDelete = it
+        },
+        updateIdMeasurement = viewModel::updateIdMeasurement,
         upsertMeasurement = viewModel::upsertMeasurementToDB,
         updateChartMode = viewModel::updateMeasurementChart,
-        measurementChart = viewModel.getMeasurementChart(),
+        updateMeasurementCardState = viewModel::updateMeasurementCardState,
         navigateBack = navigateBack
     )
 }
@@ -185,42 +204,28 @@ fun MeasurementScreen(
 private fun MeasurementScreenContent(
     measurements: List<Measurement>,
     listChartData: List<ChartData>,
-    idMeasurement: MutableLongState,
-    date: MutableState<LocalDateTime>,
+    bodyweight: Float,
+    fatMass: Float,
+    leanMass: Float,
+    notes: String,
+    date: LocalDateTime,
     measurementChart: MeasurementChart,
-    showDatePickerDialog: MutableState<Boolean>,
-    showConfirmDialog: MutableState<Boolean>,
-    measurementCardState: MutableState<MeasurementCardState>,
-    upsertMeasurement: (Measurement) -> Unit,
+    measurementCardState: MeasurementCardState,
+    updateBodyweight: (String) -> Unit,
+    updateLeanMass: (String) -> Unit,
+    updateFatMass: (String) -> Unit,
+    updateNotes: (String) -> Unit,
+    showDatePickerDialog: () -> Unit,
+    showConfirmDialog: (Long) -> Unit,
+    updateIdMeasurement: (Long) -> Unit,
+    upsertMeasurement: () -> Unit,
+    updateMeasurementCardState: (MeasurementCardState) -> Unit,
     updateChartMode: (MeasurementChart) -> Unit,
     navigateBack: () -> Unit,
 ) {
-    val fullDate: DateTimeFormatter? = DateTimeFormatter
-        .ofLocalizedDate(FormatStyle.FULL)
-        .withLocale(Locale.getDefault())
-
-    val shortDate: DateTimeFormatter? = DateTimeFormatter
-        .ofLocalizedDate(FormatStyle.SHORT)
-        .withLocale(Locale.getDefault())
-
-
-    var bodyWeight by rememberSaveable { mutableStateOf("") }
-    var fatMass by rememberSaveable { mutableStateOf("") }
-    var leanMass by rememberSaveable { mutableStateOf("") }
-    var notes by rememberSaveable { mutableStateOf("") }
-
-    var trigger by remember { mutableIntStateOf(0) }
-
-    LaunchedEffect(measurementCardState.value, trigger) {
-        if (measurementCardState.value == MeasurementCardState.NEW) {
-            idMeasurement.longValue = 0L
-            bodyWeight = ""
-            fatMass = ""
-            leanMass = ""
-            notes = ""
-            date.value = LocalDateTime.now()
-        }
-    }
+    val bodyweight = bodyweight.toString()
+    val fatMass = fatMass.toString()
+    val leanMass = leanMass.toString()
 
 
     val focusManager = LocalFocusManager.current
@@ -265,7 +270,7 @@ private fun MeasurementScreenContent(
                         ) {
                             Text(
                                 text = stringResource(
-                                    if (measurementCardState.value == MeasurementCardState.NEW)
+                                    if (measurementCardState == MeasurementCardState.NEW)
                                         R.string.new_measurement else R.string.edit_measurement
                                 ),
                                 style = MaterialTheme.typography.headlineSmall
@@ -284,17 +289,17 @@ private fun MeasurementScreenContent(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .focusRequester(focusRequester),
-                            value = bodyWeight,
+                            value = bodyweight,
                             label = { Text(text = stringResource(R.string.body_weight) + " *") },
                             suffix = { Text(stringResource(R.string.kg)) },
-                            isError = bodyWeight.isBlank(),
+                            isError = bodyweight.isBlank() || bodyweight.toFloatOrNull() == 0f,
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(
                                 keyboardType = KeyboardType.Number,
                                 showKeyboardOnFocus = true
                             ),
                             onValueChange = {
-                                bodyWeight = processFloatValue(it, 300f)
+                                updateBodyweight(processFloatValue(it, 300f))
                             }
                         )
                         AnimatedVisibility(visible = isExpanded) {
@@ -305,7 +310,7 @@ private fun MeasurementScreenContent(
                                     value = fatMass,
                                     trailingIcon = {
                                         IconButton(
-                                            onClick = { fatMass = "" }
+                                            onClick = { updateFatMass("") }
                                         ) {
                                             Icon(
                                                 ImageVector.vectorResource(R.drawable.ic_cancel),
@@ -323,7 +328,7 @@ private fun MeasurementScreenContent(
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     onValueChange = {
-                                        fatMass = processFloatValue(it, 100f)
+                                        updateFatMass(processFloatValue(it, 100f))
                                     }
                                 )
 
@@ -332,7 +337,7 @@ private fun MeasurementScreenContent(
                                     value = leanMass,
                                     trailingIcon = {
                                         IconButton(
-                                            onClick = { leanMass = "" }
+                                            onClick = { updateLeanMass("") }
                                         ) {
                                             Icon(
                                                 ImageVector.vectorResource(R.drawable.ic_cancel),
@@ -345,20 +350,18 @@ private fun MeasurementScreenContent(
                                     singleLine = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     onValueChange = {
-                                        leanMass = processFloatValue(it, 100f)
+                                        updateLeanMass(processFloatValue(it, 100f))
                                     }
                                 )
                                 OutlinedTextField(
                                     modifier = Modifier.fillMaxWidth(),
-                                    value = date.value.format(shortDate),
+                                    value = Formatter.getShortDateFromLocalDate(date),
                                     onValueChange = {},
                                     label = { Text(stringResource(R.string.label_when)) },
                                     readOnly = true,
                                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                                     trailingIcon = {
-                                        IconButton(onClick = {
-                                            showDatePickerDialog.value = true
-                                        }) {
+                                        IconButton(onClick = showDatePickerDialog) {
                                             Icon(
                                                 imageVector = ImageVector.vectorResource(R.drawable.ic_date_range),
                                                 contentDescription = stringResource(R.string.select_date)
@@ -371,7 +374,7 @@ private fun MeasurementScreenContent(
                                     modifier = Modifier.fillMaxWidth(),
                                     value = notes,
                                     label = { Text(stringResource(R.string.notes)) },
-                                    onValueChange = { notes = it }
+                                    onValueChange = updateNotes
                                 )
                             }
                         }
@@ -380,38 +383,25 @@ private fun MeasurementScreenContent(
                             LibreFitButton(
                                 modifier = Modifier.weight(1f),
                                 text = stringResource(
-                                    if (measurementCardState.value == MeasurementCardState.NEW)
+                                    if (measurementCardState == MeasurementCardState.NEW)
                                         R.string.add else R.string.save
                                 ),
                                 icon = ImageVector.vectorResource(
-                                    if (measurementCardState.value == MeasurementCardState.NEW)
+                                    if (measurementCardState == MeasurementCardState.NEW)
                                         R.drawable.ic_add else R.drawable.ic_edit
                                 ),
-                                enabled = bodyWeight.isNotBlank()
+                                enabled = bodyweight.isNotBlank() && bodyweight.toFloatOrNull() != 0f
                             ) {
-                                upsertMeasurement(
-                                    Measurement(
-                                        id = idMeasurement.longValue,
-                                        bodyWeight = bodyWeight.toFloat(),
-                                        bodyFatPercentage = fatMass.ifBlank { "0" }.toFloat(),
-                                        muscleMassPercentage = leanMass.ifBlank { "0" }
-                                            .toFloat(),
-                                        date = date.value,
-                                        notes = notes
-                                    )
-                                )
-
-                                measurementCardState.value = MeasurementCardState.NEW
+                                upsertMeasurement()
 
                                 focusManager.clearFocus()
-
-                                trigger++
                             }
-                            AnimatedVisibility(measurementCardState.value == MeasurementCardState.EDIT) {
+                            AnimatedVisibility(measurementCardState == MeasurementCardState.EDIT) {
                                 IconButton(
                                     modifier = Modifier.weight(1f),
                                     onClick = {
-                                        measurementCardState.value = MeasurementCardState.NEW
+                                        updateIdMeasurement(0)
+                                        updateMeasurementCardState(MeasurementCardState.NEW)
                                         focusManager.clearFocus()
                                     }
                                 ) {
@@ -443,7 +433,7 @@ private fun MeasurementScreenContent(
                 }
             }
 
-            items(measurements, key = { it.id }) {
+            items(measurements, key = { it.id }) { m ->
                 ElevatedCard(Modifier.animateItem()) {
                     Column(
                         modifier = Modifier
@@ -460,12 +450,12 @@ private fun MeasurementScreenContent(
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Text(
-                                    text = it.date.format(fullDate)
+                                    text = Formatter.getFullDateFromLocalDate(m.date)
                                         .replaceFirstChar { it.uppercase() },
                                     style = MaterialTheme.typography.labelMedium
                                 )
                                 Text(
-                                    text = "${it.bodyWeight} " + stringResource(R.string.kg),
+                                    text = "${m.bodyWeight} " + stringResource(R.string.kg),
                                     style = MaterialTheme.typography.displaySmall,
                                     color = MaterialTheme.colorScheme.secondary,
                                     fontWeight = FontWeight.Bold
@@ -474,16 +464,8 @@ private fun MeasurementScreenContent(
                             Row {
                                 IconButton(
                                     onClick = {
-                                        idMeasurement.longValue = it.id
-                                        bodyWeight = it.bodyWeight.toString()
-                                        leanMass = it.muscleMassPercentage
-                                            .toString().takeIf { it != "0.0" } ?: ""
-                                        fatMass = it.bodyFatPercentage
-                                            .toString().takeIf { it != "0.0" } ?: ""
-                                        notes = it.notes
-                                        date.value = it.date
-                                        measurementCardState.value =
-                                            MeasurementCardState.EDIT
+                                        updateIdMeasurement(m.id)
+                                        updateMeasurementCardState(MeasurementCardState.EDIT)
 
 
                                         coroutineScope.launch {
@@ -499,8 +481,7 @@ private fun MeasurementScreenContent(
                                 }
                                 IconButton(
                                     onClick = {
-                                        showConfirmDialog.value = true
-                                        idMeasurement.longValue = it.id
+                                        showConfirmDialog(m.id)
                                     }
                                 ) {
                                     Icon(
@@ -511,31 +492,31 @@ private fun MeasurementScreenContent(
                             }
                         }
 
-                        if (it.muscleMassPercentage != 0f || it.bodyFatPercentage != 0f) {
+                        if (m.muscleMassPercentage != 0f || m.bodyFatPercentage != 0f) {
                             HorizontalDivider()
                         }
 
-                        if (it.muscleMassPercentage != 0f) {
+                        if (m.muscleMassPercentage != 0f) {
                             Text(
                                 formatDetails(
                                     stringResource(R.string.lean_mass),
-                                    it.muscleMassPercentage.toString() + " %"
+                                    m.muscleMassPercentage.toString() + " %"
                                 )
                             )
                         }
-                        if (it.bodyFatPercentage != 0f) {
+                        if (m.bodyFatPercentage != 0f) {
                             Text(
                                 formatDetails(
                                     stringResource(R.string.fat_mass),
-                                    it.bodyFatPercentage.toString() + " %"
+                                    m.bodyFatPercentage.toString() + " %"
                                 )
                             )
                         }
 
-                        if (it.notes != "") {
+                        if (m.notes != "") {
                             HorizontalDivider()
                             Text(
-                                formatDetails(stringResource(R.string.notes), it.notes)
+                                formatDetails(stringResource(R.string.notes), m.notes)
                             )
                         }
                     }
@@ -613,7 +594,9 @@ private fun MeasurementScreenPreview() {
 
     val measurementChart = MeasurementChart.entries.random()
 
-    LibreFitTheme(false, true) {
+    val idMeasurement = remember { mutableLongStateOf(0L) }
+
+    LibreFitTheme(dynamicColor = false, darkTheme = true) {
         MeasurementScreenContent(
             measurements = measurements,
             listChartData = measurements.map {
@@ -626,14 +609,23 @@ private fun MeasurementScreenPreview() {
                     xValue = it.date.format(shortDate)
                 )
             },
-            idMeasurement = remember { mutableLongStateOf(0L) },
-            date = remember { mutableStateOf(LocalDateTime.now()) },
+            date = LocalDateTime.now(),
             measurementChart = measurementChart,
-            showDatePickerDialog = remember { mutableStateOf(false) },
-            showConfirmDialog = remember { mutableStateOf(false) },
-            measurementCardState = remember { mutableStateOf(MeasurementCardState.NEW) },
+            showDatePickerDialog = {},
+            showConfirmDialog = {},
+            measurementCardState = MeasurementCardState.EDIT,
+            updateIdMeasurement = { idMeasurement.longValue = it },
             upsertMeasurement = {},
             updateChartMode = {},
+            bodyweight = 72f,
+            fatMass = 0.12f,
+            leanMass = 0.22f,
+            notes = "This is a note",
+            updateBodyweight = {},
+            updateLeanMass = {},
+            updateFatMass = {},
+            updateNotes = {},
+            updateMeasurementCardState = {},
             navigateBack = {}
         )
     }

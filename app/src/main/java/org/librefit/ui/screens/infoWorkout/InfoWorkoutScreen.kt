@@ -19,12 +19,14 @@
 
 package org.librefit.ui.screens.infoWorkout
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -40,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -59,6 +62,7 @@ import org.librefit.enums.chart.WorkoutChart
 import org.librefit.nav.Route
 import org.librefit.ui.components.ExerciseCardSmall
 import org.librefit.ui.components.HeadlineText
+import org.librefit.ui.components.LibreFitButton
 import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.bottomMargin
@@ -282,44 +286,60 @@ private fun InfoWorkoutScreenContent(
             }
 
 
-            if (routine.title != "" && !workout.routine) {
+            if (routine.id != 0L && !workout.routine) {
                 item {
                     HeadlineText(stringResource(R.string.routine))
                 }
 
                 item {
-                    ElevatedCard {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(15.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column(
-                                modifier = Modifier.weight(1f),
-                                verticalArrangement = Arrangement.spacedBy(10.dp)
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.title) + " : " + routine.title,
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    stringResource(R.string.creation_date) + " : " +
-                                            routine.created.format(
-                                                DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
-                                                    .withLocale(
-                                                        Locale.getDefault()
-                                                    )
-                                            )
-                                )
+                    ElevatedCard(
+                        modifier = Modifier
+                            .clip(CardDefaults.elevatedShape)
+                            .clickable {
+                                navController.navigate(Route.InfoWorkoutScreen(routine.id))
                             }
-                            IconButton(
-                                onClick = { showUnlikeRoutineDialog = true }
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(15.dp),
+                            verticalArrangement = Arrangement.spacedBy(20.dp)
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically
                             ) {
-                                Icon(
-                                    imageVector = ImageVector.vectorResource(R.drawable.ic_unlink),
-                                    contentDescription = stringResource(R.string.delete)
-                                )
+                                Column(
+                                    modifier = Modifier.weight(1f),
+                                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.title) + " : " + routine.title,
+                                        style = MaterialTheme.typography.titleMedium
+                                    )
+                                    Text(
+                                        stringResource(R.string.creation_date) + " : " +
+                                                routine.created.format(
+                                                    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
+                                                        .withLocale(
+                                                            Locale.getDefault()
+                                                        )
+                                                )
+                                    )
+                                }
+                                IconButton(
+                                    onClick = { showUnlikeRoutineDialog = true }
+                                ) {
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(R.drawable.ic_unlink),
+                                        contentDescription = stringResource(R.string.delete)
+                                    )
+                                }
+                            }
+
+                            LibreFitButton(
+                                elevated = false,
+                                text = stringResource(R.string.open) + ": ${routine.title}",
+                                icon = ImageVector.vectorResource(R.drawable.ic_open_new)
+                            ) {
+                                navController.navigate(Route.InfoWorkoutScreen(routine.id))
                             }
                         }
                     }

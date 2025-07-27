@@ -86,7 +86,7 @@ class NotificationHelper(context: Context) {
         workoutNotificationBuilder
             .setSmallIcon(R.drawable.ic_logo_monochrome)
             .setCategory(NotificationCompat.CATEGORY_WORKOUT)
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_LOW)
             .setContentIntent(contentIntent)
             .setAutoCancel(false)
             .setOngoing(true)
@@ -109,7 +109,7 @@ class NotificationHelper(context: Context) {
         val workoutChannel = NotificationChannel(
             WORKOUT_CHANNEL_ID,
             appContext.getString(R.string.workout_info_channel_title),
-            NotificationManager.IMPORTANCE_DEFAULT
+            NotificationManager.IMPORTANCE_LOW
         ).apply {
             description = appContext.getString(R.string.workout_info_channel_desc)
         }

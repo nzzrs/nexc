@@ -18,6 +18,9 @@ moshi = "1.15.2"
 moshiKotlinCodegen = "1.15.2"
 aboutLibraries = "12.2.4"
 aboutlibrariesComposeM3 = "12.2.4"
+kotlinxCoroutinesTest = "1.10.2"
+truth = "1.7.0-rc01"
+turbine = "1.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version = "1.16.0" }
@@ -52,6 +55,9 @@ androidx-hilt-navigation-compose = { group = "androidx.hilt", name = "hilt-navig
 moshi = { group = "com.squareup.moshi", name = "moshi", version.ref = "moshi" }
 moshi-kotlin-codegen = { group = "com.squareup.moshi", name = "moshi-kotlin-codegen", version.ref = "moshiKotlinCodegen" }
 aboutlibraries-compose-m3 = { group = "com.mikepenz", name = "aboutlibraries-compose-m3", version.ref = "aboutlibrariesComposeM3" }
+kotlinx-coroutines-test = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-test", version.ref = "kotlinxCoroutinesTest" }
+androidx-truth = { group = "androidx.test.ext", name = "truth", version.ref = "truth" }
+turbine = { group = "app.cash.turbine", name = "turbine", version.ref = "turbine" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

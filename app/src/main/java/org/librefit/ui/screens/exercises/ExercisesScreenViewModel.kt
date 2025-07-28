@@ -24,7 +24,6 @@ import androidx.compose.ui.util.fastMap
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -33,7 +32,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import org.librefit.data.ExerciseDC
 import org.librefit.enums.exercise.FilterValue
@@ -47,6 +45,10 @@ class ExercisesScreenViewModel @Inject constructor(
     private val _query = MutableStateFlow("")
     val query = _query.asStateFlow()
 
+    fun updateQuery(newQuery: String) {
+        _query.value = newQuery
+    }
+
     @OptIn(FlowPreview::class)
     val debouncedQuery: StateFlow<String> = _query
         .debounce(300L)
@@ -57,13 +59,16 @@ class ExercisesScreenViewModel @Inject constructor(
             initialValue = ""
         )
 
-    fun updateQuery(newQuery: String) {
-        _query.value = newQuery
-    }
 
 
     private var _filterValue = MutableStateFlow(FilterValue())
     var filterValue = _filterValue.asStateFlow()
+
+    fun updateFilter(newFilterValue: FilterValue) {
+        _filterValue.value = newFilterValue
+    }
+
+
 
     val filteredExerciseList: StateFlow<List<ExerciseDC>> =
         combine(
@@ -76,7 +81,6 @@ class ExercisesScreenViewModel @Inject constructor(
                 .sortedByDescending { it.second }
                 .fastMap { it.first }
         }
-            .flowOn(Dispatchers.IO)
             .distinctUntilChanged()
             .stateIn(
                 scope = viewModelScope,
@@ -91,10 +95,6 @@ class ExercisesScreenViewModel @Inject constructor(
     private fun fuzzySearch(name: String, query: String): Int {
         if (query == "") return 100
         return FuzzySearch.partialRatio(name.lowercase(), query.lowercase().trim())
-    }
-
-    fun updateFilter(newFilterValue: FilterValue) {
-        _filterValue.value = newFilterValue
     }
 
     private fun filterExercise(exercise: ExerciseDC): Boolean = with(filterValue.value) {

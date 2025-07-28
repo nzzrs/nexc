@@ -44,11 +44,16 @@ jobs:
         run: ./gradlew assembleDebug
 
 
-      - name: Upload artifacts
+      - name: Upload Debug APK
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: build-artifacts
-          path: |
-            app/build/outputs/apk/debug/app-debug.apk
-            app/build/reports/
+          name: debug-apk
+          path: app/build/outputs/apk/debug/app-debug.apk
+
+      - name: Upload Build Reports
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: build-reports
+          path: app/build/reports/

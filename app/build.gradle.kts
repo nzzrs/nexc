@@ -18,6 +18,7 @@
  */
 
 import org.gradle.api.JavaVersion.VERSION_17
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.android.application)
@@ -76,7 +77,7 @@ android {
 
 kotlin {
     compilerOptions {
-        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 
@@ -92,20 +93,28 @@ dependencies {
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.appcompat)
+    implementation(libs.kotlinx.serialization.json)
+
+    // Unit test
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
     testImplementation(libs.androidx.truth)
     testImplementation(libs.turbine)
+    testImplementation(libs.mockk.android)
+    testImplementation(libs.mockk.agent)
+
+    // Instrumented test
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
+
+
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
 
     // Navigation
     implementation(libs.navigation.compose)
-    implementation(libs.kotlinx.serialization.json)
 
     // Room
     implementation(libs.androidx.room.runtime)

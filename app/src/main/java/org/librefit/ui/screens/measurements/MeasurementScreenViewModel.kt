@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.librefit.data.ChartData
@@ -41,7 +40,6 @@ import org.librefit.enums.chart.MeasurementChart
 import org.librefit.util.Formatter
 import java.time.LocalDateTime
 import javax.inject.Inject
-import kotlin.random.Random
 
 @HiltViewModel
 class MeasurementScreenViewModel @Inject constructor(
@@ -105,27 +103,8 @@ class MeasurementScreenViewModel @Inject constructor(
     }
 
 
-    private val currentMeasurement: StateFlow<Measurement> = idMeasurement
-        .map { id -> measurements.value.find { it.id == id } ?: Measurement() }
-        .distinctUntilChanged()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = Measurement() // Start with null until the first ID is processed
-        )
-
-
     private val _bodyweight = MutableStateFlow(0f)
-    val bodyWeight: StateFlow<Float> =
-        combine(_bodyweight, currentMeasurement) { b, m ->
-            if (bodyWeight.value != b) b else m.bodyWeight
-        }
-            .distinctUntilChanged()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = 0f
-            )
+    val bodyWeight = _bodyweight.asStateFlow()
 
     fun updateBodyweight(newValue: String) {
         _bodyweight.value = newValue.ifBlank { "0" }.toFloat()
@@ -133,16 +112,7 @@ class MeasurementScreenViewModel @Inject constructor(
 
 
     private val _fatMass = MutableStateFlow(0f)
-    val fatMass: StateFlow<Float> =
-        combine(_fatMass, currentMeasurement) { f, m ->
-            if (fatMass.value != f) f else m.bodyFatPercentage
-        }
-            .distinctUntilChanged()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = 0f
-            )
+    val fatMass = _fatMass.asStateFlow()
 
     fun updateFatMass(newValue: String) {
         _fatMass.value = newValue.ifBlank { "0" }.toFloat()
@@ -150,16 +120,7 @@ class MeasurementScreenViewModel @Inject constructor(
 
 
     private val _leanMass = MutableStateFlow(0f)
-    val leanMass: StateFlow<Float> =
-        combine(_leanMass, currentMeasurement) { l, m ->
-            if (leanMass.value != l) l else m.muscleMassPercentage
-        }
-            .distinctUntilChanged()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = 0f
-            )
+    val leanMass = _leanMass.asStateFlow()
 
     fun updateLeanMass(newValue: String) {
         _leanMass.value = newValue.ifBlank { "0" }.toFloat()
@@ -167,16 +128,7 @@ class MeasurementScreenViewModel @Inject constructor(
 
 
     private val _notes = MutableStateFlow("")
-    val notes: StateFlow<String> =
-        combine(_notes, currentMeasurement) { n, m ->
-            if (notes.value != n) n else m.notes
-        }
-            .distinctUntilChanged()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = ""
-            )
+    val notes = _notes.asStateFlow()
 
     fun updateNotes(newValue: String) {
         _notes.value = newValue
@@ -184,16 +136,7 @@ class MeasurementScreenViewModel @Inject constructor(
 
 
     private val _date = MutableStateFlow(LocalDateTime.now())
-    val date: StateFlow<LocalDateTime> =
-        combine(_date, currentMeasurement) { d, m ->
-            if (date.value != d) d else m.date
-        }
-            .distinctUntilChanged()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = LocalDateTime.now()
-            )
+    val date = _date.asStateFlow()
 
     fun updateDate(newValue: LocalDateTime) {
         _date.value = newValue
@@ -205,6 +148,33 @@ class MeasurementScreenViewModel @Inject constructor(
 
     fun updateMeasurementCardState(measurementCardState: MeasurementCardState) {
         _measurementCardState.value = measurementCardState
+    }
+
+
+    private val currentMeasurement: StateFlow<Measurement> =
+        combine(idMeasurement, measurements, measurementCardState) { id, m, mcs ->
+            if (mcs == MeasurementCardState.EDIT) {
+                m.find { it.id == id } ?: Measurement()
+            } else Measurement()
+        }
+            .distinctUntilChanged()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = Measurement() // Start with null until the first ID is processed
+            )
+
+    init {
+        viewModelScope.launch {
+            // A new current measurement is emitted when idMeasurement changes and MeasurementCardState is EDIT
+            currentMeasurement.collect { measurement ->
+                _notes.value = measurement.notes
+                _bodyweight.value = measurement.bodyWeight
+                _leanMass.value = measurement.muscleMassPercentage
+                _fatMass.value = measurement.bodyFatPercentage
+                _date.value = measurement.date
+            }
+        }
     }
 
 
@@ -221,7 +191,6 @@ class MeasurementScreenViewModel @Inject constructor(
                     date = date.value
                 )
             )
-            _idMeasurement.value = Random.nextLong()
 
             _measurementCardState.value = MeasurementCardState.NEW
         }
@@ -230,8 +199,6 @@ class MeasurementScreenViewModel @Inject constructor(
     fun deleteMeasurementById(id: Long) {
         viewModelScope.launch(Dispatchers.IO) {
             measurementRepository.deleteById(id)
-
-            _idMeasurement.value = Random.nextLong()
 
             _measurementCardState.value = MeasurementCardState.NEW
         }

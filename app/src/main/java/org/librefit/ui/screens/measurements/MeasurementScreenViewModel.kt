@@ -179,7 +179,7 @@ class MeasurementScreenViewModel @Inject constructor(
 
 
     fun upsertMeasurementToDB() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             measurementRepository.upsertMeasurement(
                 Measurement(
                     id = if (measurementCardState.value == MeasurementCardState.EDIT)
@@ -197,7 +197,7 @@ class MeasurementScreenViewModel @Inject constructor(
     }
 
     fun deleteMeasurementById(id: Long) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             measurementRepository.deleteById(id)
 
             _measurementCardState.value = MeasurementCardState.NEW

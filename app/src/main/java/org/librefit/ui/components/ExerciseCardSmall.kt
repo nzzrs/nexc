@@ -20,6 +20,7 @@
 package org.librefit.ui.components
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -27,6 +28,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.HorizontalDivider
@@ -67,7 +69,14 @@ fun ExerciseCardSmall(
     isRoutine: Boolean = false,
     onDetail: () -> Unit
 ) {
-    ElevatedCard(Modifier.padding(5.dp)) {
+    ElevatedCard(
+        modifier = Modifier
+            .padding(5.dp)
+            .clip(CardDefaults.outlinedShape)
+            .clickable {
+                onDetail()
+            }
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -191,7 +200,7 @@ fun ExerciseCardSmall(
 @Preview
 @Composable
 private fun ExerciseCardSmallPreview() {
-    LibreFitTheme(false, true) {
+    LibreFitTheme(dynamicColor = false, darkTheme = true) {
         ExerciseCardSmall(
             exerciseWithSets = ExerciseWithSets(
                 exerciseDC = ExerciseDC(name = "Name exercise"),

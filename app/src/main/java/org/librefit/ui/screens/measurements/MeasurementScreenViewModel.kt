@@ -105,7 +105,7 @@ class MeasurementScreenViewModel @Inject constructor(
     }
 
 
-    private val currentMeasurement: StateFlow<Measurement> = _idMeasurement
+    private val currentMeasurement: StateFlow<Measurement> = idMeasurement
         .map { id -> measurements.value.find { it.id == id } ?: Measurement() }
         .distinctUntilChanged()
         .stateIn(
@@ -235,6 +235,5 @@ class MeasurementScreenViewModel @Inject constructor(
 
             _measurementCardState.value = MeasurementCardState.NEW
         }
-
     }
 }

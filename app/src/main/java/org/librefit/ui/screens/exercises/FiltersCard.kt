@@ -80,7 +80,7 @@ fun FiltersCard(
     updateFilter: (FilterValue) -> Unit,
     filterValue: FilterValue
 ) {
-    val iconRotation = if (isFilterExpanded) 0f else 180f
+    val iconRotation = if (isFilterExpanded) 180f else 0f
 
     OutlinedCard(
         modifier = Modifier

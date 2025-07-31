@@ -257,13 +257,16 @@ private fun ExercisesScreenContent(
                     modifier = Modifier
                         .animateItem()
                         .clip(CardDefaults.elevatedShape)
-                        .clickable(
-                            enabled = addExercises
-                        ) {
-                            if (selectedExercisesList.contains(exercise)) {
-                                selectedExercisesList.remove(exercise)
+                        .clickable {
+                            if (addExercises) {
+                                if (selectedExercisesList.contains(exercise)) {
+                                    selectedExercisesList.remove(exercise)
+                                } else {
+                                    selectedExercisesList.add(exercise)
+                                }
                             } else {
-                                selectedExercisesList.add(exercise)
+                                selectedExercise = exercise
+                                isModalSheetOpen = true
                             }
                         },
                 ) {

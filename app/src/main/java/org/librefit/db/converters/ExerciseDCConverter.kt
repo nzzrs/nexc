@@ -29,7 +29,7 @@ import org.librefit.enums.exercise.Level
 import org.librefit.enums.exercise.Mechanic
 import org.librefit.enums.exercise.Muscle
 
-class ConverterExerciseDC {
+class ExerciseDCConverter {
     private val moshi = Moshi.Builder().build()
 
     // Converter for List<String> (for instructions and images)

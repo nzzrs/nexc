@@ -32,7 +32,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.data.ExerciseDC
-import org.librefit.db.converters.ConverterExerciseDC
+import org.librefit.db.converters.ExerciseDCConverter
+import org.librefit.db.converters.LocalDateTimeConverter
 import org.librefit.db.dao.DatasetDao
 import org.librefit.db.dao.MeasurementDao
 import org.librefit.db.dao.WorkoutDao
@@ -47,7 +48,7 @@ import javax.inject.Provider
     version = 1,
     exportSchema = false
 )
-@TypeConverters(Converter::class, ConverterExerciseDC::class)
+@TypeConverters(LocalDateTimeConverter::class, ExerciseDCConverter::class)
 abstract class AppDatabase : RoomDatabase() {
     companion object {
         const val NAME = "librefit_database"

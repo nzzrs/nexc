@@ -19,20 +19,13 @@
 
 package org.librefit.ui.screens.settings
 
-import android.content.Context
-import android.os.PowerManager
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.core.os.LocaleListCompat
 import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import dagger.hilt.android.qualifiers.ApplicationContext
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.librefit.data.DataStoreManager
@@ -42,8 +35,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class SettingsScreenViewModel @Inject constructor(
-    private val userPreferences: DataStoreManager,
-    @ApplicationContext context: Context
+    private val userPreferences: DataStoreManager
 ) : ViewModel() {
     val themeMode = userPreferences.themeMode
         .stateIn(
@@ -76,23 +68,6 @@ class SettingsScreenViewModel @Inject constructor(
         val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(language.code)
         AppCompatDelegate.setApplicationLocales(appLocale)
     }
-
-
-    val pm = context.getSystemService(Context.POWER_SERVICE) as PowerManager
-
-    val isIgnoringBatteryOptimization: StateFlow<Boolean> =
-        flow {
-            while (true) {
-                emit(pm.isIgnoringBatteryOptimizations(context.packageName))
-                delay(500)
-            }
-        }
-            .distinctUntilChanged()
-            .stateIn(
-                scope = viewModelScope,
-                started = SharingStarted.WhileSubscribed(5000),
-                initialValue = pm.isIgnoringBatteryOptimizations(context.packageName)
-            )
 
 
     fun <T> savePreference(key: Preferences.Key<T>, value: T) {

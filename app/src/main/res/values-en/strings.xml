@@ -131,8 +131,6 @@
     <string name="before_starting_the_workout">Before starting the workout</string>
     <string name="best_experience_permissions">For the best experience in LibreFit, the following permission has to be granted:</string>
     <string name="notifications_permission_desc">It allows to send notifications about the ongoing workouts and rest intervals.</string>
-    <string name="background_usage">Background usage</string>
-    <string name="background_usage_desc">Allowing background usage can prevent the app from being stopped during workout.</string>
     <string name="dont_ask_again">Don\'t ask again</string>
     <string name="skip_for_now">Skip for now</string>
     <string name="app_works_without_permission">The app will continue to work even without this permission.</string>
@@ -263,7 +261,6 @@
     <string name="privacy_notice_summary">LibreFit provides **maximum privacy** as it **cannot access the Internet**. In addition, all permissions are **optional** and do not allow data collection.</string>
     <string name="privacy_notice_optional_perm">Optional permissions</string>
     <string name="privacy_notice_notification_perm">**Notifications**: This permission allows the app to send notifications about your ongoing workout sessions and alerts when rest periods are over.</string>
-    <string name="privacy_notice_battery_perm">**Ignore Battery Optimization**: This permission allows the app to be more resilient to aggressive power-saving policies, which could cause the app to be forcibly shut down during a workout.</string>
     <string name="privacy_notice_default_perm">Permission granted by default</string>
     <string name="privacy_notice_foreground_perm">**Foreground Service**: This permission is automatically granted when LibreFit is installed and this allows it to run in the foreground during a workout.</string>
     <string name="delete_routine_text">Are you sure you want to delete this routine? This action cannot be undone</string>

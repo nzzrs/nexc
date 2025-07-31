@@ -19,10 +19,7 @@
 
 package org.librefit.ui.screens.settings
 
-import android.annotation.SuppressLint
-import android.content.Intent
 import android.os.Build
-import android.provider.Settings
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -50,7 +47,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -58,7 +54,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.core.view.HapticFeedbackConstantsCompat
 import androidx.datastore.preferences.core.Preferences
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -89,8 +84,6 @@ fun SettingsScreen(
     val keepWorkoutScreenOn by viewModel.keepScreenOn.collectAsState()
 
     val materialModeOn by viewModel.materialMode.collectAsState()
-
-    val isIgnoringBatteryOptimization by viewModel.isIgnoringBatteryOptimization.collectAsState()
 
 
     var showPreferenceDialog by remember { mutableStateOf(false) }
@@ -129,14 +122,13 @@ fun SettingsScreen(
         materialModeOn = materialModeOn,
         selectedLanguage = selectedLanguage,
         keepWorkoutScreenOn = keepWorkoutScreenOn,
-        isIgnoringBatteryOptimization = isIgnoringBatteryOptimization,
         onShowPreferenceDialog = { showPreferenceDialog = true },
         saveIntValue = viewModel::savePreference,
         saveBooleanValue = viewModel::savePreference
     )
 }
 
-@SuppressLint("BatteryLife")
+
 @Composable
 private fun SettingsScreenContent(
     navController: NavHostController,
@@ -144,13 +136,10 @@ private fun SettingsScreenContent(
     materialModeOn: Boolean,
     selectedLanguage: Language,
     keepWorkoutScreenOn: Boolean,
-    isIgnoringBatteryOptimization: Boolean,
     onShowPreferenceDialog: () -> Unit,
     saveIntValue: (Preferences.Key<Int>, value: Int) -> Unit,
     saveBooleanValue: (Preferences.Key<Boolean>, value: Boolean) -> Unit
 ) {
-    val context = LocalContext.current
-
     val view = LocalView.current
 
     LibreFitScaffold(
@@ -324,58 +313,6 @@ private fun SettingsScreenContent(
                 }
             }
 
-            item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
-                    ) {
-                        Icon(
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_speed),
-                            contentDescription = stringResource(R.string.background_usage),
-                            modifier = iconPaddingModifier
-                        )
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(id = R.string.background_usage),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            Text(
-                                text = stringResource(
-                                    id = R.string.background_usage_desc
-                                ),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                    }
-                    Switch(
-                        modifier = iconPaddingModifier,
-                        checked = isIgnoringBatteryOptimization,
-                        onCheckedChange = {
-                            view.performHapticFeedback(
-                                if (it) HapticFeedbackConstantsCompat.TOGGLE_ON
-                                else HapticFeedbackConstantsCompat.TOGGLE_OFF
-                            )
-
-                            var intent: Intent
-                            if (!isIgnoringBatteryOptimization) {
-                                intent =
-                                    Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS).apply {
-                                        data = "package:${context.packageName}".toUri()
-                                    }
-                            } else {
-                                intent =
-                                    Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
-                            }
-                            context.startActivity(intent)
-                        }
-                    )
-                }
-            }
             bottomMargin()
             //TODO: toggle to enable/disable rest timer sound
         }
@@ -401,7 +338,6 @@ fun SettingsScreenPreview() {
             onShowPreferenceDialog = {},
             selectedLanguage = Language.SYSTEM,
             keepWorkoutScreenOn = true,
-            isIgnoringBatteryOptimization = false,
             saveIntValue = { _, _ -> },
             saveBooleanValue = { _, _ -> },
             navController = rememberNavController()

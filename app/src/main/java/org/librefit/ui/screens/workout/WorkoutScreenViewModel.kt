@@ -97,7 +97,7 @@ class WorkoutScreenViewModel @Inject constructor(
                 _exercises.value = workoutWithExercisesAndSets.exercisesWithSets.map {
                     it.apply {
                         it.exerciseDC =
-                            datasetRepository.dataset.value.find { e -> e.id == it.exercise.exerciseId }!!
+                            datasetRepository.dataset.value.find { e -> e.id == it.exercise.idExerciseDC }!!
                     }
                 }
             }
@@ -108,7 +108,7 @@ class WorkoutScreenViewModel @Inject constructor(
         _exercises.value = exercises.value +
             ExerciseWithSets(
                 exercise = Exercise(
-                    exerciseId = exerciseDC.id,
+                    idExerciseDC = exerciseDC.id,
                     setMode = when (exerciseDC.category) {
                         Category.STRETCHING -> SetMode.DURATION
                         Category.CARDIO -> SetMode.DURATION

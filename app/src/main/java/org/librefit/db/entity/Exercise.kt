@@ -35,7 +35,7 @@ import kotlin.random.Random
  *
  * @property id The unique identifier for the exercise. It is auto-generated and serves as the primary key.
  * It is used as key identifier in lazy columns too.
- * @property exerciseId It stores [ExerciseDC.id] in order to be able to retrieve
+ * @property idExerciseDC It stores [ExerciseDC.id] in order to be able to retrieve
  * [ExerciseDC] and provide it to [org.librefit.db.relations.ExerciseWithSets]
  * @property notes A user note editable by the user in [org.librefit.ui.screens.workout.WorkoutScreen]
  * and [org.librefit.ui.screens.editWorkout.EditWorkoutScreen]
@@ -61,7 +61,7 @@ import kotlin.random.Random
 @Serializable
 data class Exercise(
     @PrimaryKey(true) val id: Long = Random.nextLong() + System.currentTimeMillis(),
-    val exerciseId: String = "",
+    val idExerciseDC: String = "",
     val notes: String = "",
     val setMode: SetMode = SetMode.LOAD,
     val restTime: Int = 0,

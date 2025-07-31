@@ -79,7 +79,7 @@ class InfoWorkoutScreenViewModel @Inject constructor(
             _exercises.value = workoutWithExercisesAndSets.exercisesWithSets.map {
                 it.apply {
                     it.exerciseDC =
-                        datasetRepository.dataset.value.find { e -> e.id == it.exercise.exerciseId }!!
+                        datasetRepository.dataset.value.find { e -> e.id == it.exercise.idExerciseDC }!!
                 }
             }
 

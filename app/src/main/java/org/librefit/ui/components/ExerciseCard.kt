@@ -80,10 +80,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.view.HapticFeedbackConstantsCompat
-import kotlinx.coroutines.delay
 import org.librefit.R
-import org.librefit.db.entity.ExerciseDC
 import org.librefit.db.entity.Exercise
+import org.librefit.db.entity.ExerciseDC
 import org.librefit.db.entity.Set
 import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.enums.InfoMode
@@ -128,16 +127,16 @@ import kotlin.math.roundToInt
 fun ExerciseCard(
     modifier: Modifier = Modifier,
     exerciseWithSets: ExerciseWithSets,
+    workout: Boolean = false,
+    idSetWithRunningChronometer: Long = 0L,
     addSet: () -> Unit,
     onDetail: () -> Unit,
     onDelete: () -> Unit,
-    updateSet: (Set, Float, Int) -> Unit,
+    updateSet: (Set) -> Unit,
     deleteSet: (Set) -> Unit,
     updateExercise: (String, Int) -> Unit,
     showInfo: (InfoMode) -> Unit,
-    idSetWithRunningChronometer: Long = 0L,
-    updateIdSetWithRunningChronometer: (Long) -> Unit = {},
-    workout: Boolean = false
+    updateIdSetWithRunningChronometer: (Long) -> Unit = {}
 ) {
     ElevatedCard(modifier) {
         Column(
@@ -382,10 +381,10 @@ fun ExerciseCard(
 private fun Sets(
     exerciseWithSets: ExerciseWithSets,
     deleteSet: (Set) -> Unit,
-    updateSet: (Set, Float, Int) -> Unit,
+    updateSet: (Set) -> Unit,
     workout: Boolean,
     idSetWithRunningChronometer: Long,
-    updateIdSetWithRunningChronometer: (Long) -> Unit,
+    updateIdSetWithRunningChronometer: (Long) -> Unit
 ) {
 
     val setHeight = 60
@@ -510,26 +509,6 @@ private fun Sets(
                     if (exerciseWithSets.exercise.setMode == SetMode.DURATION) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             if (workout) {
-                                LaunchedEffect(idSetWithRunningChronometer) {
-                                    // It starts chronometer when id matches
-                                    if (idSetWithRunningChronometer == set.id) {
-                                        val startTime = System.currentTimeMillis()
-                                        val pastTime = timeValue
-
-                                        while (true) {
-                                            val currentTime = System.currentTimeMillis()
-                                            val newTimeValue =
-                                                ((currentTime - startTime).toInt() / 1000) + pastTime
-
-                                            updateSet(
-                                                set,
-                                                newTimeValue.toFloat(),
-                                                2
-                                            )
-                                            delay(1000)
-                                        }
-                                    }
-                                }
 
                                 IconButton(
                                     enabled = (idSetWithRunningChronometer == 0L
@@ -558,9 +537,9 @@ private fun Sets(
                                 value = formatTime(timeValue).substring(3),
                                 onValueChange = { string ->
                                     val newTimeValue =
-                                        Formatter.parseTimeInputToSeconds(string).toFloat()
+                                        Formatter.parseTimeInputToSeconds(string)
 
-                                    updateSet(set, newTimeValue, 2)
+                                    updateSet(set.copy(elapsedTime = newTimeValue))
                                 },
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -579,7 +558,7 @@ private fun Sets(
                             onValueChange = { string ->
                                 val newRepValue = Formatter.parseIntegerValueInput(string)
 
-                                newRepValue?.let { updateSet(set, it.toFloat(), 1) }
+                                newRepValue?.let { updateSet(set.copy(reps = it)) }
                             },
                             singleLine = true,
                             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -599,7 +578,7 @@ private fun Sets(
                                 onValueChange = { newString ->
                                     val newWeightValue = Formatter.parseFloatValueInput(newString)
 
-                                    newWeightValue?.let { updateSet(set, it, 0) }
+                                    newWeightValue?.let { updateSet(set.copy(load = it)) }
                                 },
                                 singleLine = true,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
@@ -619,11 +598,7 @@ private fun Sets(
                                 if (idSetWithRunningChronometer == set.id) {
                                     updateIdSetWithRunningChronometer(0L)
                                 }
-                                updateSet(
-                                    set,
-                                    if (checked) 1f else 0f,
-                                    3
-                                )
+                                updateSet(set.copy(completed = checked))
                             }
                         )
                     }
@@ -667,18 +642,10 @@ private fun ExerciseCardPreview() {
             addSet = { e = e.copy(sets = e.sets + Set()) },
             onDetail = {},
             onDelete = {},
-            updateSet = { set, value, mode ->
+            updateSet = { set ->
                 e = e.copy(
                     sets = e.sets.map {
-                        if (it.id == set.id) {
-                            when (mode) {
-                                0 -> set.copy(load = value)
-                                1 -> set.copy(reps = value.toInt())
-                                2 -> set.copy(elapsedTime = value.toInt())
-                                3 -> set.copy(completed = value == 1f)
-                                else -> set
-                            }
-                        } else it
+                        if (it.id == set.id) set else it
                     }
                 )
             },

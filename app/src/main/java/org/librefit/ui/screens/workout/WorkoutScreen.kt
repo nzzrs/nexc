@@ -259,10 +259,10 @@ private fun WorkoutScreenContent(
     action: () -> Unit,
     startChronometer: () -> Unit,
     pauseChronometer: () -> Unit,
-    addSetToExercise: (Int) -> Unit,
+    addSetToExercise: (ExerciseWithSets) -> Unit,
     infoExercise: (ExerciseDC) -> Unit,
     deleteExercise: (Int) -> Unit,
-    updateSet: (Int, Set, Float, Int) -> Unit,
+    updateSet: (Set, ExerciseWithSets) -> Unit,
     deleteSet: (Int, Set) -> Unit,
     updateExercise: (Int, String, Int) -> Unit,
     showInfo: (InfoMode) -> Unit,
@@ -316,7 +316,7 @@ private fun WorkoutScreenContent(
                         modifier = Modifier.animateItem(),
                         exerciseWithSets = exerciseWithSets,
                         addSet = {
-                            addSetToExercise(i)
+                            addSetToExercise(exerciseWithSets)
                         },
                         onDetail = {
                             infoExercise(exerciseWithSets.exerciseDC)
@@ -324,9 +324,7 @@ private fun WorkoutScreenContent(
                         onDelete = {
                             deleteExercise(i)
                         },
-                        updateSet = { set, value, mode ->
-                            updateSet(i, set, value, mode)
-                        },
+                        updateSet = { set -> updateSet(set, exerciseWithSets) },
                         deleteSet = { set ->
                             deleteSet(i, set)
                         },

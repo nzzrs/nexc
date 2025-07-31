@@ -27,6 +27,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -64,6 +66,25 @@ class WorkoutScreenViewModel @Inject constructor(
         _idSetWithRunningChronometer.value = setId
     }
 
+    private suspend fun startSetChronometer(set: Set) {
+        val startTime = System.currentTimeMillis()
+        val initialElapsedTime = set.elapsedTime
+
+        // The loop is infinite, but the coroutine will be stopped when its Job is cancelled
+        while (true) {
+            val currentTime = System.currentTimeMillis()
+            val newElapsedTime = initialElapsedTime + ((currentTime - startTime) / 1000)
+
+            updateSet(
+                set = set.copy(elapsedTime = newElapsedTime.toInt()),
+                exerciseWithSets = exercises.value.find { e ->
+                    e.sets.map { it.id }.contains(set.id)
+                }!!
+            )
+
+            delay(1000)
+        }
+    }
 
 
 
@@ -81,6 +102,9 @@ class WorkoutScreenViewModel @Inject constructor(
     private val _exercises = MutableStateFlow<List<ExerciseWithSets>>(emptyList())
     val exercises = _exercises.asStateFlow()
 
+    // A Job to hold the running set's chronometer coroutine
+    private var chronometerJob: Job? = null
+
     init {
         viewModelScope.launch(Dispatchers.IO) {
             if (workoutId != 0L) {
@@ -93,6 +117,23 @@ class WorkoutScreenViewModel @Inject constructor(
                 )
 
                 _exercises.value = workoutWithExercisesAndSets.exercisesWithSets
+            }
+        }
+
+        // We launch a coroutine that observes changes to the running ID.
+        viewModelScope.launch {
+            idSetWithRunningChronometer.collect { runningSetId ->
+                // Whenever the ID changes, cancel any existing timer.
+                chronometerJob?.cancel()
+
+                // If the new ID is a valid set ID (not 0), start a new timer.
+                if (runningSetId > 0L) {
+                    val set = exercises.value.flatMap { it.sets }.find { it.id == runningSetId }
+                    if (set != null) {
+                        // Launch a new coroutine for the timer and assign it to our Job.
+                        chronometerJob = launch { startSetChronometer(set) }
+                    }
+                }
             }
         }
     }
@@ -118,14 +159,13 @@ class WorkoutScreenViewModel @Inject constructor(
 
     }
 
-    fun addSetToExercise(index: Int) {
-        val exerciseWithSets = exercises.value[index]
+    fun addSetToExercise(exerciseWithSets: ExerciseWithSets) {
         val newSet = exerciseWithSets.sets
             .lastOrNull()?.copy(id = Random.Default.nextLong())
             ?: Set()
 
-        _exercises.value = exercises.value.mapIndexed { i, exercise ->
-            if (index == i) {
+        _exercises.value = exercises.value.map { exercise ->
+            if (exercise == exerciseWithSets) {
                 exercise.copy(sets = exercise.sets + newSet)
             } else {
                 exercise
@@ -134,47 +174,25 @@ class WorkoutScreenViewModel @Inject constructor(
     }
 
     /**
-     * Updates a specific [Set] within an [ExerciseWithSets] by assigning a new value to one of its
-     * attributes based on the specified mode.
+     * Updates a specific [Set] within a [ExerciseWithSets.sets].
      *
-     * @param index The index of the [ExerciseWithSets] in the [exercises] list that contains the
+     * @param exerciseWithSets The [ExerciseWithSets] in the [exercises] list that contains the
      * set to be updated.
-     *
-     * @param set The [Set] object that needs to be updated.
-     * @param value The new value to assign to the specified attribute of the [Set].
-     * @param mode An integer that defines which attribute of the [Set] should be updated.
-     * The following modes correspond to specific attributes:
-     *  - 0: [Set.load]
-     *  - 1: [Set.reps]
-     *  - 2: [Set.elapsedTime]
-     *  - 3: [Set.completed] (where a [value] of 1 indicates 'true')
-     *
-     * The method will update the specified attribute of the [Set] if it matches the provided [set] ID.
-     * If the [mode] is not recognized, the original [set] will remain unchanged.
+     * @param set The updated [Set] to assign.
      */
-    fun updateSet(index: Int, set: Set, value: Float, mode: Int) {
-        val exerciseWithSets = exercises.value[index]
-
-        _exercises.value = exercises.value.mapIndexed { i, exercise ->
-            if (index == i) {
+    fun updateSet(set: Set, exerciseWithSets: ExerciseWithSets) {
+        _exercises.value = exercises.value.map { exercise ->
+            if (exercise == exerciseWithSets) {
                 exercise.copy(
                     sets = exerciseWithSets.sets.map {
-                        if (it.id == set.id) {
-                            when (mode) {
-                                0 -> set.copy(load = value)
-                                1 -> set.copy(reps = value.toInt())
-                                2 -> set.copy(elapsedTime = value.toInt())
-                                3 -> set.copy(completed = value == 1f)
-                                else -> set
-                            }
-                        } else it
+                        if (it.id == set.id) set else it
                     }
                 )
             } else {
                 exercise
             }
         }
-        if (mode == 3 && value == 1f && exerciseWithSets.exercise.restTime != 0) {
+        if (set.completed && exerciseWithSets.exercise.restTime != 0) {
             startRestTimer(exerciseWithSets.exercise.restTime + 1)
         }
     }

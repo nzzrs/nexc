@@ -47,8 +47,8 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
-import org.librefit.db.entity.ExerciseDC
 import org.librefit.db.entity.Exercise
+import org.librefit.db.entity.ExerciseDC
 import org.librefit.db.entity.Set
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.ExerciseWithSets
@@ -112,9 +112,9 @@ private fun EditWorkoutScreenContent(
     isTitleEmpty: Boolean,
     updateTitle: (String) -> Unit,
     updateNotes: (String) -> Unit,
-    addSetToExercise: (Int) -> Unit,
+    addSetToExercise: (ExerciseWithSets) -> Unit,
     deleteExercise: (Int) -> Unit,
-    updateSet: (Int, Set, Float, Int) -> Unit,
+    updateSet: (Set, ExerciseWithSets) -> Unit,
     deleteSet: (Int, Set) -> Unit,
     updateExercise: (Int, String, Int) -> Unit,
     saveWorkoutWithExercisesInDB: () -> Unit
@@ -149,7 +149,7 @@ private fun EditWorkoutScreenContent(
     /**
      * Used to display information about the selected exercise in [ExerciseDetailModalBottomSheet]
      */
-    var selectedExercise by remember { mutableStateOf<ExerciseDC>(ExerciseDC()) }
+    var selectedExercise by remember { mutableStateOf(ExerciseDC()) }
     var isModalSheetOpen by remember { mutableStateOf(false) }
 
     if (isModalSheetOpen) {
@@ -271,15 +271,13 @@ private fun EditWorkoutScreenContent(
                     ExerciseCard(
                         modifier = Modifier.animateItem(),
                         exerciseWithSets = exerciseWithSets,
-                        addSet = { addSetToExercise(i) },
+                        addSet = { addSetToExercise(exerciseWithSets) },
                         onDetail = {
                             selectedExercise = exerciseWithSets.exerciseDC
                             isModalSheetOpen = true
                         },
                         onDelete = { deleteExercise(i) },
-                        updateSet = { set, value, mode ->
-                            updateSet(i, set, value, mode)
-                        },
+                        updateSet = { updateSet(it, exerciseWithSets) },
                         deleteSet = { set ->
                             deleteSet(i, set)
                         },
@@ -323,7 +321,7 @@ private fun EditWorkoutScreenPreview() {
             updateNotes = { _ -> },
             addSetToExercise = { _ -> },
             deleteExercise = { _ -> },
-            updateSet = { _, _, _, _ -> },
+            updateSet = { _, _ -> },
             deleteSet = { _, _ -> },
             updateExercise = { _, _, _ -> },
             saveWorkoutWithExercisesInDB = { },

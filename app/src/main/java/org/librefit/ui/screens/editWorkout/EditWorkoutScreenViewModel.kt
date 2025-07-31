@@ -113,14 +113,13 @@ class EditWorkoutScreenViewModel @Inject constructor(
         _exercises.value = exercises.value + newExercise
     }
 
-    fun addSetToExercise(index: Int) {
-        val exerciseWithSets = exercises.value[index]
+    fun addSetToExercise(exerciseWithSets: ExerciseWithSets) {
         val newSet = exerciseWithSets.sets
             .lastOrNull()?.copy(id = Random.Default.nextLong())
             ?: Set()
 
-        _exercises.value = exercises.value.mapIndexed { i, exercise ->
-            if (index == i) {
+        _exercises.value = exercises.value.map { exercise ->
+            if (exercise == exerciseWithSets) {
                 exercise.copy(sets = exercise.sets + newSet)
             } else {
                 exercise
@@ -129,41 +128,18 @@ class EditWorkoutScreenViewModel @Inject constructor(
     }
 
     /**
-     * Updates a specific [Set] within an [ExerciseWithSets] by assigning a new value to one of its
-     * attributes based on the specified mode.
+     * Updates a specific [Set] within a [ExerciseWithSets.sets].
      *
-     * @param index The index of the [ExerciseWithSets] in the [exercises] list that contains the
+     * @param exerciseWithSets The [ExerciseWithSets] in the [exercises] list that contains the
      * set to be updated.
-     * @param set The [Set] object that needs to be updated.
-     * @param value The new value to assign to the specified attribute of the [Set].
-     * @param mode An integer that defines which attribute of the [Set] should be updated.
-     * The following modes correspond to specific attributes:
-     *  - 0: [Set.load]
-     *  - 1: [Set.reps]
-     *  - 2: [Set.elapsedTime]
-     *  - 3: [Set.completed] (where a [value] of 1 indicates 'true')
-     *
-     * The method will update the specified attribute of the [Set] if it matches the provided [set] ID.
-     * If the [mode] is not recognized, the original [set] will remain unchanged.
+     * @param set The updated [Set] to assign.
      */
-    fun updateSet(index: Int, set: Set, value: Float, mode: Int) {
-        val exerciseWithSets = exercises.value[index]
-
-        //TODO: refactor these methods by passing directly the set
-
-        _exercises.value = exercises.value.mapIndexed { i, exercise ->
-            if (index == i) {
+    fun updateSet(set: Set, exerciseWithSets: ExerciseWithSets) {
+        _exercises.value = exercises.value.map { exercise ->
+            if (exercise == exerciseWithSets) {
                 exercise.copy(
                     sets = exerciseWithSets.sets.map {
-                        if (it.id == set.id) {
-                            when (mode) {
-                                0 -> set.copy(load = value)
-                                1 -> set.copy(reps = value.toInt())
-                                2 -> set.copy(elapsedTime = value.toInt())
-                                3 -> set.copy(completed = value == 1f)
-                                else -> set
-                            }
-                        } else it
+                        if (it.id == set.id) set else it
                     }
                 )
             } else {

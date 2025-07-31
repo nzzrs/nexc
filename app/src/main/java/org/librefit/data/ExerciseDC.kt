@@ -19,6 +19,8 @@
 
 package org.librefit.data
 
+import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.squareup.moshi.JsonClass
 import kotlinx.serialization.Serializable
 import org.librefit.enums.exercise.Category
@@ -29,7 +31,7 @@ import org.librefit.enums.exercise.Mechanic
 import org.librefit.enums.exercise.Muscle
 
 /**
- * This class is used to store exercises as parsed from `res/raw/exercises.json` in [org.librefit.di.ExerciseDatasetModule]
+ * This data class stores exercises as parsed from `res/raw/exercises.json`. The dataset in provided by [org.librefit.db.repository.DatasetRepository]
  * Moshi's generated adapter is used for JSON serialization and deserialization as indicated by
  * [JsonClass] annotation. The actual exercise entries in database are handled by [org.librefit.db.entity.Exercise]
  *
@@ -195,8 +197,9 @@ import org.librefit.enums.exercise.Muscle
  */
 @JsonClass(generateAdapter = true)
 @Serializable
+@Entity(tableName = "dataset")
 data class ExerciseDC(
-    val id: String = "",
+    @PrimaryKey val id: String = "",
     val name: String = "",
     val force: Force? = null,
     val level: Level = Level.BEGINNER,

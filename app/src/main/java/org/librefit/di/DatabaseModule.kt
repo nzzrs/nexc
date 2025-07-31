@@ -27,10 +27,12 @@ import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
 import org.librefit.db.AppDatabase
+import org.librefit.db.dao.DatasetDao
 import org.librefit.db.dao.MeasurementDao
 import org.librefit.db.dao.WorkoutDao
 import org.librefit.db.repository.MeasurementRepository
 import org.librefit.db.repository.WorkoutRepository
+import javax.inject.Provider
 import javax.inject.Singleton
 
 @Module
@@ -39,12 +41,17 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideDatabase(@ApplicationContext appContext: Context): AppDatabase {
+    fun provideDatabase(
+        @ApplicationContext appContext: Context,
+        daoProvider: Provider<DatasetDao>
+    ): AppDatabase {
         return Room.databaseBuilder(
             appContext,
             AppDatabase::class.java,
             AppDatabase.Companion.NAME
-        ).build()
+        )
+            .addCallback(AppDatabase.Companion.PrepopulateCallback(appContext, daoProvider))
+            .build()
     }
 
     // DAOs
@@ -58,6 +65,12 @@ object DatabaseModule {
     @Singleton
     fun provideMeasurementDao(database: AppDatabase): MeasurementDao {
         return database.getMeasurementDao()
+    }
+
+    @Provides
+    @Singleton
+    fun provideDatasetDao(database: AppDatabase): DatasetDao {
+        return database.getDatasetDao()
     }
 
     //Repositories

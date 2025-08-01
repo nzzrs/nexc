@@ -141,7 +141,7 @@ fun LibreFitCartesianChart(
     val rawYValues = listChartData.map { it.yValues }
     val xValues = listChartData.map { it.xValue }
 
-    val expectedSize = rawYValues.first().size
+    val expectedSize = rawYValues.firstOrNull()?.size ?: 0
     require(rawYValues.all { it.size == expectedSize } && expectedSize <= 4) {
         "All yValues lists must have the same size which must be not over 4. Found sizes: ${rawYValues.map { it.size }}"
     }

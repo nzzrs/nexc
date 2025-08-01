@@ -91,6 +91,7 @@ import com.patrykandpatrick.vico.core.common.shape.Shape
 import org.librefit.R
 import org.librefit.enums.chart.ChartMode
 import org.librefit.enums.chart.MeasurementChart
+import org.librefit.enums.chart.StatisticsChart
 import org.librefit.enums.chart.WorkoutChart
 import org.librefit.nav.Route
 import org.librefit.ui.components.LibreFitButton
@@ -209,6 +210,7 @@ fun LibreFitCartesianChart(
                         when (chartMode) {
                             is WorkoutChart -> WorkoutChart.entries
                             is MeasurementChart -> MeasurementChart.entries
+                            is StatisticsChart -> StatisticsChart.entries
                         }
                     ) { mode: ChartMode ->
                         FilterChip(
@@ -224,6 +226,10 @@ fun LibreFitCartesianChart(
                                             MeasurementChart.BODY_WEIGHT -> R.string.body_weight
                                             MeasurementChart.FAT_MASS -> R.string.fat_mass
                                             MeasurementChart.LEAN_MASS -> R.string.lean_mass
+                                            StatisticsChart.LOAD -> R.string.load
+                                            StatisticsChart.REPS -> R.string.reps
+                                            StatisticsChart.VOLUME -> R.string.volume
+                                            StatisticsChart.DURATION -> R.string.duration
                                         }
                                     )
                                 )

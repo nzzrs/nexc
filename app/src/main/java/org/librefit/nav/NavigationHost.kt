@@ -127,7 +127,7 @@ fun NavigationHost() {
             )
         }
         composable<Route.StatisticsScreen> {
-            StatisticsScreen()
+            StatisticsScreen(navController = navController)
         }
         composable<Route.WorkoutScreen> {
             WorkoutScreen(

@@ -20,23 +20,58 @@
 package org.librefit.ui.screens.statistics
 
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import org.librefit.R
+import org.librefit.ui.components.HeadlineText
+import org.librefit.ui.components.LibreFitLazyColumn
+import org.librefit.ui.components.LibreFitScaffold
+import org.librefit.ui.components.charts.LibreFitCartesianChart
+import org.librefit.ui.theme.LibreFitTheme
 
 @Composable
-fun StatisticsScreen() {
+fun StatisticsScreen(
+    navController: NavHostController
+) {
     val viewModel: StatisticsScreenViewModel = hiltViewModel()
 
-    StatisticsScreenContent()
+    StatisticsScreenContent(
+        navController = navController
+    )
 }
 
 @Composable
-private fun StatisticsScreenContent() {
+private fun StatisticsScreenContent(
+    navController: NavHostController
+) {
+    LibreFitScaffold(
+        title = AnnotatedString(stringResource(R.string.statistics)),
+        navigateBack = navController::popBackStack
+    ) { innerPadding ->
+        LibreFitLazyColumn(innerPadding = innerPadding) {
+            item {
+                HeadlineText(stringResource(R.string.overview))
+            }
+            item {
+                LibreFitCartesianChart(
+                    points = emptyList(),
 
+                    )
+            }
+        }
+    }
 }
 
 @Preview
 @Composable
 fun StatisticsScreenPreview() {
-    StatisticsScreenContent()
+    LibreFitTheme(dynamicColor = false, darkTheme = true) {
+        StatisticsScreenContent(
+            navController = rememberNavController()
+        )
+    }
 }

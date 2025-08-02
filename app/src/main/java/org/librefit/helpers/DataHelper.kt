@@ -25,6 +25,7 @@ import kotlinx.coroutines.coroutineScope
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.db.repository.MeasurementRepository
 import org.librefit.enums.SetMode
+import org.librefit.enums.chart.StatisticsChart
 import org.librefit.enums.chart.WorkoutChart
 import org.librefit.ui.components.charts.Point
 import java.time.format.DateTimeFormatter
@@ -123,5 +124,45 @@ class DataHelper @Inject constructor(
                 (volumeForEachRep * set.reps).toDouble()
             }
         }.toFloat()
+    }
+
+    /**
+     * It returns a list of [Point] corresponding to the given [statisticsChart] type
+     * for each workout in [workoutsWithExercises].
+     *
+     */
+    suspend fun fetchPointsForStatisticsChart(
+        statisticsChart: StatisticsChart,
+        workoutsWithExercises: List<WorkoutWithExercisesAndSets>
+    ): List<Point> = coroutineScope {
+        val bodyWeights = workoutsWithExercises
+            .map {
+                async {
+                    measurementRepository.getLastMeasurementByCutoff(it.workout.completed)?.bodyWeight
+                        ?: 0f
+                }
+            }
+            .awaitAll()
+
+        workoutsWithExercises
+            .mapIndexed { index, w ->
+                async {
+                    Point(
+                        yValues = when (statisticsChart) {
+                            StatisticsChart.LOAD -> w.exercisesWithSets
+                                .sortedBy { e -> e.sets.sumOf { it.load.toDouble() } }
+                                .map { 1f }
+
+                            StatisticsChart.REPS -> TODO()
+                            StatisticsChart.VOLUME -> TODO()
+                            StatisticsChart.DURATION -> TODO()
+                        },
+                        xValue = w.workout.completed.format(shortFormatter),
+                        workoutId = w.workout.id
+                    )
+                }
+            }
+            .awaitAll()
+
     }
 }

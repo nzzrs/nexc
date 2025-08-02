@@ -151,4 +151,7 @@ dependencies {
 
     // AboutLibraries to show used dependencies in jetpack compose
     implementation(libs.aboutlibraries.compose.m3)
+
+    // Used in ui models' properties
+    implementation(libs.kotlinx.collections.immutable)
 }

@@ -125,9 +125,7 @@ class EditWorkoutScreenViewModel @Inject constructor(
             exercises.map { exercise ->
                 if (exercise == exerciseWithSets) {
                     exercise.copy(sets = exercise.sets + newSet)
-                } else {
-                    exercise
-                }
+                } else exercise
             }
         }
     }
@@ -135,15 +133,13 @@ class EditWorkoutScreenViewModel @Inject constructor(
     fun updateSet(set: Set) {
         _exercises.update { currentExercises ->
             currentExercises.map { exercise ->
-                if (set.id in exercise.sets.map { it.id }) {
+                if (exercise.sets.any { it.id == set.id }) {
                     exercise.copy(
                         sets = exercise.sets.map {
                             if (it.id == set.id) set else it
                         }
                     )
-                } else {
-                    exercise
-                }
+                } else exercise
             }
         }
     }
@@ -151,13 +147,11 @@ class EditWorkoutScreenViewModel @Inject constructor(
     fun deleteSet(set: Set) {
         _exercises.update { currentExercises ->
             currentExercises.map { exercise ->
-                if (set in exercise.sets) {
+                if (exercise.sets.any { it.id == set.id }) {
                     exercise.copy(
-                        sets = exercise.sets.filter { it != set }
+                        sets = exercise.sets.filter { it.id != set.id }
                     )
-                } else {
-                    exercise
-                }
+                } else exercise
             }
         }
     }

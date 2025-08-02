@@ -166,34 +166,25 @@ class WorkoutScreenViewModel @Inject constructor(
             exercises.map { exercise ->
                 if (exercise == exerciseWithSets) {
                     exercise.copy(sets = exercise.sets + newSet)
-                } else {
-                    exercise
-                }
+                } else exercise
             }
         }
     }
 
-    /**
-     * Updates a specific [Set] within a [ExerciseWithSets.sets].
-     *
-     * @param set The updated [Set] to assign.
-     */
     fun updateSet(set: Set) {
         _exercises.update { currentExercises ->
             currentExercises.map { exercise ->
-                if (set.id in exercise.sets.map { it.id }) {
+                if (exercise.sets.any { it.id == set.id }) {
                     exercise.copy(
                         sets = exercise.sets.map {
                             if (it.id == set.id) set else it
                         }
                     )
-                } else {
-                    exercise
-                }
+                } else exercise
             }
         }
 
-        val exerciseWithSets = exercises.value.find { e -> set.id in e.sets.map { it.id } }!!
+        val exerciseWithSets = exercises.value.find { e -> e.sets.any { it.id == set.id } }!!
         if (set.completed && exerciseWithSets.exercise.restTime != 0) {
             startRestTimer(exerciseWithSets.exercise.restTime + 1)
         }
@@ -201,16 +192,16 @@ class WorkoutScreenViewModel @Inject constructor(
 
 
     fun deleteSet(set: Set) {
-        // If there's the match, then set has a running chronometer so it has to stopped by assign 0
+        // If there's the match, then the set has a running chronometer and it has to be stopped by assign 0
         if (idSetWithRunningChronometer.value == set.id) {
             _idSetWithRunningChronometer.value = 0L
         }
 
         _exercises.update { currentExercises ->
             currentExercises.map { exercise ->
-                if (set in exercise.sets) {
+                if (exercise.sets.any { it.id == set.id }) {
                     exercise.copy(
-                        sets = exercise.sets.filter { it != set }
+                        sets = exercise.sets.filter { it.id != set.id }
                     )
                 } else exercise
             }
@@ -226,8 +217,8 @@ class WorkoutScreenViewModel @Inject constructor(
     }
 
     fun deleteExercise(exerciseWithSets: ExerciseWithSets) {
-        // If there's the match, then a set of the exercise has a running chronometer so it has to stopped by assign 0
-        if (idSetWithRunningChronometer.value in exerciseWithSets.sets.map { it.id }) {
+        // If there's the match, then the set has a running chronometer and it has to be stopped by assign 0
+        if (exerciseWithSets.sets.any { it.id == idSetWithRunningChronometer.value }) {
             _idSetWithRunningChronometer.value = 0L
         }
 

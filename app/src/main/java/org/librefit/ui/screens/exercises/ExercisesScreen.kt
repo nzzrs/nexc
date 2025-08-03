@@ -30,6 +30,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -121,6 +122,13 @@ fun ExercisesScreen(
         )
     }
 
+    val actions = remember {
+        if (addExercises) listOf {
+            sharedViewModel.setSelectedExercisesList(selectedExercisesList.map { it.toEntity() })
+            navigateBack()
+        } else listOf()
+    }
+
 
     ExercisesScreenContent(
         addExercises = addExercises,
@@ -131,10 +139,7 @@ fun ExercisesScreen(
         toggleSelectedExercise = viewModel::toggleSelectedExercise,
         updateQuery = viewModel::updateQuery,
         updateFilter = viewModel::updateFilter,
-        actions = if (addExercises) listOf {
-            sharedViewModel.setSelectedExercisesList(selectedExercisesList.map { it.toEntity() })
-            navigateBack()
-        } else listOf(),
+        actions = actions,
         navigateBack = navigateBack,
     )
 
@@ -165,9 +170,11 @@ private fun ExercisesScreenContent(
         }
     }
 
-    val scrollToTop: () -> Unit = {
-        coroutineScope.launch {
-            lazyListState.animateScrollToItem(0)
+    val scrollToTop: () -> Unit = remember {
+        {
+            coroutineScope.launch {
+                lazyListState.animateScrollToItem(0)
+            }
         }
     }
 
@@ -177,11 +184,20 @@ private fun ExercisesScreenContent(
     /**
      * Holds the information to show in [ExerciseDetailModalBottomSheet]
      */
-    var selectedExercise by remember { mutableStateOf(UiExerciseDC()) }
+    var selectedExerciseDC by remember { mutableStateOf<UiExerciseDC?>(null) }
 
-    var isModalSheetOpen by rememberSaveable { mutableStateOf(false) }
+    val updateSelectedExerciseDCid = remember(filteredExerciseList) {
+        { newId: String ->
+            selectedExerciseDC = filteredExerciseList.find { it.id == newId }
+        }
+    }
 
-    val context = LocalContext.current
+    // Opened by info icon (in the filtered list), it shows the details of an exercise
+    selectedExerciseDC?.let {
+        ExerciseDetailModalBottomSheet(exercise = it) {
+            selectedExerciseDC = null
+        }
+    }
 
 
     LibreFitScaffold(
@@ -268,93 +284,102 @@ private fun ExercisesScreenContent(
                 items = filteredExerciseList,
                 key = { index, exercise -> exercise.id }
             ) { index, exercise ->
-                ElevatedCard(
-                    modifier = Modifier
-                        .height(120.dp)
-                        .animateItem()
-                        .clip(CardDefaults.elevatedShape)
-                        .clickable {
-                            if (addExercises) {
-                                toggleSelectedExercise(exercise.id)
-                            } else {
-                                selectedExercise = exercise
-                                isModalSheetOpen = true
-                            }
-                        },
-                    colors = CardDefaults.elevatedCardColors(
-                        containerColor = if (exercise.id in selectedExercisesIdList)
-                            MaterialTheme.colorScheme.primaryContainer else Color.Unspecified
-                    )
-                ) {
-                    Row(
-                        modifier = Modifier.padding(
-                            top = 20.dp,
-                            bottom = 20.dp,
-                            start = 10.dp,
-                            end = 10.dp
-                        ),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        val image = remember(exercise.images[0]) {
-                            BitmapFactory.decodeStream(
-                                context.assets.open(exercise.images[0])
-                            ).asImageBitmap()
-                        }
-                        Image(
-                            bitmap = image,
-                            contentDescription = exercise.name,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .padding(start = 10.dp)
-                                .width(100.dp)
-                                .clip(MaterialTheme.shapes.small)
-                        )
-                        Column(
-                            modifier = Modifier
-                                .weight(1f)
-                                .padding(start = 20.dp),
-                            verticalArrangement = Arrangement.Center
-                        ) {
-                            Text(
-                                text = exercise.name,
-                                style = MaterialTheme.typography.titleMedium,
-                                overflow = TextOverflow.Ellipsis,
-                                maxLines = 1
-                            )
-                            Text(
-                                text = stringResource(exerciseEnumToStringId(exercise.category)),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            if (exercise.equipment != null) {
-                                Text(
-                                    text = stringResource(exerciseEnumToStringId(exercise.equipment)),
-                                    style = MaterialTheme.typography.bodyMedium
-                                )
-                            }
-                        }
-                        IconButton(
-                            modifier = Modifier.padding(start = 10.dp),
-                            onClick = {
-                                selectedExercise = exercise
-                                isModalSheetOpen = true
-                            }
-                        ) {
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.ic_info),
-                                contentDescription = stringResource(R.string.details)
-                            )
-                        }
-                    }
-                }
+                ItemExerciseDC(
+                    addExercises = addExercises,
+                    exercise = exercise,
+                    onAddToggle = { toggleSelectedExercise(exercise.id) },
+                    isSelected = exercise.id in selectedExercisesIdList,
+                    onInfo = { updateSelectedExerciseDCid(exercise.id) }
+                )
             }
             bottomMargin()
         }
     }
+}
 
-    // Opened by info icon (in the filtered list), it shows the details of an exercise
-    if (isModalSheetOpen) {
-        ExerciseDetailModalBottomSheet(exercise = selectedExercise) {
-            isModalSheetOpen = false
+@Composable
+private fun LazyItemScope.ItemExerciseDC(
+    addExercises: Boolean,
+    exercise: UiExerciseDC,
+    isSelected: Boolean,
+    onAddToggle: () -> Unit,
+    onInfo: () -> Unit,
+) {
+    val context = LocalContext.current
+
+    val image = remember(exercise.images[0]) {
+        BitmapFactory.decodeStream(
+            context.assets.open(exercise.images[0])
+        ).asImageBitmap()
+    }
+
+    ElevatedCard(
+        modifier = Modifier
+            .height(120.dp)
+            .animateItem()
+            .clip(CardDefaults.elevatedShape)
+            .clickable {
+                if (addExercises) {
+                    onAddToggle()
+                } else {
+                    onInfo()
+                }
+            },
+        colors = CardDefaults.elevatedCardColors(
+            containerColor = if (isSelected)
+                MaterialTheme.colorScheme.primaryContainer else Color.Unspecified
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(
+                top = 20.dp,
+                bottom = 20.dp,
+                start = 10.dp,
+                end = 10.dp
+            ),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Image(
+                bitmap = image,
+                contentDescription = exercise.name,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .padding(start = 10.dp)
+                    .width(100.dp)
+                    .clip(MaterialTheme.shapes.small)
+            )
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(start = 20.dp),
+                verticalArrangement = Arrangement.Center
+            ) {
+                Text(
+                    text = exercise.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    overflow = TextOverflow.Ellipsis,
+                    maxLines = 1
+                )
+                Text(
+                    text = stringResource(exerciseEnumToStringId(exercise.category)),
+                    style = MaterialTheme.typography.bodyMedium
+                )
+                if (exercise.equipment != null) {
+                    Text(
+                        text = stringResource(exerciseEnumToStringId(exercise.equipment)),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+            IconButton(
+                modifier = Modifier.padding(start = 10.dp),
+                onClick = onInfo
+            ) {
+                Icon(
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_info),
+                    contentDescription = stringResource(R.string.details)
+                )
+            }
         }
     }
 }

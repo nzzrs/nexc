@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import org.librefit.db.repository.DatasetRepository
@@ -76,10 +75,10 @@ class ExercisesScreenViewModel @Inject constructor(
             debouncedQuery,
             filterValue,
             dataset
-        ) { q, _, dataset ->
+        ) { q, f, dataset ->
             dataset
                 .map { e -> e to fuzzySearch(e.name, q) }
-                .filter { (e, score) -> score > 60 && filterExercise(e) }
+                .filter { (e, score) -> score > 60 && filterExercise(e, f) }
                 .sortedByDescending { it.second }
                 .map { it.first }
         }
@@ -99,7 +98,8 @@ class ExercisesScreenViewModel @Inject constructor(
         return FuzzySearch.partialRatio(name.lowercase(), query.lowercase().trim())
     }
 
-    private fun filterExercise(exercise: UiExerciseDC): Boolean = with(filterValue.value) {
+    private fun filterExercise(exercise: UiExerciseDC, filterValue: FilterValue): Boolean =
+        with(filterValue) {
         when {
             (level != null && level != exercise.level) -> false
             (force != null && force != exercise.force) -> false
@@ -107,7 +107,6 @@ class ExercisesScreenViewModel @Inject constructor(
             (equipment != null && equipment != exercise.equipment) -> false
             (muscles != null && muscles !in exercise.primaryMuscles
                     && muscles !in exercise.secondaryMuscles) -> false
-
             (category != null && category != exercise.category) -> false
             else -> true
         }
@@ -117,8 +116,11 @@ class ExercisesScreenViewModel @Inject constructor(
     private val _selectedExerciseIds = MutableStateFlow<Set<String>>(emptySet())
     val selectedExerciseIds = _selectedExerciseIds.asStateFlow()
 
-    val selectedExercises: StateFlow<List<UiExerciseDC>> = _selectedExerciseIds
-        .map { ids -> dataset.value.filter { it.id in ids } }
+    val selectedExercises: StateFlow<List<UiExerciseDC>> = combine(
+        selectedExerciseIds,
+        filteredExerciseList
+    ) { ids, list -> list.filter { it.id in ids } }
+        .distinctUntilChanged()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),

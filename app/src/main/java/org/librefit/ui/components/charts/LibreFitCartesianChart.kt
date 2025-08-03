@@ -110,9 +110,9 @@ val legendLabelKey = ExtraStore.Key<List<String>>()
  *
  * @param format It is used by [VerticalAxis] to display Y axis values following the provided format.
  * Leave empty in order to use the default format.
- * @param points A list of [Point]s containing the actual points of the chart.
- * If empty, a placeholder is shown. Leave all [Point.xValue]s blank in order to display default ordinal numeration in x axis.
- * @param useColumns When `false`, the chart will use lines instead of columns.
+ * @param points A list of [Point]s containing the actual points of the chart. The sizes of [Point.yValues]
+ * list must be not over 4. If [points] is empty, a placeholder is shown. Leave all [Point.xValue]s blank in order to display default ordinal numeration in x axis.
+ * @param useColumns When `true`, the chart will use lines instead of columns.
  * @param chartMode A [ChartMode] to display which [FilterChip] is selected. If `null`, none filter chips
  * will be displayed.
  * @param updateChartMode It's triggered when any [FilterChip] is clicked. It passes the corresponding
@@ -167,9 +167,12 @@ fun LibreFitCartesianChart(
         rawYValues.map { yList -> yList[index] }
     }
 
+    val yValuesArePresent = yValues.isNotEmpty() && yValues.all { it.isNotEmpty() }
+
+
 
     LaunchedEffect(yValues) {
-        if (yValues.all { it.isNotEmpty() }) {
+        if (yValuesArePresent) {
             modelProducer.runTransaction {
                 if (useColumns) {
                     columnSeries { yValues.forEach { series(it) } }
@@ -190,10 +193,8 @@ fun LibreFitCartesianChart(
         MaterialTheme.colorScheme.primary,
         MaterialTheme.colorScheme.secondary,
         MaterialTheme.colorScheme.tertiary,
-        MaterialTheme.colorScheme.onSurface
+        MaterialTheme.colorScheme.onSurfaceVariant
     )
-
-    val colors = colorPalette.take(yValues.size)
 
     val legendItemLabelComponent = rememberTextComponent(MaterialTheme.colorScheme.onSurface)
 
@@ -248,8 +249,44 @@ fun LibreFitCartesianChart(
                 }
             }
 
-            AnimatedContent(targetState = yValues.isNotEmpty()) { yValuesNotEmpty ->
-                if (yValuesNotEmpty) {
+            // Columns' style
+            val columnComponents = colorPalette.mapIndexed { i, c ->
+                rememberLineComponent(
+                    fill = fill(c),
+                    thickness = 32.dp,
+                    shape = if (i == colorPalette.lastIndex) CorneredShape.rounded(
+                        32,
+                        32
+                    )
+                    else Shape.Rectangle
+                )
+            }
+
+            // Lines' style
+            val lineComponents = colorPalette.map {
+                LineCartesianLayer.rememberLine(
+                    fill = LineCartesianLayer.LineFill.single(
+                        fill(it)
+                    ),
+                    areaFill = LineCartesianLayer.AreaFill.single(
+                        fill(
+                            ShaderProvider.verticalGradient(
+                                arrayOf(
+                                    it.copy(alpha = 0.4f),
+                                    Color.Transparent
+                                )
+                            )
+                        )
+                    ),
+                    // Curved line
+                    pointConnector = LineCartesianLayer.PointConnector.cubic()
+                )
+            }
+
+            AnimatedContent(targetState = yValuesArePresent) { it ->
+                if (it) {
+                    val colors = colorPalette.take(yValues.firstOrNull()?.size ?: 0)
+
                     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                         // Show chart
                         ProvideVicoTheme(rememberM3VicoTheme()) {
@@ -257,41 +294,13 @@ fun LibreFitCartesianChart(
                                 chart = rememberCartesianChart(
                                     if (useColumns) rememberColumnCartesianLayer(
                                         columnProvider = ColumnCartesianLayer.ColumnProvider.series(
-                                            colors.mapIndexed { i, c ->
-                                                rememberLineComponent(
-                                                    fill = fill(c),
-                                                    thickness = 32.dp,
-                                                    shape = if (i == colors.lastIndex) CorneredShape.rounded(
-                                                        32,
-                                                        32
-                                                    )
-                                                    else Shape.Rectangle
-                                                )
-                                            }
+                                            columnComponents
                                         ),
                                         columnCollectionSpacing = 64.dp,
                                         mergeMode = { ColumnCartesianLayer.MergeMode.stacked() }
                                     ) else rememberLineCartesianLayer(
                                         lineProvider = LineCartesianLayer.LineProvider.series(
-                                            colors.map {
-                                                LineCartesianLayer.rememberLine(
-                                                    fill = LineCartesianLayer.LineFill.single(
-                                                        fill(it)
-                                                    ),
-                                                    areaFill = LineCartesianLayer.AreaFill.single(
-                                                        fill(
-                                                            ShaderProvider.verticalGradient(
-                                                                arrayOf(
-                                                                    it.copy(alpha = 0.4f),
-                                                                    Color.Transparent
-                                                                )
-                                                            )
-                                                        )
-                                                    ),
-                                                    // Curved line
-                                                    pointConnector = LineCartesianLayer.PointConnector.cubic()
-                                                )
-                                            }
+                                            lineComponents
                                         ),
                                         pointSpacing = 64.dp
                                     ),
@@ -400,7 +409,7 @@ fun LibreFitCartesianChart(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 30.dp, bottom = 30.dp),
+                            .padding(top = 40.dp, bottom = 40.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(30.dp)
                     ) {

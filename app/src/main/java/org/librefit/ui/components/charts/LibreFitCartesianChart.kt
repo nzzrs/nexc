@@ -71,6 +71,8 @@ import com.patrykandpatrick.vico.compose.common.insets
 import com.patrykandpatrick.vico.compose.common.rememberHorizontalLegend
 import com.patrykandpatrick.vico.compose.common.shader.verticalGradient
 import com.patrykandpatrick.vico.compose.m3.common.rememberM3VicoTheme
+import com.patrykandpatrick.vico.core.cartesian.CartesianDrawingContext
+import com.patrykandpatrick.vico.core.cartesian.CartesianMeasuringContext
 import com.patrykandpatrick.vico.core.cartesian.Zoom
 import com.patrykandpatrick.vico.core.cartesian.axis.HorizontalAxis
 import com.patrykandpatrick.vico.core.cartesian.axis.VerticalAxis
@@ -83,6 +85,7 @@ import com.patrykandpatrick.vico.core.cartesian.layer.LineCartesianLayer
 import com.patrykandpatrick.vico.core.cartesian.marker.CartesianMarker
 import com.patrykandpatrick.vico.core.cartesian.marker.CartesianMarkerVisibilityListener
 import com.patrykandpatrick.vico.core.cartesian.marker.DefaultCartesianMarker
+import com.patrykandpatrick.vico.core.common.Legend
 import com.patrykandpatrick.vico.core.common.LegendItem
 import com.patrykandpatrick.vico.core.common.data.ExtraStore
 import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
@@ -160,7 +163,7 @@ fun LibreFitCartesianChart(
      * ```
      * val rawYValues = listOf(listOf(1,2),listOf(3,4),listOf(5,6))
      * //...
-     * val yValues = val rawYValues = listOf(listOf(1,3,5),listOf(2,4,6))
+     * val yValues = listOf(listOf(1,3,5),listOf(2,4,6))
      * ```
      */
     val yValues = (0 until expectedSize).map { index ->
@@ -254,7 +257,7 @@ fun LibreFitCartesianChart(
                 rememberLineComponent(
                     fill = fill(c),
                     thickness = 32.dp,
-                    shape = if (i == colorPalette.lastIndex) CorneredShape.rounded(
+                    shape = if (i == expectedSize - 1) CorneredShape.rounded(
                         32,
                         32
                     )
@@ -283,10 +286,28 @@ fun LibreFitCartesianChart(
                 )
             }
 
+            // Legend style
+            val legend: Legend<CartesianMeasuringContext, CartesianDrawingContext>? =
+                if (legendList == null) null else rememberHorizontalLegend(
+                    items = { extraStore ->
+                        extraStore[legendLabelKey].forEachIndexed { index, label ->
+                            add(
+                                LegendItem(
+                                    shapeComponent(
+                                        fill(colorPalette[index]),
+                                        CorneredShape.Pill
+                                    ),
+                                    legendItemLabelComponent,
+                                    label,
+                                )
+                            )
+                        }
+                    },
+                    padding = insets(top = 16.dp),
+                )
+
             AnimatedContent(targetState = yValuesArePresent) { it ->
                 if (it) {
-                    val colors = colorPalette.take(yValues.firstOrNull()?.size ?: 0)
-
                     Column(verticalArrangement = Arrangement.spacedBy(20.dp)) {
                         // Show chart
                         ProvideVicoTheme(rememberM3VicoTheme()) {
@@ -345,33 +366,17 @@ fun LibreFitCartesianChart(
                                         }
                                     ),
                                     bottomAxis = HorizontalAxis.rememberBottom(
-                                        valueFormatter = remember(yValues, xValues) {
+                                        valueFormatter = remember(xValues) {
                                             if (xValues.all { it.isNotBlank() } && xValues.isNotEmpty())
                                                 CartesianValueFormatter { context, x, _ ->
                                                     context.model.extraStore.getOrNull(labelListKey)
                                                         ?.get(x.toInt())
                                                         ?: xValues.first()
                                                 }
-                                            else CartesianValueFormatter.decimal()
+                                            else CartesianValueFormatter.Default
                                         }
                                     ),
-                                    legend = if (legendList == null) null else rememberHorizontalLegend(
-                                        items = { extraStore ->
-                                            extraStore[legendLabelKey].forEachIndexed { index, label ->
-                                                add(
-                                                    LegendItem(
-                                                        shapeComponent(
-                                                            fill(colors[index]),
-                                                            CorneredShape.Pill
-                                                        ),
-                                                        legendItemLabelComponent,
-                                                        label,
-                                                    )
-                                                )
-                                            }
-                                        },
-                                        padding = insets(top = 16.dp),
-                                    ),
+                                    legend = legend,
                                 ),
                                 zoomState = rememberVicoZoomState(
                                     zoomEnabled = false,

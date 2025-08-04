@@ -239,5 +239,7 @@
     <string name="unlink_dialog">Scollega</string>
     <string name="discard_changes_question">Scartare modifiche?</string>
     <string name="discard_dialog">Scarta</string>
+    <string name="open_this_routine">Apri questa routine</string>
+    <string name="linked_routine">Routine collegata</string>
 
 </resources>

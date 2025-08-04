@@ -275,6 +275,8 @@
     <string name="discard_changes_question">Discard changes?</string>
     <string name="discard_dialog">Discard</string>
     <string name="tap_a_workout">Tap a workout to select it</string>
+    <string name="open_this_routine">Open this routine</string>
+    <string name="linked_routine">Linked routine</string>
 
 
 </resources>

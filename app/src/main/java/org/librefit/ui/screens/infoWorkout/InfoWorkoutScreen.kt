@@ -289,7 +289,7 @@ private fun InfoWorkoutScreenContent(
 
             if (routine.id != 0L && !workout.routine) {
                 item {
-                    HeadlineText(stringResource(R.string.routine))
+                    HeadlineText(stringResource(R.string.linked_routine))
                 }
 
                 item {
@@ -312,11 +312,11 @@ private fun InfoWorkoutScreenContent(
                                     verticalArrangement = Arrangement.spacedBy(10.dp)
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.title) + " : " + routine.title,
+                                        text = stringResource(R.string.title) + ": " + routine.title,
                                         style = MaterialTheme.typography.titleMedium
                                     )
                                     Text(
-                                        stringResource(R.string.creation_date) + " : " +
+                                        stringResource(R.string.creation_date) + ": " +
                                                 routine.created.format(
                                                     DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
                                                         .withLocale(
@@ -337,7 +337,7 @@ private fun InfoWorkoutScreenContent(
 
                             LibreFitButton(
                                 elevated = false,
-                                text = stringResource(R.string.open) + ": ${routine.title}",
+                                text = stringResource(R.string.open_this_routine),
                                 icon = ImageVector.vectorResource(R.drawable.ic_open_new)
                             ) {
                                 navController.navigate(Route.InfoWorkoutScreen(routine.id))

@@ -122,6 +122,8 @@
     <string name="delete_workout_text">Are you sure you want to delete this workout? This action cannot be undone</string>
     <string name="delete_routine_question">Delete routine?</string>
     <string name="delete_routine_text">Are you sure you want to delete this routine? This action cannot be undone</string>
+    <string name="open_this_routine">Open this routine</string>
+    <string name="linked_routine">Linked routine</string>
 
 
     <!--Measurement screen-->

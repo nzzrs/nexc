@@ -219,6 +219,8 @@
     <string name="rest_time_desc">Il periodo di riposo si attiva al completamento di una serie, avviando immediatamente il conto alla rovescia. Al termine del riposo, viene emesso un avviso.</string>
     <string name="add">Aggiungi</string>
     <string name="save">Salva</string>
+    <string name="years">Anni</string>
+    <string name="historical">Storico</string>
     <string name="workout_saved">Allenamento salvato</string>
     <string name="start_creating_routine">Inizia creando una nuova routine</string>
     <string name="privacy">Privacy</string>
@@ -241,5 +243,15 @@
     <string name="discard_dialog">Scarta</string>
     <string name="open_this_routine">Apri questa routine</string>
     <string name="linked_routine">Routine collegata</string>
+    <string name="others">Altri</string>
+    <string name="past">Scorso</string>
+    <string name="past_week">Scorsa settimana</string>
+    <string name="past_month">Scorso mese</string>
+    <string name="past_year">Scorso anno</string>
+    <string name="day">Giorno</string>
+    <string name="days">Giorni</string>
+    <string name="month">Mese</string>
+    <string name="months">Mesi</string>
+    <string name="year">Anno</string>
 
 </resources>

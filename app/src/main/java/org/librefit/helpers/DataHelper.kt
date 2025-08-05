@@ -19,6 +19,8 @@
 
 package org.librefit.helpers
 
+import android.content.Context
+import android.util.Log
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
@@ -27,13 +29,17 @@ import org.librefit.db.repository.MeasurementRepository
 import org.librefit.enums.SetMode
 import org.librefit.enums.chart.StatisticsChart
 import org.librefit.enums.chart.WorkoutChart
+import org.librefit.enums.exercise.Muscle
 import org.librefit.ui.components.charts.Point
+import org.librefit.util.Formatter
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
 class DataHelper(
-    private val measurementRepository: MeasurementRepository
+    private val measurementRepository: MeasurementRepository,
+    private val context: Context
 ) {
     val shortFormatter: DateTimeFormatter? =
         DateTimeFormatter.ofLocalizedDate(FormatStyle.SHORT).withLocale(
@@ -63,18 +69,13 @@ class DataHelper(
         workoutChart: WorkoutChart,
         workoutsWithExercises: List<WorkoutWithExercisesAndSets>
     ): List<Point> = coroutineScope {
-        val bodyWeights = workoutsWithExercises
-            .map {
-                async {
-                    measurementRepository.getLastMeasurementByCutoff(it.workout.completed)?.bodyWeight
-                        ?: 0f
-                }
-            }
-            .awaitAll()
-
         workoutsWithExercises
             .mapIndexed { index, it ->
                 async {
+                    val bodyWeight = measurementRepository.getLastMeasurementByCutoff(
+                        it.workout.completed
+                    )?.bodyWeight ?: 0f
+
                     Point(
                         yValues = listOf(
                             when (workoutChart) {
@@ -83,11 +84,10 @@ class DataHelper(
                                     exe.sets.filter { it.completed }.sumOf {
                                         (it.load + if (exe.exercise.setMode == SetMode.BODYWEIGHT ||
                                             exe.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD
-                                        )
-                                            bodyWeights[index] else 0f) * it.reps.toDouble()
+                                        ) bodyWeight else 0f
+                                                ) * it.reps.toDouble()
                                     }
                                 }
-
                                 WorkoutChart.REPS -> it.exercisesWithSets.sumOf { exe ->
                                     exe.sets.filter { it.completed }.sumOf { it.reps }
                                 }
@@ -116,7 +116,7 @@ class DataHelper(
                 val volumeForEachRep = when (exe.exercise.setMode) {
                     SetMode.LOAD -> if (isRoutine || set.completed) set.load else 0f
                     SetMode.BODYWEIGHT -> if (isRoutine || set.completed) bodyWeight else 0f
-                    SetMode.BODYWEIGHT_WITH_LOAD -> (if (isRoutine || set.completed) set.load else 0f) + bodyWeight
+                    SetMode.BODYWEIGHT_WITH_LOAD -> if (isRoutine || set.completed) set.load + bodyWeight else 0f
                     SetMode.DURATION -> 0f
                 }
 
@@ -130,38 +130,288 @@ class DataHelper(
      * for each workout in [workoutsWithExercises].
      *
      */
-    suspend fun fetchPointsForStatisticsChart(
+    suspend fun fetchPointsForStatisticsChartOld(
         statisticsChart: StatisticsChart,
         workoutsWithExercises: List<WorkoutWithExercisesAndSets>
-    ): List<Point> = coroutineScope {
-        val bodyWeights = workoutsWithExercises
-            .map {
+    ): Pair<List<Muscle?>, List<Point>> = coroutineScope {
+        if (workoutsWithExercises.isEmpty()) {
+            emptyList<Muscle>() to emptyList<Point>()
+        }
+
+        val musclesListOrderedByValue = workoutsWithExercises
+            .flatMap { w ->
+                // Pair each exercises with its completed sets
+                w.exercisesWithSets.map { e -> e.exerciseDC to e.sets.filter { it.completed } }
+            }
+            .map { (exerciseDC, sets) ->
+                // Get muscles from each exercise
+                val muscles = (exerciseDC.primaryMuscles + exerciseDC.secondaryMuscles).toSet()
+                muscles to sets
+            }
+            .map { (muscles, sets) ->
+                // Get relevant data based on statistics chart
+                val value = when (statisticsChart) {
+                    StatisticsChart.LOAD -> sets.sumOf { it.load.toDouble() }
+                    StatisticsChart.REPS -> sets.sumOf { it.reps }
+                    StatisticsChart.VOLUME -> sets.sumOf { it.load.toDouble() * it.reps }
+                    StatisticsChart.DURATION -> sets.sumOf { it.elapsedTime }
+                }.toFloat()
+
+                muscles to value
+            }
+            .flatMap { (muscles, value) ->
+                // Assign to each muscle of the list, the related value
+                muscles.map { muscle -> muscle to value }
+            }
+            .groupBy(
+                keySelector = { it.first },      // Group pairs by Muscle
+                valueTransform = { it.second }   // Keep only the Float value in the grouped list
+            )
+            .mapValues { entry ->
+                // For each Muscle, sum the list of Floats
+                entry.value.sum()
+            }
+            .toList()
+            .filter { (_, value) -> value != 0f }
+            .sortedByDescending { (_, value) ->
+                // Sort by the muscle which has the higher value
+                value
+            }
+
+        Log.d("MuscleListWithValue", "$musclesListOrderedByValue")
+
+        // LibreFitChart support at most 4 entries so take 3 and sum the others (later indicated as "Others")
+        val topThree = musclesListOrderedByValue.take(3)
+
+        val topThreeAndOthers = if (musclesListOrderedByValue.size <= 3) {
+            topThree
+        } else {
+            val others = musclesListOrderedByValue.drop(3)
+
+            val last = null to others.sumOf { it.second.toDouble() }.toFloat()
+
+            topThree + last
+        }
+
+        Log.d("TopThreeMusclesAndOthers", "$topThreeAndOthers")
+
+        // Create list of Points highlighting the top three muscles
+        val points = workoutsWithExercises.map { w ->
+            async {
+                val bodyWeight = measurementRepository.getLastMeasurementByCutoff(
+                    w.workout.completed
+                )?.bodyWeight ?: 0f
+
+                // Until here works
+
+                val musclesWithValueForEachWorkout = topThreeAndOthers.map { (muscle, _) ->
+                    // Check in every workout the value for a specific muscle
+                    val value = if (muscle != null) {
+                        w.exercisesWithSets
+                            .sumOf { (exercise, sets, exerciseDC) ->
+                                if (muscle in exerciseDC.primaryMuscles || muscle in exerciseDC.secondaryMuscles) {
+                                    when (statisticsChart) {
+                                        StatisticsChart.LOAD -> sets.sumOf {
+                                            when (exercise.setMode) {
+                                                SetMode.LOAD -> it.load
+                                                SetMode.BODYWEIGHT -> bodyWeight
+                                                SetMode.BODYWEIGHT_WITH_LOAD -> it.load + bodyWeight
+                                                SetMode.DURATION -> 0
+                                            }.toDouble()
+                                        }
+
+                                        StatisticsChart.REPS -> sets.sumOf { it.reps }
+                                        StatisticsChart.VOLUME -> sets.sumOf {
+                                            when (exercise.setMode) {
+                                                SetMode.LOAD -> it.load
+                                                SetMode.BODYWEIGHT -> bodyWeight
+                                                SetMode.BODYWEIGHT_WITH_LOAD -> it.load + bodyWeight
+                                                SetMode.DURATION -> 0
+                                            }.toDouble() * it.reps
+                                        }
+
+                                        StatisticsChart.DURATION -> sets.sumOf { it.elapsedTime }
+                                    }.toDouble()
+                                } else 0.0
+                            }
+                    } else {
+                        w.exercisesWithSets
+                            .sumOf { (_, sets, exerciseDC) ->
+                                val containsAtLeastOneMuscleOfTopThree = topThree.any { (m, _) ->
+                                    m in exerciseDC.primaryMuscles || m in exerciseDC.secondaryMuscles
+                                }
+
+                                if (!containsAtLeastOneMuscleOfTopThree) {
+                                    when (statisticsChart) {
+                                        StatisticsChart.LOAD -> sets.sumOf { it.load.toDouble() }
+                                        StatisticsChart.REPS -> sets.sumOf { it.reps }
+                                        StatisticsChart.VOLUME -> sets.sumOf { it.load.toDouble() * it.reps }
+                                        StatisticsChart.DURATION -> sets.sumOf { it.elapsedTime }
+                                    }.toDouble()
+                                } else 0.0
+                            }
+                    }.toFloat()
+
+                    Log.d("musclePoint", "${muscle to value}")
+
+                    muscle to value
+                }
+                Point(
+                    yValues = musclesWithValueForEachWorkout.map { it.second },
+                    xValue = Formatter.getShortDateFromLocalDate(w.workout.completed),
+                    workoutId = w.workout.id
+                )
+            }
+        }
+
+        val musclesLegendTextId = topThreeAndOthers.map { it.first }
+
+        Log.d("muscleLegend", "$musclesLegendTextId")
+
+        musclesLegendTextId to points.awaitAll()
+    }
+
+    /**
+     * Calculates average performance points for each muscle group, categorized into dynamic time buckets.
+     *
+     * This function is highly configurable, allowing for any number of time buckets to be defined
+     * via cutoffs and providing an option to include or exclude data that falls outside all specified
+     * time periods.
+     *
+     * @param workoutsWithExercises The list of user workouts to process.
+     * @param cutoffs A list of [LocalDateTime] points that define the boundaries for time buckets.
+     *        The function creates `cutoffs.size` buckets for workouts newer than each cutoff, plus
+     *        an optional final bucket for all older workouts. The list is automatically sorted internally.
+     *        Example: Providing 2 cutoffs creates buckets for workouts newer than `cutoff[0]`,
+     *        newer than `cutoff[1]`, and optionally all others (which are older).
+     * @param includeOlderWorkouts If `true`, workouts older than all specified cutoffs are aggregated
+     * into a final "older" bucket. If `false`, these workouts are entirely excluded from the results.
+     * @return A list where each [Point] contains in [Point.yValues] a list of its average performance
+     * values for each time bucket while in [Point.xValue] there is the associated muscle.
+     * The size of the `averages` list corresponds to the number of time buckets generated based on [cutoffs].
+     */
+    suspend fun fetchAveragePerformancePerMuscleWithTimeBuckets(
+        statisticsChart: StatisticsChart,
+        workoutsWithExercises: List<WorkoutWithExercisesAndSets>,
+        cutoffs: List<LocalDateTime>,
+        includeOlderWorkouts: Boolean = false
+    ): List<Point> {
+        if (workoutsWithExercises.isEmpty()) {
+            return emptyList()
+        }
+
+        val sortedCutoffs = cutoffs.sortedDescending()
+        // The number of buckets depends on whether the final "older" bucket is included.
+        val numTimeBuckets =
+            if (includeOlderWorkouts) sortedCutoffs.size + 1 else sortedCutoffs.size
+
+        val processedData = coroutineScope {
+            // Map each workout to a Deferred result.
+            val deferredResults = workoutsWithExercises.map { w ->
                 async {
-                    measurementRepository.getLastMeasurementByCutoff(it.workout.completed)?.bodyWeight
-                        ?: 0f
+                    // Find the index of the first cutoff the workout date is after.
+                    val cutoffIndex = sortedCutoffs.indexOfFirst { w.workout.completed.isAfter(it) }
+
+                    // Determine the final bucket index, or decide to discard the workout.
+                    // A `null` index will signify that the workout should be discarded.
+                    val timeBucketIndex: Int? = when {
+                        // Case 1: The workout falls into one of the defined cutoff buckets.
+                        cutoffIndex != -1 -> cutoffIndex
+                        // Case 2: It's an older workout, and it is configured to include them.
+                        includeOlderWorkouts -> sortedCutoffs.size // This is the last "older" bucket.
+                        // Case 3: It's an older workout, and it is configured to EXCLUDE them.
+                        else -> null
+                    }
+
+                    // If timeBucketIndex is null, return an empty list for this workout.
+                    // Otherwise, process the exercises.
+                    if (timeBucketIndex == null) {
+                        emptyList()
+                    } else {
+                        // Process these exercises in order to calculate the specified value for each muscle
+                        w.exercisesWithSets.mapNotNull { e ->
+                            val muscles =
+                                e.exerciseDC.primaryMuscles + e.exerciseDC.secondaryMuscles
+                            val sets = e.sets.filter { it.completed }
+                            val exercise = e.exercise
+
+                            val bodyWeight = measurementRepository.getLastMeasurementByCutoff(
+                                w.workout.completed
+                            )?.bodyWeight ?: 0f
+
+                            val value = when (statisticsChart) {
+                                StatisticsChart.LOAD -> sets.sumOf {
+                                    when (exercise.setMode) {
+                                        SetMode.LOAD -> it.load
+                                        SetMode.BODYWEIGHT -> bodyWeight
+                                        SetMode.BODYWEIGHT_WITH_LOAD -> it.load + bodyWeight
+                                        SetMode.DURATION -> 0
+                                    }.toDouble()
+                                }
+
+                                StatisticsChart.REPS -> sets.sumOf { it.reps }
+                                StatisticsChart.VOLUME -> sets.sumOf {
+                                    when (exercise.setMode) {
+                                        SetMode.LOAD -> it.load
+                                        SetMode.BODYWEIGHT -> bodyWeight
+                                        SetMode.BODYWEIGHT_WITH_LOAD -> it.load + bodyWeight
+                                        SetMode.DURATION -> 0
+                                    }.toDouble() * it.reps
+                                }
+
+                                StatisticsChart.DURATION -> sets.sumOf { it.elapsedTime }
+                            }.toDouble()
+
+                            if (value == 0.0) {
+                                null // Filter out zero-value
+                            } else {
+                                // Create a "one-hot" encoded list for the value's time bucket.
+                                val values = MutableList(numTimeBuckets) { 0f }.apply {
+                                    set(timeBucketIndex, value.toFloat())
+                                }.toList()
+                                // Pair the muscles with the calculated value list.
+                                muscles.toSet() to values
+                            }
+                        }
+                    }
                 }
             }
-            .awaitAll()
+            // Wait for all parallel jobs to complete while
+            // `flatten()` converts the List<List<Pair>> into a single List<Pair>.
+            deferredResults.awaitAll().flatten()
+        }
 
-        workoutsWithExercises
-            .mapIndexed { index, w ->
-                async {
-                    Point(
-                        yValues = when (statisticsChart) {
-                            StatisticsChart.LOAD -> w.exercisesWithSets
-                                .sortedBy { e -> e.sets.sumOf { it.load.toDouble() } }
-                                .map { 1f }
 
-                            StatisticsChart.REPS -> TODO()
-                            StatisticsChart.VOLUME -> TODO()
-                            StatisticsChart.DURATION -> TODO()
-                        },
-                        xValue = w.workout.completed.format(shortFormatter),
-                        workoutId = w.workout.id
-                    )
+        return processedData
+            .asSequence()
+            // Unroll the data: from (Set<Muscle>, List) to multiple (Muscle, List) pairs.
+            .flatMap { (muscles, valuesList) ->
+                muscles.asSequence().map { muscle -> muscle to valuesList }
+            }
+            // Group all value lists by muscle.
+            .groupBy(
+                keySelector = { it.first },      // Group by Muscle
+                valueTransform = { it.second }   // Collect only the value lists
+            )
+            // Calculate the average for each time bucket for each muscle.
+            .mapValues { (_, dataLists) ->
+                List(numTimeBuckets) { bucketIndex ->
+                    // For each bucket, get all non-zero values from the collected lists.
+                    val nonZeroValues = dataLists.mapNotNull { dataList ->
+                        dataList[bucketIndex].takeIf { it != 0f }
+                    }
+
+                    // Safely calculate average. .average() on an empty list returns NaN.
+                    nonZeroValues.average().toFloat().takeIf { !it.isNaN() } ?: 0f
                 }
             }
-            .awaitAll()
-
+            .map { (muscle, list) ->
+                // Each point represent the average performance of a muscle in different time
+                // buckets which are defined by cutoffs
+                Point(
+                    yValues = list,
+                    xValue = context.getString(Formatter.exerciseEnumToStringId(muscle)),
+                )
+            }
     }
 }

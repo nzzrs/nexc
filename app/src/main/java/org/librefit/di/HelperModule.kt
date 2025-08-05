@@ -42,7 +42,10 @@ object HelperModule {
 
     @Provides
     @Singleton
-    fun provideDataHelper(measurementRepository: MeasurementRepository): DataHelper {
-        return DataHelper(measurementRepository)
+    fun provideDataHelper(
+        @ApplicationContext context: Context,
+        measurementRepository: MeasurementRepository
+    ): DataHelper {
+        return DataHelper(measurementRepository, context)
     }
 }

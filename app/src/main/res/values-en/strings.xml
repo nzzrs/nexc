@@ -252,6 +252,8 @@
     <string name="rest_time_desc">The rest period is activated upon completion of a set, immediately starting the countdown. An alert is issued when the rest ends.</string>
     <string name="add">Add</string>
     <string name="save">Save</string>
+    <string name="years">Years</string>
+    <string name="historical">Historical</string>
     <string name="workout_saved">Workout saved</string>
     <string name="edit_routine">Edit routine</string>
     <string name="start_creating_routine">Start by creating a new routine</string>
@@ -277,6 +279,16 @@
     <string name="tap_a_workout">Tap a workout to select it</string>
     <string name="open_this_routine">Open this routine</string>
     <string name="linked_routine">Linked routine</string>
+    <string name="others">Others</string>
+    <string name="past">Past</string>
+    <string name="past_week">Past week</string>
+    <string name="past_month">Past month</string>
+    <string name="past_year">Past year</string>
+    <string name="day">Day</string>
+    <string name="days">Days</string>
+    <string name="month">Month</string>
+    <string name="months">Months</string>
+    <string name="year">Year</string>
 
 
 </resources>

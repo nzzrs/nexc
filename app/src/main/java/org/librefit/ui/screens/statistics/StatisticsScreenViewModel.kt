@@ -20,13 +20,107 @@
 package org.librefit.ui.screens.statistics
 
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
+import org.librefit.R
 import org.librefit.db.repository.WorkoutRepository
+import org.librefit.enums.chart.StatisticsChart
+import org.librefit.helpers.DataHelper
+import org.librefit.ui.components.charts.Point
+import java.time.LocalDate
+import java.time.LocalDateTime
+import java.time.temporal.ChronoUnit
 import javax.inject.Inject
 
 @HiltViewModel
 class StatisticsScreenViewModel @Inject constructor(
-    workoutRepository: WorkoutRepository
+    workoutRepository: WorkoutRepository,
+    dataHelper: DataHelper
 ) : ViewModel() {
+    private val _statisticsChart = MutableStateFlow(StatisticsChart.LOAD)
+    val statisticsChart = _statisticsChart.asStateFlow()
+
+    fun updateStatisticsChart(statisticsChart: StatisticsChart) {
+        _statisticsChart.update {
+            statisticsChart
+        }
+    }
+
+
+    val defaultCutoffs = listOf(
+        LocalDateTime.now().minusDays(7),
+        LocalDateTime.now().minusDays(30),
+        LocalDateTime.now().minusDays(365)
+    )
+    private val _cutoffs = MutableStateFlow(defaultCutoffs)
+    val cutoffs = _cutoffs.asStateFlow()
+
+
+    val points: StateFlow<List<Point>> = combine(
+        workoutRepository.completedWorkoutsWithExercisesAndSets,
+        statisticsChart,
+        cutoffs
+    ) { workouts, statisticsChart, cutoffs ->
+        dataHelper.fetchAveragePerformancePerMuscleWithTimeBuckets(
+            statisticsChart = statisticsChart,
+            workoutsWithExercises = workouts,
+            cutoffs = cutoffs,
+            includeOlderWorkouts = cutoffs.size <= 3
+        )
+    }
+        .distinctUntilChanged()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
+    val legendIds: StateFlow<List<Pair<Int, Long?>>> = combine(
+        cutoffs,
+        points
+    ) { cutoffs, points ->
+        var ids = cutoffs.mapIndexedNotNull { index, cutoff ->
+            val cutoffDate = cutoff.toLocalDate()
+            val differenceDays = ChronoUnit.DAYS.between(
+                cutoffDate, LocalDate.now()
+            )
+
+            when (differenceDays) {
+                7L -> R.string.past_week to null
+                30L -> R.string.past_month to null
+                365L -> R.string.past_year to null
+                else -> {
+                    if (differenceDays <= 30) {
+                        R.string.days to differenceDays
+                    } else if (differenceDays <= 365) {
+                        R.string.months to (differenceDays / 30)
+                    } else {
+                        R.string.year to (differenceDays / 365)
+                    }
+                }
+            }
+        }
+
+        if (cutoffs.size <= 3) {
+            ids = ids + (R.string.historical to null)
+        }
+
+        ids.take(points.firstOrNull()?.yValues?.size ?: 0)
+    }
+        .distinctUntilChanged()
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = emptyList()
+        )
+
 
 }

@@ -31,6 +31,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
@@ -72,18 +73,28 @@ class InfoWorkoutScreenViewModel @Inject constructor(
             val workoutWithExercisesAndSets =
                 workoutRepository.getWorkoutWithExercisesAndSets(workoutId)
 
-            _workout.value = workoutWithExercisesAndSets.workout
+            _workout.update {
+                workoutWithExercisesAndSets.workout
+            }
 
-            _exercises.value = workoutWithExercisesAndSets.exercisesWithSets
+            _exercises.update {
+                workoutWithExercisesAndSets.exercisesWithSets
+            }
 
             if (isRoutine()) {
-                _routine.value = workout.value
+                _routine.update {
+                    workout.value
+                }
 
                 //If the workout is a routine, then retrieve all past completed workout associated with it
-                _completedWorkoutsWithExercises.value = workoutRepository
-                    .getCompletedWorkoutsWithExercisesAndSetsFromRoutine(routineId = workout.value.routineId)
+                _completedWorkoutsWithExercises.update {
+                    workoutRepository
+                        .getCompletedWorkoutsWithExercisesAndSetsFromRoutine(routineId = workout.value.routineId)
+                }
             } else {
-                _routine.value = workoutRepository.getRoutineFromRoutineID(workout.value.routineId)
+                _routine.update {
+                    workoutRepository.getRoutineFromRoutineID(workout.value.routineId)
+                }
             }
 
 
@@ -92,7 +103,9 @@ class InfoWorkoutScreenViewModel @Inject constructor(
                 WorkoutWithExercisesAndSets(workout.value, exercises.value.map { it.toEntity() })
             )
 
-            _volume.value = String.format(Locale.getDefault(), "%.2f", volumeValue)
+            _volume.update {
+                String.format(Locale.getDefault(), "%.2f", volumeValue)
+            }
         }
     }
 
@@ -112,11 +125,15 @@ class InfoWorkoutScreenViewModel @Inject constructor(
     }
 
     fun detachWorkoutFromRoutine() {
-        _workout.value = workout.value.copy(
-            routineId = Random.Default.nextLong()
-        )
+        _workout.update { currentWorkout ->
+            currentWorkout.copy(
+                routineId = Random.Default.nextLong()
+            )
+        }
 
-        _routine.value = Workout()
+        _routine.update {
+            Workout()
+        }
 
         viewModelScope.launch(Dispatchers.IO) {
             workoutRepository.updateWorkout(workout.value)
@@ -157,6 +174,8 @@ class InfoWorkoutScreenViewModel @Inject constructor(
         )
 
     fun updateChartMode(value: WorkoutChart) {
-        _workoutChart.value = value
+        _workoutChart.update {
+            value
+        }
     }
 }

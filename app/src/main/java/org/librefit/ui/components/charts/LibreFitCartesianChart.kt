@@ -59,7 +59,6 @@ import com.patrykandpatrick.vico.compose.cartesian.axis.rememberStart
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberColumnCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
-import com.patrykandpatrick.vico.compose.cartesian.layer.stacked
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
 import com.patrykandpatrick.vico.compose.common.ProvideVicoTheme
@@ -90,7 +89,6 @@ import com.patrykandpatrick.vico.core.common.LegendItem
 import com.patrykandpatrick.vico.core.common.data.ExtraStore
 import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
 import com.patrykandpatrick.vico.core.common.shape.CorneredShape
-import com.patrykandpatrick.vico.core.common.shape.Shape
 import org.librefit.R
 import org.librefit.enums.chart.ChartMode
 import org.librefit.enums.chart.MeasurementChart
@@ -257,11 +255,10 @@ fun LibreFitCartesianChart(
                 rememberLineComponent(
                     fill = fill(c),
                     thickness = 32.dp,
-                    shape = if (i == expectedSize - 1) CorneredShape.rounded(
+                    shape = CorneredShape.rounded(
                         32,
                         32
                     )
-                    else Shape.Rectangle
                 )
             }
 
@@ -317,8 +314,8 @@ fun LibreFitCartesianChart(
                                         columnProvider = ColumnCartesianLayer.ColumnProvider.series(
                                             columnComponents
                                         ),
-                                        columnCollectionSpacing = 64.dp,
-                                        mergeMode = { ColumnCartesianLayer.MergeMode.stacked() }
+                                        columnCollectionSpacing = if (chartMode is StatisticsChart)
+                                            32.dp else 64.dp,
                                     ) else rememberLineCartesianLayer(
                                         lineProvider = LineCartesianLayer.LineProvider.series(
                                             lineComponents

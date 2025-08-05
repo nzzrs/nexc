@@ -66,7 +66,7 @@ class WorkoutScreenViewModel @Inject constructor(
     val idSetWithRunningChronometer = _idSetWithRunningChronometer.asStateFlow()
 
     fun updateIdSetWithRunningChronometer(setId: Long?) {
-        _idSetWithRunningChronometer.value = setId
+        _idSetWithRunningChronometer.update { setId }
     }
 
     private suspend fun startSetChronometer(set: UiSet) {
@@ -109,12 +109,16 @@ class WorkoutScreenViewModel @Inject constructor(
                 val workoutWithExercisesAndSets =
                     workoutRepository.getWorkoutWithExercisesAndSets(workoutId)
 
-                _workout.value = workoutWithExercisesAndSets.workout.copy(
-                    id = 0,
-                    routine = false
-                )
+                _workout.update {
+                    workoutWithExercisesAndSets.workout.copy(
+                        id = 0,
+                        routine = false
+                    )
+                }
 
-                _exercises.value = workoutWithExercisesAndSets.exercisesWithSets
+                _exercises.update {
+                    workoutWithExercisesAndSets.exercisesWithSets
+                }
             }
         }
 
@@ -236,7 +240,7 @@ class WorkoutScreenViewModel @Inject constructor(
     fun deleteSet(id: Long) {
         // If there's the match, then the set has a running chronometer and it has to be stopped by assign 0
         if (idSetWithRunningChronometer.value == id) {
-            _idSetWithRunningChronometer.value = 0L
+            _idSetWithRunningChronometer.update { 0L }
         }
 
         _exercises.update { currentExercises ->
@@ -278,7 +282,7 @@ class WorkoutScreenViewModel @Inject constructor(
         val exerciseWithSets = exercises.value.find { it.exercise.id == exerciseId }!!
         // If there's the match, then the set has a running chronometer and it has to be stopped by assign 0
         if (exerciseWithSets.sets.any { it.id == idSetWithRunningChronometer.value }) {
-            _idSetWithRunningChronometer.value = 0L
+            _idSetWithRunningChronometer.update { 0L }
         }
         _exercises.update { currentExercises ->
             currentExercises.filter { it.exercise.id != exerciseId }
@@ -315,7 +319,7 @@ class WorkoutScreenViewModel @Inject constructor(
     private fun observeChanges() {
         viewModelScope.launch(Dispatchers.Main) {
             WorkoutService.restTime.collect { newRestTime ->
-                _restTime.value = newRestTime.coerceAtLeast(0)
+                _restTime.update { newRestTime.coerceAtLeast(0) }
 
                 // When timer is over and screen is visible, it plays alert sound
                 if (initialRestTime != 1 && restTime.value == 0 && isFocused) {

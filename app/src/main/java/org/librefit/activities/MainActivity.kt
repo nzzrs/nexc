@@ -17,30 +17,30 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package org.librefit
+package org.librefit.activities
 
 import android.os.Bundle
-import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import org.librefit.data.DataStoreManager
 import org.librefit.enums.ThemeMode
-import org.librefit.ui.screens.about.PrivacyScreen
+import org.librefit.nav.NavigationHost
+import org.librefit.services.WorkoutServiceManager
 import org.librefit.ui.theme.LibreFitTheme
 import javax.inject.Inject
 
-/**
- * Invoked if and only if the user taps the info icon next to a permission in the app system settings.
- * See `AndroidManifest.xml` and [this](https://developer.android.com/training/permissions/explaining-access#privacy-dashboard-show-rationale)
- */
 @AndroidEntryPoint
-class PrivacyActivity : ComponentActivity() {
+class MainActivity : AppCompatActivity() {
     @Inject
     lateinit var userPreferences: DataStoreManager
+
+    @Inject
+    lateinit var workoutServiceManager: WorkoutServiceManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -48,6 +48,7 @@ class PrivacyActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
+
 
         setContent {
             val theme = userPreferences.themeMode.collectAsState(ThemeMode.SYSTEM)
@@ -61,8 +62,15 @@ class PrivacyActivity : ComponentActivity() {
                     ThemeMode.SYSTEM -> isSystemInDarkTheme()
                 }
             ) {
-                PrivacyScreen()
+                NavigationHost()
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        if (!isChangingConfigurations) {
+            workoutServiceManager.stopService()
         }
     }
 }

@@ -28,8 +28,8 @@ import android.content.Intent
 import android.media.AudioAttributes
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
-import org.librefit.MainActivity
 import org.librefit.R
+import org.librefit.activities.MainActivity
 import org.librefit.enums.WorkoutServiceActions
 import org.librefit.services.WorkoutService
 import org.librefit.services.WorkoutService.Companion.EXTRA_ADD_TEN_SECONDS

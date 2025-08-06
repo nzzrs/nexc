@@ -25,6 +25,8 @@ import org.librefit.db.relations.ExerciseWithSets
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.ui.models.UiWorkoutWithExercisesAndSets
 import org.librefit.ui.models.mappers.toUi
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Repository class for managing workout data.
@@ -32,15 +34,16 @@ import org.librefit.ui.models.mappers.toUi
  * This class serves as a mediator between [WorkoutDao] and the
  * application, providing a clean API for data access.
  *
- * This class is provided by [org.librefit.di.RepositoryModule].
- *
  * @param workoutDao The [WorkoutDao] instance used to access workout data from the database.
  * @property completedWorkouts Refer to [WorkoutDao.getCompletedWorkouts]
  * @property routines Refer to [WorkoutDao.getRoutines]
  * @property completedWorkoutsWithExercisesAndSets Refer to [WorkoutDao.getCompletedWorkoutsWithExercisesAndSets]
  *
  */
-class WorkoutRepository(private val workoutDao: WorkoutDao) {
+@Singleton
+class WorkoutRepository @Inject constructor(
+    private val workoutDao: WorkoutDao
+) {
     val completedWorkouts = workoutDao.getCompletedWorkouts()
 
     val routines = workoutDao.getRoutines()

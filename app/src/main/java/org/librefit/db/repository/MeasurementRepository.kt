@@ -22,6 +22,8 @@ package org.librefit.db.repository
 import org.librefit.db.dao.MeasurementDao
 import org.librefit.db.entity.Measurement
 import java.time.LocalDateTime
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Repository class for managing measurements data.
@@ -29,12 +31,14 @@ import java.time.LocalDateTime
  * This class serves as a mediator between [MeasurementDao] and the
  * application, providing a clean API for data access.
  *
- * This class is provided by [org.librefit.di.RepositoryModule].
  *
  * @param measurementDao The [MeasurementDao] instance used to access measurements data from the database.
  *
  */
-class MeasurementRepository(private val measurementDao: MeasurementDao) {
+@Singleton
+class MeasurementRepository @Inject constructor(
+    private val measurementDao: MeasurementDao
+) {
     val measurements = measurementDao.getAllMeasurements()
 
     suspend fun upsertMeasurement(measurement: Measurement) {

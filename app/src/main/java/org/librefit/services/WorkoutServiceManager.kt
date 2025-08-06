@@ -21,12 +21,18 @@ package org.librefit.services
 
 import android.content.Context
 import android.content.Intent
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.librefit.enums.WorkoutServiceActions
 import org.librefit.services.WorkoutService.Companion.EXTRA_ADD_TEN_SECONDS
 import org.librefit.services.WorkoutService.Companion.EXTRA_INITIAL_REST_TIME
 import org.librefit.services.WorkoutService.Companion.EXTRA_IS_FOCUSED
+import javax.inject.Inject
+import javax.inject.Singleton
 
-class WorkoutServiceManager(context: Context) {
+@Singleton
+class WorkoutServiceManager @Inject constructor(
+    @ApplicationContext context: Context
+) {
     private val context = context.applicationContext
 
     private val workoutServiceIntent by lazy {

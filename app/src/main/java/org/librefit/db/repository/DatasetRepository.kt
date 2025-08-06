@@ -26,8 +26,11 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import org.librefit.db.dao.DatasetDao
 import org.librefit.db.entity.ExerciseDC
+import org.librefit.di.qualifiers.ApplicationScope
 import org.librefit.ui.models.UiExerciseDC
 import org.librefit.ui.models.mappers.toUi
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /**
  * Repository class to provide `res/raw/exercises.json` as a [List] of [ExerciseDC].
@@ -35,15 +38,15 @@ import org.librefit.ui.models.mappers.toUi
  * This class serves as a mediator between [DatasetDao] and the
  * application, providing a clean API for data access.
  *
- * This class is provided by [org.librefit.di.RepositoryModule].
  *
  * @param datasetDao The [DatasetDao] instance used to access the dataset from the database.
  * @param applicationScope A long-lived coroutine on the application scope in order to update the dataset.
  * @property dataset It provides the latest dataset saved in Room
  */
-class DatasetRepository(
+@Singleton
+class DatasetRepository @Inject constructor(
     datasetDao: DatasetDao,
-    applicationScope: CoroutineScope
+    @ApplicationScope applicationScope: CoroutineScope
 ) {
     // The public, read-only StateFlow for consumers to collect.
     val dataset: StateFlow<List<UiExerciseDC>> = datasetDao.getDataset()

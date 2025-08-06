@@ -28,12 +28,15 @@ import android.content.Intent
 import android.media.AudioAttributes
 import androidx.core.app.NotificationCompat
 import androidx.core.net.toUri
+import dagger.hilt.android.qualifiers.ApplicationContext
 import org.librefit.R
 import org.librefit.activities.MainActivity
 import org.librefit.enums.WorkoutServiceActions
 import org.librefit.services.WorkoutService
 import org.librefit.services.WorkoutService.Companion.EXTRA_ADD_TEN_SECONDS
 import org.librefit.util.Formatter.formatTime
+import javax.inject.Inject
+import javax.inject.Singleton
 
 
 /**
@@ -43,9 +46,11 @@ import org.librefit.util.Formatter.formatTime
  * and timer events. It sets up notification channels, builds notification content, and
  * handles user interactions through actions in the notifications.
  *
- * This class instance is provided by [org.librefit.di.HelperModule].
  */
-class NotificationHelper(context: Context) {
+@Singleton
+class NotificationHelper @Inject constructor(
+    @ApplicationContext context: Context
+) {
     companion object {
         const val WORKOUT_CHANNEL_ID = "WORKOUT_CHANNEL_ID"
         const val WORKOUT_NOTIFICATION_ID = 1001

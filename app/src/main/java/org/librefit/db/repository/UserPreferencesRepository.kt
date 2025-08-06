@@ -43,7 +43,7 @@ import javax.inject.Singleton
 @Singleton
 class UserPreferencesRepository @Inject constructor(
     private val dataStore: DataStore<Preferences>,
-    @param:ApplicationScope private val externalScope: CoroutineScope
+    @param:ApplicationScope private val applicationScope: CoroutineScope
 ) {
     companion object {
         val themeModeKey = intPreferencesKey("theme_mode")
@@ -58,7 +58,7 @@ class UserPreferencesRepository @Inject constructor(
             ThemeMode.entries.find { it.value == preferences[themeModeKey] } ?: ThemeMode.SYSTEM
         }
         .stateIn(
-            scope = externalScope,
+            scope = applicationScope,
             started = SharingStarted.Companion.Eagerly,
             initialValue = ThemeMode.SYSTEM
         )
@@ -66,7 +66,7 @@ class UserPreferencesRepository @Inject constructor(
     val materialMode: StateFlow<Boolean> = dataStore.data
         .map { preferences -> preferences[materialModeKey] == true }
         .stateIn(
-            scope = externalScope,
+            scope = applicationScope,
             started = SharingStarted.Companion.Eagerly,
             initialValue = false
         )
@@ -74,7 +74,7 @@ class UserPreferencesRepository @Inject constructor(
     val workoutScreenOn: StateFlow<Boolean> = dataStore.data
         .map { preferences -> preferences[keepOnWorkoutScreenKey] != false }
         .stateIn(
-            scope = externalScope,
+            scope = applicationScope,
             started = SharingStarted.Companion.Eagerly,
             initialValue = false
         )
@@ -82,7 +82,7 @@ class UserPreferencesRepository @Inject constructor(
     val requestPermissionsAgain: StateFlow<Boolean> = dataStore.data
         .map { preferences -> preferences[requestPermissionsAgainKey] != false }
         .stateIn(
-            scope = externalScope,
+            scope = applicationScope,
             started = SharingStarted.Companion.Eagerly,
             initialValue = false
         )
@@ -92,7 +92,7 @@ class UserPreferencesRepository @Inject constructor(
             Language.entries.find { it.code == preferences[languageKey] } ?: Language.SYSTEM
         }
         .stateIn(
-            scope = externalScope,
+            scope = applicationScope,
             started = SharingStarted.Companion.Eagerly,
             initialValue = Language.SYSTEM
         )

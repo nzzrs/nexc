@@ -31,26 +31,24 @@ import javax.inject.Singleton
 
 @Singleton
 class WorkoutServiceManager @Inject constructor(
-    @ApplicationContext context: Context
+    @param:ApplicationContext private val context: Context
 ) {
-    private val context = context.applicationContext
-
     private val workoutServiceIntent by lazy {
         Intent(context, WorkoutService::class.java)
     }
 
     fun startChronometer() {
-        val service = workoutServiceIntent.apply {
+        val serviceIntent = workoutServiceIntent.apply {
             action = WorkoutServiceActions.START_CHRONOMETER.string
         }
-        context.startForegroundService(service)
+        context.startForegroundService(serviceIntent)
     }
 
     fun pauseChronometer() {
-        val service = workoutServiceIntent.apply {
+        val serviceIntent = workoutServiceIntent.apply {
             action = WorkoutServiceActions.PAUSE_CHRONOMETER.string
         }
-        context.startForegroundService(service)
+        context.startForegroundService(serviceIntent)
     }
 
     fun updateFocus(isFocused: Boolean) {
@@ -78,10 +76,10 @@ class WorkoutServiceManager @Inject constructor(
     }
 
     fun stopService() {
-        val service = workoutServiceIntent.apply {
+        val serviceIntent = workoutServiceIntent.apply {
             action = WorkoutServiceActions.STOP_SERVICE.string
         }
-        context.startService(service)
+        context.startService(serviceIntent)
     }
 
 }

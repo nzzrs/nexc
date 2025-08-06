@@ -26,6 +26,8 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -81,6 +83,10 @@ import javax.inject.Inject
 @AndroidEntryPoint
 class WorkoutService : Service() {
 
+    // A lifecycle-aware scope for the entire service
+    // SupervisorJob ensures that if one child coroutine fails, it doesn't cancel the others.
+    private val serviceScope = CoroutineScope(SupervisorJob() + Dispatchers.Main)
+
     companion object {
         private val _timeElapsed = MutableStateFlow(0)
         val timeElapsed: StateFlow<Int> = _timeElapsed
@@ -106,11 +112,22 @@ class WorkoutService : Service() {
         return null
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        serviceScope.cancel()
+    }
+
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = WorkoutServiceActions.entries.find { it.string == intent?.action }
             ?: WorkoutServiceActions.START_CHRONOMETER
         when (action) {
-            WorkoutServiceActions.START_CHRONOMETER -> startChronometer()
+            WorkoutServiceActions.START_CHRONOMETER -> {
+                startChronometer()
+                startForeground(
+                    NotificationHelper.WORKOUT_NOTIFICATION_ID,
+                    notificationHelper.createWorkoutNotification()
+                )
+            }
             WorkoutServiceActions.PAUSE_CHRONOMETER -> pauseChronometer()
             WorkoutServiceActions.START_REST_TIMER -> {
                 val initialRestTime = intent?.getIntExtra(EXTRA_INITIAL_REST_TIME, 0) ?: 0
@@ -133,11 +150,6 @@ class WorkoutService : Service() {
 
             WorkoutServiceActions.STOP_SERVICE -> stopService()
         }
-
-        startForeground(
-            NotificationHelper.WORKOUT_NOTIFICATION_ID,
-            notificationHelper.createWorkoutNotification()
-        )
 
         return START_STICKY
     }
@@ -165,7 +177,7 @@ class WorkoutService : Service() {
 
         chronometerJob?.cancel()
 
-        chronometerJob = CoroutineScope(Dispatchers.Main).launch {
+        chronometerJob = serviceScope.launch {
             while (true) {
                 if (!isChronometerPaused.value) {
                     val currentTime = System.currentTimeMillis()

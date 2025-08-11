@@ -34,7 +34,7 @@
         android:name=".MainApplication"
         android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
-        android:theme="@style/Theme.LibreFit.SplashScreen"
+        android:theme="@style/Theme.LibreFit"
         android:localeConfig="@xml/locale_config"
         tools:targetApi="tiramisu">
         <activity
@@ -50,6 +50,7 @@
         <activity
             android:name=".activities.PrivacyActivity"
             android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:theme="@style/Theme.LibreFit.SplashScreen"
             android:exported="true">
             <!-- VIEW_PERMISSION_USAGE shows a selectable information icon on
                  LibreFit permission's page in system settings.
@@ -66,7 +67,7 @@
         <activity
             android:name=".activities.ErrorActivity"
             android:exported="true"
-            android:theme="@style/Theme.AppCompat.DayNight.NoActionBar"
+            android:theme="@style/Theme.LibreFit.SplashScreen"
             android:excludeFromRecents="true"
             android:finishOnTaskLaunch="true"
             android:process=":error_process">

@@ -25,6 +25,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import org.librefit.db.repository.UserPreferencesRepository
@@ -50,12 +51,12 @@ class PrivacyActivity : ComponentActivity() {
         enableEdgeToEdge()
 
         setContent {
-            val theme = userPreferences.themeMode.collectAsState()
-            val dynamicColor = userPreferences.materialMode.collectAsState()
+            val theme by userPreferences.themeMode.collectAsState()
+            val dynamicColor by userPreferences.materialMode.collectAsState()
 
             LibreFitTheme(
-                dynamicColor = dynamicColor.value,
-                darkTheme = when (theme.value) {
+                dynamicColor = dynamicColor,
+                darkTheme = when (theme) {
                     ThemeMode.DARK -> true
                     ThemeMode.LIGHT -> false
                     ThemeMode.SYSTEM -> isSystemInDarkTheme()

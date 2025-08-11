@@ -27,6 +27,7 @@ import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -58,6 +59,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.core.content.IntentCompat
 import androidx.core.net.toUri
+import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.delay
 import org.librefit.R
@@ -85,16 +87,21 @@ class ErrorActivity : ComponentActivity() {
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        installSplashScreen()
+
         super.onCreate(savedInstanceState)
+
+        enableEdgeToEdge()
+
         val stackTrace = intent.getStringExtra(EXTRA_STACK_TRACE) ?: "No stack trace available."
 
         setContent {
-            val theme = userPreferences.themeMode.collectAsState()
-            val dynamicColor = userPreferences.materialMode.collectAsState()
+            val theme by userPreferences.themeMode.collectAsState()
+            val dynamicColor by userPreferences.materialMode.collectAsState()
 
             LibreFitTheme(
-                dynamicColor = dynamicColor.value,
-                darkTheme = when (theme.value) {
+                dynamicColor = dynamicColor,
+                darkTheme = when (theme) {
                     ThemeMode.DARK -> true
                     ThemeMode.LIGHT -> false
                     ThemeMode.SYSTEM -> isSystemInDarkTheme()

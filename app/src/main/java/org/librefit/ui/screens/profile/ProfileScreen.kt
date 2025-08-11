@@ -75,7 +75,6 @@ import androidx.navigation.compose.rememberNavController
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
 import org.librefit.R
-import org.librefit.db.entity.Workout
 import org.librefit.enums.chart.WorkoutChart
 import org.librefit.nav.Route
 import org.librefit.ui.components.HeadlineText
@@ -87,6 +86,7 @@ import org.librefit.ui.components.animations.StreakLottie
 import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.charts.LibreFitCartesianChart
 import org.librefit.ui.components.charts.Point
+import org.librefit.ui.models.UiWorkout
 import org.librefit.ui.models.UiWorkoutWithExercisesAndSets
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter
@@ -389,7 +389,7 @@ fun StreakCard(weekStreak: Int) {
 private fun ProfileScreenPreview() {
     val workoutsWithExercises = (0..5).map {
         UiWorkoutWithExercisesAndSets(
-            workout = Workout(
+            workout = UiWorkout(
                 id = Random.nextLong(),
                 title = "Workout $it",
                 completed = LocalDateTime.now().minusDays(it.toLong() * 2),

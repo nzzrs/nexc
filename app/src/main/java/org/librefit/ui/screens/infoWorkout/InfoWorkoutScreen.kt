@@ -54,7 +54,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.collections.immutable.persistentListOf
 import org.librefit.R
-import org.librefit.db.entity.Workout
 import org.librefit.enums.chart.WorkoutChart
 import org.librefit.nav.Route
 import org.librefit.ui.components.ExerciseCardSmall
@@ -70,6 +69,7 @@ import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomShe
 import org.librefit.ui.models.UiExerciseDC
 import org.librefit.ui.models.UiExerciseWithSets
 import org.librefit.ui.models.UiSet
+import org.librefit.ui.models.UiWorkout
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatDetails
 import org.librefit.util.Formatter.formatTime
@@ -116,8 +116,8 @@ fun InfoWorkoutScreen(
 @Composable
 private fun InfoWorkoutScreenContent(
     navController: NavHostController,
-    workout: Workout,
-    routine: Workout,
+    workout: UiWorkout,
+    routine: UiWorkout,
     workoutDate: String,
     volumeExercises: String,
     workoutChart: WorkoutChart,
@@ -369,13 +369,13 @@ private fun InfoWorkoutScreenContent(
 @Preview
 @Composable
 private fun InfoRoutineScreenPreview() {
-    var routine by remember { mutableStateOf(Workout(title = "Title routine")) }
+    var routine by remember { mutableStateOf(UiWorkout(title = "Title routine")) }
 
     LibreFitTheme(dynamicColor = false, darkTheme = true) {
         InfoWorkoutScreenContent(
             navController = rememberNavController(),
             deleteWorkout = {},
-            workout = Workout(title = "My workout", notes = "This is a note!"),
+            workout = UiWorkout(title = "My workout", notes = "This is a note!"),
             routine = routine,
             workoutDate = "DD/MM/YY",
             volumeExercises = "100",
@@ -388,7 +388,7 @@ private fun InfoRoutineScreenPreview() {
             ),
             points = (0..10).map { Point(listOf(Random.nextFloat())) },
             detachWorkoutFromRoutine = {
-                routine = Workout()
+                routine = UiWorkout()
             },
             updateChartMode = {},
         )

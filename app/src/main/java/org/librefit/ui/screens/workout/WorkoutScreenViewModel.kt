@@ -38,7 +38,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.db.entity.ExerciseDC
-import org.librefit.db.entity.Workout
 import org.librefit.db.repository.UserPreferencesRepository
 import org.librefit.db.repository.WorkoutRepository
 import org.librefit.enums.SetMode
@@ -49,6 +48,7 @@ import org.librefit.services.WorkoutServiceManager
 import org.librefit.ui.models.UiExercise
 import org.librefit.ui.models.UiExerciseWithSets
 import org.librefit.ui.models.UiSet
+import org.librefit.ui.models.UiWorkout
 import org.librefit.ui.models.mappers.toUi
 import javax.inject.Inject
 import kotlin.random.Random
@@ -94,7 +94,7 @@ class WorkoutScreenViewModel @Inject constructor(
         ?: throw IllegalArgumentException("Invalid WORKOUT_ID_KEY")
 
 
-    private val _workout = MutableStateFlow(Workout())
+    private val _workout = MutableStateFlow(UiWorkout())
     val workout = _workout.asStateFlow()
 
     private val _exercises = MutableStateFlow<List<UiExerciseWithSets>>(emptyList())

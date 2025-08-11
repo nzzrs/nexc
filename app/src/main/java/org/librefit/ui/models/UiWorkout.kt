@@ -20,17 +20,23 @@
 package org.librefit.ui.models
 
 import androidx.compose.runtime.Immutable
-import kotlinx.collections.immutable.ImmutableList
+import java.time.LocalDateTime
+import kotlin.random.Random
 
 /**
- * The [org.librefit.db.relations.WorkoutWithExercisesAndSets] model used only by the ui. The difference is the use
- * of [ImmutableList] instead of [List] in order to ensure the [Immutable] annotation and improve
- * composition performance.
+ * The [org.librefit.db.entity.Workout] model used only by the ui. The difference is the use
+ * of [Immutable] annotation
  *
- * @see [org.librefit.db.relations.WorkoutWithExercisesAndSets]
+ * @see [org.librefit.db.entity.Workout]
  */
 @Immutable
-data class UiWorkoutWithExercisesAndSets(
-    val workout: UiWorkout,
-    val exercisesWithSets: ImmutableList<UiExerciseWithSets>
+data class UiWorkout(
+    val id: Long = 0,
+    val routineId: Long = Random.Default.nextLong(),
+    val notes: String = "",
+    val title: String = "",
+    val routine: Boolean = false,
+    val timeElapsed: Int = 0,
+    val created: LocalDateTime = LocalDateTime.now(),
+    val completed: LocalDateTime = LocalDateTime.now()
 )

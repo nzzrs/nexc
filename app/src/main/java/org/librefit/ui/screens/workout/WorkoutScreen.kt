@@ -215,7 +215,7 @@ fun WorkoutScreen(
                         workout = workout.copy(
                             timeElapsed = timeElapsed,
                             completed = LocalDateTime.now()
-                        ),
+                        ).toEntity(),
                         exercisesWithSets = exercisesWithSets.map { it.toEntity() },
                     )
                 )

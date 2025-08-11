@@ -48,7 +48,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.collections.immutable.persistentListOf
 import org.librefit.R
-import org.librefit.db.entity.Workout
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.enums.InfoMode
 import org.librefit.enums.SetMode
@@ -66,6 +65,7 @@ import org.librefit.ui.models.UiExercise
 import org.librefit.ui.models.UiExerciseDC
 import org.librefit.ui.models.UiExerciseWithSets
 import org.librefit.ui.models.UiSet
+import org.librefit.ui.models.UiWorkout
 import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.ui.theme.LibreFitTheme
@@ -114,7 +114,7 @@ private fun EditWorkoutScreenContent(
     navController: NavHostController,
     typeOfEdit: Boolean?,
     exercisesWithSets: List<UiExerciseWithSets>,
-    workout: Workout,
+    workout: UiWorkout,
     isTitleTooLong: Boolean,
     isTitleEmpty: Boolean,
     updateTitle: (String) -> Unit,
@@ -205,7 +205,7 @@ private fun EditWorkoutScreenContent(
                 navController.navigate(
                     Route.BeforeSavingScreen(
                         WorkoutWithExercisesAndSets(
-                            workout = workout,
+                            workout = workout.toEntity(),
                             exercisesWithSets = exercisesWithSets.map { it.toEntity() }
                         )
                     )
@@ -336,7 +336,7 @@ private fun EditWorkoutScreenPreview() {
                     sets = persistentListOf(UiSet(), UiSet(completed = true))
                 )
             ),
-            workout = Workout(title = "Title workout", notes = "This is a note"),
+            workout = UiWorkout(title = "Title workout", notes = "This is a note"),
             isTitleTooLong = false,
             isTitleEmpty = false,
             updateTitle = { _ -> },

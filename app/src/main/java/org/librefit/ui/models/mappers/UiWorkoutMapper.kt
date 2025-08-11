@@ -19,20 +19,31 @@
 
 package org.librefit.ui.models.mappers
 
-import kotlinx.collections.immutable.toImmutableList
-import org.librefit.db.relations.WorkoutWithExercisesAndSets
-import org.librefit.ui.models.UiWorkoutWithExercisesAndSets
+import org.librefit.db.entity.Workout
+import org.librefit.ui.models.UiWorkout
 
-fun WorkoutWithExercisesAndSets.toUi(): UiWorkoutWithExercisesAndSets {
-    return UiWorkoutWithExercisesAndSets(
-        workout = workout.toUi(),
-        exercisesWithSets = exercisesWithSets.map { it.toUi() }.toImmutableList()
+fun Workout.toUi(): UiWorkout {
+    return UiWorkout(
+        id = this.id,
+        routineId = this.routineId,
+        notes = this.notes,
+        title = this.title,
+        routine = this.routine,
+        timeElapsed = this.timeElapsed,
+        created = this.created,
+        completed = this.completed
     )
 }
 
-fun UiWorkoutWithExercisesAndSets.toEntity(): WorkoutWithExercisesAndSets {
-    return WorkoutWithExercisesAndSets(
-        workout = workout.toEntity(),
-        exercisesWithSets = exercisesWithSets.map { it.toEntity() }
+fun UiWorkout.toEntity(): Workout {
+    return Workout(
+        id = this.id,
+        routineId = this.routineId,
+        notes = this.notes,
+        title = this.title,
+        routine = this.routine,
+        timeElapsed = this.timeElapsed,
+        created = this.created,
+        completed = this.completed
     )
 }

@@ -33,14 +33,15 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.librefit.db.entity.Workout
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.db.repository.WorkoutRepository
 import org.librefit.enums.chart.WorkoutChart
 import org.librefit.helpers.DataHelper
 import org.librefit.ui.components.charts.Point
 import org.librefit.ui.models.UiExerciseWithSets
+import org.librefit.ui.models.UiWorkout
 import org.librefit.ui.models.mappers.toEntity
+import org.librefit.ui.models.mappers.toUi
 import org.librefit.util.Formatter
 import java.util.Locale
 import javax.inject.Inject
@@ -63,7 +64,7 @@ class InfoWorkoutScreenViewModel @Inject constructor(
     private val _volume = MutableStateFlow("")
     val volume = _volume.asStateFlow()
 
-    private val _workout = MutableStateFlow(Workout())
+    private val _workout = MutableStateFlow(UiWorkout())
     val workout = _workout.asStateFlow()
 
     init {
@@ -93,14 +94,16 @@ class InfoWorkoutScreenViewModel @Inject constructor(
                 }
             } else {
                 _routine.update {
-                    workoutRepository.getRoutineFromRoutineID(workout.value.routineId)
+                    workoutRepository.getRoutineFromRoutineID(workout.value.routineId).toUi()
                 }
             }
 
 
             // Calculate volume
             val volumeValue = dataHelper.fetchVolumeFromWorkout(
-                WorkoutWithExercisesAndSets(workout.value, exercises.value.map { it.toEntity() })
+                WorkoutWithExercisesAndSets(
+                    workout.value.toEntity(),
+                    exercises.value.map { it.toEntity() })
             )
 
             _volume.update {
@@ -120,7 +123,7 @@ class InfoWorkoutScreenViewModel @Inject constructor(
 
     fun deleteWorkout() {
         viewModelScope.launch(Dispatchers.IO) {
-            workoutRepository.deleteWorkout(workout.value)
+            workoutRepository.deleteWorkout(workout.value.toEntity())
         }
     }
 
@@ -132,16 +135,16 @@ class InfoWorkoutScreenViewModel @Inject constructor(
         }
 
         _routine.update {
-            Workout()
+            UiWorkout()
         }
 
         viewModelScope.launch(Dispatchers.IO) {
-            workoutRepository.updateWorkout(workout.value)
+            workoutRepository.updateWorkout(workout.value.toEntity())
         }
     }
 
 
-    private val _routine = MutableStateFlow(Workout())
+    private val _routine = MutableStateFlow(UiWorkout())
     val routine = _routine.asStateFlow()
 
 

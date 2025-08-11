@@ -30,7 +30,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.librefit.db.entity.ExerciseDC
-import org.librefit.db.entity.Workout
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.db.repository.WorkoutRepository
 import org.librefit.enums.SetMode
@@ -39,6 +38,7 @@ import org.librefit.enums.exercise.Equipment
 import org.librefit.ui.models.UiExercise
 import org.librefit.ui.models.UiExerciseWithSets
 import org.librefit.ui.models.UiSet
+import org.librefit.ui.models.UiWorkout
 import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.models.mappers.toUi
 import javax.inject.Inject
@@ -61,10 +61,10 @@ class EditWorkoutScreenViewModel @Inject constructor(
     private val _isRoutine = MutableStateFlow(false)
     private val isRoutine = _isRoutine.asStateFlow()
 
-    private val _workout = MutableStateFlow(Workout())
+    private val _workout = MutableStateFlow(UiWorkout())
     val workout = _workout.asStateFlow()
 
-    private val _routine = MutableStateFlow(Workout())
+    private val _routine = MutableStateFlow(UiWorkout())
     val routine = _routine.asStateFlow()
 
     private val _exercises = MutableStateFlow<List<UiExerciseWithSets>>(emptyList())
@@ -99,7 +99,7 @@ class EditWorkoutScreenViewModel @Inject constructor(
                 if (isRoutine.value) {
                     workout.value
                 } else {
-                    workoutRepository.getRoutineFromRoutineID(workout.value.routineId)
+                    workoutRepository.getRoutineFromRoutineID(workout.value.routineId).toUi()
                 }
             }
         }
@@ -263,7 +263,7 @@ class EditWorkoutScreenViewModel @Inject constructor(
         viewModelScope.launch(Dispatchers.IO) {
             workoutRepository.addWorkoutWithExercisesAndSets(
                 WorkoutWithExercisesAndSets(
-                    workout = workout.value.copy(routine = isRoutine.value),
+                    workout = workout.value.copy(routine = isRoutine.value).toEntity(),
                     exercisesWithSets = exercises.value.map { it.toEntity() }
                 )
             )

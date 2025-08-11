@@ -82,8 +82,8 @@ private fun StatisticsScreenContent(
         LibreFitLazyColumn(innerPadding = innerPadding) {
             item {
                 HeadlineText(
-                    stringResource(R.string.performance_overview),
-                    InfoMode.PERFOMANCE_OVERVIEW
+                    stringResource(R.string.muscle_distribution),
+                    InfoMode.MUSCLE_DISTRIBUTION
                 )
             }
             item {

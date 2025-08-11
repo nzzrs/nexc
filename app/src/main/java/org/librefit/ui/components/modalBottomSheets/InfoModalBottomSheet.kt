@@ -57,7 +57,7 @@ fun InfoModalBottomSheet(
             InfoMode.REST_TIMER -> stringResource(R.string.rest_time)
             InfoMode.TYPE_OF_SET -> stringResource(R.string.type_of_set)
             InfoMode.BEFORE_SAVING_STATS -> stringResource(R.string.statistics)
-            InfoMode.PERFOMANCE_OVERVIEW -> stringResource(R.string.performance_overview)
+            InfoMode.MUSCLE_DISTRIBUTION -> stringResource(R.string.muscle_distribution)
             else -> ""
         }
 
@@ -65,7 +65,7 @@ fun InfoModalBottomSheet(
             InfoMode.REST_TIMER -> stringResource(R.string.rest_time_desc)
             InfoMode.TYPE_OF_SET -> stringResource(R.string.type_of_set_desc)
             InfoMode.BEFORE_SAVING_STATS -> stringResource(R.string.statistics_desc)
-            InfoMode.PERFOMANCE_OVERVIEW -> stringResource(R.string.performance_overview_desc)
+            InfoMode.MUSCLE_DISTRIBUTION -> stringResource(R.string.muscle_distribution_desc)
             else -> ""
         }
 
@@ -94,7 +94,7 @@ fun InfoModalBottomSheet(
                         InfoMode.REST_TIMER -> AlarmLottie()
                         InfoMode.TYPE_OF_SET -> TrainingLottie()
                         InfoMode.BEFORE_SAVING_STATS -> StatsLottie()
-                        InfoMode.PERFOMANCE_OVERVIEW -> StatsLottie()
+                        InfoMode.MUSCLE_DISTRIBUTION -> StatsLottie()
                         InfoMode.DISMISS -> {}
                     }
                 }
@@ -107,6 +107,6 @@ fun InfoModalBottomSheet(
 @Composable
 private fun InfoModalBottomSheetPreview() {
     LibreFitTheme(dynamicColor = false, darkTheme = true) {
-        InfoModalBottomSheet(InfoMode.PERFOMANCE_OVERVIEW) { }
+        InfoModalBottomSheet(InfoMode.MUSCLE_DISTRIBUTION) { }
     }
 }

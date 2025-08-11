@@ -121,8 +121,8 @@ val legendLabelKey = ExtraStore.Key<List<String>>()
  * @param navController When not null, a button is shown in order to navigate to [org.librefit.ui.screens.infoWorkout.InfoWorkoutScreen]
  * and to show info about a selected [org.librefit.db.entity.Workout]. It is intended to work only with workouts
  * rather than [org.librefit.db.entity.Measurement] or anything else.
- * @param legendList A list of [String] shown under the chart as a legend. The list must match the
- * size of [Point.yValues] and it must not contain blank strings. Leave empty to not shown a legend.
+ * @param legendList A list of [String] shown under the chart as a legend. The list must have a less
+ * or equal size of [Point.yValues] and it must not contain blank strings. Leave empty to not shown a legend.
  */
 @Composable
 fun LibreFitCartesianChart(
@@ -149,8 +149,8 @@ fun LibreFitCartesianChart(
     }
 
     if (legendList != null) {
-        require(legendList.size == expectedSize && legendList.all { it.isNotBlank() }) {
-            "The legend list must match the size of yValues and it must not contain blank strings. " +
+        require(legendList.size <= expectedSize && legendList.all { it.isNotBlank() }) {
+            "The legend list must be less than the size of yValues and it must not contain blank strings. " +
                     "Legend list size: ${legendList.size}. Expected size: $expectedSize."
         }
     }

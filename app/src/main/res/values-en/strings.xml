@@ -71,6 +71,7 @@
     <string name="title_cannot_be_empty">Title cannot be empty</string>
     <string name="title_length_exceeded_30">Title cannot exceed 30 characters</string>
     <string name="crash_log">Crash log</string>
+    <string name="stack_trace_not_available">Stack trace not available</string>
     <string name="quit_adding_exercises_question">Quit adding exercises?</string>
     <string name="quit_adding_exercises_text">Are you sure you want to quit? Your selected exercises won\'t be added</string>
     <string name="search_exercise_field">Search for an exercise</string>

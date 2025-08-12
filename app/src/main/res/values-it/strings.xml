@@ -69,6 +69,7 @@
     <string name="add_set">Aggiungi serie</string>
     <string name="notes">Note</string>
     <string name="crash_log">Log del crash</string>
+    <string name="stack_trace_not_available">Stack trace non disponibile</string>
     <string name="quit_adding_exercises_question">Interrompere l\'aggiunta degli esercizi?</string>
     <string name="quit_adding_exercises_text">Sei sicuro di voler uscire? I tuoi esercizi selezionati non saranno salvati</string>
     <string name="search_exercise_field">Cerca un esercizio</string>

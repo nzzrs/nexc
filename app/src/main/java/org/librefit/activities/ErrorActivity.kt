@@ -71,6 +71,7 @@ import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.animations.WarningLottie
 import org.librefit.ui.theme.LibreFitTheme
 import javax.inject.Inject
+import kotlin.random.Random
 
 @AndroidEntryPoint
 class ErrorActivity : ComponentActivity() {
@@ -93,7 +94,7 @@ class ErrorActivity : ComponentActivity() {
 
         enableEdgeToEdge()
 
-        val stackTrace = intent.getStringExtra(EXTRA_STACK_TRACE) ?: "No stack trace available."
+        val stackTrace = intent.getStringExtra(EXTRA_STACK_TRACE) ?: ""
 
         setContent {
             val theme by userPreferences.themeMode.collectAsState()
@@ -138,7 +139,8 @@ private fun ErrorScreen(
     }
 
 
-    val searchGitHubLink = stringResource(R.string.url_github_search_issue) + stackTrace.lines().firstOrNull()
+    val searchGitHubLink =
+        stringResource(R.string.url_github_search_issue) + (stackTrace.lines().firstOrNull() ?: "")
 
     LibreFitScaffold { paddingValues ->
         LibreFitLazyColumn(
@@ -169,7 +171,8 @@ private fun ErrorScreen(
                         text = stringResource(R.string.report_github),
                         icon = ImageVector.vectorResource(R.drawable.ic_bug_report),
                         elevated = false,
-                        modifier = Modifier.weight(0.6f)
+                        modifier = Modifier.weight(0.6f),
+                        enabled = stackTrace.isNotEmpty()
                     ) {
                         val intent = Intent(Intent.ACTION_VIEW).apply {
                             data = searchGitHubLink.toUri()
@@ -196,6 +199,7 @@ private fun ErrorScreen(
                                 fontWeight = FontWeight.SemiBold
                             )
                             IconButton(
+                                enabled = stackTrace.isNotEmpty(),
                                 onClick = {
                                     val clip = ClipData.newPlainText("Copied Url", stackTrace)
                                     clipboardManager.setPrimaryClip(clip)
@@ -213,7 +217,8 @@ private fun ErrorScreen(
                         LazyRow {
                             item {
                                 Text(
-                                    text = stackTrace,
+                                    text = stackTrace.takeIf { it != "" }
+                                        ?: stringResource(R.string.stack_trace_not_available),
                                     fontFamily = FontFamily.Monospace,
                                     style = MaterialTheme.typography.bodySmall,
                                 )
@@ -232,7 +237,8 @@ private fun ErrorScreen(
 private fun ErrorScreenPreview() {
     LibreFitTheme(dynamicColor = false,darkTheme = true) {
         ErrorScreen(
-            stackTrace = "This is a very long long long long long stack trace\n".repeat(50),
+            stackTrace = if (Random.nextBoolean())
+                "This is a very long long long long long stack trace\n".repeat(50) else "",
             onRestart = {}
         )
     }

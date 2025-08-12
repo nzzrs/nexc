@@ -48,14 +48,11 @@ class DatasetRepository @Inject constructor(
     datasetDao: DatasetDao,
     @ApplicationScope applicationScope: CoroutineScope
 ) {
-    // The public, read-only StateFlow for consumers to collect.
     val dataset: StateFlow<List<UiExerciseDC>> = datasetDao.getDataset()
-        .map { dbList ->
-            dbList.map { it.toUi() }
-        }
+        .map { dataset -> dataset.map { it.toUi() } }
         .stateIn(
             scope = applicationScope,
-            started = SharingStarted.WhileSubscribed(5000),
+            started = SharingStarted.Eagerly,
             initialValue = emptyList()
         )
 }

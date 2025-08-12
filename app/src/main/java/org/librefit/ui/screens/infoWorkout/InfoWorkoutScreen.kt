@@ -309,7 +309,12 @@ private fun SharedTransitionScope.InfoWorkoutScreenContent(
                     ElevatedCard(
                         onClick = {
                             navController.navigate(Route.InfoWorkoutScreen(routine.id))
-                        }
+                        },
+                        modifier = Modifier
+                            .sharedBounds(
+                                sharedContentState = rememberSharedContentState(routine.id),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
                     ) {
                         Column(
                             modifier = Modifier.padding(15.dp),

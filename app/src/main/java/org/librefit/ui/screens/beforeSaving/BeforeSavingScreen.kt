@@ -19,6 +19,11 @@
 
 package org.librefit.ui.screens.beforeSaving
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -74,10 +79,11 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-fun BeforeSavingScreen(
-    navController: NavHostController
+fun SharedTransitionScope.BeforeSavingScreen(
+    navController: NavHostController,
+    animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     val viewModel: BeforeSavingScreenViewModel = hiltViewModel()
 
@@ -138,6 +144,7 @@ fun BeforeSavingScreen(
         workout = workout,
         routine = routine,
         volumeExercises = volume,
+        animatedVisibilityScope = animatedVisibilityScope,
         isTitleTooLong = viewModel.isTitleTooLong(),
         isTitleEmpty = viewModel.isTitleEmpty(),
         updateWorkoutTitle = viewModel::updateWorkoutTitle,
@@ -147,8 +154,9 @@ fun BeforeSavingScreen(
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun BeforeSavingScreenContent(
+fun SharedTransitionScope.BeforeSavingScreenContent(
     navController: NavHostController,
     showUnlikeRoutineDialog: () -> Unit,
     showDatePickerDialog: () -> Unit,
@@ -158,6 +166,7 @@ fun BeforeSavingScreenContent(
     volumeExercises: String,
     isTitleTooLong: Boolean,
     isTitleEmpty: Boolean,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     updateWorkoutTitle: (String) -> Unit,
     updateWorkoutNotes: (String) -> Unit,
     saveExercisesWithWorkout: () -> Unit,
@@ -319,7 +328,12 @@ fun BeforeSavingScreenContent(
                     ElevatedCard(
                         onClick = {
                             navController.navigate(Route.InfoWorkoutScreen(routine.id))
-                        }
+                        },
+                        modifier = Modifier
+                            .sharedBounds(
+                                sharedContentState = rememberSharedContentState(routine.id),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
                     ) {
                         Column(
                             modifier = Modifier.padding(15.dp),
@@ -415,28 +429,34 @@ fun BeforeSavingScreenContent(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Preview
 @Composable
 private fun BeforeSavingScreenPreview() {
     LibreFitTheme(dynamicColor = false, darkTheme = true) {
-        BeforeSavingScreenContent(
-            navController = rememberNavController(),
-            showUnlikeRoutineDialog = {},
-            showDatePickerDialog = {},
-            exercises = listOf(
-                UiExerciseWithSets(
-                    exerciseDC = UiExerciseDC(name = "Pullup")
+        SharedTransitionLayout {
+            AnimatedVisibility(visible = true) {
+                BeforeSavingScreenContent(
+                    navController = rememberNavController(),
+                    showUnlikeRoutineDialog = {},
+                    showDatePickerDialog = {},
+                    exercises = listOf(
+                        UiExerciseWithSets(
+                            exerciseDC = UiExerciseDC(name = "Pullup")
+                        )
+                    ),
+                    workout = UiWorkout(),
+                    routine = UiWorkout(),
+                    volumeExercises = "100 kg",
+                    isTitleTooLong = false,
+                    isTitleEmpty = false,
+                    updateWorkoutTitle = {},
+                    updateWorkoutNotes = {},
+                    saveExercisesWithWorkout = {},
+                    setTimeElapsed = {},
+                    animatedVisibilityScope = this
                 )
-            ),
-            volumeExercises = "100 kg",
-            isTitleTooLong = false,
-            isTitleEmpty = false,
-            updateWorkoutTitle = {},
-            updateWorkoutNotes = {},
-            saveExercisesWithWorkout = {},
-            setTimeElapsed = {},
-            workout = UiWorkout(),
-            routine = UiWorkout()
-        )
+            }
+        }
     }
 }

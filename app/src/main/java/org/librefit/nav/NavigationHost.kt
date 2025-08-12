@@ -79,7 +79,10 @@ fun NavigationHost() {
                     typeOf<WorkoutWithExercisesAndSets>() to WorkoutWithExercisesAndSetsNavType()
                 )
             ) {
-                BeforeSavingScreen(navController = navController)
+                BeforeSavingScreen(
+                    navController = navController,
+                    animatedVisibilityScope = this
+                )
             }
             composable<Route.CalendarScreen> {
                 CalendarScreen(

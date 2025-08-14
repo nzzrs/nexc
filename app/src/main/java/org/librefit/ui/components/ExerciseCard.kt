@@ -113,11 +113,12 @@ private val NoOpUpdate: (Long?) -> Unit = {}
  *
  * @param modifier A [Modifier] that should be passed as `Modifier.animateItem` to enable
  * animation for the card within the list.
+ * @param animatedVisibilityScope Used for image's animation transition
  * @param exerciseWithSets An instance of [UiExerciseWithSets] containing all the relevant information
  * required for the card display.
  * @param addSet A lambda function invoked when the "Add set" button is clicked.
  * @param onDetail A lambda function triggered when the *Info* icon is clicked, which should open
- * the [org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet].
+ * the [org.librefit.ui.screens.infoExercise.InfoExerciseScreen].
  * @param onDelete A lambda function executed when the *Delete* icon is clicked, it should result in
  * the removal of the card.
  * @param updateExerciseNotes A function to update notes based on [UiExercise.id]. For more details, refer to

@@ -75,9 +75,10 @@ import org.librefit.util.Formatter.formatTime
  * but not to modify it.
  *
  * @param exerciseWithSets A [UiExerciseWithSets] that holds the data
+ * @param animatedVisibilityScope Used for image's animation transition
  * @param isRoutine When `false`, the card shows checkboxes of set completion
  * @param onDetail A lambda function triggered when the `Info` icon is clicked, which should open
- * the [org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet].
+ * the [org.librefit.ui.screens.infoExercise.InfoExerciseScreen].
  */
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable

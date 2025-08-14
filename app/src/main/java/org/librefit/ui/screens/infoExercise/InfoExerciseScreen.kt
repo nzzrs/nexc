@@ -67,7 +67,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -100,7 +99,7 @@ fun SharedTransitionScope.InfoExerciseScreen(
     animatedVisibilityScope: AnimatedVisibilityScope,
     navController: NavHostController
 ) {
-    InfoExerciseContent(
+    InfoExerciseScreenContent(
         id = id,
         exercise = exerciseDC.toUi(),
         animatedVisibilityScope = animatedVisibilityScope,
@@ -111,7 +110,7 @@ fun SharedTransitionScope.InfoExerciseScreen(
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-private fun SharedTransitionScope.InfoExerciseContent(
+private fun SharedTransitionScope.InfoExerciseScreenContent(
     id: Long,
     exercise: UiExerciseDC,
     animatedVisibilityScope: AnimatedVisibilityScope,
@@ -123,13 +122,19 @@ private fun SharedTransitionScope.InfoExerciseContent(
     val stringId = if (id == 0L) "" else id.toString()
 
     LibreFitScaffold(
-        title = AnnotatedString(exercise.name),
         navigateBack = navigateBack
     ) { innerPadding ->
         LibreFitLazyColumn(
             innerPadding = innerPadding,
             startEndPadding = 0.dp
         ) {
+            item {
+                Text(
+                    text = exercise.name,
+                    style = MaterialTheme.typography.displaySmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+            }
             item {
                 AlternatingImages(stringId, exercise, animatedVisibilityScope)
             }
@@ -393,12 +398,7 @@ private fun SharedTransitionScope.AlternatingImages(
     }
 
     Box(
-        modifier = Modifier
-            .padding(15.dp)
-            .sharedElement(
-                sharedContentState = rememberSharedContentState(stringId + exercise.id),
-                animatedVisibilityScope = animatedVisibilityScope
-            ),
+        modifier = Modifier.padding(15.dp),
         contentAlignment = Alignment.BottomEnd
     ) {
         Image(
@@ -406,8 +406,12 @@ private fun SharedTransitionScope.AlternatingImages(
             contentDescription = exercise.name,
             contentScale = ContentScale.Crop,
             modifier = Modifier
+                .sharedElement(
+                    sharedContentState = rememberSharedContentState(stringId + exercise.id),
+                    animatedVisibilityScope = animatedVisibilityScope
+                )
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.large)
+                .clip(MaterialTheme.shapes.large),
         )
         FilledIconButton(
             modifier = Modifier.padding(5.dp),
@@ -430,7 +434,7 @@ private fun InfoExercisePreview() {
     LibreFitTheme(dynamicColor = false, darkTheme = true) {
         SharedTransitionLayout {
             AnimatedVisibility(visible = true) {
-                InfoExerciseContent(
+                InfoExerciseScreenContent(
                     id = 0L,
                     exercise = UiExerciseDC(
                         name = "3/4 Sit-Up",

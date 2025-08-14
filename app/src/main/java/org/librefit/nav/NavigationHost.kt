@@ -32,6 +32,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import org.librefit.db.entity.ExerciseDC
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.ui.screens.MainScreen
 import org.librefit.ui.screens.about.AboutScreen
@@ -42,6 +43,7 @@ import org.librefit.ui.screens.beforeSaving.BeforeSavingScreen
 import org.librefit.ui.screens.calendar.CalendarScreen
 import org.librefit.ui.screens.editWorkout.EditWorkoutScreen
 import org.librefit.ui.screens.exercises.ExercisesScreen
+import org.librefit.ui.screens.infoExercise.InfoExerciseScreen
 import org.librefit.ui.screens.infoWorkout.InfoWorkoutScreen
 import org.librefit.ui.screens.measurements.MeasurementScreen
 import org.librefit.ui.screens.requestPermission.RequestPermissionScreen
@@ -93,14 +95,28 @@ fun NavigationHost() {
             composable<Route.EditWorkoutScreen> {
                 EditWorkoutScreen(
                     sharedViewModel = sharedViewModel,
-                    navController = navController
+                    navController = navController,
+                    animatedVisibilityScope = this
                 )
             }
             composable<Route.ExercisesScreen> {
                 ExercisesScreen(
                     addExercises = it.toRoute<Route.ExercisesScreen>().addExercises,
-                    navigateBack = navController::popBackStack,
-                    sharedViewModel = sharedViewModel
+                    navController = navController,
+                    sharedViewModel = sharedViewModel,
+                    animatedVisibilityScope = this
+                )
+            }
+            composable<Route.InfoExerciseScreen>(
+                typeMap = mapOf(
+                    typeOf<ExerciseDC>() to ExerciseDCNavType()
+                )
+            ) {
+                InfoExerciseScreen(
+                    id = it.toRoute<Route.InfoExerciseScreen>().id,
+                    exerciseDC = it.toRoute<Route.InfoExerciseScreen>().exerciseDC,
+                    animatedVisibilityScope = this,
+                    navController = navController
                 )
             }
             composable<Route.InfoWorkoutScreen> {
@@ -149,7 +165,8 @@ fun NavigationHost() {
             composable<Route.WorkoutScreen> {
                 WorkoutScreen(
                     navController = navController,
-                    sharedViewModel = sharedViewModel
+                    sharedViewModel = sharedViewModel,
+                    animatedVisibilityScope = this
                 )
             }
         }

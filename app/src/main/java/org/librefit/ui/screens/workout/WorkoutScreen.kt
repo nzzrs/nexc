@@ -23,6 +23,9 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -69,7 +72,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import org.librefit.R
-import org.librefit.db.entity.ExerciseDC
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.enums.InfoMode
 import org.librefit.enums.SetMode
@@ -79,18 +81,20 @@ import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.animations.DumbbellLottie
 import org.librefit.ui.components.dialogs.ConfirmDialog
-import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
 import org.librefit.ui.components.modalBottomSheets.InfoModalBottomSheet
+import org.librefit.ui.models.UiExerciseDC
 import org.librefit.ui.models.UiExerciseWithSets
 import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.util.Formatter.formatTime
 import java.time.LocalDateTime
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun WorkoutScreen(
+fun SharedTransitionScope.WorkoutScreen(
     navController: NavHostController,
-    sharedViewModel: SharedViewModel
+    sharedViewModel: SharedViewModel,
+    animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     val viewModel: WorkoutScreenViewModel = hiltViewModel()
 
@@ -166,29 +170,10 @@ fun WorkoutScreen(
     }
 
 
-    /**
-     * It holds [ExerciseDC] for [ExerciseDetailModalBottomSheet]
-     */
-    var selectedExerciseId by remember { mutableStateOf<String?>(null) }
-    val onSelectedExerciseIdChange = remember {
-        { newId: String ->
-            selectedExerciseId = newId
-        }
-    }
-
-    selectedExerciseId?.let {
-        ExerciseDetailModalBottomSheet(
-            exercise = exercisesWithSets.map { it.exerciseDC }
-                .find { it.id == selectedExerciseId }!!
-        )
-        {
-            selectedExerciseId = null
-        }
-    }
-
 
 
     WorkoutScreenContent(
+        animatedVisibilityScope = animatedVisibilityScope,
         timeElapsed = timeElapsed,
         isChronometerPaused = isChronometerPaused,
         isListEmpty = exercisesWithSets.isEmpty(),
@@ -222,7 +207,9 @@ fun WorkoutScreen(
                 )
             )
         },
-        onSelectedExerciseIdChange = onSelectedExerciseIdChange,
+        onSelectedExerciseIdChange = { id, exercise ->
+            navController.navigate(Route.InfoExerciseScreen(id, exercise.toEntity()))
+        },
         startChronometer = viewModel::startChronometer,
         pauseChronometer = viewModel::pauseChronometer,
         updateSetTime = viewModel::updateSetTime,
@@ -257,8 +244,10 @@ fun WorkoutScreen(
 }
 
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun WorkoutScreenContent(
+private fun SharedTransitionScope.WorkoutScreenContent(
+    animatedVisibilityScope: AnimatedVisibilityScope,
     timeElapsed: Int,
     isChronometerPaused: Boolean,
     exercisesWithSets: List<UiExerciseWithSets>,
@@ -283,7 +272,7 @@ private fun WorkoutScreenContent(
     updateExerciseRestTime: (Int, Long) -> Unit,
     updateExerciseSetMode: (SetMode, Long) -> Unit,
     deleteExercise: (Long) -> Unit,
-    onSelectedExerciseIdChange: (String) -> Unit,
+    onSelectedExerciseIdChange: (Long, UiExerciseDC) -> Unit,
     showInfo: (InfoMode) -> Unit,
     modifyRestTime: (Boolean) -> Unit
 ) {
@@ -333,6 +322,7 @@ private fun WorkoutScreenContent(
                 ) { i, exerciseWithSets ->
                     ExerciseCard(
                         modifier = Modifier.animateItem(),
+                        animatedVisibilityScope = animatedVisibilityScope,
                         exerciseWithSets = exerciseWithSets,
                         idSetWithRunningChronometer = idSetWithRunningChronometer,
                         workout = true,

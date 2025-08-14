@@ -20,6 +20,7 @@
 package org.librefit.nav
 
 import kotlinx.serialization.Serializable
+import org.librefit.db.entity.ExerciseDC
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.enums.SuccessMessage
 
@@ -44,6 +45,12 @@ sealed class Route {
     @Serializable
     data class ExercisesScreen(
         val addExercises: Boolean
+    )
+
+    @Serializable
+    data class InfoExerciseScreen(
+        val id: Long,
+        val exerciseDC: ExerciseDC
     )
 
     @Serializable

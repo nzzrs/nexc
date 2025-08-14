@@ -21,6 +21,11 @@ package org.librefit.ui.screens.exercises
 
 import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -29,7 +34,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -65,16 +69,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavHostController
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.launch
 import org.librefit.R
+import org.librefit.db.entity.ExerciseDC
 import org.librefit.enums.exercise.FilterValue
+import org.librefit.nav.Route
 import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.animations.NoResultLottie
-import org.librefit.ui.components.bottomMargin
 import org.librefit.ui.components.dialogs.ConfirmDialog
-import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
 import org.librefit.ui.models.UiExerciseDC
 import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.screens.shared.SharedViewModel
@@ -82,11 +87,13 @@ import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.exerciseEnumToStringId
 
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun ExercisesScreen(
+fun SharedTransitionScope.ExercisesScreen(
     addExercises: Boolean,
-    navigateBack: () -> Unit,
-    sharedViewModel: SharedViewModel
+    navController: NavHostController,
+    sharedViewModel: SharedViewModel,
+    animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     val viewModel: ExercisesScreenViewModel = hiltViewModel()
 
@@ -114,7 +121,7 @@ fun ExercisesScreen(
             text = stringResource(R.string.quit_adding_exercises_text),
             confirmText = stringResource(R.string.quit_dialog),
             onConfirm = {
-                navigateBack()
+                navController.popBackStack()
                 showConfirmDialog = false
             },
             onDismiss = { showConfirmDialog = false }
@@ -123,8 +130,8 @@ fun ExercisesScreen(
 
     val actions = remember {
         if (addExercises) listOf {
+            navController.popBackStack()
             sharedViewModel.setSelectedExercisesList(selectedExercisesList.map { it.toEntity() })
-            navigateBack()
         } else listOf()
     }
 
@@ -135,27 +142,34 @@ fun ExercisesScreen(
         filteredExerciseList = filteredExerciseList,
         query = query,
         filterValue = filterValue,
+        animatedVisibilityScope = animatedVisibilityScope,
         toggleSelectedExercise = viewModel::toggleSelectedExercise,
         updateQuery = viewModel::updateQuery,
         updateFilter = viewModel::updateFilter,
         actions = actions,
-        navigateBack = navigateBack,
+        navigateBack = navController::popBackStack,
+        navigateToInfoExercise = {
+            navController.navigate(Route.InfoExerciseScreen(0L, it))
+        }
     )
 
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun ExercisesScreenContent(
+private fun SharedTransitionScope.ExercisesScreenContent(
     addExercises: Boolean,
     selectedExercisesIdList: Set<String>,
     filteredExerciseList: List<UiExerciseDC>,
     query: String,
     filterValue: FilterValue,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     toggleSelectedExercise: (String) -> Unit,
     updateQuery: (String) -> Unit,
     updateFilter: (FilterValue) -> Unit,
     actions: List<() -> Unit>,
-    navigateBack: () -> Unit
+    navigateBack: () -> Unit,
+    navigateToInfoExercise: (ExerciseDC) -> Unit
 ) {
 
     val coroutineScope = rememberCoroutineScope()
@@ -179,24 +193,6 @@ private fun ExercisesScreenContent(
 
 
     var isFilterExpanded by rememberSaveable { mutableStateOf(false) }
-
-    /**
-     * Holds the information to show in [ExerciseDetailModalBottomSheet]
-     */
-    var selectedExerciseDC by remember { mutableStateOf<UiExerciseDC?>(null) }
-
-    val updateSelectedExerciseDCid = remember(filteredExerciseList) {
-        { newId: String ->
-            selectedExerciseDC = filteredExerciseList.find { it.id == newId }
-        }
-    }
-
-    // Opened by info icon (in the filtered list), it shows the details of an exercise
-    selectedExerciseDC?.let {
-        ExerciseDetailModalBottomSheet(exercise = it) {
-            selectedExerciseDC = null
-        }
-    }
 
 
     LibreFitScaffold(
@@ -283,23 +279,27 @@ private fun ExercisesScreenContent(
                 key = { index, exercise -> exercise.id }
             ) { index, exercise ->
                 ItemExerciseDC(
+                    modifier = Modifier.animateItem(),
                     addExercises = addExercises,
                     exercise = exercise,
+                    animatedVisibilityScope = animatedVisibilityScope,
                     onAddToggle = { toggleSelectedExercise(exercise.id) },
                     isSelected = exercise.id in selectedExercisesIdList,
-                    onInfo = { updateSelectedExerciseDCid(exercise.id) }
+                    onInfo = { navigateToInfoExercise(exercise.toEntity()) }
                 )
             }
-            bottomMargin()
         }
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun LazyItemScope.ItemExerciseDC(
+private fun SharedTransitionScope.ItemExerciseDC(
+    modifier: Modifier,
     addExercises: Boolean,
     exercise: UiExerciseDC,
     isSelected: Boolean,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onAddToggle: () -> Unit,
     onInfo: () -> Unit,
 ) {
@@ -319,9 +319,7 @@ private fun LazyItemScope.ItemExerciseDC(
                 onInfo()
             }
         },
-        modifier = Modifier
-            .height(120.dp)
-            .animateItem(),
+        modifier = modifier.height(120.dp),
         colors = CardDefaults.elevatedCardColors(
             containerColor = if (isSelected)
                 MaterialTheme.colorScheme.primaryContainer else Color.Unspecified
@@ -342,6 +340,10 @@ private fun LazyItemScope.ItemExerciseDC(
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .padding(start = 10.dp)
+                    .sharedElement(
+                        sharedContentState = rememberSharedContentState(exercise.id),
+                        animatedVisibilityScope = animatedVisibilityScope
+                    )
                     .width(100.dp)
                     .clip(MaterialTheme.shapes.small)
             )
@@ -382,6 +384,7 @@ private fun LazyItemScope.ItemExerciseDC(
 }
 
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Preview
 @Composable
 private fun ExercisesScreenPreview() {
@@ -390,23 +393,29 @@ private fun ExercisesScreenPreview() {
     var filterValue by remember { mutableStateOf(FilterValue()) }
 
     LibreFitTheme(dynamicColor = false, darkTheme = true) {
-        ExercisesScreenContent(
-            addExercises = false,
-            selectedExercisesIdList = setOf(),
-            filteredExerciseList = List(20) {
-                UiExerciseDC(
-                    id = "$it",
-                    name = "Exercise $it",
-                    images = persistentListOf("3_4_Sit-Up/0.jpg")
+        SharedTransitionLayout {
+            AnimatedVisibility(visible = true) {
+                ExercisesScreenContent(
+                    animatedVisibilityScope = this,
+                    addExercises = false,
+                    selectedExercisesIdList = setOf(),
+                    filteredExerciseList = List(20) {
+                        UiExerciseDC(
+                            id = "$it",
+                            name = "Exercise $it",
+                            images = persistentListOf("3_4_Sit-Up/0.jpg")
+                        )
+                    },
+                    query = query,
+                    filterValue = filterValue,
+                    toggleSelectedExercise = {},
+                    updateQuery = { query = it },
+                    updateFilter = { filterValue = it },
+                    actions = listOf {},
+                    navigateBack = {},
+                    navigateToInfoExercise = {}
                 )
-            },
-            query = query,
-            filterValue = filterValue,
-            toggleSelectedExercise = {},
-            updateQuery = { query = it },
-            updateFilter = { filterValue = it },
-            actions = listOf {},
-            navigateBack = {},
-        )
+            }
+        }
     }
 }

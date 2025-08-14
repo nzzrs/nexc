@@ -20,6 +20,11 @@
 package org.librefit.ui.screens.editWorkout
 
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -58,7 +63,6 @@ import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.animations.DumbbellLottie
 import org.librefit.ui.components.dialogs.ConfirmDialog
-import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
 import org.librefit.ui.components.modalBottomSheets.InfoModalBottomSheet
 import org.librefit.ui.models.UiExercise
 import org.librefit.ui.models.UiExerciseDC
@@ -69,10 +73,12 @@ import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.ui.theme.LibreFitTheme
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun EditWorkoutScreen(
+fun SharedTransitionScope.EditWorkoutScreen(
     sharedViewModel: SharedViewModel,
-    navController: NavHostController
+    navController: NavHostController,
+    animatedVisibilityScope: AnimatedVisibilityScope
 ) {
     val viewModel: EditWorkoutScreenViewModel = hiltViewModel()
 
@@ -86,6 +92,7 @@ fun EditWorkoutScreen(
 
     EditWorkoutScreenContent(
         navController = navController,
+        animatedVisibilityScope = animatedVisibilityScope,
         typeOfEdit = viewModel.getTypeOfEdit(),
         exercisesWithSets = exercises,
         workout = workout,
@@ -108,9 +115,11 @@ fun EditWorkoutScreen(
 
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun EditWorkoutScreenContent(
+private fun SharedTransitionScope.EditWorkoutScreenContent(
     navController: NavHostController,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     typeOfEdit: Boolean?,
     exercisesWithSets: List<UiExerciseWithSets>,
     workout: UiWorkout,
@@ -155,23 +164,6 @@ private fun EditWorkoutScreenContent(
             },
             onDismiss = { showConfirmDialog = false }
         )
-    }
-
-    /**
-     * Used to display information about the selected exercise in [ExerciseDetailModalBottomSheet]
-     */
-    var selectedExerciseId by remember { mutableStateOf<String?>(null) }
-    val onSelectedExerciseIdChange = remember {
-        { newId: String ->
-            selectedExerciseId = newId
-        }
-    }
-
-    if (selectedExerciseId != null) {
-        ExerciseDetailModalBottomSheet(
-            exercise = exercisesWithSets.map { it.exerciseDC }
-                .find { it.id == selectedExerciseId }!!
-        ) { selectedExerciseId = null }
     }
 
 
@@ -293,10 +285,18 @@ private fun EditWorkoutScreenContent(
                 ) { i, exerciseWithSets ->
                     ExerciseCard(
                         modifier = Modifier.animateItem(),
+                        animatedVisibilityScope = animatedVisibilityScope,
                         exerciseWithSets = exerciseWithSets,
                         workout = typeOfEdit == false,
                         addSet = addSetToExercise,
-                        onDetail = onSelectedExerciseIdChange,
+                        onDetail = { id, exercise ->
+                            navController.navigate(
+                                Route.InfoExerciseScreen(
+                                    id,
+                                    exercise.toEntity()
+                                )
+                            )
+                        },
                         onDelete = deleteExercise,
                         deleteSet = deleteSet,
                         updateExerciseNotes = updateExerciseNotes,
@@ -314,6 +314,7 @@ private fun EditWorkoutScreenContent(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Preview
 @Composable
 private fun EditWorkoutScreenPreview() {
@@ -324,32 +325,37 @@ private fun EditWorkoutScreenPreview() {
     val typeOfEdit = false
 
     LibreFitTheme(dynamicColor = false, darkTheme = true) {
-        EditWorkoutScreenContent(
-            navController = rememberNavController(),
-            typeOfEdit = typeOfEdit,
-            exercisesWithSets = persistentListOf(
-                UiExerciseWithSets(
-                    exercise = UiExercise(restTime = 90, setMode = SetMode.BODYWEIGHT),
-                    exerciseDC = UiExerciseDC(name = "Name exercise"),
-                    sets = persistentListOf(UiSet(), UiSet(completed = true))
+        SharedTransitionLayout {
+            AnimatedVisibility(visible = true) {
+                EditWorkoutScreenContent(
+                    navController = rememberNavController(),
+                    animatedVisibilityScope = this,
+                    typeOfEdit = typeOfEdit,
+                    exercisesWithSets = persistentListOf(
+                        UiExerciseWithSets(
+                            exercise = UiExercise(restTime = 90, setMode = SetMode.BODYWEIGHT),
+                            exerciseDC = UiExerciseDC(name = "Name exercise"),
+                            sets = persistentListOf(UiSet(), UiSet(completed = true))
+                        )
+                    ),
+                    workout = UiWorkout(title = "Title workout", notes = "This is a note"),
+                    isTitleTooLong = false,
+                    isTitleEmpty = false,
+                    updateTitle = { _ -> },
+                    updateNotes = { _ -> },
+                    addSetToExercise = { _ -> },
+                    deleteExercise = { _ -> },
+                    deleteSet = { _ -> },
+                    saveWorkoutWithExercisesInDB = { },
+                    updateExerciseNotes = { _, _ -> },
+                    updateExerciseRestTime = { _, _ -> },
+                    updateExerciseSetMode = { _, _ -> },
+                    updateSetTime = { _, _ -> },
+                    updateSetReps = { _, _ -> },
+                    updateSetLoad = { _, _ -> },
+                    updateSetCompleted = { _, _ -> }
                 )
-            ),
-            workout = UiWorkout(title = "Title workout", notes = "This is a note"),
-            isTitleTooLong = false,
-            isTitleEmpty = false,
-            updateTitle = { _ -> },
-            updateNotes = { _ -> },
-            addSetToExercise = { _ -> },
-            deleteExercise = { _ -> },
-            deleteSet = { _ -> },
-            saveWorkoutWithExercisesInDB = { },
-            updateExerciseNotes = { _, _ -> },
-            updateExerciseRestTime = { _, _ -> },
-            updateExerciseSetMode = { _, _ -> },
-            updateSetTime = { _, _ -> },
-            updateSetReps = { _, _ -> },
-            updateSetLoad = { _, _ -> },
-            updateSetCompleted = { _, _ -> }
-        )
+            }
+        }
     }
 }

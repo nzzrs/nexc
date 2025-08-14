@@ -19,8 +19,15 @@
 
 package org.librefit.ui.components
 
+import android.graphics.BitmapFactory
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
@@ -35,6 +42,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -70,10 +78,14 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -140,15 +152,16 @@ private val NoOpUpdate: (Long?) -> Unit = {}
  * This parameter is only used when [workout] is `true`.
  * @param workout A Boolean flag indicating whether a checkbox should be displayed next to each set.
  */
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
-fun ExerciseCard(
+fun SharedTransitionScope.ExerciseCard(
     modifier: Modifier = Modifier,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     exerciseWithSets: UiExerciseWithSets,
     workout: Boolean = false,
     idSetWithRunningChronometer: Long? = null,
     addSet: (Long) -> Unit,
-    onDetail: (String) -> Unit,
+    onDetail: (Long, UiExerciseDC) -> Unit,
     onDelete: (Long) -> Unit,
     deleteSet: (Long) -> Unit,
     updateExerciseNotes: (String, Long) -> Unit,
@@ -161,7 +174,18 @@ fun ExerciseCard(
     showInfo: (InfoMode) -> Unit,
     updateIdSetWithRunningChronometer: (Long?) -> Unit = NoOpUpdate
 ) {
-    ElevatedCard(modifier) {
+    val context = LocalContext.current
+
+    val image = remember {
+        BitmapFactory.decodeStream(context.assets.open(exerciseWithSets.exerciseDC.images[0]))
+    }.asImageBitmap()
+
+    ElevatedCard(
+        modifier = modifier,
+        onClick = {
+            onDetail(exerciseWithSets.exercise.id, exerciseWithSets.exerciseDC)
+        }
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -173,19 +197,29 @@ fun ExerciseCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
+                Image(
+                    bitmap = image,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .padding(end = 10.dp)
+                        .sharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = exerciseWithSets.exercise.id.toString() + exerciseWithSets.exerciseDC.id
+                            ),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                        .size(50.dp)
+                        .clip(CircleShape)
+                )
                 Text(
                     text = exerciseWithSets.exerciseDC.name,
-                    style = MaterialTheme.typography.headlineMedium,
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f)
                 )
-                IconButton(onClick = { onDetail(exerciseWithSets.exerciseDC.id) }) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(R.drawable.ic_info),
-                        contentDescription = stringResource(R.string.info)
-                    )
-                }
                 IconButton(onClick = { onDelete(exerciseWithSets.exercise.id) }) {
                     Icon(
                         imageVector = ImageVector.vectorResource(R.drawable.ic_delete),
@@ -636,6 +670,7 @@ private fun Sets(
 }
 
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Preview
 @Composable
 private fun ExerciseCardPreview() {
@@ -650,34 +685,42 @@ private fun ExerciseCardPreview() {
                     setMode = SetMode.DURATION
                 ),
                 sets = persistentListOf(UiSet(completed = true), UiSet(elapsedTime = 100)),
-                exerciseDC = UiExerciseDC(name = "Exercise name")
+                exerciseDC = UiExerciseDC(
+                    name = "Exercise name",
+                    images = persistentListOf("3_4_Sit-Up/0.jpg")
+                )
             )
         )
     }
 
     LibreFitTheme(dynamicColor = false, darkTheme = true) {
-        ExerciseCard(
-            exerciseWithSets = e,
-            addSet = {
-                val newSets = e.sets.toMutableList() + UiSet()
-                e = e.copy(sets = newSets.toImmutableList())
-            },
-            onDetail = {},
-            onDelete = {},
-            deleteSet = { id ->
-                e = e.copy(sets = e.sets.filter { it.id != id }.toImmutableList())
-            },
-            showInfo = {},
-            idSetWithRunningChronometer = currentIdSetWithRunningSet,
-            updateIdSetWithRunningChronometer = { currentIdSetWithRunningSet = it },
-            workout = true,
-            updateExerciseNotes = { _, _ -> },
-            updateExerciseRestTime = { _, _ -> },
-            updateExerciseSetMode = { _, _ -> },
-            updateSetTime = { _, _ -> },
-            updateSetReps = { _, _ -> },
-            updateSetLoad = { _, _ -> },
-            updateSetCompleted = { _, _ -> }
-        )
+        SharedTransitionLayout {
+            AnimatedVisibility(visible = true) {
+                ExerciseCard(
+                    animatedVisibilityScope = this,
+                    exerciseWithSets = e,
+                    addSet = {
+                        val newSets = e.sets.toMutableList() + UiSet()
+                        e = e.copy(sets = newSets.toImmutableList())
+                    },
+                    onDetail = { _, _ -> },
+                    onDelete = {},
+                    deleteSet = { id ->
+                        e = e.copy(sets = e.sets.filter { it.id != id }.toImmutableList())
+                    },
+                    showInfo = {},
+                    idSetWithRunningChronometer = currentIdSetWithRunningSet,
+                    updateIdSetWithRunningChronometer = { currentIdSetWithRunningSet = it },
+                    workout = true,
+                    updateExerciseNotes = { _, _ -> },
+                    updateExerciseRestTime = { _, _ -> },
+                    updateExerciseSetMode = { _, _ -> },
+                    updateSetTime = { _, _ -> },
+                    updateSetReps = { _, _ -> },
+                    updateSetLoad = { _, _ -> },
+                    updateSetCompleted = { _, _ -> }
+                )
+            }
+        }
     }
 }

@@ -67,11 +67,11 @@ import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.charts.LibreFitCartesianChart
 import org.librefit.ui.components.charts.Point
 import org.librefit.ui.components.dialogs.ConfirmDialog
-import org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet
 import org.librefit.ui.models.UiExerciseDC
 import org.librefit.ui.models.UiExerciseWithSets
 import org.librefit.ui.models.UiSet
 import org.librefit.ui.models.UiWorkout
+import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatDetails
 import org.librefit.util.Formatter.formatTime
@@ -177,11 +177,6 @@ private fun SharedTransitionScope.InfoWorkoutScreenContent(
         )
     }
 
-
-    /**
-     * Holds the information to show in [ExerciseDetailModalBottomSheet]
-     */
-    var selectedExercise by remember { mutableStateOf<UiExerciseDC?>(null) }
 
     LibreFitScaffold(
         title = AnnotatedString(stringResource(if (isRoutine) R.string.routine else R.string.workout)),
@@ -385,17 +380,20 @@ private fun SharedTransitionScope.InfoWorkoutScreenContent(
 
 
             item { HeadlineText(stringResource(R.string.exercises)) }
-            items(exercises) { exercise ->
-                ExerciseCardSmall(exercise, isRoutine) {
-                    selectedExercise = exercise.exerciseDC
+            items(exercises) { e ->
+                ExerciseCardSmall(
+                    exerciseWithSets = e,
+                    isRoutine = isRoutine,
+                    animatedVisibilityScope = animatedVisibilityScope
+                ) {
+                    navController.navigate(
+                        Route.InfoExerciseScreen(
+                            e.exercise.id,
+                            e.exerciseDC.toEntity()
+                        )
+                    )
                 }
             }
-        }
-    }
-    // Opened by info icon next to exercise name, it shows the details of an exercise
-    selectedExercise?.let {
-        ExerciseDetailModalBottomSheet(exercise = selectedExercise!!) {
-            selectedExercise = null
         }
     }
 }

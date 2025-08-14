@@ -19,12 +19,21 @@
 
 package org.librefit.ui.components
 
+import android.graphics.BitmapFactory
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
@@ -35,12 +44,17 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -65,12 +79,20 @@ import org.librefit.util.Formatter.formatTime
  * @param onDetail A lambda function triggered when the `Info` icon is clicked, which should open
  * the [org.librefit.ui.components.modalBottomSheets.ExerciseDetailModalBottomSheet].
  */
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-fun ExerciseCardSmall(
+fun SharedTransitionScope.ExerciseCardSmall(
     exerciseWithSets: UiExerciseWithSets,
     isRoutine: Boolean = false,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     onDetail: () -> Unit
 ) {
+    val context = LocalContext.current
+
+    val image = remember {
+        BitmapFactory.decodeStream(context.assets.open(exerciseWithSets.exerciseDC.images[0]))
+    }.asImageBitmap()
+
     ElevatedCard(
         onClick = onDetail,
         modifier = Modifier
@@ -85,12 +107,28 @@ fun ExerciseCardSmall(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                Image(
+                    bitmap = image,
+                    contentDescription = null,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .padding(end = 10.dp)
+                        .sharedElement(
+                            sharedContentState = rememberSharedContentState(
+                                key = exerciseWithSets.exercise.id.toString() + exerciseWithSets.exerciseDC.id
+                            ),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        )
+                        .size(50.dp)
+                        .clip(CircleShape)
+                )
                 Text(
                     modifier = Modifier.weight(1f),
                     text = exerciseWithSets.exerciseDC.name,
                     style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
                     overflow = TextOverflow.Ellipsis,
-                    maxLines = 1
+                    maxLines = 1,
                 )
                 IconButton(
                     onClick = onDetail
@@ -206,22 +244,28 @@ fun ExerciseCardSmall(
     }
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Preview
 @Composable
 private fun ExerciseCardSmallPreview() {
     LibreFitTheme(dynamicColor = false, darkTheme = true) {
-        ExerciseCardSmall(
-            exerciseWithSets = UiExerciseWithSets(
-                exercise = UiExercise(
-                    notes = "Notes",
-                    restTime = 100,
-                    setMode = SetMode.BODYWEIGHT
-                ),
-                exerciseDC = UiExerciseDC(
-                    name = "Name exercise long long long long",
-                ),
-                sets = persistentListOf(UiSet(completed = true), UiSet(reps = 10), UiSet())
-            ),
-        ) { }
+        SharedTransitionLayout {
+            AnimatedVisibility(visible = true) {
+                ExerciseCardSmall(
+                    exerciseWithSets = UiExerciseWithSets(
+                        exercise = UiExercise(
+                            notes = "Notes",
+                            restTime = 100,
+                            setMode = SetMode.BODYWEIGHT
+                        ),
+                        exerciseDC = UiExerciseDC(
+                            name = "Name exercise long long long long",
+                        ),
+                        sets = persistentListOf(UiSet(completed = true), UiSet(reps = 10), UiSet())
+                    ),
+                    animatedVisibilityScope = this
+                ) { }
+            }
+        }
     }
 }

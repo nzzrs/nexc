@@ -37,6 +37,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -68,6 +69,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -133,6 +135,7 @@ private fun SharedTransitionScope.InfoExerciseScreenContent(
                     text = exercise.name,
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.SemiBold,
+                    textAlign = TextAlign.Center
                 )
             }
             item {
@@ -186,6 +189,8 @@ private fun SharedTransitionScope.InfoExerciseScreenContent(
                     state = pagerState,
                     contentPadding = PaddingValues(start = 15.dp, end = 15.dp),
                     pageSpacing = 20.dp,
+                    verticalAlignment = Alignment.Top,
+                    modifier = Modifier.wrapContentHeight()
                 ) { pageIndex ->
                     val enum = InfoExerciseMode.entries[pageIndex]
 
@@ -196,19 +201,7 @@ private fun SharedTransitionScope.InfoExerciseScreenContent(
                         when (enum) {
                             InfoExerciseMode.DETAILS -> DetailsPage(exercise)
                             InfoExerciseMode.HISTORY -> HistoryPage()
-                            InfoExerciseMode.INSTRUCTIONS -> {
-                                Text(
-                                    text = buildString {
-                                        exercise.instructions.forEachIndexed { index, instruction ->
-                                            // For all items except the first, add the separator BEFORE the item.
-                                            if (index > 0) {
-                                                append("\n\n")
-                                            }
-                                            append("${index + 1}. $instruction")
-                                        }
-                                    }
-                                )
-                            }
+                            InfoExerciseMode.INSTRUCTIONS -> InstructionsPage(exercise.instructions)
                         }
                     }
                 }
@@ -344,7 +337,23 @@ private fun DetailsPage(exercise: UiExerciseDC) {
             }
         }
     }
+}
 
+@Composable
+private fun InstructionsPage(
+    instructions: List<String>,
+) {
+    Text(
+        text = buildString {
+            instructions.forEachIndexed { index, instruction ->
+                // For all items except the first, add the separator BEFORE the item.
+                if (index > 0) {
+                    append("\n\n")
+                }
+                append("${index + 1}. $instruction")
+            }
+        }
+    )
 }
 
 @Composable

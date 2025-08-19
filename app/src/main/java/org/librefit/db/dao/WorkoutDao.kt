@@ -205,4 +205,23 @@ interface WorkoutDao {
             }
         }
     }
+
+    /**
+     * It provides all [WorkoutWithExercisesAndSets] having the passed [org.librefit.db.entity.ExerciseDC] in [Exercise] and
+     * the passed [state]
+     */
+    @Transaction
+    @Query(
+        """
+        SELECT * FROM workouts 
+        WHERE id IN (
+            SELECT DISTINCT workoutId FROM exercises WHERE idExerciseDC = :idExerciseDC
+        ) AND state = :state ORDER BY completed DESC
+    """
+    )
+    fun getWorkoutsFromIdExerciseDC(
+        idExerciseDC: String,
+        state: WorkoutState
+    ): Flow<List<WorkoutWithExercisesAndSets>>
+
 }

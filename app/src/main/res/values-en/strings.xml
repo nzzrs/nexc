@@ -138,6 +138,7 @@
     <string name="type_of_set">Type of set</string>
     <string name="not_enough_data">Not enough data to display this chart</string>
     <string name="open_the_workout">Open the workout of</string>
+    <string name="one_rep_max">One rep max</string>
     <string name="any">Any</string>
     <string name="rest_time_is_over">Rest time is over!</string>
     <string name="rest">Rest</string>
@@ -236,6 +237,7 @@
     <string name="privacy_notice_foreground_perm">**Foreground Service**: This permission is automatically granted when LibreFit is installed and this allows it to run in the foreground during a workout.</string>
     <string name="delete_routine_text">Are you sure you want to delete this routine? This action cannot be undone</string>
     <string name="history">History</string>
+    <string name="second_abbreviation">s</string>
     <string name="body_weight">Body weight</string>
     <string name="fat_mass">Fat mass</string>
     <string name="quit_routine_creation_question">Quit routine creation?</string>
@@ -262,6 +264,15 @@
     <string name="application_encountered_error">The application has encountered an unexpected error</string>
     <string name="restart_app">Restart</string>
     <string name="report_github">Report on GitHub</string>
+    <string name="best_time">Best time</string>
+    <string name="total_time">Total time</string>
+    <string name="heaviest_weight">Heaviest weight</string>
+    <string name="best_set_volume">Best set volume</string>
+    <string name="total_volume">Total volume</string>
+    <string name="total_reps">Total reps</string>
+    <string name="session_reps">Session reps</string>
+    <string name="most_reps">Most reps</string>
+    <string name="session_volume">Session volume</string>
 
 
 </resources>

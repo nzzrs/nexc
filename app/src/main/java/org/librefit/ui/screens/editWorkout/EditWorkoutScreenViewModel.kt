@@ -111,13 +111,13 @@ class EditWorkoutScreenViewModel @Inject constructor(
             exercise = UiExercise(
                 idExerciseDC = exerciseDC.id,
                 setMode = when (exerciseDC.category) {
-                    Category.STRETCHING -> SetMode.DURATION
-                    Category.CARDIO -> SetMode.DURATION
+                    Category.STRETCHING, Category.CARDIO -> SetMode.DURATION
                     else -> when (exerciseDC.equipment) {
-                        Equipment.BODY_ONLY -> SetMode.BODYWEIGHT
-                        Equipment.FOAM_ROLL -> SetMode.BODYWEIGHT
-                        Equipment.EXERCISE_BALL -> SetMode.BODYWEIGHT
-                        else -> SetMode.LOAD
+                        Equipment.BODY_ONLY, Equipment.FOAM_ROLL, Equipment.EXERCISE_BALL,
+                        Equipment.MEDICINE_BALL, Equipment.BANDS -> SetMode.BODYWEIGHT
+
+                        else -> if (exerciseDC.name.contains("Weighted", true))
+                            SetMode.BODYWEIGHT_WITH_LOAD else SetMode.LOAD
                     }
                 }
             ),

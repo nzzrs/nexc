@@ -90,9 +90,13 @@ import com.patrykandpatrick.vico.core.common.data.ExtraStore
 import com.patrykandpatrick.vico.core.common.shader.ShaderProvider
 import com.patrykandpatrick.vico.core.common.shape.CorneredShape
 import org.librefit.R
+import org.librefit.enums.chart.BodyweightChart
 import org.librefit.enums.chart.ChartMode
+import org.librefit.enums.chart.LoadChart
 import org.librefit.enums.chart.MeasurementChart
 import org.librefit.enums.chart.StatisticsChart
+import org.librefit.enums.chart.TimeChart
+import org.librefit.enums.chart.WeightedBodyweightChart
 import org.librefit.enums.chart.WorkoutChart
 import org.librefit.nav.Route
 import org.librefit.ui.components.LibreFitButton
@@ -213,6 +217,10 @@ fun LibreFitCartesianChart(
                             is WorkoutChart -> WorkoutChart.entries
                             is MeasurementChart -> MeasurementChart.entries
                             is StatisticsChart -> StatisticsChart.entries
+                            is TimeChart -> TimeChart.entries
+                            is WeightedBodyweightChart -> WeightedBodyweightChart.entries
+                            is BodyweightChart -> BodyweightChart.entries
+                            is LoadChart -> LoadChart.entries
                         }
                     ) { mode: ChartMode ->
                         FilterChip(
@@ -232,6 +240,19 @@ fun LibreFitCartesianChart(
                                             StatisticsChart.REPS -> R.string.reps
                                             StatisticsChart.VOLUME -> R.string.volume
                                             StatisticsChart.DURATION -> R.string.duration
+                                            TimeChart.BEST_TIME -> R.string.best_time
+                                            TimeChart.TOTAL_TIME -> R.string.total_time
+                                            WeightedBodyweightChart.HEAVIEST_WEIGHT -> R.string.heaviest_weight
+                                            WeightedBodyweightChart.BEST_SET_VOLUME -> R.string.best_set_volume
+                                            WeightedBodyweightChart.TOTAL_VOLUME -> R.string.total_volume
+                                            WeightedBodyweightChart.TOTAL_REPS -> R.string.total_reps
+                                            BodyweightChart.SESSION_REPS -> R.string.session_reps
+                                            BodyweightChart.MOST_REPS -> R.string.most_reps
+                                            LoadChart.HEAVIEST_WEIGHT -> R.string.heaviest_weight
+                                            LoadChart.BEST_SET_VOLUME -> R.string.best_set_volume
+                                            LoadChart.TOTAL_REPS -> R.string.total_reps
+                                            LoadChart.SESSION_VOLUME -> R.string.session_volume
+                                            LoadChart.ONE_REP_MAX -> R.string.one_rep_max
                                         }
                                     )
                                 )
@@ -393,7 +414,7 @@ fun LibreFitCartesianChart(
                                 }
                             }
                         }
-                        if (navController != null && WorkoutChart.entries.contains(chartMode)) {
+                        if (navController != null) {
                             HorizontalDivider()
                             LibreFitButton(
                                 elevated = false,

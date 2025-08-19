@@ -26,13 +26,13 @@ import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -42,9 +42,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CornerSize
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -53,6 +57,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -72,13 +77,21 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.librefit.R
 import org.librefit.db.entity.ExerciseDC
 import org.librefit.enums.InfoExerciseMode
+import org.librefit.enums.SetMode
+import org.librefit.enums.chart.BodyweightChart
+import org.librefit.enums.chart.ExerciseChart
+import org.librefit.enums.chart.LoadChart
+import org.librefit.enums.chart.TimeChart
+import org.librefit.enums.chart.WeightedBodyweightChart
 import org.librefit.enums.exercise.Category
 import org.librefit.enums.exercise.Equipment
 import org.librefit.enums.exercise.Force
@@ -88,10 +101,21 @@ import org.librefit.enums.exercise.Muscle
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
+import org.librefit.ui.components.animations.EmptyLottie
+import org.librefit.ui.components.charts.LibreFitCartesianChart
+import org.librefit.ui.components.charts.Point
+import org.librefit.ui.models.UiExercise
 import org.librefit.ui.models.UiExerciseDC
+import org.librefit.ui.models.UiExerciseWithSets
+import org.librefit.ui.models.UiWorkout
+import org.librefit.ui.models.UiWorkoutWithExercisesAndSets
 import org.librefit.ui.models.mappers.toUi
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter
+import org.librefit.util.Formatter.formatDetails
+import org.librefit.util.Formatter.formatTime
+import java.text.DecimalFormat
+import kotlin.random.Random
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -101,11 +125,23 @@ fun SharedTransitionScope.InfoExerciseScreen(
     animatedVisibilityScope: AnimatedVisibilityScope,
     navController: NavHostController
 ) {
+    val viewModel: InfoExerciseScreenViewModel = hiltViewModel()
+
+    val workoutsWithExercises by viewModel.workoutsWithExercises.collectAsState()
+
+    val points by viewModel.points.collectAsState()
+
+    val exerciseChart by viewModel.exerciseChart.collectAsState()
+
     InfoExerciseScreenContent(
         id = id,
-        exercise = exerciseDC.toUi(),
+        exerciseDC = exerciseDC.toUi(),
         animatedVisibilityScope = animatedVisibilityScope,
-        navigateBack = navController::popBackStack
+        workoutsWithExercises = workoutsWithExercises,
+        points = points,
+        exerciseChart = exerciseChart,
+        navController = navController,
+        updateExerciseChart = viewModel::updateExerciseChart
     )
 
 }
@@ -114,9 +150,13 @@ fun SharedTransitionScope.InfoExerciseScreen(
 @Composable
 private fun SharedTransitionScope.InfoExerciseScreenContent(
     id: Long,
-    exercise: UiExerciseDC,
+    exerciseDC: UiExerciseDC,
     animatedVisibilityScope: AnimatedVisibilityScope,
-    navigateBack: () -> Unit
+    workoutsWithExercises: List<UiWorkoutWithExercisesAndSets>,
+    points: List<Point>,
+    exerciseChart: ExerciseChart,
+    navController: NavHostController,
+    updateExerciseChart: (ExerciseChart) -> Unit
 ) {
     val pagerState = rememberPagerState(pageCount = { InfoExerciseMode.entries.size })
     val coroutineScope = rememberCoroutineScope()
@@ -124,7 +164,7 @@ private fun SharedTransitionScope.InfoExerciseScreenContent(
     val stringId = if (id == 0L) "" else id.toString()
 
     LibreFitScaffold(
-        navigateBack = navigateBack
+        navigateBack = navController::popBackStack
     ) { innerPadding ->
         LibreFitLazyColumn(
             innerPadding = innerPadding,
@@ -132,14 +172,15 @@ private fun SharedTransitionScope.InfoExerciseScreenContent(
         ) {
             item {
                 Text(
-                    text = exercise.name,
+                    modifier = Modifier.padding(start = 10.dp, end = 10.dp),
+                    text = exerciseDC.name,
                     style = MaterialTheme.typography.displaySmall,
                     fontWeight = FontWeight.SemiBold,
                     textAlign = TextAlign.Center
                 )
             }
             item {
-                AlternatingImages(stringId, exercise, animatedVisibilityScope)
+                AlternatingImages(stringId, exerciseDC, animatedVisibilityScope)
             }
             item {
                 PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
@@ -199,9 +240,16 @@ private fun SharedTransitionScope.InfoExerciseScreenContent(
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         when (enum) {
-                            InfoExerciseMode.DETAILS -> DetailsPage(exercise)
-                            InfoExerciseMode.HISTORY -> HistoryPage()
-                            InfoExerciseMode.INSTRUCTIONS -> InstructionsPage(exercise.instructions)
+                            InfoExerciseMode.DETAILS -> DetailsPage(exerciseDC)
+                            InfoExerciseMode.HISTORY -> HistoryPage(
+                                workoutsWithExercises = workoutsWithExercises,
+                                points = points,
+                                exerciseChart = exerciseChart,
+                                navController = navController,
+                                updateExerciseChart = updateExerciseChart
+                            )
+
+                            InfoExerciseMode.INSTRUCTIONS -> InstructionsPage(exerciseDC.instructions)
                         }
                     }
                 }
@@ -357,18 +405,153 @@ private fun InstructionsPage(
 }
 
 @Composable
-private fun HistoryPage() {
-    ElevatedCard(
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(100.dp)
-    ) {
-        Column(
-            modifier = Modifier.fillMaxSize(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
+private fun HistoryPage(
+    workoutsWithExercises: List<UiWorkoutWithExercisesAndSets>,
+    points: List<Point>,
+    exerciseChart: ExerciseChart,
+    navController: NavHostController,
+    updateExerciseChart: (ExerciseChart) -> Unit
+) {
+    LibreFitCartesianChart(
+        format = when (exerciseChart) {
+            BodyweightChart.MOST_REPS, BodyweightChart.SESSION_REPS, LoadChart.TOTAL_REPS,
+            WeightedBodyweightChart.TOTAL_REPS -> DecimalFormat()
+
+            TimeChart.BEST_TIME, TimeChart.TOTAL_TIME -> DecimalFormat("# " + stringResource(R.string.second_abbreviation))
+            else -> DecimalFormat("#.# " + stringResource(R.string.kg))
+        },
+        points = points,
+        chartMode = exerciseChart,
+        updateChartMode = { updateExerciseChart(it as ExerciseChart) },
+        navController = navController
+    )
+
+    HeadlineText(stringResource(R.string.past_workouts))
+
+    if (workoutsWithExercises.isEmpty()) {
+        EmptyLottie()
+        Text(
+            text = stringResource(R.string.nothing_to_show),
+            textAlign = TextAlign.Center
+        )
+    }
+
+    workoutsWithExercises.forEach { workoutWithExercisesAndSets ->
+        ElevatedCard(
+            modifier = Modifier.fillMaxWidth()
         ) {
-            Text("TODO")
+            Column(
+                modifier = Modifier.padding(10.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+
+                workoutWithExercisesAndSets.exercisesWithSets.forEach { exerciseWithSets ->
+                    Text(
+                        text = formatDetails(
+                            stringResource(R.string.type_of_set),
+                            stringResource(
+                                Formatter.setModeToStringId(exerciseWithSets.exercise.setMode)
+                            )
+                        )
+                    )
+
+                    if (exerciseWithSets.exercise.restTime != 0) {
+                        Text(
+                            formatDetails(
+                                stringResource(R.string.rest_time),
+                                exerciseWithSets.exercise.restTime.toString()
+                                        + " " + stringResource(R.string.seconds).replaceFirstChar { it.lowercase() })
+                        )
+                    }
+
+                    if (exerciseWithSets.exercise.notes.isNotBlank()) {
+                        HorizontalDivider()
+
+                        Text(
+                            formatDetails(
+                                stringResource(R.string.notes),
+                                exerciseWithSets.exercise.notes
+                            )
+                        )
+                    }
+
+
+                    if (exerciseWithSets.sets.isNotEmpty()) {
+                        HorizontalDivider()
+
+                        val setMode = exerciseWithSets.exercise.setMode
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceAround
+                        ) {
+                            Text(stringResource(R.string.set))
+                            if (setMode == SetMode.DURATION) {
+                                Text(stringResource(R.string.time))
+                            } else {
+                                Text(stringResource(R.string.reps))
+                                if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
+                                    Text(
+                                        stringResource(R.string.load) + " (" + stringResource(
+                                            R.string.kg
+                                        ) + ")"
+                                    )
+                                }
+                            }
+                            Icon(
+                                imageVector = ImageVector.vectorResource(R.drawable.ic_check),
+                                contentDescription = stringResource(R.string.done)
+                            )
+
+                        }
+
+                        Column {
+                            exerciseWithSets.sets.forEachIndexed { index, set ->
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .clip(
+                                            RoundedCornerShape(
+                                                topStart = CornerSize(if (index == 0) 25 else 0),
+                                                topEnd = CornerSize(if (index == 0) 25 else 0),
+                                                bottomEnd = CornerSize(
+                                                    if (index == exerciseWithSets.sets.lastIndex) 25 else 0
+                                                ),
+                                                bottomStart = CornerSize(
+                                                    if (index == exerciseWithSets.sets.lastIndex) 25 else 0
+                                                ),
+                                            )
+                                        )
+                                        .background(
+                                            if (set.completed) MaterialTheme.colorScheme.secondaryContainer
+                                            else MaterialTheme.colorScheme.surfaceContainerLow
+                                        )
+                                        .padding(5.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.SpaceAround
+                                ) {
+                                    Text("${index + 1}")
+                                    if (setMode == SetMode.DURATION) {
+                                        Text(formatTime(set.elapsedTime).substring(3))
+                                    } else {
+                                        Text("${set.reps}")
+                                        if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
+                                            Text("${set.load}")
+                                        }
+                                    }
+                                    Checkbox(
+                                        checked = set.completed,
+                                        onCheckedChange = null
+                                    )
+
+                                }
+                            }
+                        }
+                    }
+                }
+
+            }
         }
     }
 
@@ -445,7 +628,8 @@ private fun InfoExercisePreview() {
             AnimatedVisibility(visible = true) {
                 InfoExerciseScreenContent(
                     id = 0L,
-                    exercise = UiExerciseDC(
+                    exerciseChart = TimeChart.BEST_TIME,
+                    exerciseDC = UiExerciseDC(
                         name = "3/4 Sit-Up",
                         force = Force.PULL,
                         level = Level.BEGINNER,
@@ -463,7 +647,38 @@ private fun InfoExercisePreview() {
                         images = persistentListOf("3_4_Sit-Up/0.jpg", "3_4_Sit-Up/1.jpg")
                     ),
                     animatedVisibilityScope = this,
-                    navigateBack = {}
+                    workoutsWithExercises = listOf(
+                        UiWorkoutWithExercisesAndSets(
+                            workout = UiWorkout(),
+                            exercisesWithSets = persistentListOf(
+                                UiExerciseWithSets(
+                                    exercise = UiExercise(
+                                        setMode = SetMode.DURATION,
+                                        restTime = 120,
+                                        notes = "This is the first exercise",
+                                        workoutId = Random.nextLong()
+                                    ),
+                                    sets = persistentListOf()
+                                )
+                            )
+                        ),
+                        UiWorkoutWithExercisesAndSets(
+                            workout = UiWorkout(),
+                            exercisesWithSets = persistentListOf(
+                                UiExerciseWithSets(
+                                    exercise = UiExercise(
+                                        setMode = SetMode.DURATION,
+                                        notes = "This is the second exercise",
+                                        workoutId = Random.nextLong()
+                                    ),
+                                    sets = persistentListOf()
+                                )
+                            )
+                        )
+                    ),
+                    points = emptyList(),
+                    navController = rememberNavController(),
+                    updateExerciseChart = {}
                 )
             }
         }

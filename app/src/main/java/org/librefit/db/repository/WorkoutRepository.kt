@@ -19,6 +19,8 @@
 
 package org.librefit.db.repository
 
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import org.librefit.db.dao.WorkoutDao
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
@@ -93,4 +95,16 @@ class WorkoutRepository @Inject constructor(
         workoutDao.addWorkoutWithExercisesAndSets(workoutWithExercisesAndSets)
     }
 
+
+    fun getCompletedWorkoutsWithExercisesWithIdExerciseDC(idExerciseDC: String): Flow<List<WorkoutWithExercisesAndSets>> {
+        return workoutDao
+            .getWorkoutsFromIdExerciseDC(idExerciseDC, WorkoutState.COMPLETED)
+            .map { list ->
+                list.map { w ->
+                    w.copy(
+                        exercisesWithSets = w.exercisesWithSets.filter { it.exerciseDC.id == idExerciseDC }
+                    )
+                }
+            }
+    }
 }

@@ -28,10 +28,16 @@ import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.db.repository.MeasurementRepository
 import org.librefit.enums.SetMode
 import org.librefit.enums.WorkoutState
+import org.librefit.enums.chart.BodyweightChart
+import org.librefit.enums.chart.ExerciseChart
+import org.librefit.enums.chart.LoadChart
 import org.librefit.enums.chart.StatisticsChart
+import org.librefit.enums.chart.TimeChart
+import org.librefit.enums.chart.WeightedBodyweightChart
 import org.librefit.enums.chart.WorkoutChart
 import org.librefit.ui.components.charts.Point
 import org.librefit.util.Formatter
+import org.librefit.util.OneRepMaxCalculator
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -412,5 +418,76 @@ class DataHelper @Inject constructor(
                     xValue = exercise.name,
                 )
             }
+    }
+
+    suspend fun fetchPointsForExercisesChart(
+        exerciseChart: ExerciseChart,
+        workoutsWithExercises: List<WorkoutWithExercisesAndSets>
+    ): List<Point> = coroutineScope {
+        workoutsWithExercises
+            .flatMap { it.exercisesWithSets }
+            .mapIndexed { index, eWs ->
+                async {
+                    val workout =
+                        workoutsWithExercises.find { eWs in it.exercisesWithSets }?.workout
+
+                    val includeBodyweight = eWs.exercise.setMode == SetMode.BODYWEIGHT ||
+                            eWs.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD
+
+                    val bodyWeight = if (includeBodyweight && workout != null) measurementRepository
+                        .getLastMeasurementByCutoff(workout.completed)?.bodyWeight ?: 0f else 0f
+
+                    val sets = eWs.sets.filter { it.completed }
+
+
+                    Point(
+                        yValues = listOf(
+                            when (exerciseChart) {
+                                TimeChart.BEST_TIME -> sets.maxOf { set -> set.elapsedTime }
+                                TimeChart.TOTAL_TIME -> sets.sumOf { set -> set.elapsedTime }
+                                WeightedBodyweightChart.TOTAL_REPS -> sets.sumOf { set ->
+                                    set.reps
+                                }
+
+                                WeightedBodyweightChart.TOTAL_VOLUME -> sets.sumOf { set ->
+                                    (set.load + bodyWeight) * set.reps.toDouble()
+                                }
+
+                                WeightedBodyweightChart.BEST_SET_VOLUME -> sets.maxOf { set ->
+                                    (set.load + bodyWeight) * set.reps
+                                }
+
+                                WeightedBodyweightChart.HEAVIEST_WEIGHT -> sets.maxOf { set ->
+                                    set.load + bodyWeight
+                                }
+
+                                BodyweightChart.MOST_REPS -> sets.maxOf { set -> set.reps }
+                                BodyweightChart.SESSION_REPS -> sets.sumOf { set -> set.reps }
+                                LoadChart.HEAVIEST_WEIGHT -> sets.maxOf { set -> set.load }
+                                LoadChart.BEST_SET_VOLUME -> sets.maxOf { set ->
+                                    set.load * set.reps
+                                }
+
+                                LoadChart.ONE_REP_MAX -> sets.maxOf { set ->
+                                    OneRepMaxCalculator.calculate(set.load, set.reps)
+                                }
+
+                                LoadChart.TOTAL_REPS -> sets.sumOf { set ->
+                                    set.reps
+                                }
+
+                                LoadChart.SESSION_VOLUME -> sets.sumOf { set ->
+                                    set.load * set.reps.toDouble()
+                                }
+                            }.toFloat()
+                        ),
+                        xValue = workout?.completed?.let(Formatter::getShortDateFromLocalDate)
+                            ?: "",
+                        workoutId = workout?.id
+                    )
+                }
+            }
+            .awaitAll()
+
     }
 }

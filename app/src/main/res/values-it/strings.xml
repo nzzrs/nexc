@@ -116,6 +116,7 @@
     <string name="not_enough_data">Dati non sufficienti per mostrare questo grafico</string>
     <string name="tap_a_workout">Tocca un allenamento per selezionarlo</string>
     <string name="open_the_workout">Apri l\'allenamento del</string>
+    <string name="one_rep_max">Massimale su una ripetizione</string>
     <string name="any">Qualsiasi</string>
     <string name="rest_time_is_over">Il tempo di riposo è finito!</string>
     <string name="rest">Riposo</string>
@@ -236,6 +237,7 @@
     <string name="privacy_notice_foreground_perm">**Servizio in primo piano**: Questa autorizzazione viene concessa automaticamente quando si installa LibreFit e gli consente di funzionare in primo piano durante un allenamento.</string>
     <string name="delete_routine_text">Sei sicuro di voler eliminare questa routine? Questa azione non può essere annullata</string>
     <string name="history">Storico</string>
+    <string name="second_abbreviation">s</string>
     <string name="body_weight">Peso corporeo</string>
     <string name="fat_mass">Massa grassa</string>
     <string name="quit_routine_creation_question">Interrompere creazione routine?</string>
@@ -261,5 +263,14 @@
     <string name="application_encountered_error">L\'applicazione ha riscontrato un errore imprevisto</string>
     <string name="restart_app">Riavvia</string>
     <string name="report_github">Segnala su GitHub</string>
+    <string name="best_time">Miglior tempo</string>
+    <string name="total_time">Tempo totale</string>
+    <string name="heaviest_weight">Carico più pesante</string>
+    <string name="best_set_volume">Massimo volume per serie</string>
+    <string name="total_volume">Volume totale</string>
+    <string name="total_reps">Ripetizioni totali</string>
+    <string name="session_reps">Ripetizione per sessione</string>
+    <string name="most_reps">Massime ripetizioni</string>
+    <string name="session_volume">Volume per sessione</string>
 
 </resources>

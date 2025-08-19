@@ -135,7 +135,28 @@
 
 
     <!-- Info exercise screen-->
+    <string name="details">Details</string>
+    <string name="force">Force</string>
+    <string name="level">Level</string>
+    <string name="mechanic">Mechanic</string>
+    <string name="equipment">Equipment</string>
+    <string name="category">Category</string>
+    <string name="muscles">Muscles</string>
+    <string name="primary_muscles">Primary muscles</string>
+    <string name="secondary_muscles">Secondary muscles</string>
+    <string name="instructions">Instructions</string>
     <string name="history">History</string>
+    <string name="best_time">Best time</string>
+    <string name="total_time">Total time</string>
+    <string name="heaviest_weight">Heaviest weight</string>
+    <string name="best_set_volume">Best set volume</string>
+    <string name="total_volume">Total volume</string>
+    <string name="total_reps">Total reps</string>
+    <string name="session_reps">Session reps</string>
+    <string name="most_reps">Most reps</string>
+    <string name="session_volume">Session volume</string>
+    <string name="one_rep_max">One rep max</string>
+    <string name="second_abbreviation">s</string>
 
 
     <!--Measurement screen-->
@@ -239,18 +260,6 @@
     <string name="muscle_distribution_desc">- This chart shows the **average performance of each muscle over specific time periods**, based on the chosen parameter.\n- The legend identifies the time period represented by each column.\n- The **Historical** column includes all workouts completed before every time period shown.\n- The parameter can be changed by selecting a new one above the chart.</string>
     <string name="exercises_distribution_desc">- This chart shows the **average performance of each exercise over specific time periods**, based on the chosen parameter.\n- The legend identifies the time period represented by each column.\n- The **Historical** column includes all workouts completed before every time period shown.\n- The parameter can be changed by selecting a new one above the chart.</string>
 
-
-    <!--Exercise detail modal bottom sheet-->
-    <string name="details">Details</string>
-    <string name="force">Force</string>
-    <string name="level">Level</string>
-    <string name="mechanic">Mechanic</string>
-    <string name="equipment">Equipment</string>
-    <string name="category">Category</string>
-    <string name="muscles">Muscles</string>
-    <string name="primary_muscles">Primary muscles</string>
-    <string name="secondary_muscles">Secondary muscles</string>
-    <string name="instructions">Instructions</string>
 
 
     <!--Exercise card-->

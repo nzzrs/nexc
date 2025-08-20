@@ -194,6 +194,9 @@ import org.librefit.enums.exercise.Muscle
  * @property instructions Step-by-step instructions detailing how to perform the exercise.
  * @property category The [org.librefit.enums.exercise.Category] of the exercise. Acceptable values are defined in the JSON schema.
  * @property images Identifiers of images associated with the exercise.
+ * @property isCustomExercise It tells whether this exercise is created by the user or not. By default,
+ * the exercise comes from `exercises.json` so it is set to `false`. However, this property is not present
+ * in JSON schema so [com.squareup.moshi.JsonAdapter.fromJson] would [throw an exception if it didn't have a default value](https://github.com/square/moshi?tab=readme-ov-file#omitting-fields).
  */
 @JsonClass(generateAdapter = true)
 @Serializable
@@ -209,5 +212,6 @@ data class ExerciseDC(
     val secondaryMuscles: List<Muscle> = listOf(),
     val instructions: List<String> = listOf(),
     val category: Category = Category.POWERLIFTING,
-    val images: List<String> = listOf()
+    val images: List<String> = listOf(),
+    val isCustomExercise: Boolean = false
 )

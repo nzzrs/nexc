@@ -48,5 +48,6 @@ data class UiExerciseDC(
     val secondaryMuscles: ImmutableList<Muscle> = persistentListOf(),
     val instructions: ImmutableList<String> = persistentListOf(),
     val category: Category = Category.POWERLIFTING,
-    val images: ImmutableList<String> = persistentListOf()
+    val images: ImmutableList<String> = persistentListOf(),
+    val isCustomExercise: Boolean = false
 )

@@ -50,7 +50,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
@@ -67,6 +69,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
@@ -75,6 +78,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
@@ -98,6 +102,7 @@ import org.librefit.enums.exercise.Force
 import org.librefit.enums.exercise.Level
 import org.librefit.enums.exercise.Mechanic
 import org.librefit.enums.exercise.Muscle
+import org.librefit.nav.Route
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
@@ -246,7 +251,8 @@ private fun SharedTransitionScope.InfoExerciseScreenContent(
                                 points = points,
                                 exerciseChart = exerciseChart,
                                 navController = navController,
-                                updateExerciseChart = updateExerciseChart
+                                updateExerciseChart = updateExerciseChart,
+                                animatedVisibilityScope = animatedVisibilityScope
                             )
 
                             InfoExerciseMode.INSTRUCTIONS -> InstructionsPage(exerciseDC.instructions)
@@ -404,12 +410,14 @@ private fun InstructionsPage(
     )
 }
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
-private fun HistoryPage(
+private fun SharedTransitionScope.HistoryPage(
     workoutsWithExercises: List<UiWorkoutWithExercisesAndSets>,
     points: List<Point>,
     exerciseChart: ExerciseChart,
     navController: NavHostController,
+    animatedVisibilityScope: AnimatedVisibilityScope,
     updateExerciseChart: (ExerciseChart) -> Unit
 ) {
     LibreFitCartesianChart(
@@ -437,114 +445,164 @@ private fun HistoryPage(
     }
 
     workoutsWithExercises.forEach { workoutWithExercisesAndSets ->
+        val workout = workoutWithExercisesAndSets.workout
         ElevatedCard(
-            modifier = Modifier.fillMaxWidth()
+            onClick = {
+                navController.navigate(Route.InfoWorkoutScreen(workout.id))
+            },
+            modifier = Modifier.sharedBounds(
+                sharedContentState = rememberSharedContentState(workout.id),
+                animatedVisibilityScope = animatedVisibilityScope
+            )
         ) {
             Column(
                 modifier = Modifier.padding(10.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(10.dp)
             ) {
-
-                workoutWithExercisesAndSets.exercisesWithSets.forEach { exerciseWithSets ->
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     Text(
-                        text = formatDetails(
-                            stringResource(R.string.type_of_set),
-                            stringResource(
-                                Formatter.setModeToStringId(exerciseWithSets.exercise.setMode)
-                            )
-                        )
+                        modifier = Modifier
+                            .weight(1f)
+                            .sharedElement(
+                                sharedContentState = rememberSharedContentState(
+                                    key = workout.id.toString() + workout.title
+                                ),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            ),
+                        text = workout.title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
                     )
 
-                    if (exerciseWithSets.exercise.restTime != 0) {
-                        Text(
-                            formatDetails(
-                                stringResource(R.string.rest_time),
-                                exerciseWithSets.exercise.restTime.toString()
-                                        + " " + stringResource(R.string.seconds).replaceFirstChar { it.lowercase() })
-                        )
-                    }
-
-                    if (exerciseWithSets.exercise.notes.isNotBlank()) {
-                        HorizontalDivider()
-
-                        Text(
-                            formatDetails(
-                                stringResource(R.string.notes),
-                                exerciseWithSets.exercise.notes
-                            )
-                        )
-                    }
-
-
-                    if (exerciseWithSets.sets.isNotEmpty()) {
-                        HorizontalDivider()
-
-                        val setMode = exerciseWithSets.exercise.setMode
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceAround
-                        ) {
-                            Text(stringResource(R.string.set))
-                            if (setMode == SetMode.DURATION) {
-                                Text(stringResource(R.string.time))
-                            } else {
-                                Text(stringResource(R.string.reps))
-                                if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
-                                    Text(
-                                        stringResource(R.string.load) + " (" + stringResource(
-                                            R.string.kg
-                                        ) + ")"
-                                    )
-                                }
-                            }
-                            Icon(
-                                imageVector = ImageVector.vectorResource(R.drawable.ic_check),
-                                contentDescription = stringResource(R.string.done)
-                            )
-
+                    IconButton(
+                        onClick = {
+                            navController.navigate(Route.InfoWorkoutScreen(workout.id))
                         }
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(R.drawable.ic_info),
+                            contentDescription = stringResource(R.string.info)
+                        )
+                    }
+                }
+                Text(
+                    text = formatDetails(
+                        stringResource(R.string.label_when),
+                        Formatter.getFullDateFromLocalDate(workout.completed)
+                    )
+                )
 
-                        Column {
-                            exerciseWithSets.sets.forEachIndexed { index, set ->
+                workoutWithExercisesAndSets.exercisesWithSets.forEach { exerciseWithSets ->
+                    OutlinedCard {
+                        Column(
+                            modifier = Modifier.padding(10.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            if (exerciseWithSets.exercise.notes.isNotBlank()) {
+                                Text(
+                                    formatDetails(
+                                        stringResource(R.string.notes),
+                                        exerciseWithSets.exercise.notes
+                                    )
+                                )
+                                HorizontalDivider()
+                            }
+
+                            Text(
+                                text = formatDetails(
+                                    stringResource(R.string.type_of_set),
+                                    stringResource(
+                                        Formatter.setModeToStringId(exerciseWithSets.exercise.setMode)
+                                    )
+                                )
+                            )
+
+                            if (exerciseWithSets.exercise.restTime != 0) {
+                                Text(
+                                    formatDetails(
+                                        stringResource(R.string.rest_time),
+                                        exerciseWithSets.exercise.restTime.toString()
+                                                + " " + stringResource(R.string.seconds).replaceFirstChar { it.lowercase() })
+                                )
+                            }
+
+
+                            if (exerciseWithSets.sets.isNotEmpty()) {
+                                HorizontalDivider()
+
+                                val setMode = exerciseWithSets.exercise.setMode
                                 Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .clip(
-                                            RoundedCornerShape(
-                                                topStart = CornerSize(if (index == 0) 25 else 0),
-                                                topEnd = CornerSize(if (index == 0) 25 else 0),
-                                                bottomEnd = CornerSize(
-                                                    if (index == exerciseWithSets.sets.lastIndex) 25 else 0
-                                                ),
-                                                bottomStart = CornerSize(
-                                                    if (index == exerciseWithSets.sets.lastIndex) 25 else 0
-                                                ),
-                                            )
-                                        )
-                                        .background(
-                                            if (set.completed) MaterialTheme.colorScheme.secondaryContainer
-                                            else MaterialTheme.colorScheme.surfaceContainerLow
-                                        )
-                                        .padding(5.dp),
+                                    modifier = Modifier.fillMaxWidth(),
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.SpaceAround
                                 ) {
-                                    Text("${index + 1}")
+                                    Text(stringResource(R.string.set))
                                     if (setMode == SetMode.DURATION) {
-                                        Text(formatTime(set.elapsedTime).substring(3))
+                                        Text(stringResource(R.string.time))
                                     } else {
-                                        Text("${set.reps}")
+                                        Text(stringResource(R.string.reps))
                                         if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
-                                            Text("${set.load}")
+                                            Text(
+                                                stringResource(R.string.load) + " (" + stringResource(
+                                                    R.string.kg
+                                                ) + ")"
+                                            )
                                         }
                                     }
-                                    Checkbox(
-                                        checked = set.completed,
-                                        onCheckedChange = null
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(R.drawable.ic_check),
+                                        contentDescription = stringResource(R.string.done)
                                     )
 
+                                }
+
+                                Column {
+                                    exerciseWithSets.sets.forEachIndexed { index, set ->
+                                        Row(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clip(
+                                                    RoundedCornerShape(
+                                                        topStart = CornerSize(if (index == 0) 25 else 0),
+                                                        topEnd = CornerSize(if (index == 0) 25 else 0),
+                                                        bottomEnd = CornerSize(
+                                                            if (index == exerciseWithSets.sets.lastIndex) 25 else 0
+                                                        ),
+                                                        bottomStart = CornerSize(
+                                                            if (index == exerciseWithSets.sets.lastIndex) 25 else 0
+                                                        ),
+                                                    )
+                                                )
+                                                .background(
+                                                    if (set.completed) MaterialTheme.colorScheme.secondaryContainer
+                                                    else Color.Unspecified
+                                                )
+                                                .padding(5.dp),
+                                            verticalAlignment = Alignment.CenterVertically,
+                                            horizontalArrangement = Arrangement.SpaceAround
+                                        ) {
+                                            Text("${index + 1}")
+                                            if (setMode == SetMode.DURATION) {
+                                                Text(formatTime(set.elapsedTime).substring(3))
+                                            } else {
+                                                Text("${set.reps}")
+                                                if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
+                                                    Text("${set.load}")
+                                                }
+                                            }
+                                            Checkbox(
+                                                checked = set.completed,
+                                                onCheckedChange = null
+                                            )
+
+                                        }
+                                    }
                                 }
                             }
                         }
@@ -649,7 +707,7 @@ private fun InfoExercisePreview() {
                     animatedVisibilityScope = this,
                     workoutsWithExercises = listOf(
                         UiWorkoutWithExercisesAndSets(
-                            workout = UiWorkout(),
+                            workout = UiWorkout(title = "My first workout", notes = "Very funny"),
                             exercisesWithSets = persistentListOf(
                                 UiExerciseWithSets(
                                     exercise = UiExercise(
@@ -659,11 +717,12 @@ private fun InfoExercisePreview() {
                                         workoutId = Random.nextLong()
                                     ),
                                     sets = persistentListOf()
-                                )
+                                ),
+                                UiExerciseWithSets()
                             )
                         ),
                         UiWorkoutWithExercisesAndSets(
-                            workout = UiWorkout(),
+                            workout = UiWorkout(title = "My second workout"),
                             exercisesWithSets = persistentListOf(
                                 UiExerciseWithSets(
                                     exercise = UiExercise(

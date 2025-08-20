@@ -115,7 +115,7 @@ class InfoWorkoutScreenViewModel @Inject constructor(
 
     fun getDate(): String {
         val date = if (isRoutine()) workout.value.created else workout.value.completed
-        return Formatter.getLongDateFromLocalDate(date)
+        return Formatter.getFullDateFromLocalDate(date)
     }
 
     fun isRoutine(): Boolean {

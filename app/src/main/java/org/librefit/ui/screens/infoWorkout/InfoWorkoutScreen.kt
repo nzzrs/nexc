@@ -73,9 +73,11 @@ import org.librefit.ui.models.UiSet
 import org.librefit.ui.models.UiWorkout
 import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.theme.LibreFitTheme
+import org.librefit.util.Formatter
 import org.librefit.util.Formatter.formatDetails
 import org.librefit.util.Formatter.formatTime
 import java.text.DecimalFormat
+import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Locale
@@ -214,8 +216,6 @@ private fun SharedTransitionScope.InfoWorkoutScreenContent(
                         Text(
                             text = workout.title,
                             style = MaterialTheme.typography.headlineMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
                             fontWeight = FontWeight.SemiBold,
                             modifier = Modifier.sharedElement(
                                 sharedContentState = rememberSharedContentState(
@@ -412,15 +412,18 @@ private fun InfoRoutineScreenPreview() {
                 InfoWorkoutScreenContent(
                     navController = rememberNavController(),
                     deleteWorkout = {},
-                    workout = UiWorkout(title = "My workout", notes = "This is a note!"),
+                    workout = UiWorkout(title = "My long workout title", notes = "This is a note!"),
                     routine = routine,
                     isRoutine = false,
-                    workoutDate = "DD/MM/YY",
+                    workoutDate = Formatter.getFullDateFromLocalDate(LocalDateTime.now()),
                     volumeExercises = "100",
                     workoutChart = WorkoutChart.REPS,
                     exercises = listOf(
                         UiExerciseWithSets(
-                            exerciseDC = UiExerciseDC(name = "Name exercise"),
+                            exerciseDC = UiExerciseDC(
+                                name = "Name exercise",
+                                images = persistentListOf("3_4_Sit-Up/0.jpg")
+                            ),
                             sets = persistentListOf(UiSet(), UiSet())
                         )
                     ),

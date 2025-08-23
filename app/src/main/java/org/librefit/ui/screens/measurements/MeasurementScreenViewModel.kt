@@ -72,8 +72,8 @@ class MeasurementScreenViewModel @Inject constructor(
                 .filter {
                     when (measurementChart) {
                         MeasurementChart.BODY_WEIGHT -> it.bodyWeight != 0f
-                        MeasurementChart.FAT_MASS -> it.bodyFatPercentage != 0f
-                        MeasurementChart.LEAN_MASS -> it.muscleMassPercentage != 0f
+                        MeasurementChart.FAT_MASS -> it.bodyFatPercentage != 0
+                        MeasurementChart.LEAN_MASS -> it.muscleMassPercentage != 0
                     }
                 }
                 .map {
@@ -83,7 +83,7 @@ class MeasurementScreenViewModel @Inject constructor(
                                 MeasurementChart.BODY_WEIGHT -> it.bodyWeight
                                 MeasurementChart.FAT_MASS -> it.bodyFatPercentage
                                 MeasurementChart.LEAN_MASS -> it.muscleMassPercentage
-                            }
+                            }.toFloat()
                         ),
                         xValue = Formatter.getShortDateFromLocalDate(it.date)
                     )
@@ -106,27 +106,74 @@ class MeasurementScreenViewModel @Inject constructor(
     }
 
 
-    private val _bodyweight = MutableStateFlow(0f)
+    private val _bodyweight = MutableStateFlow("")
     val bodyWeight = _bodyweight.asStateFlow()
 
     fun updateBodyweight(newValue: String) {
-        _bodyweight.update { newValue.ifBlank { "0" }.toFloat() }
+        _bodyweight.update {
+            val stringValue = newValue
+                .replace(",", ".")
+                .filter { it.isDigit() || it == '.' }
+
+            val firstDotIndex = stringValue.indexOf(".")
+
+            // Take the float value and remove all dots except the first one
+            val floatValue = if (firstDotIndex == -1) {
+                stringValue
+            } else {
+                val beforeFirstDot = stringValue
+                    .substring(0, firstDotIndex + 1)
+                    // Take last 3 integer digits
+                    .takeLast(4)
+
+                val afterFirstDot = stringValue
+                    .substring(firstDotIndex + 1)
+                    .replace(".", "")
+                    // Take the first 2 decimal digits
+                    .take(3)
+
+                beforeFirstDot + afterFirstDot
+            }
+
+            if (floatValue == "." || floatValue == "0" || floatValue.isBlank()) {
+                ""
+            } else {
+                if (firstDotIndex == -1) {
+                    // It doesn't contain dots so it is an integer
+                    floatValue.toInt().coerceIn(0, 300).toString()
+                } else {
+                    floatValue.toFloat().coerceIn(0f, 300f).toString()
+                }
+            }
+        }
     }
 
 
-    private val _fatMass = MutableStateFlow(0f)
+    private val _fatMass = MutableStateFlow<Int?>(null)
     val fatMass = _fatMass.asStateFlow()
 
     fun updateFatMass(newValue: String) {
-        _fatMass.update { newValue.ifBlank { "0" }.toFloat() }
+        _fatMass.update {
+            newValue
+                .filter { it.isDigit() }
+                .ifBlank { null }
+                ?.toInt()
+                ?.coerceIn(0, 100)
+        }
     }
 
 
-    private val _leanMass = MutableStateFlow(0f)
+    private val _leanMass = MutableStateFlow<Int?>(null)
     val leanMass = _leanMass.asStateFlow()
 
     fun updateLeanMass(newValue: String) {
-        _leanMass.update { newValue.ifBlank { "0" }.toFloat() }
+        _leanMass.update {
+            newValue
+                .filter { it.isDigit() }
+                .ifBlank { null }
+                ?.toInt()
+                ?.coerceIn(0, 100)
+        }
     }
 
 
@@ -172,9 +219,9 @@ class MeasurementScreenViewModel @Inject constructor(
             // A new current measurement is emitted when idMeasurement changes and MeasurementCardState is EDIT
             currentMeasurement.collect { measurement ->
                 _notes.update { measurement.notes }
-                _bodyweight.update { measurement.bodyWeight }
-                _leanMass.update { measurement.muscleMassPercentage }
-                _fatMass.update { measurement.bodyFatPercentage }
+                _bodyweight.update { measurement.bodyWeight.takeIf { it != 0f }?.toString() ?: "" }
+                _leanMass.update { measurement.muscleMassPercentage.takeIf { it != 0 } }
+                _fatMass.update { measurement.bodyFatPercentage.takeIf { it != 0 } }
                 _date.update { measurement.date }
             }
         }
@@ -187,10 +234,11 @@ class MeasurementScreenViewModel @Inject constructor(
                 Measurement(
                     id = if (measurementCardState.value == MeasurementCardState.EDIT)
                         idMeasurement.value else 0L,
-                    bodyWeight = bodyWeight.value,
+                    bodyWeight = bodyWeight.value.toFloatOrNull()
+                        ?: error("Bodyweight must be a float when saving a new measurement"),
                     notes = notes.value,
-                    muscleMassPercentage = leanMass.value,
-                    bodyFatPercentage = fatMass.value,
+                    muscleMassPercentage = leanMass.value ?: 0,
+                    bodyFatPercentage = fatMass.value ?: 0,
                     date = date.value
                 )
             )

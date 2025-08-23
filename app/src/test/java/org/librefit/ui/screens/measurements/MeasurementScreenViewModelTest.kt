@@ -61,8 +61,8 @@ class MeasurementScreenViewModelTest {
     private val now: LocalDateTime = LocalDateTime.now()
 
     private val allMeasurements = listOf(
-        Measurement(id = 1, bodyWeight = 90f, bodyFatPercentage = 0.1f),
-        Measurement(id = 2, bodyWeight = 88f, muscleMassPercentage = 0.2f, date = now.minusDays(7)),
+        Measurement(id = 1, bodyWeight = 90f, bodyFatPercentage = 10),
+        Measurement(id = 2, bodyWeight = 88f, muscleMassPercentage = 20, date = now.minusDays(7)),
         Measurement(id = 3, bodyWeight = 93f, notes = "notes", date = now.minusDays(14))
     )
 
@@ -120,18 +120,18 @@ class MeasurementScreenViewModelTest {
     }
 
     @Test
-    fun `initial state - body weight is 0 `() = runTest {
-        assertThat(viewModel.bodyWeight.value).isZero()
+    fun `initial state - body weight is empty `() = runTest {
+        assertThat(viewModel.bodyWeight.value).isEmpty()
     }
 
     @Test
-    fun `initial state - fat mass is 0 `() = runTest {
-        assertThat(viewModel.fatMass.value).isZero()
+    fun `initial state - fat mass is null `() = runTest {
+        assertThat(viewModel.fatMass.value).isEqualTo(null)
     }
 
     @Test
-    fun `initial state - lean mass is 0 `() = runTest {
-        assertThat(viewModel.leanMass.value).isZero()
+    fun `initial state - lean mass is null `() = runTest {
+        assertThat(viewModel.leanMass.value).isEqualTo(null)
     }
 
     @Test
@@ -206,7 +206,8 @@ class MeasurementScreenViewModelTest {
 
                 // Assert: The flow should emit list of `ChartData` having yValue equal to the respective fat mass
                 val actual = awaitItem().map { it.yValues.first() }
-                val expected = allMeasurements.map { it.bodyFatPercentage }.filter { it != 0f }
+                val expected =
+                    allMeasurements.map { it.bodyFatPercentage.toFloat() }.filter { it != 0f }
 
                 assertThat(actual).isEqualTo(expected)
             }
@@ -217,7 +218,7 @@ class MeasurementScreenViewModelTest {
         runTest {
             // Arrange: Define the initial and expected states
             val newNotes = "This is a new measurement"
-            val insertedMeasurement = Measurement(notes = newNotes)
+            val insertedMeasurement = Measurement(notes = newNotes, bodyWeight = 90.3f)
             val updatedMeasurements = allMeasurements + insertedMeasurement
 
             // Arrange: Set the initial value for the flow.
@@ -231,6 +232,7 @@ class MeasurementScreenViewModelTest {
                 // Act: Simulate the user entering data and saving a new measurement.
                 viewModel.updateNotes(insertedMeasurement.notes)
                 viewModel.updateDate(insertedMeasurement.date)
+                viewModel.updateBodyweight(insertedMeasurement.bodyWeight.toString())
                 viewModel.upsertMeasurementToDB()
 
                 // Assert: Await the new emission and verify its contents are correct

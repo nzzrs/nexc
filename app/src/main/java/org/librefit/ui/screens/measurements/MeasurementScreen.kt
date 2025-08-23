@@ -23,8 +23,10 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
@@ -177,8 +179,8 @@ fun MeasurementScreen(
         date = date,
         measurementCardState = measurementCardState,
         bodyweight = bodyweight,
-        fatMass = fatMass,
-        leanMass = leanMass,
+        fatMass = fatMass?.toString() ?: "",
+        leanMass = leanMass?.toString() ?: "",
         notes = notes,
         measurementChart = measurementChart,
         updateBodyweight = viewModel::updateBodyweight,
@@ -203,9 +205,9 @@ fun MeasurementScreen(
 private fun MeasurementScreenContent(
     measurements: List<Measurement>,
     listChartData: List<Point>,
-    bodyweight: Float,
-    fatMass: Float,
-    leanMass: Float,
+    bodyweight: String,
+    fatMass: String,
+    leanMass: String,
     notes: String,
     date: LocalDateTime,
     measurementChart: MeasurementChart,
@@ -222,10 +224,6 @@ private fun MeasurementScreenContent(
     updateChartMode: (MeasurementChart) -> Unit,
     navigateBack: () -> Unit,
 ) {
-    val bodyweight = bodyweight.toString()
-    val fatMass = fatMass.toString()
-    val leanMass = leanMass.toString()
-
 
     val focusManager = LocalFocusManager.current
 
@@ -284,90 +282,91 @@ private fun MeasurementScreenContent(
                             }
                         }
 
-                        OutlinedTextField(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .focusRequester(focusRequester),
-                            value = bodyweight,
-                            label = { Text(text = stringResource(R.string.body_weight) + " *") },
-                            suffix = { Text(stringResource(R.string.kg)) },
-                            isError = bodyweight.isBlank() || bodyweight.toFloatOrNull() == 0f,
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(
-                                keyboardType = KeyboardType.Number,
-                                showKeyboardOnFocus = true
-                            ),
-                            onValueChange = {
-                                updateBodyweight(processFloatValue(it, 300f))
-                            }
-                        )
+                        Row {
+                            OutlinedTextField(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .focusRequester(focusRequester),
+                                value = bodyweight,
+                                label = { Text(text = stringResource(R.string.body_weight)) },
+                                suffix = { Text(stringResource(R.string.kg)) },
+                                isError = bodyweight.isBlank(),
+                                singleLine = true,
+                                keyboardOptions = KeyboardOptions(
+                                    keyboardType = KeyboardType.Number,
+                                    showKeyboardOnFocus = true
+                                ),
+                                onValueChange = updateBodyweight
+                            )
+                            Spacer(Modifier.width(10.dp))
+                            OutlinedTextField(
+                                modifier = Modifier.weight(1f),
+                                value = Formatter.getShortDateFromLocalDate(date),
+                                onValueChange = {},
+                                label = { Text(stringResource(R.string.label_when)) },
+                                readOnly = true,
+                                trailingIcon = {
+                                    IconButton(onClick = showDatePickerDialog) {
+                                        Icon(
+                                            imageVector = ImageVector.vectorResource(R.drawable.ic_date_range),
+                                            contentDescription = stringResource(R.string.select_date)
+                                        )
+                                    }
+                                }
+                            )
+                        }
                         AnimatedVisibility(visible = isExpanded) {
                             Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
-
-                                OutlinedTextField(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    value = fatMass,
-                                    trailingIcon = {
-                                        IconButton(
-                                            onClick = { updateFatMass("") }
-                                        ) {
-                                            Icon(
-                                                ImageVector.vectorResource(R.drawable.ic_cancel),
-                                                null
+                                Row {
+                                    OutlinedTextField(
+                                        modifier = Modifier.weight(1f),
+                                        value = fatMass,
+                                        trailingIcon = {
+                                            IconButton(
+                                                onClick = { updateFatMass("") }
+                                            ) {
+                                                Icon(
+                                                    ImageVector.vectorResource(R.drawable.ic_cancel),
+                                                    null
+                                                )
+                                            }
+                                        },
+                                        label = {
+                                            Text(
+                                                text = stringResource(R.string.fat_mass),
+                                                overflow = TextOverflow.Ellipsis
                                             )
-                                        }
-                                    },
-                                    label = {
-                                        Text(
-                                            text = stringResource(R.string.fat_mass),
-                                            overflow = TextOverflow.Ellipsis
-                                        )
-                                    },
-                                    suffix = { Text("%") },
-                                    singleLine = true,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    onValueChange = {
-                                        updateFatMass(processFloatValue(it, 100f))
-                                    }
-                                )
-
-                                OutlinedTextField(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    value = leanMass,
-                                    trailingIcon = {
-                                        IconButton(
-                                            onClick = { updateLeanMass("") }
-                                        ) {
-                                            Icon(
-                                                ImageVector.vectorResource(R.drawable.ic_cancel),
-                                                null
-                                            )
-                                        }
-                                    },
-                                    label = { Text(stringResource(R.string.lean_mass)) },
-                                    suffix = { Text("%") },
-                                    singleLine = true,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    onValueChange = {
-                                        updateLeanMass(processFloatValue(it, 100f))
-                                    }
-                                )
-                                OutlinedTextField(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    value = Formatter.getShortDateFromLocalDate(date),
-                                    onValueChange = {},
-                                    label = { Text(stringResource(R.string.label_when)) },
-                                    readOnly = true,
-                                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                    trailingIcon = {
-                                        IconButton(onClick = showDatePickerDialog) {
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(R.drawable.ic_date_range),
-                                                contentDescription = stringResource(R.string.select_date)
-                                            )
-                                        }
-                                    }
-                                )
+                                        },
+                                        suffix = { Text("%") },
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(
+                                            keyboardType = KeyboardType.NumberPassword
+                                        ),
+                                        onValueChange = updateFatMass
+                                    )
+                                    Spacer(modifier = Modifier.width(10.dp))
+                                    OutlinedTextField(
+                                        modifier = Modifier.weight(1f),
+                                        value = leanMass,
+                                        trailingIcon = {
+                                            IconButton(
+                                                onClick = { updateLeanMass("") }
+                                            ) {
+                                                Icon(
+                                                    ImageVector.vectorResource(R.drawable.ic_cancel),
+                                                    null
+                                                )
+                                            }
+                                        },
+                                        label = { Text(stringResource(R.string.lean_mass)) },
+                                        suffix = { Text("%") },
+                                        singleLine = true,
+                                        keyboardOptions = KeyboardOptions(
+                                            keyboardType = KeyboardType.NumberPassword
+                                        ),
+                                        onValueChange = updateLeanMass
+                                    )
+                                }
 
                                 OutlinedTextField(
                                     modifier = Modifier.fillMaxWidth(),
@@ -491,11 +490,11 @@ private fun MeasurementScreenContent(
                             }
                         }
 
-                        if (m.muscleMassPercentage != 0f || m.bodyFatPercentage != 0f) {
+                        if (m.muscleMassPercentage != 0 || m.bodyFatPercentage != 0) {
                             HorizontalDivider()
                         }
 
-                        if (m.muscleMassPercentage != 0f) {
+                        if (m.muscleMassPercentage != 0) {
                             Text(
                                 formatDetails(
                                     stringResource(R.string.lean_mass),
@@ -503,7 +502,7 @@ private fun MeasurementScreenContent(
                                 )
                             )
                         }
-                        if (m.bodyFatPercentage != 0f) {
+                        if (m.bodyFatPercentage != 0) {
                             Text(
                                 formatDetails(
                                     stringResource(R.string.fat_mass),
@@ -523,37 +522,6 @@ private fun MeasurementScreenContent(
             }
         }
     }
-}
-
-private fun processFloatValue(string: String, max: Float): String {
-    if (string.isBlank()) return ""
-
-    val stringValue = string
-        .replace(",", ".")
-        .filter { it.isDigit() || it == '.' }
-        .takeLast(5)
-
-    val firstDotIndex = stringValue.indexOf(".")
-
-    var value: String
-
-    if (firstDotIndex == -1) {
-        value = stringValue
-    } else {
-        val beforeFirstDot = stringValue.substring(
-            0, firstDotIndex + 1
-        )
-
-        val afterFirstDot = stringValue
-            .substring(firstDotIndex + 1)
-            .replace(".", "")
-
-        value = beforeFirstDot + afterFirstDot
-    }
-
-    if (value == ".") value = "0"
-
-    return value.toFloat().coerceAtMost(maximumValue = max).toString()
 }
 
 @Preview
@@ -577,10 +545,8 @@ private fun MeasurementScreenPreview() {
                 id = it.toLong(),
                 notes = if (Random.nextBoolean()) "This is the note of the ${it + 1}° measurement" else "",
                 bodyWeight = Random.nextLong(60, 80).toFloat(),
-                bodyFatPercentage = if (Random.nextBoolean()) Random.nextLong(10, 80)
-                    .toFloat() else 0f,
-                muscleMassPercentage = if (Random.nextBoolean()) Random.nextLong(20, 80)
-                    .toFloat() else 0f,
+                bodyFatPercentage = if (Random.nextBoolean()) Random.nextInt(10, 80) else 0,
+                muscleMassPercentage = if (Random.nextBoolean()) Random.nextInt(20, 80) else 0,
                 date = LocalDateTime.ofEpochSecond(
                     Random.nextLong(fromEpochSecond, toEpochSecond),
                     0,
@@ -604,7 +570,7 @@ private fun MeasurementScreenPreview() {
                             MeasurementChart.BODY_WEIGHT -> it.bodyWeight
                             MeasurementChart.FAT_MASS -> it.bodyFatPercentage
                             MeasurementChart.LEAN_MASS -> it.muscleMassPercentage
-                        }
+                        }.toFloat()
                     ),
                     xValue = it.date.format(shortDate)
                 )
@@ -617,9 +583,9 @@ private fun MeasurementScreenPreview() {
             updateIdMeasurement = { idMeasurement.longValue = it },
             upsertMeasurement = {},
             updateChartMode = {},
-            bodyweight = 72f,
-            fatMass = 0.12f,
-            leanMass = 0.22f,
+            bodyweight = "72",
+            fatMass = "12",
+            leanMass = "22",
             notes = "This is a note",
             updateBodyweight = {},
             updateLeanMass = {},

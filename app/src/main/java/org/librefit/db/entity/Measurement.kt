@@ -19,6 +19,8 @@
 
 package org.librefit.db.entity
 
+import androidx.annotation.FloatRange
+import androidx.annotation.IntRange
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import java.time.LocalDateTime
@@ -26,9 +28,9 @@ import java.time.LocalDateTime
 @Entity(tableName = "measurements")
 data class Measurement(
     @PrimaryKey(autoGenerate = true) val id: Long = 0L,
-    val bodyWeight: Float = 0f,
-    val bodyFatPercentage: Float = 0f,
-    val muscleMassPercentage: Float = 0f,
+    @get:FloatRange(0.0, 300.0) val bodyWeight: Float = 0f,
+    @get:IntRange(0, 100) val bodyFatPercentage: Int = 0,
+    @get:IntRange(0, 100) val muscleMassPercentage: Int = 0,
     val date: LocalDateTime = LocalDateTime.now(),
     val notes: String = ""
 )

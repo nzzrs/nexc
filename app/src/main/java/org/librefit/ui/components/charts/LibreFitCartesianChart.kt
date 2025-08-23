@@ -341,7 +341,7 @@ fun LibreFitCartesianChart(
                                         lineProvider = LineCartesianLayer.LineProvider.series(
                                             lineComponents
                                         ),
-                                        pointSpacing = 64.dp
+                                        pointSpacing = 80.dp
                                     ),
                                     marker = rememberLibreFitMarker(
                                         valueFormatter = DefaultCartesianMarker.ValueFormatter.default(

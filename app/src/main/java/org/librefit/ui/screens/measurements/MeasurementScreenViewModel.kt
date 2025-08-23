@@ -111,39 +111,16 @@ class MeasurementScreenViewModel @Inject constructor(
 
     fun updateBodyweight(newValue: String) {
         _bodyweight.update {
-            val stringValue = newValue
-                .replace(",", ".")
-                .filter { it.isDigit() || it == '.' }
+            val value = Formatter.normalizeNumericString(newValue)
 
-            val firstDotIndex = stringValue.indexOf(".")
-
-            // Take the float value and remove all dots except the first one
-            val floatValue = if (firstDotIndex == -1) {
-                stringValue
+            if (value.isEmpty()) {
+                value
+            } else if (value.indexOf(".") == -1) {
+                // Integer
+                value.toInt().coerceIn(0, 300).toString()
             } else {
-                val beforeFirstDot = stringValue
-                    .substring(0, firstDotIndex + 1)
-                    // Take last 3 integer digits
-                    .takeLast(4)
-
-                val afterFirstDot = stringValue
-                    .substring(firstDotIndex + 1)
-                    .replace(".", "")
-                    // Take the first 2 decimal digits
-                    .take(3)
-
-                beforeFirstDot + afterFirstDot
-            }
-
-            if (floatValue == "." || floatValue == "0" || floatValue.isBlank()) {
-                ""
-            } else {
-                if (firstDotIndex == -1) {
-                    // It doesn't contain dots so it is an integer
-                    floatValue.toInt().coerceIn(0, 300).toString()
-                } else {
-                    floatValue.toFloat().coerceIn(0f, 300f).toString()
-                }
+                // Float
+                value.toFloat().coerceIn(0f, 300f).toString()
             }
         }
     }
@@ -154,11 +131,7 @@ class MeasurementScreenViewModel @Inject constructor(
 
     fun updateFatMass(newValue: String) {
         _fatMass.update {
-            newValue
-                .filter { it.isDigit() }
-                .ifBlank { null }
-                ?.toInt()
-                ?.coerceIn(0, 100)
+            Formatter.parseIntegerFromString(string = newValue, maxValue = 100, minValue = 0)
         }
     }
 
@@ -168,11 +141,7 @@ class MeasurementScreenViewModel @Inject constructor(
 
     fun updateLeanMass(newValue: String) {
         _leanMass.update {
-            newValue
-                .filter { it.isDigit() }
-                .ifBlank { null }
-                ?.toInt()
-                ?.coerceIn(0, 100)
+            Formatter.parseIntegerFromString(string = newValue, maxValue = 100, minValue = 0)
         }
     }
 

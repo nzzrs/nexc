@@ -41,6 +41,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -116,7 +117,7 @@ private val NoOpUpdate: (Long?) -> Unit = {}
  * @param exerciseWithSets An instance of [UiExerciseWithSets] containing all the relevant information
  * required for the card display.
  * @param addSet A lambda function invoked when the "Add set" button is clicked.
- * @param onDetail A lambda function triggered when the *Info* icon is clicked, which should open
+ * @param onDetail A lambda function triggered when the exercise's name or image is clicked, which should open
  * the [org.librefit.ui.screens.infoExercise.InfoExerciseScreen].
  * @param onDelete A lambda function executed when the *Delete* icon is clicked, it should result in
  * the removal of the card.
@@ -132,7 +133,7 @@ private val NoOpUpdate: (Long?) -> Unit = {}
  * @param updateSetLoad A function to update load based on [UiSet.id]. For more details, refer to
  * [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateSetLoad] and
  * [org.librefit.ui.screens.editWorkout.EditWorkoutScreenViewModel.updateSetLoad].
- * @param updateSetReps A function to update reps based on [UiSet.id].. For more details, refer to
+ * @param updateSetReps A function to update reps based on [UiSet.id]. For more details, refer to
  * [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateSetReps] and
  * [org.librefit.ui.screens.editWorkout.EditWorkoutScreenViewModel.updateSetReps].
  * @param updateSetTime A function to update time based on [UiSet.id].. For more details, refer to
@@ -182,9 +183,6 @@ fun SharedTransitionScope.ExerciseCard(
 
     ElevatedCard(
         modifier = modifier,
-        onClick = {
-            onDetail(exerciseWithSets.exercise.id, exerciseWithSets.exerciseDC)
-        }
     ) {
         Column(
             modifier = Modifier
@@ -197,29 +195,39 @@ fun SharedTransitionScope.ExerciseCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Image(
-                    bitmap = image,
-                    contentDescription = exerciseWithSets.exerciseDC.name,
-                    contentScale = ContentScale.Crop,
+                Row(
                     modifier = Modifier
-                        .padding(end = 10.dp)
-                        .sharedElement(
-                            sharedContentState = rememberSharedContentState(
-                                key = exerciseWithSets.exercise.id.toString() + exerciseWithSets.exerciseDC.id
-                            ),
-                            animatedVisibilityScope = animatedVisibilityScope
-                        )
-                        .size(50.dp)
+                        .weight(1f)
                         .clip(MaterialTheme.shapes.medium)
-                )
-                Text(
-                    text = exerciseWithSets.exerciseDC.name,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f)
-                )
+                        .clickable {
+                            onDetail(exerciseWithSets.exercise.id, exerciseWithSets.exerciseDC)
+                        },
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Image(
+                        bitmap = image,
+                        contentDescription = exerciseWithSets.exerciseDC.name,
+                        contentScale = ContentScale.Crop,
+                        modifier = Modifier
+                            .padding(end = 10.dp)
+                            .sharedElement(
+                                sharedContentState = rememberSharedContentState(
+                                    key = exerciseWithSets.exercise.id.toString() + exerciseWithSets.exerciseDC.id
+                                ),
+                                animatedVisibilityScope = animatedVisibilityScope
+                            )
+                            .size(50.dp)
+                            .clip(MaterialTheme.shapes.medium)
+                    )
+                    Text(
+                        text = exerciseWithSets.exerciseDC.name,
+                        style = MaterialTheme.typography.headlineSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier.weight(1f)
+                    )
+                }
                 IconButton(onClick = { onDelete(exerciseWithSets.exercise.id) }) {
                     Icon(
                         imageVector = ImageVector.vectorResource(R.drawable.ic_delete),
@@ -258,14 +266,12 @@ fun SharedTransitionScope.ExerciseCard(
             }
 
             val view = LocalView.current
-            var oldValue by remember { mutableIntStateOf(0) }
             Slider(
                 value = restTime.toFloat(),
                 onValueChange = {
-                    restTime = it.roundToInt()
-                    if (restTime != oldValue) {
+                    if (it % 5f == 0f) {
+                        restTime = it.roundToInt()
                         view.performHapticFeedback(HapticFeedbackConstantsCompat.SEGMENT_FREQUENT_TICK)
-                        oldValue = restTime
                     }
                 },
                 onValueChangeFinished = {
@@ -410,17 +416,37 @@ fun SharedTransitionScope.ExerciseCard(
             }
 
             //Sets
-            Sets(
-                exerciseWithSets = exerciseWithSets,
-                deleteSet = deleteSet,
-                workout = workout,
-                idSetWithRunningChronometer = idSetWithRunningChronometer,
-                updateIdSetWithRunningChronometer = updateIdSetWithRunningChronometer,
-                updateSetTime = updateSetTime,
-                updateSetReps = updateSetReps,
-                updateSetLoad = updateSetLoad,
-                updateSetCompleted = updateSetCompleted
+            val setHeight = 60
+            val animatedSetsColumnHeight = animateDpAsState(
+                targetValue = (exerciseWithSets.sets.size * setHeight).dp,
+                animationSpec = tween(600),
+                label = "animatedSetsColumnHeight",
             )
+            LazyColumn(
+                modifier = Modifier.height(animatedSetsColumnHeight.value)
+            ) {
+                itemsIndexed(
+                    items = exerciseWithSets.sets,
+                    key = { i, set -> set.id }
+                ) { i, set ->
+                    Set(
+                        i = i,
+                        set = set,
+                        setHeight = setHeight,
+                        lastIndex = exerciseWithSets.sets.lastIndex,
+                        setMode = exerciseWithSets.exercise.setMode,
+                        isTimerRunning = idSetWithRunningChronometer == null,
+                        isThisSetTimerRunning = idSetWithRunningChronometer == set.id,
+                        workout = workout,
+                        deleteSet = deleteSet,
+                        updateIdSetWithRunningChronometer = updateIdSetWithRunningChronometer,
+                        updateSetTime = updateSetTime,
+                        updateSetReps = updateSetReps,
+                        updateSetLoad = updateSetLoad,
+                        updateSetCompleted = updateSetCompleted
+                    )
+                }
+            }
 
             HorizontalDivider(modifier = Modifier.padding(top = 10.dp, bottom = 10.dp))
 
@@ -436,237 +462,218 @@ fun SharedTransitionScope.ExerciseCard(
 }
 
 @Composable
-private fun Sets(
-    exerciseWithSets: UiExerciseWithSets,
+private fun LazyItemScope.Set(
+    i: Int,
+    set: UiSet,
+    lastIndex: Int,
+    setHeight: Int,
+    setMode: SetMode,
+    isTimerRunning: Boolean,
+    isThisSetTimerRunning: Boolean,
+    workout: Boolean,
     deleteSet: (Long) -> Unit,
     updateSetTime: (Int, Long) -> Unit,
     updateSetReps: (Int, Long) -> Unit,
     updateSetLoad: (Float, Long) -> Unit,
     updateSetCompleted: (Boolean, Long) -> Unit,
-    workout: Boolean,
-    idSetWithRunningChronometer: Long?,
     updateIdSetWithRunningChronometer: (Long?) -> Unit
 ) {
+    val timeValue by rememberUpdatedState(set.elapsedTime)
+    val repValue by rememberUpdatedState(set.reps.toString())
+    var weightValue by remember { mutableStateOf(set.load.toString()) }
 
-    val setHeight = 60
-    val animatedSetsColumnHeight = animateDpAsState(
-        targetValue = (exerciseWithSets.sets.size * setHeight).dp,
-        animationSpec = tween(600),
-        label = "animatedSetsColumnHeight",
+    val swipeToDismissBoxState = rememberSwipeToDismissBoxState(
+        confirmValueChange = {
+            when (it) {
+                SwipeToDismissBoxValue.Settled -> return@rememberSwipeToDismissBoxState false
+                else -> deleteSet(set.id)
+            }
+            return@rememberSwipeToDismissBoxState true
+        },
+        positionalThreshold = { it * 0.3f }
     )
-    LazyColumn(
-        modifier = Modifier.height(animatedSetsColumnHeight.value)
-    ) {
-        itemsIndexed(
-            items = exerciseWithSets.sets,
-            key = { i, set -> set.id }
-        ) { i, set ->
-            val timeValue by rememberUpdatedState(set.elapsedTime)
-            val repValue by rememberUpdatedState(set.reps.toString())
-            val weightValue by rememberUpdatedState(set.load.toString())
 
-            val swipeToDismissBoxState = rememberSwipeToDismissBoxState(
-                confirmValueChange = {
-                    when (it) {
-                        SwipeToDismissBoxValue.Settled -> return@rememberSwipeToDismissBoxState false
-                        else -> deleteSet(set.id)
-                    }
-                    return@rememberSwipeToDismissBoxState true
-                },
-                positionalThreshold = { it * 0.3f }
+    var zoom by remember { mutableStateOf(false) }
+    val view = LocalView.current
+    LaunchedEffect(swipeToDismissBoxState.progress < 0.3f) {
+        if (swipeToDismissBoxState.progress < 0.3f || swipeToDismissBoxState.progress == 1f) {
+            zoom = false
+        } else {
+            view.performHapticFeedback(HapticFeedbackConstantsCompat.DRAG_START)
+            zoom = true
+        }
+    }
+
+    val size = animateDpAsState(
+        targetValue = if (zoom) {
+            (ImageVector.vectorResource(R.drawable.ic_delete).defaultHeight.value * 1.2f).dp
+        } else {
+            ImageVector.vectorResource(R.drawable.ic_delete).defaultHeight
+        }
+    )
+
+    SwipeToDismissBox(
+        modifier = Modifier.animateItem(),
+        state = swipeToDismissBoxState,
+        backgroundContent = {
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .clip(
+                        RoundedCornerShape(
+                            topStart = CornerSize(if (i == 0) 15 else 0),
+                            topEnd = CornerSize(if (i == 0) 15 else 0),
+                            bottomEnd = CornerSize(
+                                if (i == lastIndex) 15 else 0
+                            ),
+                            bottomStart = CornerSize(
+                                if (i == lastIndex) 15 else 0
+                            ),
+                        )
+                    )
+                    .background(
+                        when (swipeToDismissBoxState.dismissDirection) {
+                            SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.errorContainer
+                            SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
+                            SwipeToDismissBoxValue.Settled -> Color.Transparent
+                        }
+                    )
+                    .padding(start = 10.dp, end = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = when (swipeToDismissBoxState.dismissDirection) {
+                    SwipeToDismissBoxValue.EndToStart -> Arrangement.End
+                    else -> Arrangement.Start
+                }
+            ) {
+                Icon(
+                    modifier = Modifier.size(size.value),
+                    imageVector = ImageVector.vectorResource(R.drawable.ic_delete),
+                    contentDescription = stringResource(R.string.delete),
+                )
+            }
+        }
+    ) {
+        Row(
+            modifier = Modifier
+                .clip(
+                    RoundedCornerShape(
+                        topStart = CornerSize(if (i == 0) 15 else 0),
+                        topEnd = CornerSize(if (i == 0) 15 else 0),
+                        bottomEnd = CornerSize(
+                            if (i == lastIndex) 15 else 0
+                        ),
+                        bottomStart = CornerSize(
+                            if (i == lastIndex) 15 else 0
+                        ),
+                    )
+                )
+                .background(
+                    if (set.completed) MaterialTheme.colorScheme.secondaryContainer
+                    else MaterialTheme.colorScheme.surfaceContainerLow
+                )
+                .height(setHeight.dp)
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceAround
+        ) {
+            Text(
+                text = "${i + 1}",
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(start = 20.dp, end = 10.dp)
             )
 
-            var zoom by remember { mutableStateOf(false) }
-            val view = LocalView.current
-            LaunchedEffect(swipeToDismissBoxState.progress < 0.3f) {
-                if (swipeToDismissBoxState.progress < 0.3f || swipeToDismissBoxState.progress == 1f) {
-                    zoom = false
-                } else {
-                    view.performHapticFeedback(HapticFeedbackConstantsCompat.DRAG_START)
-                    zoom = true
+            if (setMode == SetMode.DURATION) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (workout) {
+
+                        IconButton(
+                            enabled = (isTimerRunning || isThisSetTimerRunning)
+                                    && !set.completed,
+                            onClick = {
+                                val newId = if (isThisSetTimerRunning) null else set.id
+                                updateIdSetWithRunningChronometer(newId)
+                            }
+                        ) {
+                            Icon(
+                                imageVector = ImageVector.vectorResource(
+                                    if (isThisSetTimerRunning)
+                                        R.drawable.ic_pause else R.drawable.ic_play_arrow
+                                ),
+                                contentDescription = if (isThisSetTimerRunning)
+                                    stringResource(R.string.resume) else
+                                    stringResource(R.string.pause)
+                            )
+                        }
+                    }
+                    //Time
+                    OutlinedTextField(
+                        modifier = Modifier.width(80.dp),
+                        value = formatTime(timeValue).substring(3),
+                        onValueChange = { string ->
+                            val newTimeValue =
+                                Formatter.parseTimeInputToSeconds(string)
+
+                            updateSetTime(newTimeValue, set.id)
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.Transparent,
+                            focusedBorderColor = Color.Transparent,
+                            disabledBorderColor = Color.Transparent
+                        )
+                    )
+                }
+            } else {
+                //Reps
+                OutlinedTextField(
+                    modifier = Modifier.width(80.dp),
+                    value = repValue,
+                    onValueChange = { string ->
+                        updateSetReps(Formatter.parseIntegerFromString(string), set.id)
+                    },
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        unfocusedBorderColor = Color.Transparent,
+                        focusedBorderColor = Color.Transparent,
+                        disabledBorderColor = Color.Transparent
+                    )
+                )
+                if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
+                    //Weight
+                    OutlinedTextField(
+                        modifier = Modifier.width(80.dp),
+                        value = weightValue,
+                        onValueChange = { string ->
+                            weightValue = Formatter.normalizeNumericString(string)
+                            updateSetLoad(Formatter.parseFloatFromString(weightValue), set.id)
+                        },
+                        singleLine = true,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        colors = OutlinedTextFieldDefaults.colors(
+                            unfocusedBorderColor = Color.Transparent,
+                            focusedBorderColor = Color.Transparent,
+                            disabledBorderColor = Color.Transparent
+                        )
+                    )
                 }
             }
 
-            val size = animateDpAsState(
-                targetValue = if (zoom) {
-                    (ImageVector.vectorResource(R.drawable.ic_delete).defaultHeight.value * 1.2f).dp
-                } else {
-                    ImageVector.vectorResource(R.drawable.ic_delete).defaultHeight
-                }
-            )
-
-            SwipeToDismissBox(
-                modifier = Modifier.animateItem(),
-                state = swipeToDismissBoxState,
-                backgroundContent = {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .clip(
-                                RoundedCornerShape(
-                                    topStart = CornerSize(if (i == 0) 15 else 0),
-                                    topEnd = CornerSize(if (i == 0) 15 else 0),
-                                    bottomEnd = CornerSize(
-                                        if (i == exerciseWithSets.sets.lastIndex) 15 else 0
-                                    ),
-                                    bottomStart = CornerSize(
-                                        if (i == exerciseWithSets.sets.lastIndex) 15 else 0
-                                    ),
-                                )
-                            )
-                            .background(
-                                when (swipeToDismissBoxState.dismissDirection) {
-                                    SwipeToDismissBoxValue.StartToEnd -> MaterialTheme.colorScheme.errorContainer
-                                    SwipeToDismissBoxValue.EndToStart -> MaterialTheme.colorScheme.errorContainer
-                                    SwipeToDismissBoxValue.Settled -> Color.Transparent
-                                }
-                            )
-                            .padding(start = 10.dp, end = 10.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.SpaceBetween
-                    ) {
-                        Icon(
-                            modifier = Modifier.size(size.value),
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_delete),
-                            contentDescription = stringResource(R.string.delete),
-                        )
-                        Icon(
-                            modifier = Modifier.size(size.value),
-                            imageVector = ImageVector.vectorResource(R.drawable.ic_delete),
-                            contentDescription = stringResource(R.string.delete),
-                        )
-                    }
-                }
-            ) {
-                Row(
-                    modifier = Modifier
-                        .clip(
-                            RoundedCornerShape(
-                                topStart = CornerSize(if (i == 0) 15 else 0),
-                                topEnd = CornerSize(if (i == 0) 15 else 0),
-                                bottomEnd = CornerSize(
-                                    if (i == exerciseWithSets.sets.lastIndex) 15 else 0
-                                ),
-                                bottomStart = CornerSize(
-                                    if (i == exerciseWithSets.sets.lastIndex) 15 else 0
-                                ),
-                            )
-                        )
-                        .background(
-                            if (set.completed) MaterialTheme.colorScheme.secondaryContainer
-                            else MaterialTheme.colorScheme.surfaceContainerLow
-                        )
-                        .height(setHeight.dp)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceAround
-                ) {
-                    Text(
-                        text = "${i + 1}",
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(start = 20.dp, end = 10.dp)
-                    )
-
-                    if (exerciseWithSets.exercise.setMode == SetMode.DURATION) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
-                            if (workout) {
-
-                                IconButton(
-                                    enabled = (idSetWithRunningChronometer == null
-                                            || idSetWithRunningChronometer == set.id)
-                                            && !set.completed,
-                                    onClick = {
-                                        val newId =
-                                            if (idSetWithRunningChronometer == set.id) null else set.id
-                                        updateIdSetWithRunningChronometer(newId)
-                                    }
-                                ) {
-                                    Icon(
-                                        imageVector = ImageVector.vectorResource(
-                                            if (idSetWithRunningChronometer == set.id)
-                                                R.drawable.ic_pause else R.drawable.ic_play_arrow
-                                        ),
-                                        contentDescription = if (idSetWithRunningChronometer == set.id)
-                                            stringResource(R.string.resume) else
-                                            stringResource(R.string.pause)
-                                    )
-                                }
-                            }
-                            //Time
-                            OutlinedTextField(
-                                modifier = Modifier.width(80.dp),
-                                value = formatTime(timeValue).substring(3),
-                                onValueChange = { string ->
-                                    val newTimeValue =
-                                        Formatter.parseTimeInputToSeconds(string)
-
-                                    updateSetTime(newTimeValue, set.id)
-                                },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    unfocusedBorderColor = Color.Transparent,
-                                    focusedBorderColor = Color.Transparent,
-                                    disabledBorderColor = Color.Transparent
-                                )
-                            )
+            if (workout) {
+                Checkbox(
+                    checked = set.completed,
+                    onCheckedChange = { checked ->
+                        if (isThisSetTimerRunning) {
+                            updateIdSetWithRunningChronometer(null)
                         }
-                    } else {
-                        //Reps
-                        OutlinedTextField(
-                            modifier = Modifier.width(80.dp),
-                            value = repValue,
-                            onValueChange = { string ->
-                                val newRepValue = Formatter.parseIntegerValueInput(string)
-
-                                newRepValue?.let { updateSetReps(it, set.id) }
-                            },
-                            singleLine = true,
-                            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                            colors = OutlinedTextFieldDefaults.colors(
-                                unfocusedBorderColor = Color.Transparent,
-                                focusedBorderColor = Color.Transparent,
-                                disabledBorderColor = Color.Transparent
-                            )
-                        )
-                        if (exerciseWithSets.exercise.setMode == SetMode.LOAD ||
-                            exerciseWithSets.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD
-                        ) {
-                            //Weight
-                            OutlinedTextField(
-                                modifier = Modifier.width(80.dp),
-                                value = weightValue,
-                                onValueChange = { newString ->
-                                    val newWeightValue = Formatter.parseFloatValueInput(newString)
-
-                                    newWeightValue?.let { updateSetLoad(it, set.id) }
-                                },
-                                singleLine = true,
-                                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    unfocusedBorderColor = Color.Transparent,
-                                    focusedBorderColor = Color.Transparent,
-                                    disabledBorderColor = Color.Transparent
-                                )
-                            )
-                        }
+                        updateSetCompleted(checked, set.id)
                     }
-
-                    if (workout) {
-                        Checkbox(
-                            checked = set.completed,
-                            onCheckedChange = { checked ->
-                                if (idSetWithRunningChronometer == set.id) {
-                                    updateIdSetWithRunningChronometer(null)
-                                }
-                                updateSetCompleted(checked, set.id)
-                            }
-                        )
-                    }
-                }
+                )
             }
         }
     }
+
 }
 
 

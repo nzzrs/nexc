@@ -19,6 +19,7 @@
 
 package org.librefit.util
 
+import androidx.annotation.IntRange
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -147,14 +148,6 @@ object Formatter {
         )
     }
 
-    fun getLongDateFromLocalDate(date: LocalDateTime): String {
-        return date.format(
-            DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(
-                Locale.getDefault()
-            )
-        )
-    }
-
     fun getFullDateFromLocalDate(date: LocalDateTime): String {
         return date.format(
             DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(
@@ -164,46 +157,112 @@ object Formatter {
     }
 
     /**
-     * It is used to process user input in [org.librefit.ui.components.ExerciseCard] and [org.librefit.ui.screens.measurements.MeasurementScreen]
-     * text field and return the corresponding float. If [string] fulfills the requirements then a
-     * [Float] is returned otherwise it returns `null`.
-     * @return A float value corresponding to the sanitized [string]. Returns `null` if the format is invalid.
+     * It is used to process user input in [org.librefit.ui.components.ExerciseCard]
+     * text field and return the corresponding float.
+     * @param string The string value to be processed
+     * @return A float value corresponding to the sanitized [string].
      */
-    fun parseFloatValueInput(
-        string: String,
-        maxIntegerDigits: Int = 3,
-        maxDecimalDigits: Int = 2
-    ): Float? {
-        val sanitizedString = string.replace(',', '.')
+    fun parseFloatFromString(string: String): Float {
+        // Keep only digits and dots.
+        val sanitized = string
+            .replace(",", ".")
+            .filter { it.isDigit() || it == '.' }
 
-        // Regex to allow a valid float format with up to 2 decimal place.
-        // e.g. : 123.45
-        val regex = Regex("^\\d{0,${maxIntegerDigits}}\\.?\\d{0,${maxDecimalDigits}}$")
+        // Find the last separator.
+        val decimalSeparatorIndex = sanitized.lastIndexOf('.')
 
-        if (sanitizedString.isEmpty() || regex.matches(sanitizedString)) {
-            return sanitizedString.toFloatOrNull() ?: 0f
+        val finalString = if (decimalSeparatorIndex != -1) {
+            // Remove all other separators (which are now group separators)
+            val integerPart = sanitized
+                .substring(0, decimalSeparatorIndex)
+                .replace(".", "")
+            val fractionalPart = sanitized
+                .substring(decimalSeparatorIndex + 1)
+                .replace(".", "")
+
+            "$integerPart.$fractionalPart"
+        } else {
+            // No separators, just a number
+            sanitized
         }
 
-        return null
+        // Safely convert to Float
+        return finalString.toFloatOrNull() ?: 0f
     }
 
     /**
      * It is used to process user input in UI components like text fields and return the
-     * corresponding integer. If [string] fulfills the requirements, an [Int] is returned;
-     * otherwise, it returns `null` to indicate invalid input.
+     * corresponding integer.
      *
-     * @param string The input string from a text field.
-     * @return An integer value if the string is empty or a valid integer format (up to 3 digits).
-     * Returns `null` if the format is invalid.
+     * @param string The input string to be converted.
+     * @param maxIntegerDigits Takes the first [maxIntegerDigits] from integer part of [string] starting from the left.
+     * @param maxFractionalDigits Takes the first [maxFractionalDigits] from fractional part of [string] starting from the left.
+     * @throws IllegalArgumentException if [maxIntegerDigits] or [maxFractionalDigits] are not a value
+     * between 0 and 8
      */
-    fun parseIntegerValueInput(string: String, maxDigits: Int = 4): Int? {
-        val regex = Regex("^\\d{0,${maxDigits}}$")
-
-        if (regex.matches(string)) {
-            return string.toIntOrNull() ?: 0
+    fun normalizeNumericString(
+        string: String,
+        @IntRange(0, 8) maxIntegerDigits: Int = 3,
+        @IntRange(0, 8) maxFractionalDigits: Int = 3,
+    ): String {
+        require(maxIntegerDigits in 0..8 && maxFractionalDigits in 0..8) {
+            "maxIntegerDigits and maxFractionalDigits must be between 0 and 8. maxIntegerDigits: $maxIntegerDigits. " +
+                    "maxFractionalDigits: $maxFractionalDigits."
         }
 
-        return null
+        // Keep only digits and dots.
+        val sanitized = string
+            .replace(",", ".")
+            .filter { it.isDigit() || it == '.' }
+
+        // Find the last separator.
+        val decimalSeparatorIndex = sanitized.lastIndexOf('.')
+
+        val value = if (decimalSeparatorIndex != -1) {
+            // Remove all other separators (which are now group separators)
+            val integerPart = sanitized
+                .substring(0, decimalSeparatorIndex)
+                .replace(".", "")
+                .take(maxIntegerDigits)
+            val fractionalPart = sanitized
+                .substring(decimalSeparatorIndex + 1)
+                .replace(".", "")
+                .take(maxFractionalDigits)
+
+            "$integerPart.$fractionalPart"
+        } else {
+            // No separators, just a number
+            sanitized.take(maxIntegerDigits)
+        }
+
+        return value.takeIf { it != "." && value.isNotBlank() } ?: ""
+    }
+
+    /**
+     * It is used to process user input in UI components like text fields and return the
+     * corresponding integer.
+     *
+     * @param string The input string to be converted.
+     * @param maxValue The maximum value allowed. By default is [Int.MAX_VALUE]. It must be greater than [minValue].
+     * @param minValue The minimum value allowed. By default is [Int.MIN_VALUE]. It must be less than [maxValue].
+     * @return The converted [string] value as [Int] or 0 if the string is blank.
+     * @throws NumberFormatException If the [string] format cannot be converted as [Int],
+     * [String.toInt] launches an exception. However, it should not happen as this function process
+     * empty string or with only digits.
+     * @throws IllegalArgumentException if [minValue] is greater than [maxValue]
+     */
+    fun parseIntegerFromString(
+        string: String,
+        maxValue: Int = Int.MAX_VALUE,
+        minValue: Int = Int.MIN_VALUE
+    ): Int {
+        require(maxValue >= minValue) { "maxValue must be greater or equal than minValue. maxValue: $maxValue. minValue : $minValue" }
+
+        return string
+            .filter { it.isDigit() }
+            .ifBlank { "0" }
+            .toInt()
+            .coerceIn(minValue, maxValue)
     }
 
     /**

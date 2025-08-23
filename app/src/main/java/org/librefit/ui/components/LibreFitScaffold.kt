@@ -40,12 +40,12 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.core.view.HapticFeedbackConstantsCompat
 import org.librefit.R
 
 
@@ -118,7 +118,7 @@ fun LibreFitScaffold(
                         }
                     },
                     actions = {
-                        val view = LocalView.current
+                        val haptic = LocalHapticFeedback.current
 
                         actions.forEachIndexed { index, action ->
                             val description = actionsDescription.getOrNull(index)
@@ -133,7 +133,7 @@ fun LibreFitScaffold(
                             if (icon != null) {
                                 IconButton(
                                     onClick = {
-                                        view.performHapticFeedback(HapticFeedbackConstantsCompat.CONTEXT_CLICK)
+                                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                                         action()
                                     },
                                     enabled = enabled,
@@ -150,7 +150,7 @@ fun LibreFitScaffold(
                             if (description != null) {
                                 Button(
                                     onClick = {
-                                        view.performHapticFeedback(HapticFeedbackConstantsCompat.CONTEXT_CLICK)
+                                        haptic.performHapticFeedback(HapticFeedbackType.ContextClick)
                                         action()
                                     },
                                     enabled = enabled,

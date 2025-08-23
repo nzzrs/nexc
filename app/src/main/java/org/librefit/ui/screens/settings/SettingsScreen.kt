@@ -47,14 +47,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.view.HapticFeedbackConstantsCompat
 import androidx.datastore.preferences.core.Preferences
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
@@ -139,7 +139,7 @@ private fun SettingsScreenContent(
     saveIntValue: (Preferences.Key<Int>, value: Int) -> Unit,
     saveBooleanValue: (Preferences.Key<Boolean>, value: Boolean) -> Unit
 ) {
-    val view = LocalView.current
+    val haptic = LocalHapticFeedback.current
 
     LibreFitScaffold(
         title = AnnotatedString(stringResource(id = R.string.settings)),
@@ -173,7 +173,7 @@ private fun SettingsScreenContent(
                                 SegmentedButton(
                                     selected = selectedTheme == mode,
                                     onClick = {
-                                        view.performHapticFeedback(HapticFeedbackConstantsCompat.TOGGLE_ON)
+                                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
                                         saveIntValue(UserPreferencesRepository.themeModeKey, index)
                                     },
                                     shape = SegmentedButtonDefaults.itemShape(
@@ -229,9 +229,9 @@ private fun SettingsScreenContent(
                             modifier = iconPaddingModifier,
                             checked = materialModeOn,
                             onCheckedChange = {
-                                view.performHapticFeedback(
-                                    if (it) HapticFeedbackConstantsCompat.TOGGLE_ON
-                                    else HapticFeedbackConstantsCompat.TOGGLE_OFF
+                                haptic.performHapticFeedback(
+                                    hapticFeedbackType = if (it) HapticFeedbackType.ToggleOn
+                                    else HapticFeedbackType.ToggleOff
                                 )
                                 saveBooleanValue(UserPreferencesRepository.materialModeKey, it)
                             }
@@ -302,9 +302,9 @@ private fun SettingsScreenContent(
                         modifier = iconPaddingModifier,
                         checked = keepWorkoutScreenOn,
                         onCheckedChange = {
-                            view.performHapticFeedback(
-                                if (it) HapticFeedbackConstantsCompat.TOGGLE_ON
-                                else HapticFeedbackConstantsCompat.TOGGLE_OFF
+                            haptic.performHapticFeedback(
+                                hapticFeedbackType = if (it) HapticFeedbackType.ToggleOn
+                                else HapticFeedbackType.ToggleOff
                             )
                             saveBooleanValue(UserPreferencesRepository.keepOnWorkoutScreenKey, it)
                         }

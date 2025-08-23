@@ -23,9 +23,9 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
-import androidx.core.view.HapticFeedbackConstantsCompat
 import org.librefit.R
 
 @Composable
@@ -36,7 +36,7 @@ fun ConfirmDialog(
     onConfirm: () -> Unit,
     onDismiss: () -> Unit
 ) {
-    val view = LocalView.current
+    val haptic = LocalHapticFeedback.current
 
     AlertDialog(
         title = { Text(text = title) },
@@ -45,7 +45,7 @@ fun ConfirmDialog(
         confirmButton = {
             TextButton(
                 onClick = {
-                    view.performHapticFeedback(HapticFeedbackConstantsCompat.CONFIRM)
+                    haptic.performHapticFeedback(HapticFeedbackType.Confirm)
                     onConfirm()
                 }
             ) {
@@ -54,7 +54,7 @@ fun ConfirmDialog(
         },
         dismissButton = {
             TextButton(onClick = {
-                view.performHapticFeedback(HapticFeedbackConstantsCompat.REJECT)
+                haptic.performHapticFeedback(HapticFeedbackType.Reject)
                 onDismiss()
             }) {
                 Text(text = stringResource(id = R.string.cancel_dialog))

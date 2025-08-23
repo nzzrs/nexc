@@ -80,9 +80,10 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalView
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
@@ -90,7 +91,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.core.view.HapticFeedbackConstantsCompat
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.librefit.R
@@ -265,13 +265,13 @@ fun SharedTransitionScope.ExerciseCard(
                         + " " + stringResource(R.string.seconds).replaceFirstChar { it.lowercase() })
             }
 
-            val view = LocalView.current
+            val haptic = LocalHapticFeedback.current
             Slider(
                 value = restTime.toFloat(),
                 onValueChange = {
                     if (it % 5f == 0f) {
                         restTime = it.roundToInt()
-                        view.performHapticFeedback(HapticFeedbackConstantsCompat.SEGMENT_FREQUENT_TICK)
+                        haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
                     }
                 },
                 onValueChangeFinished = {
@@ -494,12 +494,12 @@ private fun LazyItemScope.Set(
     )
 
     var zoom by remember { mutableStateOf(false) }
-    val view = LocalView.current
+    val haptic = LocalHapticFeedback.current
     LaunchedEffect(swipeToDismissBoxState.progress < 0.3f) {
         if (swipeToDismissBoxState.progress < 0.3f || swipeToDismissBoxState.progress == 1f) {
             zoom = false
         } else {
-            view.performHapticFeedback(HapticFeedbackConstantsCompat.DRAG_START)
+            haptic.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
             zoom = true
         }
     }

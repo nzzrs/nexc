@@ -34,6 +34,9 @@ import org.librefit.enums.exercise.Force
 import org.librefit.enums.exercise.Level
 import org.librefit.enums.exercise.Mechanic
 import org.librefit.enums.exercise.Muscle
+import org.librefit.enums.userPreferences.DialogPreference
+import org.librefit.enums.userPreferences.Language
+import org.librefit.enums.userPreferences.ThemeMode
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -119,6 +122,17 @@ object Formatter {
             Muscle.SHOULDERS -> R.drawable.shoulders
             Muscle.TRAPS -> R.drawable.traps
             Muscle.TRICEPS -> R.drawable.triceps
+        }
+    }
+
+    fun preferenceToStringId(dialogPreference: DialogPreference): Int {
+        return when (dialogPreference) {
+            Language.ENGLISH -> R.string.language_english_nt
+            Language.ITALIAN -> R.string.language_italian_nt
+            Language.SYSTEM -> R.string.follow_system
+            ThemeMode.LIGHT -> R.string.theme_light
+            ThemeMode.DARK -> R.string.theme_dark
+            ThemeMode.SYSTEM -> R.string.follow_system
         }
     }
 

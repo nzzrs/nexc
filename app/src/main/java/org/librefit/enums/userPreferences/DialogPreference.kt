@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025. LibreFit
+ * Copyright (c) 2025. LibreFit
  *
  * This file is part of LibreFit
  *
@@ -19,8 +19,4 @@
 
 package org.librefit.enums.userPreferences
 
-enum class ThemeMode(val value: Int) : DialogPreference {
-    SYSTEM(0),
-    LIGHT(1),
-    DARK(2);
-}
+sealed interface DialogPreference

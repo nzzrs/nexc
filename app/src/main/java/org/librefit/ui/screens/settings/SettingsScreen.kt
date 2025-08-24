@@ -20,32 +20,23 @@
 package org.librefit.ui.screens.settings
 
 import android.os.Build
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.SegmentedButton
-import androidx.compose.material3.SegmentedButtonDefaults
-import androidx.compose.material3.SingleChoiceSegmentedButtonRow
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -61,13 +52,17 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
 import org.librefit.db.repository.UserPreferencesRepository
-import org.librefit.enums.Language
-import org.librefit.enums.ThemeMode
+import org.librefit.enums.userPreferences.DialogPreference
+import org.librefit.enums.userPreferences.Language
+import org.librefit.enums.userPreferences.ThemeMode
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
+import org.librefit.ui.components.dialogs.PreferenceDialog
 import org.librefit.ui.theme.LibreFitTheme
+import org.librefit.util.Formatter
 
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
 fun SettingsScreen(
     navController: NavHostController
@@ -84,35 +79,19 @@ fun SettingsScreen(
 
     val materialModeOn by viewModel.materialMode.collectAsState()
 
+    val preferences by viewModel.preferences.collectAsState()
 
-    var showPreferenceDialog by remember { mutableStateOf(false) }
+    val currentPreference by viewModel.currentPreference.collectAsState()
 
+    preferences?.let {
+        PreferenceDialog(
+            currentPreference = currentPreference,
+            preferences = it,
+            updatePreference = viewModel::updatePreference,
+        ) {
+            viewModel.updatePreferences(null)
+        }
 
-
-    if (showPreferenceDialog) {
-        AlertDialog(
-            title = { Text(stringResource(id = R.string.language)) },
-            onDismissRequest = { showPreferenceDialog = false },
-            confirmButton = { /*The user doesn't need to confirm*/ },
-            text = {
-                LazyColumn(Modifier.heightIn(max = 200.dp)) {
-                    items(Language.entries) { language ->
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            RadioButton(
-                                selected = language == selectedLanguage,
-                                onClick = {
-                                    viewModel.changeLanguage(language)
-                                }
-                            )
-                            Text(text = stringResource(id = languageCodeToId(language)))
-                        }
-                    }
-                }
-            }
-        )
     }
 
     SettingsScreenContent(
@@ -121,8 +100,7 @@ fun SettingsScreen(
         materialModeOn = materialModeOn,
         selectedLanguage = selectedLanguage,
         keepWorkoutScreenOn = keepWorkoutScreenOn,
-        onShowPreferenceDialog = { showPreferenceDialog = true },
-        saveIntValue = viewModel::savePreference,
+        updatePreferences = viewModel::updatePreferences,
         saveBooleanValue = viewModel::savePreference
     )
 }
@@ -135,78 +113,84 @@ private fun SettingsScreenContent(
     materialModeOn: Boolean,
     selectedLanguage: Language,
     keepWorkoutScreenOn: Boolean,
-    onShowPreferenceDialog: () -> Unit,
-    saveIntValue: (Preferences.Key<Int>, value: Int) -> Unit,
+    updatePreferences: (List<DialogPreference>) -> Unit,
     saveBooleanValue: (Preferences.Key<Boolean>, value: Boolean) -> Unit
 ) {
     val haptic = LocalHapticFeedback.current
+
+    val iconPaddingModifier = Modifier.padding(start = 15.dp, end = 25.dp)
+
+    val preferencesPadding = 10.dp
 
     LibreFitScaffold(
         title = AnnotatedString(stringResource(id = R.string.settings)),
         navigateBack = navController::navigateUp
     ) { innerPadding ->
-        LibreFitLazyColumn(innerPadding, 20.dp, 0.dp) {
-            val iconPaddingModifier = Modifier.padding(start = 20.dp, end = 20.dp)
-
+        LibreFitLazyColumn(innerPadding, verticalSpacing = 0.dp, startEndPadding = 0.dp) {
             item { HeadlineText(text = stringResource(id = R.string.appearance)) }
 
             item {
-                Column {
-                    Row {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(MaterialTheme.shapes.large)
+                        .clickable { updatePreferences(ThemeMode.entries) }
+                ) {
+                    Row(
+                        modifier = Modifier.padding(preferencesPadding),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
                         Icon(
                             imageVector = ImageVector.vectorResource(id = R.drawable.ic_dark_mode),
                             contentDescription = stringResource(R.string.theme),
                             modifier = iconPaddingModifier
                         )
-                        Text(
-                            text = stringResource(id = R.string.theme),
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                    }
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
-                    ) {
-                        SingleChoiceSegmentedButtonRow {
-                            ThemeMode.entries.forEachIndexed { index, mode ->
-                                SegmentedButton(
-                                    selected = selectedTheme == mode,
-                                    onClick = {
-                                        haptic.performHapticFeedback(HapticFeedbackType.ToggleOn)
-                                        saveIntValue(UserPreferencesRepository.themeModeKey, index)
-                                    },
-                                    shape = SegmentedButtonDefaults.itemShape(
-                                        index = index,
-                                        count = ThemeMode.entries.size
+                        Column {
+                            Text(
+                                text = stringResource(id = R.string.theme),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = stringResource(
+                                    id = Formatter.preferenceToStringId(
+                                        selectedTheme
                                     )
-                                ) {
-                                    Text(
-                                        stringResource(
-                                            id = when (mode) {
-                                                ThemeMode.SYSTEM -> R.string.follow_system
-                                                ThemeMode.LIGHT -> R.string.theme_light
-                                                ThemeMode.DARK -> R.string.theme_dark
-                                            }
-                                        )
-                                    )
-                                }
-                            }
-
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
                         }
                     }
                 }
+
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 item {
                     Row(
                         modifier = Modifier
-                            .fillMaxWidth(),
+                            .fillMaxWidth()
+                            .clip(MaterialTheme.shapes.large)
+                            .clickable {
+                                haptic.performHapticFeedback(
+                                    hapticFeedbackType = if (!materialModeOn) HapticFeedbackType.ToggleOn
+                                    else HapticFeedbackType.ToggleOff
+                                )
+                                saveBooleanValue(
+                                    UserPreferencesRepository.materialModeKey,
+                                    !materialModeOn
+                                )
+                            },
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Row(verticalAlignment = Alignment.CenterVertically) {
+                        Row(
+                            modifier = Modifier
+                                .padding(preferencesPadding)
+                                .weight(1f),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
                             Icon(
                                 imageVector = ImageVector.vectorResource(id = R.drawable.ic_material),
                                 contentDescription = stringResource(R.string.material_you),
@@ -221,7 +205,9 @@ private fun SettingsScreenContent(
                                     text = stringResource(
                                         id = if (materialModeOn) R.string.dynamic_color_enabled else R.string.dynamic_color_disabled
                                     ),
-                                    style = MaterialTheme.typography.bodyMedium
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis
                                 )
                             }
                         }
@@ -247,38 +233,62 @@ private fun SettingsScreenContent(
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable { onShowPreferenceDialog() },
+                        .clip(MaterialTheme.shapes.large)
+                        .clickable { updatePreferences(Language.entries) },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = ImageVector.vectorResource(id = R.drawable.ic_translate),
-                        contentDescription = stringResource(R.string.translate),
-                        modifier = iconPaddingModifier
-                    )
-                    Column {
-                        Text(
-                            text = stringResource(id = R.string.language),
-                            style = MaterialTheme.typography.titleMedium
+                    Row(
+                        modifier = Modifier.padding(preferencesPadding),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = ImageVector.vectorResource(id = R.drawable.ic_translate),
+                            contentDescription = stringResource(R.string.translate),
+                            modifier = iconPaddingModifier
                         )
-                        Text(
-                            text = stringResource(id = languageCodeToId(selectedLanguage)),
-                            style = MaterialTheme.typography.bodyMedium,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis
-                        )
+                        Column {
+                            Text(
+                                text = stringResource(id = R.string.language),
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = stringResource(
+                                    id = Formatter.preferenceToStringId(
+                                        selectedLanguage
+                                    )
+                                ),
+                                style = MaterialTheme.typography.bodyMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis
+                            )
+                        }
                     }
                 }
             }
 
             item {
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clip(MaterialTheme.shapes.large)
+                        .clickable {
+                            haptic.performHapticFeedback(
+                                hapticFeedbackType = if (!keepWorkoutScreenOn) HapticFeedbackType.ToggleOn
+                                else HapticFeedbackType.ToggleOff
+                            )
+                            saveBooleanValue(
+                                UserPreferencesRepository.keepOnWorkoutScreenKey,
+                                !keepWorkoutScreenOn
+                            )
+                        },
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.weight(1f)
+                        modifier = Modifier
+                            .padding(preferencesPadding)
+                            .weight(1f)
                     ) {
                         Icon(
                             imageVector = ImageVector.vectorResource(id = R.drawable.ic_keep),
@@ -318,14 +328,7 @@ private fun SettingsScreenContent(
 }
 
 
-private fun languageCodeToId(language: Language): Int {
-    return when (language) {
-        Language.ENGLISH -> R.string.language_english_nt
-        Language.ITALIAN -> R.string.language_italian_nt
-        Language.SYSTEM -> R.string.follow_system
-    }
-}
-
+@OptIn(ExperimentalSharedTransitionApi::class)
 @Preview
 @Composable
 fun SettingsScreenPreview() {
@@ -333,10 +336,9 @@ fun SettingsScreenPreview() {
         SettingsScreenContent(
             selectedTheme = ThemeMode.DARK,
             materialModeOn = false,
-            onShowPreferenceDialog = {},
+            updatePreferences = {},
             selectedLanguage = Language.SYSTEM,
             keepWorkoutScreenOn = true,
-            saveIntValue = { _, _ -> },
             saveBooleanValue = { _, _ -> },
             navController = rememberNavController()
         )

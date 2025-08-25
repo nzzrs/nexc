@@ -19,8 +19,6 @@
 
 package org.librefit.ui.screens.settings
 
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.core.os.LocaleListCompat
 import androidx.datastore.preferences.core.Preferences
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -48,12 +46,6 @@ class SettingsScreenViewModel @Inject constructor(
     val materialMode = userPreferences.materialMode
     val keepScreenOn = userPreferences.workoutScreenOn
     val language = userPreferences.language
-
-    fun changeLanguage(language: Language) {
-        savePreference(UserPreferencesRepository.languageKey, language.code)
-        val appLocale: LocaleListCompat = LocaleListCompat.forLanguageTags(language.code)
-        AppCompatDelegate.setApplicationLocales(appLocale)
-    }
 
 
     fun <T> savePreference(key: Preferences.Key<T>, value: T) {
@@ -97,7 +89,10 @@ class SettingsScreenViewModel @Inject constructor(
 
     fun updatePreference(newPreference: DialogPreference) {
         when (newPreference) {
-            is Language -> changeLanguage(newPreference)
+            is Language -> savePreference(
+                UserPreferencesRepository.languageKey,
+                newPreference.code
+            )
             is ThemeMode -> savePreference(
                 UserPreferencesRepository.themeModeKey,
                 newPreference.value

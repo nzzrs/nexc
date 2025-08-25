@@ -23,6 +23,7 @@ import android.app.Application
 import android.content.ComponentCallbacks
 import android.content.res.Configuration
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.core.os.LocaleListCompat
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
@@ -38,7 +39,6 @@ import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.launch
 import org.librefit.di.qualifiers.ApplicationScope
 import org.librefit.enums.userPreferences.Language
 import org.librefit.enums.userPreferences.ThemeMode
@@ -100,11 +100,11 @@ class UserPreferencesRepository @Inject constructor(
 
     /**
      * A Flow that emits the new Locale whenever the app's configuration changes.
-     * This is an efficient, callback-based alternative to polling.
      */
-    private val onLocaleChanged: Flow<Locale?> = callbackFlow {
+    private val currentLocale: Flow<Locale?> = callbackFlow {
         val callback = object : ComponentCallbacks {
             override fun onConfigurationChanged(newConfig: Configuration) {
+                // It's null when no app-specific locales are set so LANGUAGE.SYSTEM is chosen
                 val currentLocale = AppCompatDelegate.getApplicationLocales()[0]
                 // Offer the new locale to the channel
                 trySend(currentLocale)
@@ -122,23 +122,14 @@ class UserPreferencesRepository @Inject constructor(
         }
     }.conflate()
 
-    init {
-        // It listens for external changes to locale and updates data store.
-        applicationScope.launch {
-            onLocaleChanged.collect { newLocale ->
-                // Null means `follow system`
-                val newLanguageCode = newLocale?.language ?: ""
-                // Only update if the system language is different from the saved preference.
-                if (language.value.code != newLanguageCode) {
-                    savePreference(languageKey, newLanguageCode)
-                }
-            }
-        }
-    }
 
-    val language: StateFlow<Language> = dataStore.data
-        .map { preferences ->
-            Language.entries.find { it.code == preferences[languageKey] } ?: Language.SYSTEM
+    val language: StateFlow<Language> = currentLocale
+        .map { newLocale ->
+            // If newLanguage is null, follow system otherwise find the associated enum
+            newLocale?.language?.let { newLanguage ->
+                Language.entries.find { it.code == newLanguage }
+                    ?: error("Unknown language: $newLanguage")
+            } ?: Language.SYSTEM
         }
         .stateIn(
             scope = applicationScope,
@@ -147,8 +138,14 @@ class UserPreferencesRepository @Inject constructor(
         )
 
     suspend fun <T> savePreference(key: Preferences.Key<T>, value: T) {
-        dataStore.edit { preferences ->
-            preferences[key] = value
+        if (key == languageKey && value is String) {
+            AppCompatDelegate.setApplicationLocales(
+                LocaleListCompat.forLanguageTags(value)
+            )
+        } else {
+            dataStore.edit { preferences ->
+                preferences[key] = value
+            }
         }
     }
 }

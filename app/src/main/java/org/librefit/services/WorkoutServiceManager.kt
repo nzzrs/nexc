@@ -37,16 +37,16 @@ class WorkoutServiceManager @Inject constructor(
         Intent(context, WorkoutService::class.java)
     }
 
-    fun startChronometer() {
+    fun startStopwatch() {
         val serviceIntent = workoutServiceIntent.apply {
-            action = WorkoutServiceActions.START_CHRONOMETER.string
+            action = WorkoutServiceActions.START_STOPWATCH.string
         }
         context.startForegroundService(serviceIntent)
     }
 
-    fun pauseChronometer() {
+    fun pauseStopwatch() {
         val serviceIntent = workoutServiceIntent.apply {
-            action = WorkoutServiceActions.PAUSE_CHRONOMETER.string
+            action = WorkoutServiceActions.PAUSE_STOPWATCH.string
         }
         context.startForegroundService(serviceIntent)
     }

@@ -41,7 +41,7 @@ import kotlin.random.Random
  * and the info in [org.librefit.ui.screens.infoWorkout.InfoWorkoutScreen] will be shown differently.
  * When it is set as `ARCHIVED`, it will be located in the respective section in `HomeScreen`. Same goes for `LIBRARY`
  * @property timeElapsed The total time elapsed during the workout, measured in seconds by
- * [org.librefit.services.WorkoutService] chronometer during a workout session.
+ * [org.librefit.services.WorkoutService]'s stopwatch during a workout session.
  * @property created The timestamp indicating when a routine was created.
  * @property completed The timestamp indicating when the workout was completed.
  * This is set to the current date and time by default, but it is updated when the workout is

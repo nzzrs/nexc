@@ -145,11 +145,11 @@ private val NoOpUpdate: (Long?) -> Unit = {}
  * @param deleteSet A function called when the user swipes the set to remove it.
  * @param showInfo A lambda function executed when info icon next to "type of set" or "rest time" text
  * is clicked. The passed parameter is used by [org.librefit.ui.components.modalBottomSheets.InfoModalBottomSheet] to show the relevant information.
- * @param idSetWithRunningChronometer The ID of the set whose timer is currently active. This ensures
- * only one timer runs at a time. The composable will display a running chronometer for the
+ * @param idSetWithRunningStopwatch The ID of the set whose stopwatch is currently active. This ensures
+ * only one timer runs at a time. The composable will display a running stopwatch for the
  * set matching this ID. Pass null if no timer is active. This parameter is only used when [workout] is `true`.
- * @param updateIdSetWithRunningChronometer A callback invoked when the user interacts with a set with a
- * running chronometer. It provides the ID of the set that should become active, or null to stop the current timer.
+ * @param updateIdSetWithRunningStopwatch A callback invoked when the user interacts with a set with a
+ * running stopwatch. It provides the ID of the set that should become active, or null to stop the current timer.
  * This parameter is only used when [workout] is `true`.
  * @param workout A Boolean flag indicating whether a checkbox should be displayed next to each set.
  */
@@ -160,7 +160,7 @@ fun SharedTransitionScope.ExerciseCard(
     animatedVisibilityScope: AnimatedVisibilityScope,
     exerciseWithSets: UiExerciseWithSets,
     workout: Boolean = false,
-    idSetWithRunningChronometer: Long? = null,
+    idSetWithRunningStopwatch: Long? = null,
     addSet: (Long) -> Unit,
     onDetail: (Long, UiExerciseDC) -> Unit,
     onDelete: (Long) -> Unit,
@@ -173,7 +173,7 @@ fun SharedTransitionScope.ExerciseCard(
     updateSetLoad: (Double, Long) -> Unit,
     updateSetCompleted: (Boolean, Long) -> Unit,
     showInfo: (InfoMode) -> Unit,
-    updateIdSetWithRunningChronometer: (Long?) -> Unit = NoOpUpdate
+    updateIdSetWithRunningStopwatch: (Long?) -> Unit = NoOpUpdate
 ) {
     val context = LocalContext.current
 
@@ -435,11 +435,11 @@ fun SharedTransitionScope.ExerciseCard(
                         setHeight = setHeight,
                         lastIndex = exerciseWithSets.sets.lastIndex,
                         setMode = exerciseWithSets.exercise.setMode,
-                        isTimerRunning = idSetWithRunningChronometer == null,
-                        isThisSetTimerRunning = idSetWithRunningChronometer == set.id,
+                        isStopwatchRunning = idSetWithRunningStopwatch == null,
+                        isThisSetStopwatchRunning = idSetWithRunningStopwatch == set.id,
                         workout = workout,
                         deleteSet = deleteSet,
-                        updateIdSetWithRunningChronometer = updateIdSetWithRunningChronometer,
+                        updateIdSetWithRunningStopwatch = updateIdSetWithRunningStopwatch,
                         updateSetTime = updateSetTime,
                         updateSetReps = updateSetReps,
                         updateSetLoad = updateSetLoad,
@@ -468,15 +468,15 @@ private fun LazyItemScope.Set(
     lastIndex: Int,
     setHeight: Int,
     setMode: SetMode,
-    isTimerRunning: Boolean,
-    isThisSetTimerRunning: Boolean,
+    isStopwatchRunning: Boolean,
+    isThisSetStopwatchRunning: Boolean,
     workout: Boolean,
     deleteSet: (Long) -> Unit,
     updateSetTime: (Int, Long) -> Unit,
     updateSetReps: (Int, Long) -> Unit,
     updateSetLoad: (Double, Long) -> Unit,
     updateSetCompleted: (Boolean, Long) -> Unit,
-    updateIdSetWithRunningChronometer: (Long?) -> Unit
+    updateIdSetWithRunningStopwatch: (Long?) -> Unit
 ) {
     val timeValue by rememberUpdatedState(set.elapsedTime)
     val repValue by rememberUpdatedState(set.reps.toString())
@@ -587,19 +587,19 @@ private fun LazyItemScope.Set(
                     if (workout) {
 
                         IconButton(
-                            enabled = (isTimerRunning || isThisSetTimerRunning)
+                            enabled = (isStopwatchRunning || isThisSetStopwatchRunning)
                                     && !set.completed,
                             onClick = {
-                                val newId = if (isThisSetTimerRunning) null else set.id
-                                updateIdSetWithRunningChronometer(newId)
+                                val newId = if (isThisSetStopwatchRunning) null else set.id
+                                updateIdSetWithRunningStopwatch(newId)
                             }
                         ) {
                             Icon(
                                 imageVector = ImageVector.vectorResource(
-                                    if (isThisSetTimerRunning)
+                                    if (isThisSetStopwatchRunning)
                                         R.drawable.ic_pause else R.drawable.ic_play_arrow
                                 ),
-                                contentDescription = if (isThisSetTimerRunning)
+                                contentDescription = if (isThisSetStopwatchRunning)
                                     stringResource(R.string.resume) else
                                     stringResource(R.string.pause)
                             )
@@ -664,8 +664,8 @@ private fun LazyItemScope.Set(
                 Checkbox(
                     checked = set.completed,
                     onCheckedChange = { checked ->
-                        if (isThisSetTimerRunning) {
-                            updateIdSetWithRunningChronometer(null)
+                        if (isThisSetStopwatchRunning) {
+                            updateIdSetWithRunningStopwatch(null)
                         }
                         updateSetCompleted(checked, set.id)
                     }
@@ -716,8 +716,8 @@ private fun ExerciseCardPreview() {
                         e = e.copy(sets = e.sets.filter { it.id != id }.toImmutableList())
                     },
                     showInfo = {},
-                    idSetWithRunningChronometer = currentIdSetWithRunningSet,
-                    updateIdSetWithRunningChronometer = { currentIdSetWithRunningSet = it },
+                    idSetWithRunningStopwatch = currentIdSetWithRunningSet,
+                    updateIdSetWithRunningStopwatch = { currentIdSetWithRunningSet = it },
                     workout = true,
                     updateExerciseNotes = { _, _ -> },
                     updateExerciseRestTime = { _, _ -> },

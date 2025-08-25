@@ -65,14 +65,14 @@ class WorkoutScreenViewModel @Inject constructor(
     workoutRepository: WorkoutRepository
 ) : ViewModel() {
 
-    private val _idSetWithRunningChronometer = MutableStateFlow<Long?>(null)
-    val idSetWithRunningChronometer = _idSetWithRunningChronometer.asStateFlow()
+    private val _idSetWithRunningStopwatch = MutableStateFlow<Long?>(null)
+    val idSetWithRunningStopwatch = _idSetWithRunningStopwatch.asStateFlow()
 
-    fun updateIdSetWithRunningChronometer(setId: Long?) {
-        _idSetWithRunningChronometer.update { setId }
+    fun updateIdSetWithRunningStopwatch(setId: Long?) {
+        _idSetWithRunningStopwatch.update { setId }
     }
 
-    private suspend fun startSetChronometer(set: UiSet) {
+    private suspend fun startSetStopwatch(set: UiSet) {
         val startTime = System.currentTimeMillis()
         val initialElapsedTime = set.elapsedTime
 
@@ -103,8 +103,8 @@ class WorkoutScreenViewModel @Inject constructor(
     private val _exercises = MutableStateFlow<List<UiExerciseWithSets>>(emptyList())
     val exercises = _exercises.asStateFlow()
 
-    // A Job to hold the running set's chronometer coroutine
-    private var chronometerJob: Job? = null
+    // A Job to hold the running set's stopwatch coroutine
+    private var stopwatchJob: Job? = null
 
     init {
         viewModelScope.launch {
@@ -126,16 +126,16 @@ class WorkoutScreenViewModel @Inject constructor(
         }
 
         viewModelScope.launch {
-            idSetWithRunningChronometer.collect { runningSetId ->
+            idSetWithRunningStopwatch.collect { runningSetId ->
                 // Whenever the ID changes, cancel any existing timer.
-                chronometerJob?.cancel()
+                stopwatchJob?.cancel()
 
                 // If the new ID is a valid set ID (not 0), start a new timer.
                 if (runningSetId != null) {
                     val set = exercises.value.flatMap { it.sets }.find { it.id == runningSetId }
                     if (set != null) {
                         // Launch a new coroutine for the timer and assign it to the Job.
-                        chronometerJob = launch { startSetChronometer(set) }
+                        stopwatchJob = launch { startSetStopwatch(set) }
                     }
                 }
             }
@@ -241,9 +241,9 @@ class WorkoutScreenViewModel @Inject constructor(
     }
 
     fun deleteSet(id: Long) {
-        // If there's the match, then the set has a running chronometer and it has to be stopped by assign 0
-        if (idSetWithRunningChronometer.value == id) {
-            _idSetWithRunningChronometer.update { 0L }
+        // If there's the match, then the set has a running stopwatch and it has to be stopped by assign 0
+        if (idSetWithRunningStopwatch.value == id) {
+            _idSetWithRunningStopwatch.update { 0L }
         }
 
         _exercises.update { currentExercises ->
@@ -283,9 +283,9 @@ class WorkoutScreenViewModel @Inject constructor(
 
     fun deleteExercise(exerciseId: Long) {
         val exerciseWithSets = exercises.value.find { it.exercise.id == exerciseId }!!
-        // If there's the match, then the set has a running chronometer and it has to be stopped by assign 0
-        if (exerciseWithSets.sets.any { it.id == idSetWithRunningChronometer.value }) {
-            _idSetWithRunningChronometer.update { 0L }
+        // If there's the match, then the set has a running stopwatch and it has to be stopped by assign 0
+        if (exerciseWithSets.sets.any { it.id == idSetWithRunningStopwatch.value }) {
+            _idSetWithRunningStopwatch.update { 0L }
         }
         _exercises.update { currentExercises ->
             currentExercises.filter { it.exercise.id != exerciseId }
@@ -308,7 +308,7 @@ class WorkoutScreenViewModel @Inject constructor(
 
 
     val timeElapsed = WorkoutService.timeElapsed
-    val isChronometerPaused = WorkoutService.isChronometerPaused
+    val isStopwatchPaused = WorkoutService.isStopwatchPaused
 
     private val _restTime = MutableStateFlow(0)
     val restTime = _restTime.asStateFlow()
@@ -319,7 +319,7 @@ class WorkoutScreenViewModel @Inject constructor(
 
 
     init {
-        startChronometer()
+        startStopwatch()
         observeChanges()
     }
 
@@ -344,12 +344,12 @@ class WorkoutScreenViewModel @Inject constructor(
         }
     }
 
-    fun startChronometer() {
-        workoutServiceManager.startChronometer()
+    fun startStopwatch() {
+        workoutServiceManager.startStopwatch()
     }
 
-    fun pauseChronometer() {
-        workoutServiceManager.pauseChronometer()
+    fun pauseStopwatch() {
+        workoutServiceManager.pauseStopwatch()
     }
 
     /**

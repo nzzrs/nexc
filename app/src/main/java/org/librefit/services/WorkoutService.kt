@@ -38,21 +38,21 @@ import org.librefit.helpers.NotificationHelper
 import org.librefit.services.WorkoutService.Companion.EXTRA_ADD_TEN_SECONDS
 import org.librefit.services.WorkoutService.Companion.EXTRA_INITIAL_REST_TIME
 import org.librefit.services.WorkoutService.Companion.EXTRA_IS_FOCUSED
-import org.librefit.services.WorkoutService.Companion.isChronometerPaused
+import org.librefit.services.WorkoutService.Companion.isStopwatchPaused
 import org.librefit.services.WorkoutService.Companion.restTime
 import org.librefit.services.WorkoutService.Companion.timeElapsed
 import javax.inject.Inject
 
 /**
- * A service that manages the chronometer and the rest timer during a workout session.
+ * A service that manages the stopwatch and the rest timer during a workout session.
  *
  * This service is designed to run in the foreground and it's used by
  * [org.librefit.ui.screens.workout.WorkoutScreenViewModel] to start, pause, and modify
- * a chronometer and a rest timer.
+ * a stopwatch and a rest timer.
  *
  * ## State Flows
  * - [timeElapsed]: A [StateFlow] that emits the total time elapsed in seconds.
- * - [isChronometerPaused]: A [StateFlow] that indicates whether the chronometer is currently paused.
+ * - [isStopwatchPaused]: A [StateFlow] that indicates whether the stopwatch is currently paused.
  * - [restTime]: A [StateFlow] that emits the remaining time for the rest timer in seconds.
  *
  * ## Intent Extras
@@ -64,8 +64,8 @@ import javax.inject.Inject
  *
  * ## Actions
  * The service can handle the following actions:
- * - [WorkoutServiceActions.START_CHRONOMETER]: Starts and resumes the chronometer with [startChronometer]
- * - [WorkoutServiceActions.PAUSE_CHRONOMETER]: Pauses the chronometer with [pauseChronometer]
+ * - [WorkoutServiceActions.START_STOPWATCH]: Starts and resumes the stopwatch with [startStopwatch]
+ * - [WorkoutServiceActions.PAUSE_STOPWATCH]: Pauses the stopwatch with [pauseStopwatch]
  * - [WorkoutServiceActions.START_REST_TIMER]: Starts the rest timer with the specified initial time with [startRestTimer]
  * - [WorkoutServiceActions.MODIFY_REST_TIMER]: Modifies the rest timer by adding or subtracting ten
  *   seconds with [modifyRestTimer].
@@ -91,8 +91,8 @@ class WorkoutService : Service() {
         private val _timeElapsed = MutableStateFlow(0)
         val timeElapsed: StateFlow<Int> = _timeElapsed
 
-        private val _isChronometerPaused = MutableStateFlow(false)
-        val isChronometerPaused: StateFlow<Boolean> = _isChronometerPaused
+        private val _isStopwatchPaused = MutableStateFlow(false)
+        val isStopwatchPaused: StateFlow<Boolean> = _isStopwatchPaused
 
         private val _restTime = MutableStateFlow(0)
         val restTime: StateFlow<Int> = _restTime
@@ -119,16 +119,17 @@ class WorkoutService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         val action = WorkoutServiceActions.entries.find { it.string == intent?.action }
-            ?: WorkoutServiceActions.START_CHRONOMETER
+            ?: WorkoutServiceActions.START_STOPWATCH
         when (action) {
-            WorkoutServiceActions.START_CHRONOMETER -> {
-                startChronometer()
+            WorkoutServiceActions.START_STOPWATCH -> {
+                startStopwatch()
                 startForeground(
                     NotificationHelper.WORKOUT_NOTIFICATION_ID,
                     notificationHelper.createWorkoutNotification()
                 )
             }
-            WorkoutServiceActions.PAUSE_CHRONOMETER -> pauseChronometer()
+
+            WorkoutServiceActions.PAUSE_STOPWATCH -> pauseStopwatch()
             WorkoutServiceActions.START_REST_TIMER -> {
                 val initialRestTime = intent?.getIntExtra(EXTRA_INITIAL_REST_TIME, 0) ?: 0
 
@@ -155,7 +156,7 @@ class WorkoutService : Service() {
     }
 
     fun stopService() {
-        chronometerJob?.cancel()
+        stopwatchJob?.cancel()
         restTimerJob?.cancel()
         _timeElapsed.update { 0 }
         _restTime.update { 0 }
@@ -165,21 +166,20 @@ class WorkoutService : Service() {
     }
 
 
+    private var stopwatchJob: Job? = null
 
-    private var chronometerJob: Job? = null
+    private fun startStopwatch() {
 
-    private fun startChronometer() {
-
-        _isChronometerPaused.update { false }
+        _isStopwatchPaused.update { false }
 
         val startTime = System.currentTimeMillis()
         val pastTime = timeElapsed.value
 
-        chronometerJob?.cancel()
+        stopwatchJob?.cancel()
 
-        chronometerJob = serviceScope.launch {
+        stopwatchJob = serviceScope.launch {
             while (true) {
-                if (!isChronometerPaused.value) {
+                if (!isStopwatchPaused.value) {
                     val currentTime = System.currentTimeMillis()
 
                     _timeElapsed.update {
@@ -189,7 +189,7 @@ class WorkoutService : Service() {
 
                 notificationHelper.notifyOngoingWorkout(
                     timeElapsed.value,
-                    isChronometerPaused.value,
+                    isStopwatchPaused.value,
                     restTime.value,
                     initialRestTime
                 )
@@ -199,9 +199,9 @@ class WorkoutService : Service() {
         }
     }
 
-    private fun pauseChronometer() {
-        _isChronometerPaused.update { true }
-        notificationHelper.notifyOngoingWorkout(timeElapsed.value, isChronometerPaused.value)
+    private fun pauseStopwatch() {
+        _isStopwatchPaused.update { true }
+        notificationHelper.notifyOngoingWorkout(timeElapsed.value, isStopwatchPaused.value)
     }
 
 

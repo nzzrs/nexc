@@ -106,7 +106,7 @@ fun SharedTransitionScope.WorkoutScreen(
 
     val timeElapsed by viewModel.timeElapsed.collectAsState()
 
-    val isChronometerPaused by viewModel.isChronometerPaused.collectAsState()
+    val isStopwatchPaused by viewModel.isStopwatchPaused.collectAsState()
 
     val exercisesWithSets by viewModel.exercises.collectAsState()
 
@@ -116,7 +116,7 @@ fun SharedTransitionScope.WorkoutScreen(
 
     val restTime by viewModel.restTime.collectAsState()
 
-    val idSetWithRunningChronometer by viewModel.idSetWithRunningChronometer.collectAsState()
+    val idSetWithRunningStopwatch by viewModel.idSetWithRunningStopwatch.collectAsState()
 
     val progress by viewModel.progress.collectAsState()
     
@@ -175,14 +175,14 @@ fun SharedTransitionScope.WorkoutScreen(
     WorkoutScreenContent(
         animatedVisibilityScope = animatedVisibilityScope,
         timeElapsed = timeElapsed,
-        isChronometerPaused = isChronometerPaused,
+        isStopwatchPaused = isStopwatchPaused,
         isListEmpty = exercisesWithSets.isEmpty(),
         exercisesWithSets = exercisesWithSets,
         progress = progress,
         timerProgress = viewModel.getRestTimeProgress(),
-        idSetWithRunningChronometer = idSetWithRunningChronometer,
+        idSetWithRunningStopwatch = idSetWithRunningStopwatch,
         restTime = restTime,
-        updateIdSetWithRunningChronometer = viewModel::updateIdSetWithRunningChronometer,
+        updateIdSetWithRunningStopwatch = viewModel::updateIdSetWithRunningStopwatch,
         navigateBack = {
             if (exercisesWithSets.isEmpty()) {
                 viewModel.stopWorkoutService()
@@ -217,8 +217,8 @@ fun SharedTransitionScope.WorkoutScreen(
                 )
             ) { launchSingleTop = true }
         },
-        startChronometer = viewModel::startChronometer,
-        pauseChronometer = viewModel::pauseChronometer,
+        startStopwatch = viewModel::startStopwatch,
+        pauseStopwatch = viewModel::pauseStopwatch,
         updateSetTime = viewModel::updateSetTime,
         updateSetReps = viewModel::updateSetReps,
         updateSetLoad = viewModel::updateSetLoad,
@@ -256,19 +256,19 @@ fun SharedTransitionScope.WorkoutScreen(
 private fun SharedTransitionScope.WorkoutScreenContent(
     animatedVisibilityScope: AnimatedVisibilityScope,
     timeElapsed: Int,
-    isChronometerPaused: Boolean,
+    isStopwatchPaused: Boolean,
     exercisesWithSets: List<UiExerciseWithSets>,
     progress: Float,
     isListEmpty: Boolean,
     timerProgress: Float,
-    idSetWithRunningChronometer: Long?,
+    idSetWithRunningStopwatch: Long?,
     restTime: Int,
-    updateIdSetWithRunningChronometer: (Long?) -> Unit,
+    updateIdSetWithRunningStopwatch: (Long?) -> Unit,
     navigateBack: () -> Unit,
     fabAction: () -> Unit,
     action: () -> Unit,
-    startChronometer: () -> Unit,
-    pauseChronometer: () -> Unit,
+    startStopwatch: () -> Unit,
+    pauseStopwatch: () -> Unit,
     addSetToExercise: (Long) -> Unit,
     updateSetTime: (Int, Long) -> Unit,
     updateSetReps: (Int, Long) -> Unit,
@@ -296,12 +296,12 @@ private fun SharedTransitionScope.WorkoutScreenContent(
             BottomAppBar {
                 BottomAppBarContent(
                     timeElapsed = timeElapsed,
-                    isChronometerPaused = isChronometerPaused,
+                    isStopwatchPaused = isStopwatchPaused,
                     progress = progress,
                     timerProgress = timerProgress,
                     restTime = restTime,
-                    startChronometer = startChronometer,
-                    pauseChronometer = pauseChronometer,
+                    startStopwatch = startStopwatch,
+                    pauseStopwatch = pauseStopwatch,
                     modifyRestTime = modifyRestTime
                 )
             }
@@ -331,14 +331,14 @@ private fun SharedTransitionScope.WorkoutScreenContent(
                         modifier = Modifier.animateItem(),
                         animatedVisibilityScope = animatedVisibilityScope,
                         exerciseWithSets = exerciseWithSets,
-                        idSetWithRunningChronometer = idSetWithRunningChronometer,
+                        idSetWithRunningStopwatch = idSetWithRunningStopwatch,
                         workout = true,
                         addSet = addSetToExercise,
                         onDetail = onSelectedExerciseIdChange,
                         onDelete = deleteExercise,
                         deleteSet = deleteSet,
                         showInfo = showInfo,
-                        updateIdSetWithRunningChronometer = updateIdSetWithRunningChronometer,
+                        updateIdSetWithRunningStopwatch = updateIdSetWithRunningStopwatch,
                         updateExerciseNotes = updateExerciseNotes,
                         updateExerciseRestTime = updateExerciseRestTime,
                         updateExerciseSetMode = updateExerciseSetMode,
@@ -358,12 +358,12 @@ private fun SharedTransitionScope.WorkoutScreenContent(
 @Composable
 private fun BottomAppBarContent(
     timeElapsed: Int,
-    isChronometerPaused: Boolean,
+    isStopwatchPaused: Boolean,
     progress: Float,
     timerProgress: Float,
     restTime: Int,
-    startChronometer: () -> Unit,
-    pauseChronometer: () -> Unit,
+    startStopwatch: () -> Unit,
+    pauseStopwatch: () -> Unit,
     modifyRestTime: (Boolean) -> Unit
 ) {
 
@@ -398,22 +398,22 @@ private fun BottomAppBarContent(
                 val maxHeight = maxHeight.value
                 val maxWidth = maxWidth.value
                 val animatedWidth = animateFloatAsState(
-                    targetValue = if (isChronometerPaused) maxHeight else maxWidth
+                    targetValue = if (isStopwatchPaused) maxHeight else maxWidth
                 )
                 //Play button
                 FilledIconButton(
                     onClick = {
-                        if (isChronometerPaused) startChronometer()
-                        else pauseChronometer()
+                        if (isStopwatchPaused) startStopwatch()
+                        else pauseStopwatch()
                     },
                     modifier = Modifier
                         .height(maxHeight.dp)
                         .width(animatedWidth.value.dp)
                 ) {
                     Icon(
-                        imageVector = if (isChronometerPaused) ImageVector.vectorResource(R.drawable.ic_play_arrow) else
+                        imageVector = if (isStopwatchPaused) ImageVector.vectorResource(R.drawable.ic_play_arrow) else
                             ImageVector.vectorResource(id = R.drawable.ic_pause),
-                        contentDescription = stringResource(if (isChronometerPaused) R.string.pause else R.string.resume),
+                        contentDescription = stringResource(if (isStopwatchPaused) R.string.pause else R.string.resume),
                         modifier = Modifier.fillMaxSize(0.7f)
                     )
                 }

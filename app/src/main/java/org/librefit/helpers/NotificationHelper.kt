@@ -156,7 +156,7 @@ class NotificationHelper @Inject constructor(
 
     fun notifyOngoingWorkout(
         timeInSeconds: Int,
-        isChronometerPaused: Boolean,
+        isStopwatchPaused: Boolean,
         restTime: Int = 0,
         initialRestTime: Int = 0,
     ) {
@@ -166,19 +166,19 @@ class NotificationHelper @Inject constructor(
             .setProgress(initialRestTime, restTime, false)
             .clearActions()
 
-        if (isChronometerPaused) {
+        if (isStopwatchPaused) {
             builder
                 .addAction(
                     R.drawable.ic_play_arrow,
                     appContext.getString(R.string.resume),
-                    createWorkoutServiceIntent(WorkoutServiceActions.START_CHRONOMETER.string)
+                    createWorkoutServiceIntent(WorkoutServiceActions.START_STOPWATCH.string)
                 )
         } else {
             builder
                 .addAction(
                     R.drawable.ic_pause,
                     appContext.getString(R.string.pause),
-                    createWorkoutServiceIntent(WorkoutServiceActions.PAUSE_CHRONOMETER.string)
+                    createWorkoutServiceIntent(WorkoutServiceActions.PAUSE_STOPWATCH.string)
                 )
         }
 

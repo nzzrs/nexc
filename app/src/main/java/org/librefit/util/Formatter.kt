@@ -174,9 +174,9 @@ object Formatter {
      * It is used to process user input in [org.librefit.ui.components.ExerciseCard]
      * text field and return the corresponding float.
      * @param string The string value to be processed
-     * @return A float value corresponding to the sanitized [string].
+     * @return A [Double] value corresponding to the sanitized [string].
      */
-    fun parseFloatFromString(string: String): Float {
+    fun parseDoubleFromString(string: String): Double {
         // Keep only digits and dots.
         val sanitized = string
             .replace(",", ".")
@@ -200,8 +200,8 @@ object Formatter {
             sanitized
         }
 
-        // Safely convert to Float
-        return finalString.toFloatOrNull() ?: 0f
+        // Safely convert to Double
+        return finalString.toDoubleOrNull() ?: 0.0
     }
 
     /**

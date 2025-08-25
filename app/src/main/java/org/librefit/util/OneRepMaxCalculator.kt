@@ -30,14 +30,14 @@ object OneRepMaxCalculator {
      * Calculates the Epley (1985) 1RM estimate.
      * This is one of the most widely validated and used formulas.
      */
-    private fun epley(weight: Float, reps: Int): Float {
+    private fun epley(weight: Double, reps: Int): Double {
         return weight * (1 + (reps / 30f))
     }
 
     /**
      * Calculates the Brzycki (1993) 1RM estimate.
      */
-    private fun brzycki(weight: Float, reps: Int): Float {
+    private fun brzycki(weight: Double, reps: Int): Double {
         return weight * 36 / (37 - reps)
     }
 
@@ -52,10 +52,10 @@ object OneRepMaxCalculator {
      *
      * @param weight The weight lifted (must be a positive value).
      * @param reps The number of repetitions completed (must be a positive integer).
-     * @return The estimated one-rep max as a [Float].
+     * @return The estimated one-rep max as a [Double].
      * @throws IllegalArgumentException if weight or reps are negative.
      */
-    fun calculate(weight: Float, reps: Int): Float {
+    fun calculate(weight: Double, reps: Int): Double {
         require(weight >= 0 && reps >= 0) { "Weight and reps must be positive values." }
 
 

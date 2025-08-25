@@ -167,22 +167,22 @@ fun StatisticsScreenPreview() {
     key(muscleDistributionStatisticsChart) {
         val muscleDistributionPoints = listOf(
             Point(
-                yValues = (0..2).map { Random.nextFloat() },
+                yValues = (0..2).map { Random.nextDouble() },
                 xValue = musclesNames.first()
             ),
             Point(
-                yValues = (0..2).map { Random.nextFloat() },
+                yValues = (0..2).map { Random.nextDouble() },
                 xValue = musclesNames[1]
             )
         )
 
         val exerciseDistributionPoints = listOf(
             Point(
-                yValues = (0..2).map { Random.nextFloat() },
+                yValues = (0..2).map { Random.nextDouble() },
                 xValue = musclesNames.first()
             ),
             Point(
-                yValues = (0..2).map { Random.nextFloat() },
+                yValues = (0..2).map { Random.nextDouble() },
                 xValue = musclesNames[1]
             )
         )

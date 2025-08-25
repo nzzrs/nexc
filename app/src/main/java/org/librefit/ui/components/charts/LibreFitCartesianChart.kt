@@ -475,7 +475,7 @@ private fun LibreFitCartesianChartPreview() {
             format = DecimalFormat("#.# %"),
             points = (0..10).map {
                 Point(
-                    yValues = (0..numRandomEntries).map { Random.nextFloat() },
+                    yValues = (0..numRandomEntries).map { Random.nextDouble() },
                     xValue = Formatter.getShortDateFromLocalDate(
                         LocalDateTime.now().minusDays(it.toLong())
                     ),

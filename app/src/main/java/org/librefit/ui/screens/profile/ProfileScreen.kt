@@ -427,7 +427,7 @@ private fun ProfileScreenPreview() {
 
     val listChartData = workoutsWithExercises.map {
         Point(
-            yValues = listOf(it.workout.timeElapsed.toFloat()),
+            yValues = listOf(it.workout.timeElapsed.toDouble()),
             xValue = Formatter.getShortDateFromLocalDate(it.workout.completed),
             workoutId = it.workout.id
         )

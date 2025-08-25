@@ -83,24 +83,25 @@ class DataHelper @Inject constructor(
                 async {
                     val bodyWeight = measurementRepository.getLastMeasurementByCutoff(
                         it.workout.completed
-                    )?.bodyWeight ?: 0f
+                    )?.bodyWeight ?: 0.0
 
                     Point(
                         yValues = listOf(
                             when (workoutChart) {
-                                WorkoutChart.DURATION -> it.workout.timeElapsed / 60f
+                                WorkoutChart.DURATION -> it.workout.timeElapsed / 60.0
                                 WorkoutChart.VOLUME -> it.exercisesWithSets.sumOf { exe ->
+                                    val includeBodyweight =
+                                        exe.exercise.setMode == SetMode.BODYWEIGHT ||
+                                                exe.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD
+
                                     exe.sets.filter { it.completed }.sumOf {
-                                        (it.load + if (exe.exercise.setMode == SetMode.BODYWEIGHT ||
-                                            exe.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD
-                                        ) bodyWeight else 0f
-                                                ) * it.reps.toDouble()
+                                        (it.load + if (includeBodyweight) bodyWeight else 0.0) * it.reps
                                     }
                                 }
                                 WorkoutChart.REPS -> it.exercisesWithSets.sumOf { exe ->
                                     exe.sets.filter { it.completed }.sumOf { it.reps }
-                                }
-                            }.toFloat()
+                                }.toDouble()
+                            }
                         ),
                         xValue = it.workout.completed.format(shortFormatter),
                         workoutId = it.workout.id
@@ -113,25 +114,25 @@ class DataHelper @Inject constructor(
 
     suspend fun fetchVolumeFromWorkout(
         workout: WorkoutWithExercisesAndSets
-    ): Float {
+    ): Double {
         val isRoutine = workout.workout.state == WorkoutState.ROUTINE
 
         val bodyWeight = measurementRepository.getLastMeasurementByCutoff(
             if (isRoutine) workout.workout.created else workout.workout.completed
-        )?.bodyWeight ?: 0f
+        )?.bodyWeight ?: 0.0
 
         return workout.exercisesWithSets.sumOf { exe ->
             exe.sets.sumOf { set ->
                 val volumeForEachRep = when (exe.exercise.setMode) {
-                    SetMode.LOAD -> if (isRoutine || set.completed) set.load else 0f
-                    SetMode.BODYWEIGHT -> if (isRoutine || set.completed) bodyWeight else 0f
-                    SetMode.BODYWEIGHT_WITH_LOAD -> if (isRoutine || set.completed) set.load + bodyWeight else 0f
-                    SetMode.DURATION -> 0f
+                    SetMode.LOAD -> if (isRoutine || set.completed) set.load else 0.0
+                    SetMode.BODYWEIGHT -> if (isRoutine || set.completed) bodyWeight else 0.0
+                    SetMode.BODYWEIGHT_WITH_LOAD -> if (isRoutine || set.completed) set.load + bodyWeight else 0.0
+                    SetMode.DURATION -> 0.0
                 }
 
-                (volumeForEachRep * set.reps).toDouble()
+                (volumeForEachRep * set.reps)
             }
-        }.toFloat()
+        }
     }
 
 
@@ -203,7 +204,7 @@ class DataHelper @Inject constructor(
 
                             val bodyWeight = measurementRepository.getLastMeasurementByCutoff(
                                 w.workout.completed
-                            )?.bodyWeight ?: 0f
+                            )?.bodyWeight ?: 0.0
 
                             val value = when (muscleDistributionStatisticsChart) {
                                 StatisticsChart.LOAD -> sets.sumOf {
@@ -230,8 +231,8 @@ class DataHelper @Inject constructor(
                                 null // Filter out zero-value
                             } else {
                                 // Create a encoded list for the value's time bucket.
-                                val values = MutableList(numTimeBuckets) { 0f }.apply {
-                                    set(timeBucketIndex, value.toFloat())
+                                val values = MutableList(numTimeBuckets) { 0.0 }.apply {
+                                    set(timeBucketIndex, value)
                                 }.toList()
                                 // Pair the muscles with the calculated value list.
                                 muscles.toSet() to values
@@ -262,11 +263,11 @@ class DataHelper @Inject constructor(
                 List(numTimeBuckets) { bucketIndex ->
                     // For each bucket, get all non-zero values from the collected lists.
                     val nonZeroValues = dataLists.mapNotNull { dataList ->
-                        dataList[bucketIndex].takeIf { it != 0f }
+                        dataList[bucketIndex].takeIf { it != 0.0 }
                     }
 
                     // Safely calculate average. .average() on an empty list returns NaN.
-                    nonZeroValues.average().toFloat().takeIf { !it.isNaN() } ?: 0f
+                    nonZeroValues.average().takeIf { !it.isNaN() } ?: 0.0
                 }
             }
             .map { (muscle, list) ->
@@ -346,7 +347,7 @@ class DataHelper @Inject constructor(
 
                             val bodyWeight = measurementRepository.getLastMeasurementByCutoff(
                                 w.workout.completed
-                            )?.bodyWeight ?: 0f
+                            )?.bodyWeight ?: 0.0
 
                             val value = when (exerciseDistributionStatisticsChart) {
                                 StatisticsChart.LOAD -> sets.sumOf {
@@ -375,8 +376,8 @@ class DataHelper @Inject constructor(
                                 null // Filter out zero-value
                             } else {
                                 // Create a encoded list for the value's time bucket.
-                                val values = MutableList(numTimeBuckets) { 0f }.apply {
-                                    set(timeBucketIndex, value.toFloat())
+                                val values = MutableList(numTimeBuckets) { 0.0 }.apply {
+                                    set(timeBucketIndex, value)
                                 }.toList()
                                 // Pair the exercise with the calculated value list.
                                 e.exerciseDC to values
@@ -403,11 +404,11 @@ class DataHelper @Inject constructor(
                 List(numTimeBuckets) { bucketIndex ->
                     // For each bucket, get all non-zero values from the collected lists.
                     val nonZeroValues = dataLists.mapNotNull { dataList ->
-                        dataList[bucketIndex].takeIf { it != 0f }
+                        dataList[bucketIndex].takeIf { it != 0.0 }
                     }
 
                     // Safely calculate average. .average() on an empty list returns NaN.
-                    nonZeroValues.average().toFloat().takeIf { !it.isNaN() } ?: 0f
+                    nonZeroValues.average().takeIf { !it.isNaN() } ?: 0.0
                 }
             }
             .map { (exercise, list) ->
@@ -435,7 +436,7 @@ class DataHelper @Inject constructor(
                             eWs.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD
 
                     val bodyWeight = if (includeBodyweight && workout != null) measurementRepository
-                        .getLastMeasurementByCutoff(workout.completed)?.bodyWeight ?: 0f else 0f
+                        .getLastMeasurementByCutoff(workout.completed)?.bodyWeight ?: 0.0 else 0.0
 
                     val sets = eWs.sets.filter { it.completed }
 
@@ -479,7 +480,7 @@ class DataHelper @Inject constructor(
                                 LoadChart.SESSION_VOLUME -> sets.sumOf { set ->
                                     set.load * set.reps.toDouble()
                                 }
-                            }.toFloat()
+                            }.toDouble()
                         ),
                         xValue = workout?.completed?.let(Formatter::getShortDateFromLocalDate)
                             ?: "",

@@ -272,7 +272,7 @@ private fun SharedTransitionScope.WorkoutScreenContent(
     addSetToExercise: (Long) -> Unit,
     updateSetTime: (Int, Long) -> Unit,
     updateSetReps: (Int, Long) -> Unit,
-    updateSetLoad: (Float, Long) -> Unit,
+    updateSetLoad: (Double, Long) -> Unit,
     updateSetCompleted: (Boolean, Long) -> Unit,
     deleteSet: (Long) -> Unit,
     updateExerciseNotes: (String, Long) -> Unit,

@@ -71,7 +71,7 @@ class MeasurementScreenViewModel @Inject constructor(
             measurements
                 .filter {
                     when (measurementChart) {
-                        MeasurementChart.BODY_WEIGHT -> it.bodyWeight != 0f
+                        MeasurementChart.BODY_WEIGHT -> it.bodyWeight != 0.0
                         MeasurementChart.FAT_MASS -> it.bodyFatPercentage != 0
                         MeasurementChart.LEAN_MASS -> it.muscleMassPercentage != 0
                     }
@@ -83,7 +83,7 @@ class MeasurementScreenViewModel @Inject constructor(
                                 MeasurementChart.BODY_WEIGHT -> it.bodyWeight
                                 MeasurementChart.FAT_MASS -> it.bodyFatPercentage
                                 MeasurementChart.LEAN_MASS -> it.muscleMassPercentage
-                            }.toFloat()
+                            }.toDouble()
                         ),
                         xValue = Formatter.getShortDateFromLocalDate(it.date)
                     )
@@ -119,8 +119,8 @@ class MeasurementScreenViewModel @Inject constructor(
                 // Integer
                 value.toInt().coerceIn(0, 300).toString()
             } else {
-                // Float
-                value.toFloat().coerceIn(0f, 300f).toString()
+                // Double
+                value.toDouble().coerceIn(0.0, 300.0).toString()
             }
         }
     }
@@ -188,7 +188,7 @@ class MeasurementScreenViewModel @Inject constructor(
             // A new current measurement is emitted when idMeasurement changes and MeasurementCardState is EDIT
             currentMeasurement.collect { measurement ->
                 _notes.update { measurement.notes }
-                _bodyweight.update { measurement.bodyWeight.takeIf { it != 0f }?.toString() ?: "" }
+                _bodyweight.update { measurement.bodyWeight.takeIf { it != 0.0 }?.toString() ?: "" }
                 _leanMass.update { measurement.muscleMassPercentage.takeIf { it != 0 } }
                 _fatMass.update { measurement.bodyFatPercentage.takeIf { it != 0 } }
                 _date.update { measurement.date }
@@ -203,8 +203,8 @@ class MeasurementScreenViewModel @Inject constructor(
                 Measurement(
                     id = if (measurementCardState.value == MeasurementCardState.EDIT)
                         idMeasurement.value else 0L,
-                    bodyWeight = bodyWeight.value.toFloatOrNull()
-                        ?: error("Bodyweight must be a float when saving a new measurement"),
+                    bodyWeight = bodyWeight.value.toDoubleOrNull()
+                        ?: error("Bodyweight must be a double when saving a new measurement"),
                     notes = notes.value,
                     muscleMassPercentage = leanMass.value ?: 0,
                     bodyFatPercentage = fatMass.value ?: 0,

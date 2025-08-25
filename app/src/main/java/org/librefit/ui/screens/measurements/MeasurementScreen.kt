@@ -388,7 +388,7 @@ private fun MeasurementScreenContent(
                                     if (measurementCardState == MeasurementCardState.NEW)
                                         R.drawable.ic_add else R.drawable.ic_edit
                                 ),
-                                enabled = bodyweight.isNotBlank() && bodyweight.toFloatOrNull() != 0f
+                                enabled = bodyweight.isNotBlank() && bodyweight.toDoubleOrNull() != 0.0
                             ) {
                                 upsertMeasurement()
 
@@ -544,7 +544,7 @@ private fun MeasurementScreenPreview() {
             Measurement(
                 id = it.toLong(),
                 notes = if (Random.nextBoolean()) "This is the note of the ${it + 1}° measurement" else "",
-                bodyWeight = Random.nextLong(60, 80).toFloat(),
+                bodyWeight = Random.nextDouble(60.0, 80.0),
                 bodyFatPercentage = if (Random.nextBoolean()) Random.nextInt(10, 80) else 0,
                 muscleMassPercentage = if (Random.nextBoolean()) Random.nextInt(20, 80) else 0,
                 date = LocalDateTime.ofEpochSecond(
@@ -570,7 +570,7 @@ private fun MeasurementScreenPreview() {
                             MeasurementChart.BODY_WEIGHT -> it.bodyWeight
                             MeasurementChart.FAT_MASS -> it.bodyFatPercentage
                             MeasurementChart.LEAN_MASS -> it.muscleMassPercentage
-                        }.toFloat()
+                        }.toDouble()
                     ),
                     xValue = it.date.format(shortDate)
                 )

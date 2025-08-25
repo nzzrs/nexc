@@ -427,7 +427,7 @@ private fun InfoRoutineScreenPreview() {
                             sets = persistentListOf(UiSet(), UiSet())
                         )
                     ),
-                    points = (0..10).map { Point(listOf(Random.nextFloat())) },
+                    points = (0..10).map { Point(listOf(Random.nextDouble())) },
                     detachWorkoutFromRoutine = {
                         routine = UiWorkout()
                     },

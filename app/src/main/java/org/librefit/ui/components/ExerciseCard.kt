@@ -170,7 +170,7 @@ fun SharedTransitionScope.ExerciseCard(
     updateExerciseSetMode: (SetMode, Long) -> Unit,
     updateSetTime: (Int, Long) -> Unit,
     updateSetReps: (Int, Long) -> Unit,
-    updateSetLoad: (Float, Long) -> Unit,
+    updateSetLoad: (Double, Long) -> Unit,
     updateSetCompleted: (Boolean, Long) -> Unit,
     showInfo: (InfoMode) -> Unit,
     updateIdSetWithRunningChronometer: (Long?) -> Unit = NoOpUpdate
@@ -474,7 +474,7 @@ private fun LazyItemScope.Set(
     deleteSet: (Long) -> Unit,
     updateSetTime: (Int, Long) -> Unit,
     updateSetReps: (Int, Long) -> Unit,
-    updateSetLoad: (Float, Long) -> Unit,
+    updateSetLoad: (Double, Long) -> Unit,
     updateSetCompleted: (Boolean, Long) -> Unit,
     updateIdSetWithRunningChronometer: (Long?) -> Unit
 ) {
@@ -647,7 +647,7 @@ private fun LazyItemScope.Set(
                         value = weightValue,
                         onValueChange = { string ->
                             weightValue = Formatter.normalizeNumericString(string)
-                            updateSetLoad(Formatter.parseFloatFromString(weightValue), set.id)
+                            updateSetLoad(Formatter.parseDoubleFromString(weightValue), set.id)
                         },
                         singleLine = true,
                         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),

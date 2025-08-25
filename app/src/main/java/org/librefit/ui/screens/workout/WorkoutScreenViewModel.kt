@@ -208,7 +208,7 @@ class WorkoutScreenViewModel @Inject constructor(
         }
     }
 
-    fun updateSetLoad(load: Float, id: Long) {
+    fun updateSetLoad(load: Double, id: Long) {
         _exercises.update { currentExercises ->
             currentExercises.map { exercise ->
                 if (exercise.sets.any { it.id == id }) {

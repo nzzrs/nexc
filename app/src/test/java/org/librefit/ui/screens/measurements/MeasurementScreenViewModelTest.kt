@@ -61,9 +61,9 @@ class MeasurementScreenViewModelTest {
     private val now: LocalDateTime = LocalDateTime.now()
 
     private val allMeasurements = listOf(
-        Measurement(id = 1, bodyWeight = 90f, bodyFatPercentage = 10),
-        Measurement(id = 2, bodyWeight = 88f, muscleMassPercentage = 20, date = now.minusDays(7)),
-        Measurement(id = 3, bodyWeight = 93f, notes = "notes", date = now.minusDays(14))
+        Measurement(id = 1, bodyWeight = 90.0, bodyFatPercentage = 10),
+        Measurement(id = 2, bodyWeight = 88.0, muscleMassPercentage = 20, date = now.minusDays(7)),
+        Measurement(id = 3, bodyWeight = 93.0, notes = "notes", date = now.minusDays(14))
     )
 
     @Before
@@ -180,7 +180,7 @@ class MeasurementScreenViewModelTest {
 
 
                 // Act: update measurements
-                val newMeasurements = allMeasurements + Measurement(id = 4, bodyWeight = 90f)
+                val newMeasurements = allMeasurements + Measurement(id = 4, bodyWeight = 90.0)
                 measurementsFlow.value = newMeasurements
 
                 // Assert: Check list of `ChartData` again
@@ -207,7 +207,7 @@ class MeasurementScreenViewModelTest {
                 // Assert: The flow should emit list of `ChartData` having yValue equal to the respective fat mass
                 val actual = awaitItem().map { it.yValues.first() }
                 val expected =
-                    allMeasurements.map { it.bodyFatPercentage.toFloat() }.filter { it != 0f }
+                    allMeasurements.map { it.bodyFatPercentage.toDouble() }.filter { it != 0.0 }
 
                 assertThat(actual).isEqualTo(expected)
             }
@@ -218,7 +218,7 @@ class MeasurementScreenViewModelTest {
         runTest {
             // Arrange: Define the initial and expected states
             val newNotes = "This is a new measurement"
-            val insertedMeasurement = Measurement(notes = newNotes, bodyWeight = 90.3f)
+            val insertedMeasurement = Measurement(notes = newNotes, bodyWeight = 90.3)
             val updatedMeasurements = allMeasurements + insertedMeasurement
 
             // Arrange: Set the initial value for the flow.

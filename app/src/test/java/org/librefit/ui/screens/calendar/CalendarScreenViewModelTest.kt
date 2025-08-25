@@ -19,6 +19,8 @@
 
 package org.librefit.ui.screens.calendar
 
+import androidx.compose.material3.DatePickerDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import app.cash.turbine.test
 import com.google.common.truth.Truth.assertThat
 import io.mockk.every
@@ -35,6 +37,7 @@ import java.time.LocalDate
 import java.time.LocalDateTime
 import java.time.ZoneOffset
 
+@OptIn(ExperimentalMaterial3Api::class)
 class CalendarScreenViewModelTest {
     // The mock repository
     private lateinit var workoutRepository: WorkoutRepository
@@ -78,6 +81,16 @@ class CalendarScreenViewModelTest {
     }
 
     @Test
+    fun `initial state - year range has no bounds`() = runTest {
+        assertThat(viewModel.yearRange.value).isEqualTo(DatePickerDefaults.YearRange)
+    }
+
+    @Test
+    fun `initial state - all dates are selectable`() = runTest {
+        assertThat(viewModel.selectableDates.value).isEqualTo(DatePickerDefaults.AllDates)
+    }
+
+    @Test
     fun `when date is selected - workoutsFromDate emits filtered list for that date`() = runTest {
         // Arrange: Provide workouts from the repository
         completedWorkoutsFlow.value = allWorkouts
@@ -109,20 +122,20 @@ class CalendarScreenViewModelTest {
                 LocalDate.of(2025, 1, 1).atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli()
 
             viewModel.workoutsFromDate.test {
-                // 1. Consume the initial empty list (because no date is selected yet)
+                // Consume the initial empty list (because no date is selected yet)
                 assertThat(awaitItem()).isEmpty()
 
-                // 2. Act: Select a date that *has* workouts to establish a non-empty state
+                // Act: Select a date that *has* workouts to establish a non-empty state
                 viewModel.updateSelectedDateInMillis(dateWithWorkoutsInMillis)
 
-                // 3. Assert & Consume: Confirm the workouts are received. The state is now non-empty.
+                // Assert & Consume: Confirm the workouts are received. The state is now non-empty.
                 val expectedWorkouts = listOf(workout1, workout2)
                 assertThat(awaitItem()).isEqualTo(expectedWorkouts)
 
-                // 4. Act: Now, select the date with *no* workouts. This is the real action to test.
+                // Act: Now, select the date with *no* workouts. This is the real action to test.
                 viewModel.updateSelectedDateInMillis(dateWithNoWorkoutsInMillis)
 
-                // 5. Assert: The flow should now transition from the list of workouts to an empty list.
+                // Assert: The flow should now transition from the list of workouts to an empty list.
                 assertThat(awaitItem()).isEmpty()
             }
         }
@@ -179,4 +192,20 @@ class CalendarScreenViewModelTest {
                 assertThat(awaitItem()).isEqualTo(expectedWorkouts2)
             }
         }
+
+    @Test
+    fun `when workout list updates - year range reflect the max and min years`() = runTest {
+        viewModel.yearRange.test {
+            // Initial emission
+            assertThat(awaitItem()).isEqualTo(DatePickerDefaults.YearRange)
+
+            // Act: Provide workouts from the repository
+            completedWorkoutsFlow.value = allWorkouts + UiWorkout(
+                completed = LocalDateTime.of(2023, 1, 1, 1, 1)
+            )
+
+            // Assert: year range reflects the max and min years in the provided workouts
+            assertThat(awaitItem()).isEqualTo((2023..2025))
+        }
+    }
 }

@@ -28,7 +28,9 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -58,6 +60,7 @@ import org.librefit.ui.components.dialogs.UrlActionDialog
 import org.librefit.ui.theme.LibreFitTheme
 
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun AboutScreen(navController: NavHostController) {
 
@@ -95,7 +98,7 @@ fun AboutScreen(navController: NavHostController) {
                         }
                         append(stringResource(id = R.string.app_name).removeRange(0, 5))
                     },
-                    style = MaterialTheme.typography.displayMedium
+                    style = MaterialTheme.typography.displayMediumEmphasized
                 )
             }
 
@@ -233,6 +236,7 @@ fun AboutScreen(navController: NavHostController) {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun AboutItem(
     imageVector: ImageVector,
@@ -242,15 +246,21 @@ private fun AboutItem(
     enabled: Boolean = true
 ) {
 
-    ElevatedCard(
+    Button(
         enabled = enabled,
-        onClick = onClick
+        onClick = onClick,
+        shapes = ButtonDefaults.shapes(
+            shape = MaterialTheme.shapes.extraLarge
+        ),
+        contentPadding = ButtonDefaults.MediumContentPadding,
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        )
     ) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(20.dp)
+            modifier = Modifier.fillMaxWidth()
         ) {
             Icon(
                 imageVector = imageVector,

@@ -82,7 +82,8 @@ fun FiltersCard(
     val iconRotation = if (isFilterExpanded) 180f else 0f
 
     OutlinedCard(
-        onClick = updateCardExpansion
+        onClick = updateCardExpansion,
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,

@@ -28,6 +28,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,7 +36,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -119,6 +122,7 @@ class ErrorActivity : ComponentActivity() {
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun ErrorScreen(
     stackTrace: String,
@@ -157,28 +161,44 @@ private fun ErrorScreen(
                 )
             }
             item {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(16.dp)
+                val interactionSources = remember { List(2) { MutableInteractionSource() } }
+                ButtonGroup(
+                    overflowIndicator = {}
                 ) {
-                    LibreFitButton (
-                        text = stringResource(R.string.restart_app),
-                        onClick = onRestart,
-                        modifier = Modifier.weight(0.4f),
-                        icon = ImageVector.vectorResource(R.drawable.ic_refresh)
+                    customItem(
+                        buttonGroupContent = {
+                            LibreFitButton(
+                                text = stringResource(R.string.restart_app),
+                                onClick = onRestart,
+                                modifier = Modifier
+                                    .weight(0.4f)
+                                    .animateWidth(interactionSources[0]),
+                                icon = ImageVector.vectorResource(R.drawable.ic_refresh),
+                                interactionSource = interactionSources[0]
+                            )
+                        },
+                        menuContent = {}
                     )
-                    LibreFitButton(
-                        text = stringResource(R.string.report_github),
-                        icon = ImageVector.vectorResource(R.drawable.ic_bug_report),
-                        elevated = false,
-                        modifier = Modifier.weight(0.6f),
-                        enabled = stackTrace.isNotEmpty()
-                    ) {
-                        val intent = Intent(Intent.ACTION_VIEW).apply {
-                            data = searchGitHubLink.toUri()
-                        }
-                        context.startActivity(intent)
-                    }
+                    customItem(
+                        buttonGroupContent = {
+                            LibreFitButton(
+                                text = stringResource(R.string.report_github),
+                                icon = ImageVector.vectorResource(R.drawable.ic_bug_report),
+                                elevated = false,
+                                modifier = Modifier
+                                    .weight(0.6f)
+                                    .animateWidth(interactionSources[1]),
+                                enabled = stackTrace.isNotEmpty(),
+                                interactionSource = interactionSources[1]
+                            ) {
+                                val intent = Intent(Intent.ACTION_VIEW).apply {
+                                    data = searchGitHubLink.toUri()
+                                }
+                                context.startActivity(intent)
+                            }
+                        },
+                        menuContent = {}
+                    )
                 }
             }
 

@@ -21,12 +21,15 @@ package org.librefit.ui.screens.settings
 
 import android.os.Build
 import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.foundation.clickable
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
@@ -34,15 +37,17 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.datastore.preferences.core.Preferences
@@ -120,107 +125,40 @@ private fun SettingsScreenContent(
     updatePreferences: (List<DialogPreference>) -> Unit,
     saveBooleanValue: (Preferences.Key<Boolean>, value: Boolean) -> Unit
 ) {
-    val haptic = LocalHapticFeedback.current
-
-    val iconPaddingModifier = Modifier.padding(start = 15.dp, end = 25.dp)
-
-    val preferencesPadding = 10.dp
-
     LibreFitScaffold(
         title = AnnotatedString(stringResource(id = R.string.settings)),
         navigateBack = navController::navigateUp
     ) { innerPadding ->
-        LibreFitLazyColumn(innerPadding, verticalSpacing = 0.dp, startEndPadding = 0.dp) {
+        LibreFitLazyColumn(innerPadding) {
             item { HeadlineText(text = stringResource(id = R.string.appearance)) }
 
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(MaterialTheme.shapes.large)
-                        .clickable { updatePreferences(ThemeMode.entries) }
-                ) {
-                    Row(
-                        modifier = Modifier.padding(preferencesPadding),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_dark_mode),
-                            contentDescription = stringResource(R.string.theme),
-                            modifier = iconPaddingModifier
-                        )
-                        Column {
-                            Text(
-                                text = stringResource(id = R.string.theme),
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = stringResource(
-                                    id = Formatter.preferenceToStringId(
-                                        selectedTheme
-                                    )
-                                ),
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                }
-
+                SettingItem(
+                    onClick = { updatePreferences(ThemeMode.entries) },
+                    icon = painterResource(R.drawable.ic_dark_mode),
+                    settingName = stringResource(id = R.string.theme),
+                    settingDesc = stringResource(
+                        id = Formatter.preferenceToStringId(selectedTheme)
+                    )
+                )
             }
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 item {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clip(MaterialTheme.shapes.large)
-                            .clickable {
-                                haptic.performHapticFeedback(
-                                    hapticFeedbackType = if (!materialModeOn) HapticFeedbackType.ToggleOn
-                                    else HapticFeedbackType.ToggleOff
-                                )
-                                saveBooleanValue(
-                                    UserPreferencesRepository.materialModeKey,
-                                    !materialModeOn
-                                )
-                            },
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .padding(preferencesPadding)
-                                .weight(1f),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                painter = painterResource(id = R.drawable.ic_material),
-                                contentDescription = stringResource(R.string.material_you),
-                                modifier = iconPaddingModifier
+                    SettingItem(
+                        onClick = {
+                            saveBooleanValue(
+                                UserPreferencesRepository.materialModeKey,
+                                !materialModeOn
                             )
-                            Column(verticalArrangement = Arrangement.Center) {
-                                Text(
-                                    text = stringResource(id = R.string.material_you),
-                                    style = MaterialTheme.typography.titleMedium
-                                )
-                                Text(
-                                    text = stringResource(
-                                        id = if (materialModeOn) R.string.dynamic_color_enabled else R.string.dynamic_color_disabled
-                                    ),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
-                                )
-                            }
-                        }
-                        Switch(
-                            modifier = iconPaddingModifier,
-                            checked = materialModeOn,
-                            onCheckedChange = null
-                        )
-                    }
+                        },
+                        icon = painterResource(R.drawable.ic_material),
+                        settingName = stringResource(id = R.string.material_you),
+                        settingDesc = stringResource(
+                            id = if (materialModeOn) R.string.dynamic_color_enabled else R.string.dynamic_color_disabled
+                        ),
+                        isChecked = materialModeOn
+                    )
                 }
             }
 
@@ -228,141 +166,110 @@ private fun SettingsScreenContent(
             item { HeadlineText(text = stringResource(id = R.string.settings_general)) }
 
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(MaterialTheme.shapes.large)
-                        .clickable { updatePreferences(Language.entries) },
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        modifier = Modifier.padding(preferencesPadding),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_translate),
-                            contentDescription = stringResource(R.string.translate),
-                            modifier = iconPaddingModifier
-                        )
-                        Column {
-                            Text(
-                                text = stringResource(id = R.string.language),
-                                style = MaterialTheme.typography.titleMedium
-                            )
-                            Text(
-                                text = stringResource(
-                                    id = Formatter.preferenceToStringId(
-                                        selectedLanguage
-                                    )
-                                ),
-                                style = MaterialTheme.typography.bodyMedium,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis
-                            )
-                        }
-                    }
-                }
+                SettingItem(
+                    onClick = { updatePreferences(Language.entries) },
+                    icon = painterResource(R.drawable.ic_translate),
+                    settingName = stringResource(id = R.string.language),
+                    settingDesc = stringResource(
+                        id = Formatter.preferenceToStringId(selectedLanguage)
+                    )
+                )
             }
 
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(MaterialTheme.shapes.large)
-                        .clickable {
-                            haptic.performHapticFeedback(
-                                hapticFeedbackType = if (!keepWorkoutScreenOn) HapticFeedbackType.ToggleOn
-                                else HapticFeedbackType.ToggleOff
-                            )
-                            saveBooleanValue(
-                                UserPreferencesRepository.keepOnWorkoutScreenKey,
-                                !keepWorkoutScreenOn
-                            )
-                        },
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(preferencesPadding)
-                            .weight(1f)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_keep),
-                            contentDescription = stringResource(R.string.keep_screen_on),
-                            modifier = iconPaddingModifier
+                SettingItem(
+                    onClick = {
+                        saveBooleanValue(
+                            UserPreferencesRepository.keepOnWorkoutScreenKey,
+                            !keepWorkoutScreenOn
                         )
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(id = R.string.keep_screen_on),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            Text(
-                                text = stringResource(
-                                    id = if (keepWorkoutScreenOn) R.string.screen_on_desc else R.string.screen_off_desc
-                                ),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                    }
-                    Switch(
-                        modifier = iconPaddingModifier,
-                        checked = keepWorkoutScreenOn,
-                        onCheckedChange = null
-                    )
-                }
+                    },
+                    icon = painterResource(R.drawable.ic_keep),
+                    settingName = stringResource(id = R.string.keep_screen_on),
+                    settingDesc = stringResource(
+                        id = if (keepWorkoutScreenOn) R.string.screen_on_desc else R.string.screen_off_desc
+                    ),
+                    isChecked = keepWorkoutScreenOn
+                )
             }
 
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clip(MaterialTheme.shapes.large)
-                        .clickable {
-                            haptic.performHapticFeedback(
-                                hapticFeedbackType = if (!restTimerSoundOn) HapticFeedbackType.ToggleOn
-                                else HapticFeedbackType.ToggleOff
-                            )
-                            saveBooleanValue(
-                                UserPreferencesRepository.restTimerSoundKey,
-                                !restTimerSoundOn
-                            )
-                        },
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(preferencesPadding)
-                            .weight(1f)
-                    ) {
-                        Icon(
-                            painter = painterResource(id = R.drawable.ic_notification_sound),
-                            contentDescription = stringResource(R.string.rest_timer_sound),
-                            modifier = iconPaddingModifier
+                SettingItem(
+                    onClick = {
+                        saveBooleanValue(
+                            UserPreferencesRepository.restTimerSoundKey,
+                            !restTimerSoundOn
                         )
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                text = stringResource(id = R.string.rest_timer_sound),
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            Text(
-                                text = stringResource(
-                                    id = if (restTimerSoundOn) R.string.rest_timer_sound_on_desc else R.string.rest_timer_sound_off_desc
-                                ),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                        }
-                    }
-                    Switch(
-                        modifier = iconPaddingModifier,
-                        checked = restTimerSoundOn,
-                        onCheckedChange = null
-                    )
-                }
+                    },
+                    icon = painterResource(R.drawable.ic_notification_sound),
+                    settingName = stringResource(id = R.string.rest_timer_sound),
+                    settingDesc = stringResource(
+                        id = if (restTimerSoundOn) R.string.rest_timer_sound_on_desc else R.string.rest_timer_sound_off_desc
+                    ),
+                    isChecked = restTimerSoundOn
+                )
             }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
+@Composable
+private fun SettingItem(
+    onClick: () -> Unit,
+    icon: Painter,
+    settingName: String,
+    settingDesc: String,
+    isChecked: Boolean? = null
+) {
+    val haptic = LocalHapticFeedback.current
+
+    Button(
+        modifier = Modifier.animateContentSize(),
+        onClick = {
+            haptic.performHapticFeedback(
+                hapticFeedbackType = isChecked?.let {
+                    if (it) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff
+                } ?: HapticFeedbackType.ContextClick
+            )
+            onClick()
+        },
+        shapes = ButtonDefaults.shapes(),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            contentColor = MaterialTheme.colorScheme.onSurface
+        ),
+        contentPadding = ButtonDefaults.ContentPadding
+    ) {
+        Row(
+            modifier = Modifier
+                .padding(end = 10.dp)
+                .weight(1f)
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Start,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                painter = icon,
+                contentDescription = stringResource(R.string.theme),
+                modifier = Modifier.padding(start = 5.dp, end = 20.dp)
+            )
+            Column {
+                Text(
+                    text = settingName,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = settingDesc,
+                    style = MaterialTheme.typography.bodyMedium,
+                )
+            }
+        }
+        isChecked?.let {
+            Switch(
+                checked = it,
+                onCheckedChange = null
+            )
         }
     }
 }
@@ -372,7 +279,10 @@ private fun SettingsScreenContent(
 @Preview
 @Composable
 fun SettingsScreenPreview() {
-    val materialModeOn = Random.nextBoolean()
+    var materialModeOn by remember { mutableStateOf(Random.nextBoolean()) }
+    var keepWorkoutScreenOn by remember { mutableStateOf(Random.nextBoolean()) }
+    var restTimerSoundOn by remember { mutableStateOf(Random.nextBoolean()) }
+
     val theme = ThemeMode.entries.random()
 
     LibreFitTheme(dynamicColor = materialModeOn, darkTheme = theme != ThemeMode.LIGHT) {
@@ -381,9 +291,23 @@ fun SettingsScreenPreview() {
             materialModeOn = materialModeOn,
             updatePreferences = {},
             selectedLanguage = Language.SYSTEM,
-            keepWorkoutScreenOn = Random.nextBoolean(),
-            restTimerSoundOn = Random.nextBoolean(),
-            saveBooleanValue = { _, _ -> },
+            keepWorkoutScreenOn = keepWorkoutScreenOn,
+            restTimerSoundOn = restTimerSoundOn,
+            saveBooleanValue = { key, value ->
+                when (key) {
+                    UserPreferencesRepository.materialModeKey -> {
+                        materialModeOn = value
+                    }
+
+                    UserPreferencesRepository.keepOnWorkoutScreenKey -> {
+                        keepWorkoutScreenOn = value
+                    }
+
+                    UserPreferencesRepository.restTimerSoundKey -> {
+                        restTimerSoundOn = value
+                    }
+                }
+            },
             navController = rememberNavController()
         )
     }

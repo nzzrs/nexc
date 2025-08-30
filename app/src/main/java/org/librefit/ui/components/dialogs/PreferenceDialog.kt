@@ -37,10 +37,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import org.librefit.R
 import org.librefit.enums.userPreferences.DialogPreference
@@ -83,7 +81,7 @@ fun PreferenceDialog(
         confirmButton = { /*The user doesn't need to confirm*/ },
         text = {
             LazyColumn(Modifier.heightIn(max = 300.dp)) {
-                items(preferences) { preference ->
+                items(preferences, key = { it }) { preference ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -96,9 +94,7 @@ fun PreferenceDialog(
                     ) {
                         RadioButton(
                             selected = preference == currentPreference,
-                            onClick = {
-                                updatePreference(preference)
-                            }
+                            onClick = { updatePreference(preference) }
                         )
                         Spacer(Modifier.width(10.dp))
                         Text(stringResource(Formatter.preferenceToStringId(preference)))

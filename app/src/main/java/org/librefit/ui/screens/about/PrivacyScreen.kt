@@ -19,8 +19,7 @@
 
 package org.librefit.ui.screens.about
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -28,8 +27,10 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import org.librefit.R
@@ -41,6 +42,7 @@ import org.librefit.ui.components.MarkdownText
 import org.librefit.ui.components.dialogs.UrlActionDialog
 import org.librefit.ui.theme.LibreFitTheme
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun PrivacyScreen(
     navigateBack: (() -> Unit)? = null
@@ -85,7 +87,7 @@ fun PrivacyScreen(
             item {
                 LibreFitButton(
                     text = stringResource(R.string.view_online_version),
-                    icon = Icons.AutoMirrored.Filled.ExitToApp,
+                    icon = ImageVector.vectorResource(R.drawable.ic_exit_to_app),
                     onClick = {
                         url.value = resources.getString(R.string.url_privacy)
                     }
@@ -103,7 +105,7 @@ fun PrivacyScreen(
 @Preview
 @Composable
 private fun PrivacyScreenPreview() {
-    LibreFitTheme(false, true) {
+    LibreFitTheme(dynamicColor = false, darkTheme = true) {
         PrivacyScreen()
     }
 }

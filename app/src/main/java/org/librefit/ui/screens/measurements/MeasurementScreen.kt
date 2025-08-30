@@ -34,6 +34,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -200,7 +201,7 @@ fun MeasurementScreen(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun MeasurementScreenContent(
     measurements: List<Measurement>,
@@ -270,7 +271,7 @@ private fun MeasurementScreenContent(
                                     if (measurementCardState == MeasurementCardState.NEW)
                                         R.string.new_measurement else R.string.edit_measurement
                                 ),
-                                style = MaterialTheme.typography.headlineSmall
+                                style = MaterialTheme.typography.headlineSmallEmphasized
                             )
 
                             IconButton(

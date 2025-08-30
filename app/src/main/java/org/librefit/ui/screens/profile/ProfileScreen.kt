@@ -50,7 +50,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.OutlinedCard
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -65,7 +65,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
@@ -164,9 +163,10 @@ private fun SharedTransitionScope.ProfileScreenContent(
                         LibreFitButton(
                             text = stringResource(R.string.statistics),
                             icon = ImageVector.vectorResource(R.drawable.ic_chart),
-                            modifier = Modifier.weight(0.5f),
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .animateWidth(interactionSources[0]),
                             elevated = false,
-                            buttonGroupScope = this,
                             interactionSource = interactionSources[0]
                         ) {
                             navController.navigate(Route.StatisticsScreen) {
@@ -181,9 +181,10 @@ private fun SharedTransitionScope.ProfileScreenContent(
                         LibreFitButton(
                             text = stringResource(R.string.exercises),
                             icon = ImageVector.vectorResource(R.drawable.ic_search),
-                            modifier = Modifier.weight(0.5f),
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .animateWidth(interactionSources[1]),
                             elevated = false,
-                            buttonGroupScope = this,
                             interactionSource = interactionSources[1]
                         ) {
                             navController.navigate(Route.ExercisesScreen(addExercises = false)) {
@@ -206,9 +207,10 @@ private fun SharedTransitionScope.ProfileScreenContent(
                         LibreFitButton(
                             text = stringResource(R.string.measurements),
                             icon = ImageVector.vectorResource(R.drawable.ic_monitor),
-                            modifier = Modifier.weight(0.5f),
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .animateWidth(interactionSources[0]),
                             elevated = false,
-                            buttonGroupScope = this,
                             interactionSource = interactionSources[0]
                         ) {
                             navController.navigate(Route.MeasurementScreen) {
@@ -223,9 +225,10 @@ private fun SharedTransitionScope.ProfileScreenContent(
                         LibreFitButton(
                             text = stringResource(R.string.calendar),
                             icon = ImageVector.vectorResource(R.drawable.ic_date_range),
-                            modifier = Modifier.weight(0.5f),
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .animateWidth(interactionSources[1]),
                             elevated = false,
-                            buttonGroupScope = this,
                             interactionSource = interactionSources[1]
                         ) {
                             navController.navigate(Route.CalendarScreen) { launchSingleTop = true }
@@ -347,6 +350,7 @@ private fun SharedTransitionScope.ProfileScreenContent(
     }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @SuppressLint("UnusedBoxWithConstraintsScope")
 @Composable
 fun StreakCard(weekStreak: Int) {
@@ -396,10 +400,10 @@ fun StreakCard(weekStreak: Int) {
         }
 
         val brush = Brush.linearGradient(
-            listOf(
-                Color.Unspecified,
+            colors = listOf(
+                MaterialTheme.colorScheme.outlineVariant,
                 MaterialTheme.colorScheme.primary.copy(alpha = 0.5f + 0.5f * (speed / 52f)),
-                Color.Unspecified
+                MaterialTheme.colorScheme.outlineVariant
             ),
             start = Offset(
                 translateAnim - (spaceMaxWidth * shimmerWidthPercentage),
@@ -408,18 +412,18 @@ fun StreakCard(weekStreak: Int) {
             end = Offset(translateAnim, spaceMaxHeight)
         )
 
-        OutlinedCard(
-            modifier = Modifier
-                .border(
-                    border = BorderStroke(
-                        width = (if (speed < 17) 1 else if (speed < 34) 2 else 3).dp,
-                        brush = brush
-                    ),
-                    shape = CardDefaults.outlinedShape
-                ),
+        OutlinedButton(
             onClick = {
                 clicks.intValue = clicks.intValue.coerceIn(0, 39) + 1
-            }
+            },
+            shapes = ButtonDefaults.shapes(
+                shape = MaterialTheme.shapes.extraLarge,
+                pressedShape = MaterialTheme.shapes.small
+            ),
+            border = BorderStroke(
+                width = (if (speed < 17) 1 else if (speed < 34) 2 else 3).dp,
+                brush = brush
+            )
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),

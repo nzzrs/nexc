@@ -36,8 +36,10 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerState
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberDatePickerState
@@ -109,7 +111,10 @@ fun SharedTransitionScope.CalendarScreen(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@OptIn(
+    ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
+    ExperimentalMaterial3ExpressiveApi::class
+)
 @Composable
 private fun SharedTransitionScope.CalendarScreenContent(
     navController: NavHostController,
@@ -151,6 +156,7 @@ private fun SharedTransitionScope.CalendarScreenContent(
 
             items(workoutsFromDate) { workout ->
                 ElevatedCard(
+                    shape = MaterialTheme.shapes.largeIncreased,
                     onClick = {
                         navController.navigate(Route.InfoWorkoutScreen(workoutId = workout.id)) {
                             launchSingleTop = true
@@ -206,6 +212,7 @@ private fun SharedTransitionScope.CalendarScreenContent(
                                 )
                             }
                             IconButton(
+                                shapes = IconButtonDefaults.shapes(),
                                 onClick = {
                                     navController.navigate(Route.InfoWorkoutScreen(workoutId = workout.id)) {
                                         launchSingleTop = true

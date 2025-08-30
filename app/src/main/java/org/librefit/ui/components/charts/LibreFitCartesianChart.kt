@@ -228,7 +228,9 @@ fun LibreFitCartesianChart(
         typeface = typeface
     )
 
-    ElevatedCard {
+    ElevatedCard(
+        shape = MaterialTheme.shapes.extraLargeIncreased
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()

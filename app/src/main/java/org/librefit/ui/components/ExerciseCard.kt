@@ -273,10 +273,9 @@ fun SharedTransitionScope.ExerciseCard(
             Slider(
                 value = restTime.toFloat(),
                 onValueChange = {
-                    if (it % 5f == 0f) {
-                        restTime = it.roundToInt()
-                        haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-                    }
+                    // By dividing first and then multiplying by 5, it rounds to the closest number multiple of 5
+                    restTime = (it / 5).roundToInt() * 5
+                    haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
                 },
                 onValueChangeFinished = {
                     updateExerciseRestTime(
@@ -285,6 +284,7 @@ fun SharedTransitionScope.ExerciseCard(
                     )
                 },
                 valueRange = 0f..300f,
+                // 19 steps means values multiple of 5
                 steps = 19
             )
 
@@ -526,7 +526,6 @@ private fun LazyItemScope.Set(
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = when (swipeToDismissBoxState.dismissDirection) {
                     SwipeToDismissBoxValue.EndToStart -> Arrangement.End
-                    else -> Arrangement.Start
                     SwipeToDismissBoxValue.Settled -> Arrangement.Start
                     SwipeToDismissBoxValue.StartToEnd -> Arrangement.Start
                 }

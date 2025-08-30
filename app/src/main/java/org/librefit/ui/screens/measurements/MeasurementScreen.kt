@@ -20,6 +20,7 @@
 package org.librefit.ui.screens.measurements
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -30,6 +31,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ElevatedCard
@@ -39,6 +41,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
@@ -253,7 +256,9 @@ private fun MeasurementScreenContent(
             item {
                 var isExpanded by rememberSaveable { mutableStateOf(false) }
 
-                OutlinedCard {
+                OutlinedCard(
+                    shape = MaterialTheme.shapes.extraLarge
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -437,7 +442,10 @@ private fun MeasurementScreenContent(
             }
 
             items(measurements, key = { it.id }) { m ->
-                ElevatedCard(Modifier.animateItem()) {
+                ElevatedCard(
+                    modifier = Modifier.animateItem(),
+                    shape = MaterialTheme.shapes.extraLarge
+                ) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -464,34 +472,54 @@ private fun MeasurementScreenContent(
                                     fontWeight = FontWeight.Bold
                                 )
                             }
-                            Row {
-                                IconButton(
-                                    onClick = {
-                                        updateIdMeasurement(m.id)
-                                        updateMeasurementCardState(MeasurementCardState.EDIT)
+                            val interactionSources =
+                                remember { List(2) { MutableInteractionSource() } }
+                            ButtonGroup(
+                                overflowIndicator = {}
+                            ) {
+                                customItem(
+                                    buttonGroupContent = {
+                                        IconButton(
+                                            interactionSource = interactionSources[0],
+                                            modifier = Modifier.animateWidth(interactionSources[0]),
+                                            shapes = IconButtonDefaults.shapes(),
+                                            onClick = {
+                                                updateIdMeasurement(m.id)
+                                                updateMeasurementCardState(MeasurementCardState.EDIT)
 
 
-                                        coroutineScope.launch {
-                                            lazyListState.animateScrollToItem(index = 1)
-                                            focusRequester.requestFocus()
+                                                coroutineScope.launch {
+                                                    lazyListState.animateScrollToItem(index = 1)
+                                                    focusRequester.requestFocus()
+                                                }
+                                            }
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.ic_edit),
+                                                contentDescription = null
+                                            )
                                         }
-                                    }
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_edit),
-                                        contentDescription = null
-                                    )
-                                }
-                                IconButton(
-                                    onClick = {
-                                        showConfirmDialog(m.id)
-                                    }
-                                ) {
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_delete),
-                                        contentDescription = null
-                                    )
-                                }
+                                    },
+                                    menuContent = {}
+                                )
+                                customItem(
+                                    buttonGroupContent = {
+                                        IconButton(
+                                            interactionSource = interactionSources[1],
+                                            modifier = Modifier.animateWidth(interactionSources[1]),
+                                            shapes = IconButtonDefaults.shapes(),
+                                            onClick = {
+                                                showConfirmDialog(m.id)
+                                            }
+                                        ) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.ic_delete),
+                                                contentDescription = null
+                                            )
+                                        }
+                                    },
+                                    menuContent = {}
+                                )
                             }
                         }
 

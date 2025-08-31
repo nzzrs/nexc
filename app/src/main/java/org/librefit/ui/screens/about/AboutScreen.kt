@@ -19,9 +19,15 @@
 
 package org.librefit.ui.screens.about
 
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -39,13 +45,16 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -109,38 +118,59 @@ fun AboutScreen(navController: NavHostController) {
             }
 
             item {
-                HeadlineText(text = stringResource(R.string.support_project))
-            }
+                BoxWithConstraints {
+                    val spaceMaxWidth = with(LocalDensity.current) { maxWidth.toPx() }
 
+                    val infiniteTransition = rememberInfiniteTransition()
+                    val animationProgress = infiniteTransition.animateFloat(
+                        initialValue = 0.1f,
+                        targetValue = spaceMaxWidth * 5,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(2000),
+                            repeatMode = RepeatMode.Restart
+                        )
+                    )
 
-            item {
-                AboutItem(
-                    painterResource(R.drawable.ic_favorite),
-                    text = stringResource(R.string.donate),
-                    description = stringResource(R.string.donate_desc),
-                    onClick = {},
-                    enabled = false
-                )
-            }
+                    val a = Brush.radialGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.inversePrimary,
+                            MaterialTheme.colorScheme.primary
+                        ),
+                        radius = animationProgress.value
+                    )
 
-            item {
-                AboutItem(
-                    painterResource(R.drawable.ic_handshake),
-                    text = stringResource(R.string.contribute),
-                    description = stringResource(R.string.contribute_desc),
-                    onClick = {},
-                    enabled = false
-                )
-            }
-
-            item {
-                AboutItem(
-                    painterResource(R.drawable.ic_translate),
-                    stringResource(R.string.translate),
-                    description = stringResource(R.string.translate_desc),
-                    onClick = {},
-                    enabled = false
-                )
+                    Button(
+                        onClick = {
+                            navController.navigate(Route.SupportScreen) {
+                                launchSingleTop = true
+                            }
+                        },
+                        shapes = ButtonDefaults.shapes(),
+                        contentPadding = ButtonDefaults.MediumContentPadding,
+                        border = BorderStroke(
+                            width = 4.dp,
+                            brush = a
+                        )
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_favorite),
+                                contentDescription = null
+                            )
+                            Text(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(start = 10.dp),
+                                text = stringResource(R.string.lets_build_it_together),
+                                style = MaterialTheme.typography.headlineSmallEmphasized,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
             }
 
             item {
@@ -242,12 +272,10 @@ private fun AboutItem(
     icon: Painter,
     text: String,
     description: String = "",
-    onClick: () -> Unit,
-    enabled: Boolean = true
+    onClick: () -> Unit
 ) {
 
     Button(
-        enabled = enabled,
         onClick = onClick,
         shapes = ButtonDefaults.shapes(
             shape = MaterialTheme.shapes.extraLarge

@@ -36,11 +36,7 @@
     <string name="copy">Copy</string>
     <string name="support_project">Support the project</string>
     <string name="donate">Donate</string>
-    <string name="donate_desc">LibreFit is crafted by dedicated volunteers who invest their free time to enhance your user experience. Support the developers to help make LibreFit even better!</string>
     <string name="contribute">Contribute</string>
-    <string name="contribute_desc">Contributions to the source code are welcome from anyone interested in enhancing LibreFit.</string>
-    <string name="translate">Translate</string>
-    <string name="translate_desc">Translators ensure LibreFit is accessible to everyone, regardless of their language.</string>
     <string name="info">Info</string>
     <string name="privacy_policy">Privacy policy</string>
     <string name="privacy_policy_desc">LibreFit cannot access the Internet. This means user data never leaves the device.</string>
@@ -61,6 +57,7 @@
     <string name="github" translatable="false">GitHub</string>
     <string name="version">Version</string>
     <string name="libraries">Libraries</string>
+    <string name="lets_build_it_together">Let\'s build it together</string>
 
 
     <!--Before saving screen-->
@@ -254,6 +251,15 @@
     <!-- Success screen-->
     <string name="workout_saved">Workout saved</string>
     <string name="routine_saved">Routine saved</string>
+
+
+    <!-- Support screen-->
+    <string name="lets_build">Let\'s build</string>
+    <string name="together">together</string>
+    <string name="motivation_1">LibreFit is a passion project, built by one person who believes software should be open, simple, beautiful, and above all, respectful of your privacy.</string>
+    <string name="motivation_2">I pour countless hours into designing, coding, and refining every detail to create the best possible experience. It\'s a commitment to you, the user, and to a better digital world.</string>
+    <string name="motivation_3">LibreFit is only possible with your support, whether by donating or by contributing to code or translations.</string>
+    <string name="motivation_4">All donators and contributors get the supporter version and a credit in the app and on GitHub.</string>
 
 
     <!--Info modal bottom sheet-->

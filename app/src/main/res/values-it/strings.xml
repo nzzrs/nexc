@@ -33,11 +33,7 @@
     <string name="copy">Copia</string>
     <string name="support_project">Supporta il progetto</string>
     <string name="donate">Dona</string>
-    <string name="donate_desc">LibreFit è realizzato da volontari dedicati che investono il loro tempo libero per migliorare la tua esperienza utente. Sostieni gli sviluppatori per aiutare a rendere LibreFit ancora migliore!</string>
     <string name="contribute">Contribuisci</string>
-    <string name="contribute_desc">I contributi al codice sorgente sono benvenuti da chiunque sia interessato a migliorare LibreFit.</string>
-    <string name="translate">Traduci</string>
-    <string name="translate_desc">I traduttori assicurano che LibreFit sia accessibile a tutti, indipendentemente dalla loro lingua.</string>
     <string name="info">Info</string>
     <string name="privacy_policy_desc">LibreFit non può accedere a Internet. Ciò significa che i dati dell\'utente non lasciano mai il dispositivo.</string>
     <string name="website">Sito web</string>
@@ -50,6 +46,7 @@
     <string name="contributed_to">"Contribuito a: "</string>
     <string name="version">Versione</string>
     <string name="libraries">Librerie</string>
+    <string name="lets_build_it_together">Costruiamolo insieme</string>
     <string name="unlink_routine_question">Scollegare routine?</string>
     <string name="unlink_routine_text">Il collegamento delle routine consente di misurare i progressi degli allenamenti nel tempo. Se si scollega questo allenamento da una routine, quest\'ultima non verrà cancellato e tutti gli allenamenti collegati a quella routine rimarranno invariati. Lo scollegamento avrà effetto solo sull\'allenamento corrente.</string>
     <string name="overview">Panoramica</string>
@@ -220,6 +217,7 @@
     <string name="done">Fatto</string>
     <string name="menu">Menu</string>
     <string name="routine_saved">Routine salvata</string>
+    <string name="motivation_4">Tutti i donatori e contributori ottengono la versione supporter e un credito nell\'app e su GitHub.</string>
     <string name="rest_time_desc">Il periodo di riposo si attiva al completamento di una serie, avviando immediatamente il conto alla rovescia. Al termine del riposo, viene emesso un avviso.</string>
     <string name="add">Aggiungi</string>
     <string name="save">Salva</string>
@@ -275,5 +273,10 @@
     <string name="most_reps">Massime ripetizioni</string>
     <string name="session_volume">Volume per sessione</string>
     <string name="rest_timer_sound">Suono timer riposo</string>
+    <string name="lets_build">Costruiamo</string>
+    <string name="together">insieme</string>
+    <string name="motivation_1">LibreFit è un progetto di passione, creato da una persona che crede fortemente che il software dovrebbe essere aperto, semplice, bello, e soprattutto, rispettoso della tua privacy.</string>
+    <string name="motivation_2">Dedico innumerevoli ore nella progettazione, programmazione, e nella rifinitura di ogni dettaglio per creare la migliore esperienza possibile. È una dedizione nei tuoi confronti, l\'utente, e nei cofronti di un mondo digitale migliore.</string>
+    <string name="motivation_3">LibreFit è possibile solo grazie al tuo supporto, sia donando che contribuendo al codice o alle traduzioni.</string>
 
 </resources>

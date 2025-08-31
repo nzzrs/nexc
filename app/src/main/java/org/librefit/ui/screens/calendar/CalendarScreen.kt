@@ -156,7 +156,7 @@ private fun SharedTransitionScope.CalendarScreenContent(
 
             items(workoutsFromDate) { workout ->
                 ElevatedCard(
-                    shape = MaterialTheme.shapes.largeIncreased,
+                    shape = MaterialTheme.shapes.extraLarge,
                     onClick = {
                         navController.navigate(Route.InfoWorkoutScreen(workoutId = workout.id)) {
                             launchSingleTop = true

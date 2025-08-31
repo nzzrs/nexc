@@ -283,6 +283,7 @@ private fun SharedTransitionScope.ProfileScreenContent(
                         launchSingleTop = true
                     }
                 },
+                shape = MaterialTheme.shapes.extraLarge,
                 modifier = Modifier
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(workout.id),

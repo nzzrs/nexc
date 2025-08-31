@@ -319,6 +319,7 @@ private fun SharedTransitionScope.InfoWorkoutScreenContent(
                         onClick = {
                             navController.navigate(Route.InfoWorkoutScreen(routine.id))
                         },
+                        shape = MaterialTheme.shapes.extraLarge,
                         modifier = Modifier
                             .sharedBounds(
                                 sharedContentState = rememberSharedContentState(routine.id),

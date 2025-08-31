@@ -47,7 +47,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledIconButton
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -57,6 +57,8 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.ToggleButton
+import androidx.compose.material3.ToggleButtonDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -454,6 +456,7 @@ private fun SharedTransitionScope.HistoryPage(
             onClick = {
                 navController.navigate(Route.InfoWorkoutScreen(workout.id))
             },
+            shape = MaterialTheme.shapes.extraLarge,
             modifier = Modifier.sharedBounds(
                 sharedContentState = rememberSharedContentState(workout.id),
                 animatedVisibilityScope = animatedVisibilityScope
@@ -502,7 +505,9 @@ private fun SharedTransitionScope.HistoryPage(
                 )
 
                 workoutWithExercisesAndSets.exercisesWithSets.forEach { exerciseWithSets ->
-                    OutlinedCard {
+                    OutlinedCard(
+                        shape = MaterialTheme.shapes.extraLarge
+                    ) {
                         Column(
                             modifier = Modifier.padding(10.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
@@ -619,7 +624,7 @@ private fun SharedTransitionScope.HistoryPage(
 
 }
 
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun SharedTransitionScope.AlternatingImages(
     stringId: String,
@@ -637,14 +642,14 @@ private fun SharedTransitionScope.AlternatingImages(
 
     var currentBitmap by remember { mutableStateOf(firstBitmap) }
 
-    var isPaused by rememberSaveable { mutableStateOf(false) }
+    var isRunning by rememberSaveable { mutableStateOf(true) }
 
 
     LaunchedEffect(Unit) {
         var i = 0
         while (true) {
             delay(1000)
-            if (!isPaused) {
+            if (isRunning) {
                 i++
                 currentBitmap = if (i % 2 == 0) firstBitmap else secondBitmap
             }
@@ -665,17 +670,20 @@ private fun SharedTransitionScope.AlternatingImages(
                     animatedVisibilityScope = animatedVisibilityScope
                 )
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.large),
+                .clip(MaterialTheme.shapes.extraLarge),
         )
-        FilledIconButton(
+
+        ToggleButton(
+            checked = isRunning,
             modifier = Modifier.padding(5.dp),
-            onClick = { isPaused = !isPaused }
+            onCheckedChange = { isRunning = it },
+            shapes = ToggleButtonDefaults.shapes()
         ) {
             Icon(
                 painter = painterResource(
-                    if (isPaused) R.drawable.ic_play_arrow else R.drawable.ic_pause
+                    if (isRunning) R.drawable.ic_pause else R.drawable.ic_play_arrow
                 ),
-                contentDescription = stringResource(if (isPaused) R.string.pause else R.string.resume),
+                contentDescription = stringResource(if (isRunning) R.string.pause else R.string.resume),
             )
         }
     }

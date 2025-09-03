@@ -33,7 +33,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -85,15 +85,14 @@ fun AboutScreen(navController: NavHostController) {
     ) { innerPadding ->
         LibreFitLazyColumn(innerPadding) {
             item {
-                val logoSize = 170.dp
                 Image(
                     painter = painterResource(id = R.drawable.ic_logo),
                     contentDescription = stringResource(R.string.app_name),
                     modifier = Modifier
-                        .size(logoSize)
+                        .size(160.dp)
                         .border(
                             BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainer),
-                            RoundedCornerShape(logoSize)
+                            CircleShape
                         )
                 )
             }

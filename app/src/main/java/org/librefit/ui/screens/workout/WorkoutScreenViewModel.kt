@@ -411,7 +411,7 @@ class WorkoutScreenViewModel @Inject constructor(
 
 
     init {
-        startStopwatch()
+        workoutServiceManager.startStopwatch()
         observeChanges()
     }
 
@@ -436,12 +436,12 @@ class WorkoutScreenViewModel @Inject constructor(
         }
     }
 
-    fun startStopwatch() {
-        workoutServiceManager.startStopwatch()
-    }
-
-    fun pauseStopwatch() {
-        workoutServiceManager.pauseStopwatch()
+    fun toggleStopwatch() {
+        if (isStopwatchPaused.value) {
+            workoutServiceManager.startStopwatch()
+        } else {
+            workoutServiceManager.pauseStopwatch()
+        }
     }
 
     /**
@@ -463,9 +463,13 @@ class WorkoutScreenViewModel @Inject constructor(
         workoutServiceManager.modifyRestTime(addTenSeconds)
     }
 
-    fun getRestTimeProgress(): Float {
-        return restTime.value.toFloat() / initialRestTime
-    }
+    val restTimerProgress = restTime
+        .map { it.toFloat() / initialRestTime }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.WhileSubscribed(5000),
+            initialValue = 0f
+        )
 
     fun stopWorkoutService() {
         workoutServiceManager.stopService()

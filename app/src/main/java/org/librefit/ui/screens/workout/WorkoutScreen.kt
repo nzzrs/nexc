@@ -23,14 +23,17 @@ import android.annotation.SuppressLint
 import android.app.Activity
 import android.view.WindowManager
 import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
@@ -66,13 +69,14 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import kotlinx.collections.immutable.persistentListOf
 import org.librefit.R
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.enums.InfoMode
@@ -88,6 +92,7 @@ import org.librefit.ui.models.UiExerciseDC
 import org.librefit.ui.models.UiExerciseWithSets
 import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.screens.shared.SharedViewModel
+import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter.formatTime
 import java.time.LocalDateTime
 
@@ -122,7 +127,9 @@ fun SharedTransitionScope.WorkoutScreen(
 
     val progress by viewModel.progress.collectAsState()
 
-    val previousPerformances by viewModel.previousPerformances.collectAsStateWithLifecycle()
+    val previousPerformances by viewModel.previousPerformances.collectAsState()
+
+    val restTimerProgress by viewModel.restTimerProgress.collectAsState()
     
 
     //It keeps the screen turned on
@@ -173,21 +180,8 @@ fun SharedTransitionScope.WorkoutScreen(
         }
     }
 
-
-
-
-    WorkoutScreenContent(
-        animatedVisibilityScope = animatedVisibilityScope,
-        timeElapsed = timeElapsed,
-        isStopwatchPaused = isStopwatchPaused,
-        isListEmpty = exercisesWithSets.isEmpty(),
-        exercisesWithSets = exercisesWithSets,
-        previousPerformances = previousPerformances,
-        progress = progress,
-        timerProgress = viewModel.getRestTimeProgress(),
-        idSetWithRunningStopwatch = idSetWithRunningStopwatch,
-        restTime = restTime,
-        updateIdSetWithRunningStopwatch = viewModel::updateIdSetWithRunningStopwatch,
+    LibreFitScaffold(
+        title = AnnotatedString(stringResource(R.string.workout)),
         navigateBack = {
             if (exercisesWithSets.isEmpty()) {
                 viewModel.stopWorkoutService()
@@ -201,7 +195,7 @@ fun SharedTransitionScope.WorkoutScreen(
                 launchSingleTop = true
             }
         },
-        action = {
+        actions = listOf {
             navController.navigate(
                 Route.BeforeSavingScreen(
                     WorkoutWithExercisesAndSets(
@@ -214,30 +208,55 @@ fun SharedTransitionScope.WorkoutScreen(
                 )
             ) { launchSingleTop = true }
         },
-        onSelectedExerciseIdChange = { id, exercise ->
-            navController.navigate(
-                Route.InfoExerciseScreen(
-                    id,
-                    exercise.toEntity()
+        actionsEnabled = listOf(!exercisesWithSets.isEmpty()),
+        actionsDescription = listOf(stringResource(R.string.done)),
+        fabIcon = painterResource(R.drawable.ic_add),
+        fabDescription = stringResource(R.string.add_exercise),
+        bottomBar = {
+            BottomAppBar {
+                BottomAppBarContent(
+                    timeElapsed = timeElapsed,
+                    isStopwatchPaused = isStopwatchPaused,
+                    progress = progress,
+                    timerProgress = restTimerProgress,
+                    restTime = restTime,
+                    toggleStopwatch = viewModel::toggleStopwatch,
+                    modifyRestTime = viewModel::modifyRestTime
                 )
-            ) { launchSingleTop = true }
-        },
-        startStopwatch = viewModel::startStopwatch,
-        pauseStopwatch = viewModel::pauseStopwatch,
-        updateSetTime = viewModel::updateSetTime,
-        updateSetReps = viewModel::updateSetReps,
-        updateSetLoad = viewModel::updateSetLoad,
-        updateSetCompleted = viewModel::updateSetCompleted,
-        addSetToExercise = viewModel::addSetToExercise,
-        deleteSet = viewModel::deleteSet,
-        updateExerciseNotes = viewModel::updateExerciseNotes,
-        updateExerciseRestTime = viewModel::updateExerciseRestTime,
-        updateExerciseSetMode = viewModel::updateExerciseSetMode,
-        deleteExercise = viewModel::deleteExercise,
-        showInfo = { infoMode = it },
-        modifyRestTime = viewModel::modifyRestTime,
-        applyPreviousSetPerformance = viewModel::applyPreviousSetPerformance
-    )
+            }
+        }
+    ) { innerPadding ->
+        WorkoutScreenContent(
+            animatedVisibilityScope = animatedVisibilityScope,
+            innerPadding = innerPadding,
+            exercisesWithSets = exercisesWithSets,
+            previousPerformances = previousPerformances,
+            idSetWithRunningStopwatch = idSetWithRunningStopwatch,
+            updateIdSetWithRunningStopwatch = viewModel::updateIdSetWithRunningStopwatch,
+            onSelectedExerciseIdChange = { id, exercise ->
+                navController.navigate(
+                    Route.InfoExerciseScreen(
+                        id,
+                        exercise.toEntity()
+                    )
+                ) { launchSingleTop = true }
+            },
+            updateSetTime = viewModel::updateSetTime,
+            updateSetReps = viewModel::updateSetReps,
+            updateSetLoad = viewModel::updateSetLoad,
+            updateSetCompleted = viewModel::updateSetCompleted,
+            addSetToExercise = viewModel::addSetToExercise,
+            deleteSet = viewModel::deleteSet,
+            updateExerciseNotes = viewModel::updateExerciseNotes,
+            updateExerciseRestTime = viewModel::updateExerciseRestTime,
+            updateExerciseSetMode = viewModel::updateExerciseSetMode,
+            deleteExercise = viewModel::deleteExercise,
+            showInfo = { infoMode = it },
+            applyPreviousSetPerformance = viewModel::applyPreviousSetPerformance
+        )
+    }
+
+
 
 
     val lifecycleOwner = LocalLifecycleOwner.current
@@ -261,21 +280,11 @@ fun SharedTransitionScope.WorkoutScreen(
 @Composable
 private fun SharedTransitionScope.WorkoutScreenContent(
     animatedVisibilityScope: AnimatedVisibilityScope,
-    timeElapsed: Int,
-    isStopwatchPaused: Boolean,
+    innerPadding: PaddingValues,
     exercisesWithSets: List<UiExerciseWithSets>,
     previousPerformances: List<List<String>?>,
-    progress: Float,
-    isListEmpty: Boolean,
-    timerProgress: Float,
     idSetWithRunningStopwatch: Long?,
-    restTime: Int,
     updateIdSetWithRunningStopwatch: (Long?) -> Unit,
-    navigateBack: () -> Unit,
-    fabAction: () -> Unit,
-    action: () -> Unit,
-    startStopwatch: () -> Unit,
-    pauseStopwatch: () -> Unit,
     addSetToExercise: (Long) -> Unit,
     updateSetTime: (Int, Long) -> Unit,
     updateSetReps: (Int, Long) -> Unit,
@@ -288,79 +297,54 @@ private fun SharedTransitionScope.WorkoutScreenContent(
     deleteExercise: (Long) -> Unit,
     onSelectedExerciseIdChange: (Long, UiExerciseDC) -> Unit,
     showInfo: (InfoMode) -> Unit,
-    modifyRestTime: (Boolean) -> Unit,
     applyPreviousSetPerformance: (Long) -> Unit
 ) {
-    LibreFitScaffold(
-        title = AnnotatedString(stringResource(R.string.workout)),
-        navigateBack = navigateBack,
-        actions = listOf { action() },
-        actionsEnabled = listOf(!isListEmpty),
-        actionsDescription = listOf(stringResource(R.string.done)),
-        fabIcon = painterResource(R.drawable.ic_add),
-        fabAction = fabAction,
-        fabDescription = stringResource(R.string.add_exercise),
-        bottomBar = {
-            BottomAppBar {
-                BottomAppBarContent(
-                    timeElapsed = timeElapsed,
-                    isStopwatchPaused = isStopwatchPaused,
-                    progress = progress,
-                    timerProgress = timerProgress,
-                    restTime = restTime,
-                    startStopwatch = startStopwatch,
-                    pauseStopwatch = pauseStopwatch,
-                    modifyRestTime = modifyRestTime
-                )
-            }
-        }
-    ) { innerPadding ->
-        LibreFitLazyColumn(innerPadding) {
-            if (isListEmpty) {
-                item {
-                    Column(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        DumbbellLottie()
-                        Text(
-                            text = stringResource(id = R.string.add_to_empty_workout),
-                            color = MaterialTheme.colorScheme.onBackground,
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                }
-            } else {
-                itemsIndexed(
-                    items = exercisesWithSets,
-                    key = { i, exercise -> exercise.exercise.id }
-                ) { i, exerciseWithSets ->
-                    ExerciseCard(
-                        modifier = Modifier.animateItem(),
-                        animatedVisibilityScope = animatedVisibilityScope,
-                        exerciseWithSets = exerciseWithSets,
-                        previousPerformances = previousPerformances.getOrNull(i),
-                        idSetWithRunningStopwatch = idSetWithRunningStopwatch,
-                        workout = true,
-                        addSet = addSetToExercise,
-                        onDetail = onSelectedExerciseIdChange,
-                        onDelete = deleteExercise,
-                        deleteSet = deleteSet,
-                        showInfo = showInfo,
-                        updateIdSetWithRunningStopwatch = updateIdSetWithRunningStopwatch,
-                        updateExerciseNotes = updateExerciseNotes,
-                        updateExerciseRestTime = updateExerciseRestTime,
-                        updateExerciseSetMode = updateExerciseSetMode,
-                        updateSetTime = updateSetTime,
-                        updateSetReps = updateSetReps,
-                        updateSetLoad = updateSetLoad,
-                        updateSetCompleted = updateSetCompleted,
-                        applyPreviousSetPerformance = applyPreviousSetPerformance
+    LibreFitLazyColumn(innerPadding) {
+        if (exercisesWithSets.isEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    DumbbellLottie()
+                    Text(
+                        text = stringResource(id = R.string.add_to_empty_workout),
+                        color = MaterialTheme.colorScheme.onBackground,
+                        textAlign = TextAlign.Center
                     )
                 }
             }
+        } else {
+            itemsIndexed(
+                items = exercisesWithSets,
+                key = { i, exercise -> exercise.exercise.id }
+            ) { i, exerciseWithSets ->
+                ExerciseCard(
+                    modifier = Modifier.animateItem(),
+                    animatedVisibilityScope = animatedVisibilityScope,
+                    exerciseWithSets = exerciseWithSets,
+                    previousPerformances = previousPerformances.getOrNull(i),
+                    idSetWithRunningStopwatch = idSetWithRunningStopwatch,
+                    workout = true,
+                    addSet = addSetToExercise,
+                    onDetail = onSelectedExerciseIdChange,
+                    onDelete = deleteExercise,
+                    deleteSet = deleteSet,
+                    showInfo = showInfo,
+                    updateIdSetWithRunningStopwatch = updateIdSetWithRunningStopwatch,
+                    updateExerciseNotes = updateExerciseNotes,
+                    updateExerciseRestTime = updateExerciseRestTime,
+                    updateExerciseSetMode = updateExerciseSetMode,
+                    updateSetTime = updateSetTime,
+                    updateSetReps = updateSetReps,
+                    updateSetLoad = updateSetLoad,
+                    updateSetCompleted = updateSetCompleted,
+                    applyPreviousSetPerformance = applyPreviousSetPerformance
+                )
+            }
         }
     }
+
 }
 
 
@@ -373,8 +357,7 @@ private fun BottomAppBarContent(
     progress: Float,
     timerProgress: Float,
     restTime: Int,
-    startStopwatch: () -> Unit,
-    pauseStopwatch: () -> Unit,
+    toggleStopwatch: () -> Unit,
     modifyRestTime: (Boolean) -> Unit
 ) {
 
@@ -410,7 +393,7 @@ private fun BottomAppBarContent(
                 //Play button
                 ElevatedToggleButton(
                     checked = !isStopwatchPaused,
-                    onCheckedChange = { if (it) startStopwatch() else pauseStopwatch() },
+                    onCheckedChange = { toggleStopwatch() },
                     modifier = Modifier.height(maxHeight.dp),
                     shapes = ToggleButtonDefaults.shapesFor(maxHeight.dp)
                 ) {
@@ -486,4 +469,69 @@ private fun BottomAppBarContent(
 
         }
     }
+}
+
+@OptIn(ExperimentalSharedTransitionApi::class)
+@Preview
+@Composable
+private fun WorkoutScreenPreview() {
+    val e = listOf(
+        UiExerciseWithSets(
+            exerciseDC = UiExerciseDC(
+                name = "3/4 Sit-Up",
+                images = persistentListOf("3_4_Sit-Up/0.jpg")
+            )
+        )
+    )
+    LibreFitTheme(dynamicColor = false, darkTheme = true) {
+        SharedTransitionLayout {
+            AnimatedVisibility(true) {
+                LibreFitScaffold(
+                    title = AnnotatedString(stringResource(R.string.workout)),
+                    navigateBack = {},
+                    actions = listOf {},
+                    actionsEnabled = listOf(!e.isEmpty()),
+                    actionsDescription = listOf(stringResource(R.string.done)),
+                    fabIcon = painterResource(R.drawable.ic_add),
+                    fabAction = {},
+                    bottomBar = {
+                        BottomAppBar {
+                            BottomAppBarContent(
+                                timeElapsed = 0,
+                                isStopwatchPaused = false,
+                                progress = 0f,
+                                timerProgress = 0f,
+                                restTime = 0,
+                                toggleStopwatch = {},
+                                modifyRestTime = {}
+                            )
+                        }
+                    }
+                ) { innerPadding ->
+                    WorkoutScreenContent(
+                        animatedVisibilityScope = this,
+                        innerPadding = innerPadding,
+                        exercisesWithSets = e,
+                        previousPerformances = emptyList(),
+                        idSetWithRunningStopwatch = null,
+                        updateIdSetWithRunningStopwatch = {},
+                        addSetToExercise = {},
+                        updateSetTime = { _, _ -> },
+                        updateSetReps = { _, _ -> },
+                        updateSetLoad = { _, _ -> },
+                        updateSetCompleted = { _, _ -> },
+                        deleteSet = {},
+                        updateExerciseNotes = { _, _ -> },
+                        updateExerciseRestTime = { _, _ -> },
+                        updateExerciseSetMode = { _, _ -> },
+                        deleteExercise = {},
+                        onSelectedExerciseIdChange = { _, _ -> },
+                        showInfo = {},
+                        applyPreviousSetPerformance = {}
+                    )
+                }
+            }
+        }
+    }
+
 }

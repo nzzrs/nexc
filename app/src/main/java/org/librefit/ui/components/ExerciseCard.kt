@@ -25,8 +25,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
-import androidx.compose.animation.core.animateDpAsState
-import androidx.compose.animation.core.tween
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -36,14 +35,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentWidth
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyItemScope
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
@@ -71,6 +66,7 @@ import androidx.compose.material3.rememberSwipeToDismissBoxState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -439,37 +435,27 @@ fun SharedTransitionScope.ExerciseCard(
                 }
 
                 //Sets
-                val setHeight = 60
-                val animatedSetsColumnHeight = animateDpAsState(
-                    targetValue = (exerciseWithSets.sets.size * setHeight).dp,
-                    animationSpec = tween(600),
-                    label = "animatedSetsColumnHeight",
-                )
-                LazyColumn(
-                    modifier = Modifier.height(animatedSetsColumnHeight.value)
-                ) {
-                    itemsIndexed(
-                        items = exerciseWithSets.sets,
-                        key = { i, set -> set.id }
-                    ) { i, set ->
-                        Set(
-                            i = i,
-                            set = set,
-                            previousSet = previousPerformances?.getOrNull(i),
-                            setHeight = setHeight,
-                            lastIndex = exerciseWithSets.sets.lastIndex,
-                            setMode = exerciseWithSets.exercise.setMode,
-                            isStopwatchRunning = idSetWithRunningStopwatch == null,
-                            isThisSetStopwatchRunning = idSetWithRunningStopwatch == set.id,
-                            workout = workout,
-                            deleteSet = deleteSet,
-                            updateIdSetWithRunningStopwatch = updateIdSetWithRunningStopwatch,
-                            updateSetTime = updateSetTime,
-                            updateSetReps = updateSetReps,
-                            updateSetLoad = updateSetLoad,
-                            updateSetCompleted = updateSetCompleted,
-                            applyPreviousSet = applyPreviousSetPerformance
-                        )
+                Column(modifier = Modifier.animateContentSize()) {
+                    exerciseWithSets.sets.forEachIndexed { i, set ->
+                        key(set) {
+                            Set(
+                                i = i,
+                                set = set,
+                                previousSet = previousPerformances?.getOrNull(i),
+                                lastIndex = exerciseWithSets.sets.lastIndex,
+                                setMode = exerciseWithSets.exercise.setMode,
+                                isStopwatchRunning = idSetWithRunningStopwatch == null,
+                                isThisSetStopwatchRunning = idSetWithRunningStopwatch == set.id,
+                                workout = workout,
+                                deleteSet = deleteSet,
+                                updateIdSetWithRunningStopwatch = updateIdSetWithRunningStopwatch,
+                                updateSetTime = updateSetTime,
+                                updateSetReps = updateSetReps,
+                                updateSetLoad = updateSetLoad,
+                                updateSetCompleted = updateSetCompleted,
+                                applyPreviousSet = applyPreviousSetPerformance
+                            )
+                        }
                     }
                 }
             }
@@ -487,12 +473,11 @@ fun SharedTransitionScope.ExerciseCard(
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-private fun LazyItemScope.Set(
+private fun Set(
     i: Int,
     set: UiSet,
     previousSet: String? = null,
     lastIndex: Int,
-    setHeight: Int,
     setMode: SetMode,
     isStopwatchRunning: Boolean,
     isThisSetStopwatchRunning: Boolean,
@@ -519,7 +504,6 @@ private fun LazyItemScope.Set(
     }
 
     SwipeToDismissBox(
-        modifier = Modifier.animateItem(),
         state = swipeToDismissBoxState,
         onDismiss = { deleteSet(set.id) },
         backgroundContent = {
@@ -578,7 +562,6 @@ private fun LazyItemScope.Set(
                     if (set.completed) MaterialTheme.colorScheme.primaryContainer
                     else MaterialTheme.colorScheme.surfaceContainerHighest
                 )
-                .height(setHeight.dp)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = if (previousSet != null) Arrangement.SpaceBetween else Arrangement.SpaceAround

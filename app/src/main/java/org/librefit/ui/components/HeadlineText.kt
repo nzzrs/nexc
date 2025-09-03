@@ -21,10 +21,8 @@ package org.librefit.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
@@ -40,10 +38,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.librefit.R
@@ -76,22 +74,23 @@ fun HeadlineText(
         horizontalArrangement = Arrangement.Center
     ) {
         Text(
+            modifier = Modifier.weight(1f, false),
             text = text,
             style = MaterialTheme.typography.headlineSmallEmphasized,
-            color = MaterialTheme.colorScheme.primary
+            color = MaterialTheme.colorScheme.primary,
+            textAlign = TextAlign.Center,
         )
         if (infoMode != null) {
-            Spacer(Modifier.width(10.dp))
-
             IconButton(
                 onClick = { localInfoMode = infoMode }
             ) {
                 Icon(
                     painter = painterResource(R.drawable.ic_info),
-                    contentDescription = null
+                    contentDescription = stringResource(R.string.info)
                 )
             }
         }
+
     }
 }
 
@@ -107,7 +106,14 @@ private fun HeadlineTextPreview() {
                 item {
                     HeadlineText(
                         "Headline",
-                        InfoMode.entries.filter { it != InfoMode.DISMISS }.random()
+                        InfoMode.entries.filter { it != InfoMode.DISMISS }.randomOrNull()
+                    )
+                }
+
+                item {
+                    HeadlineText(
+                        "Very long long log headline",
+                        InfoMode.entries.filter { it != InfoMode.DISMISS }.randomOrNull()
                     )
                 }
 

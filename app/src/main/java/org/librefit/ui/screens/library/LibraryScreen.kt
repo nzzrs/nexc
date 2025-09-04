@@ -44,6 +44,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.graphics.shapes.CornerRounding
@@ -51,6 +52,7 @@ import androidx.graphics.shapes.Morph
 import androidx.graphics.shapes.RoundedPolygon
 import androidx.graphics.shapes.star
 import kotlinx.coroutines.delay
+import org.librefit.R
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.animations.morphShape.CustomRotatingMorphShape
 import org.librefit.ui.theme.LibreFitTheme
@@ -164,7 +166,7 @@ fun LibraryScreen(
             contentAlignment = Alignment.Center
         ) {
             Text(
-                text = "Coming soon",
+                text = stringResource(R.string.coming_soon),
                 style = MaterialTheme.typography.headlineSmallEmphasized,
                 color = colors.getValue(currentColor)
             )

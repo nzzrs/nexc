@@ -100,10 +100,11 @@ fun AboutScreen(navController: NavHostController) {
                 LibreFitAppName.AppNameText(MaterialTheme.typography.displayLargeEmphasized)
             }
 
-            item {
-                val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
-                val version = pInfo?.versionName.toString()
-                Text(stringResource(R.string.version) + ": $version")
+            val pInfo = context.packageManager.getPackageInfo(context.packageName, 0)
+            pInfo?.versionName?.let {
+                item {
+                    Text(stringResource(R.string.version) + ": $it")
+                }
             }
 
             item {

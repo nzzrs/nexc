@@ -177,6 +177,14 @@ object Formatter {
         )
     }
 
+    fun getLongDateFromLocalDate(date: LocalDateTime): String {
+        return date.format(
+            DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(
+                Locale.getDefault()
+            )
+        )
+    }
+
     fun getFullDateFromLocalDate(date: LocalDateTime): String {
         return date.format(
             DateTimeFormatter.ofLocalizedDate(FormatStyle.FULL).withLocale(

@@ -53,7 +53,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
@@ -61,6 +60,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import kotlinx.collections.immutable.persistentListOf
 import org.librefit.R
 import org.librefit.enums.InfoMode
 import org.librefit.enums.SuccessMessage
@@ -70,15 +70,14 @@ import org.librefit.ui.components.LibreFitButton
 import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.dialogs.ConfirmDialog
+import org.librefit.ui.models.UiExercise
 import org.librefit.ui.models.UiExerciseDC
 import org.librefit.ui.models.UiExerciseWithSets
+import org.librefit.ui.models.UiSet
 import org.librefit.ui.models.UiWorkout
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter
 import org.librefit.util.Formatter.formatTime
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
@@ -336,6 +335,7 @@ fun SharedTransitionScope.BeforeSavingScreenContent(
                 }
                 item {
                     ElevatedCard(
+                        shape = MaterialTheme.shapes.extraLargeIncreased,
                         onClick = {
                             navController.navigate(Route.InfoWorkoutScreen(routine.id)) {
                                 launchSingleTop = true
@@ -348,7 +348,7 @@ fun SharedTransitionScope.BeforeSavingScreenContent(
                             )
                     ) {
                         Column(
-                            modifier = Modifier.padding(15.dp),
+                            modifier = Modifier.padding(20.dp),
                             verticalArrangement = Arrangement.spacedBy(20.dp)
                         ) {
                             Row(
@@ -363,7 +363,6 @@ fun SharedTransitionScope.BeforeSavingScreenContent(
                                         style = MaterialTheme.typography.titleLarge,
                                         maxLines = 1,
                                         overflow = TextOverflow.Ellipsis,
-                                        fontWeight = FontWeight.SemiBold,
                                         modifier = Modifier.sharedElement(
                                             sharedContentState = rememberSharedContentState(
                                                 routine.id.toString() + routine.title
@@ -372,13 +371,10 @@ fun SharedTransitionScope.BeforeSavingScreenContent(
                                         )
                                     )
                                     Text(
-                                        stringResource(R.string.creation_date) + ": " +
-                                                routine.created.format(
-                                                    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
-                                                        .withLocale(
-                                                            Locale.getDefault()
-                                                        )
-                                                )
+                                        text = stringResource(R.string.creation_date) + ": " +
+                                                Formatter.getLongDateFromLocalDate(routine.created),
+                                        maxLines = 1,
+                                        overflow = TextOverflow.Ellipsis,
                                     )
                                 }
                                 IconButton(
@@ -411,11 +407,11 @@ fun SharedTransitionScope.BeforeSavingScreenContent(
             }
 
             item {
-                ElevatedCard {
+                ElevatedCard(shape = MaterialTheme.shapes.extraLargeIncreased) {
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(10.dp),
+                            .padding(20.dp),
                         verticalArrangement = Arrangement.spacedBy(10.dp)
                     ) {
                         Row(
@@ -440,7 +436,7 @@ fun SharedTransitionScope.BeforeSavingScreenContent(
                                     text = exercise.exerciseDC.name,
                                     style = MaterialTheme.typography.titleMedium
                                 )
-                                Text("${exercise.sets.filter { it.completed }.size} / ${exercise.sets.size}")
+                                Text("${exercise.sets.count { s -> s.completed }} / ${exercise.sets.count()}")
                             }
                         }
                     }

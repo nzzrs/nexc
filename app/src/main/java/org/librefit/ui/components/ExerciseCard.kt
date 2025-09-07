@@ -559,7 +559,7 @@ private fun Set(
                     )
                 )
                 .background(
-                    if (set.completed) MaterialTheme.colorScheme.primaryContainer
+                    if (set.completed) MaterialTheme.colorScheme.tertiaryContainer
                     else MaterialTheme.colorScheme.surfaceContainerHighest
                 )
                 .fillMaxWidth(),

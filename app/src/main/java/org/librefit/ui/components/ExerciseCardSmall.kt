@@ -226,7 +226,7 @@ fun SharedTransitionScope.ExerciseCardSmall(
                                         )
                                     )
                                     .background(
-                                        if (!isRoutine && set.completed) MaterialTheme.colorScheme.secondaryContainer
+                                        if (!isRoutine && set.completed) MaterialTheme.colorScheme.tertiaryContainer
                                         else Color.Unspecified
                                     )
                                     .padding(5.dp),

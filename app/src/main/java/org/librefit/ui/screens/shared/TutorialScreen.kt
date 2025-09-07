@@ -22,6 +22,7 @@ package org.librefit.ui.screens.shared
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -53,6 +54,7 @@ import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -125,6 +127,7 @@ fun TutorialScreen(
 
                 HorizontalPager(
                     state = pagerState,
+                    contentPadding = PaddingValues(start = 30.dp, end = 30.dp),
                     pageSpacing = 20.dp,
                     beyondViewportPageCount = 5
                 ) { page ->
@@ -134,14 +137,14 @@ fun TutorialScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp),
+                                .padding(15.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Image(
                                 modifier = Modifier
                                     .clip(MaterialTheme.shapes.large)
-                                    .fillMaxWidth(0.6f),
+                                    .fillMaxWidth(0.8f),
                                 painter = painterResource(
                                     id = when (page) {
                                         0 -> R.drawable.tut_create_routine_1
@@ -165,7 +168,8 @@ fun TutorialScreen(
                                         4 -> R.string.tut_create_routine_5
                                         else -> error("Invalid page index: $page. Expected: ${0..pages - 1}")
                                     }
-                                )
+                                ),
+                                textAlign = TextAlign.Center
                             )
                         }
                     }
@@ -230,6 +234,7 @@ fun TutorialScreen(
 
                 HorizontalPager(
                     state = pagerState,
+                    contentPadding = PaddingValues(start = 30.dp, end = 30.dp),
                     pageSpacing = 20.dp,
                     beyondViewportPageCount = 5
                 ) { page ->
@@ -239,14 +244,14 @@ fun TutorialScreen(
                         Column(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .padding(20.dp),
+                                .padding(15.dp),
                             horizontalAlignment = Alignment.CenterHorizontally,
                             verticalArrangement = Arrangement.spacedBy(10.dp)
                         ) {
                             Image(
                                 modifier = Modifier
                                     .clip(MaterialTheme.shapes.large)
-                                    .fillMaxWidth(0.6f),
+                                    .fillMaxWidth(0.8f),
                                 painter = painterResource(
                                     id = when (page) {
                                         0 -> R.drawable.tut_complete_workout_1
@@ -272,7 +277,8 @@ fun TutorialScreen(
                                         5 -> R.string.tut_complete_workout_6
                                         else -> error("Invalid page index: $page. Expected: ${0..pages}")
                                     }
-                                )
+                                ),
+                                textAlign = TextAlign.Center
                             )
                         }
                     }

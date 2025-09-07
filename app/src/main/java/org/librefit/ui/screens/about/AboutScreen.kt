@@ -169,20 +169,30 @@ fun AboutScreen(navController: NavHostController) {
 
             item {
                 AboutItem(
-                    painterResource(R.drawable.ic_policy),
-                    stringResource(R.string.privacy),
-                    description = stringResource(R.string.privacy_policy_desc),
+                    icon = painterResource(R.drawable.ic_help),
+                    text = stringResource(R.string.tutorial),
+                    description = stringResource(R.string.tutorial_desc),
                     onClick = {
-                        navController.navigate(Route.PrivacyScreen) { launchSingleTop = true }
+                        navController.navigate(Route.TutorialScreen()) { launchSingleTop = true }
                     }
-
                 )
             }
 
             item {
                 AboutItem(
-                    painterResource(R.drawable.ic_globe),
-                    stringResource(R.string.website),
+                    icon = painterResource(R.drawable.ic_policy),
+                    text = stringResource(R.string.privacy),
+                    description = stringResource(R.string.privacy_policy_desc),
+                    onClick = {
+                        navController.navigate(Route.PrivacyScreen) { launchSingleTop = true }
+                    }
+                )
+            }
+
+            item {
+                AboutItem(
+                    icon = painterResource(R.drawable.ic_globe),
+                    text = stringResource(R.string.website),
                     onClick = {
                         url.value = context.getString(R.string.url_website)
                     }
@@ -192,8 +202,8 @@ fun AboutScreen(navController: NavHostController) {
 
             item {
                 AboutItem(
-                    painterResource(R.drawable.ic_license),
-                    stringResource(R.string.license),
+                    icon = painterResource(R.drawable.ic_license),
+                    text = stringResource(R.string.license),
                     description = stringResource(R.string.license_desc),
                     onClick = {
                         navController.navigate(Route.LicenseScreen) { launchSingleTop = true }
@@ -203,9 +213,9 @@ fun AboutScreen(navController: NavHostController) {
 
             item {
                 AboutItem(
-                    painterResource(R.drawable.ic_github),
-                    stringResource(R.string.github),
-                    stringResource(R.string.source_code),
+                    icon = painterResource(R.drawable.ic_github),
+                    text = stringResource(R.string.github),
+                    description = stringResource(R.string.source_code),
                     onClick = {
                         url.value = context.getString(R.string.url_source_code)
                     }
@@ -214,8 +224,8 @@ fun AboutScreen(navController: NavHostController) {
 
             item {
                 AboutItem(
-                    painterResource(R.drawable.ic_contract),
-                    stringResource(R.string.dependencies),
+                    icon = painterResource(R.drawable.ic_contract),
+                    text = stringResource(R.string.dependencies),
                     onClick = {
                         navController.navigate(Route.LibrariesScreen) { launchSingleTop = true }
                     }
@@ -229,9 +239,9 @@ fun AboutScreen(navController: NavHostController) {
 
             item {
                 AboutItem(
-                    painterResource(R.drawable.ic_person),
-                    stringResource(R.string.url_IamDg).split("/").last(),
-                    stringResource(R.string.founder),
+                    icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.url_IamDg).split("/").last(),
+                    description = stringResource(R.string.founder),
                     onClick = {
                         url.value = context.getString(R.string.url_IamDg)
                     }
@@ -244,9 +254,9 @@ fun AboutScreen(navController: NavHostController) {
 
             item {
                 AboutItem(
-                    painterResource(R.drawable.ic_person),
-                    stringResource(R.string.url_IamDg).split("/").last(),
-                    stringResource(R.string.contributed_to) + stringResource(R.string.language_italian),
+                    icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.url_IamDg).split("/").last(),
+                    description = stringResource(R.string.contributed_to) + stringResource(R.string.language_italian),
                     onClick = {
                         url.value = context.getString(R.string.url_IamDg)
                     }

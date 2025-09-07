@@ -152,17 +152,29 @@ private fun SharedTransitionScope.HomeScreenContent(
 
         if (routines.isEmpty()) {
             item {
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(150.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
                     Text(
                         text = stringResource(R.string.start_creating_routine),
                         textAlign = TextAlign.Center
                     )
+                    IconButton(
+                        onClick = {
+                            navController.navigate(Route.TutorialScreen()) {
+                                launchSingleTop = true
+                            }
+                        }
+                    ) {
+                        Icon(
+                            painter = painterResource(R.drawable.ic_help),
+                            contentDescription = stringResource(R.string.help)
+                        )
+                    }
                 }
             }
         }
@@ -299,10 +311,10 @@ fun HomeScreenPreview() {
                     HomeScreenContent(
                         innerPadding = innerPadding,
                         navController = rememberNavController(),
-                        routines = (0..5).map { i ->
+                        routines = (0..0).map { i ->
                             UiWorkout(
                                 id = i.toLong(),
-                                title = "Workout $i"
+                                title = "Chest day"
                             )
                         },
                         navigateToRoutine = {},

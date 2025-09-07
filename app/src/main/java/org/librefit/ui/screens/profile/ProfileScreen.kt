@@ -83,6 +83,7 @@ import kotlinx.coroutines.delay
 import org.librefit.R
 import org.librefit.enums.chart.WorkoutChart
 import org.librefit.enums.pages.MainScreenPages
+import org.librefit.enums.pages.TutorialContent
 import org.librefit.nav.Route
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.LibreFitAppName.GetAppNameInAnnotatedBuilder
@@ -266,10 +267,29 @@ private fun SharedTransitionScope.ProfileScreenContent(
                     verticalArrangement = Arrangement.Center
                 ) {
                     EmptyLottie()
-                    Text(
-                        text = stringResource(R.string.nothing_to_show),
-                        textAlign = TextAlign.Center
-                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.Center,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(1f, false),
+                            text = stringResource(R.string.start_completing_workout),
+                            textAlign = TextAlign.Center,
+                        )
+                        IconButton(
+                            onClick = {
+                                navController.navigate(Route.TutorialScreen(TutorialContent.START_WORKOUT)) {
+                                    launchSingleTop = true
+                                }
+                            }
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_help),
+                                contentDescription = stringResource(R.string.help)
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -284,7 +304,7 @@ private fun SharedTransitionScope.ProfileScreenContent(
                         launchSingleTop = true
                     }
                 },
-                shape = MaterialTheme.shapes.extraLarge,
+                shape = MaterialTheme.shapes.extraLargeIncreased,
                 modifier = Modifier
                     .sharedBounds(
                         sharedContentState = rememberSharedContentState(workout.id),
@@ -294,7 +314,7 @@ private fun SharedTransitionScope.ProfileScreenContent(
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(15.dp)
+                        .padding(20.dp)
                 ) {
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -453,13 +473,13 @@ fun StreakCard(weekStreak: Int) {
 @Preview
 @Composable
 private fun ProfileScreenPreview() {
-    val workoutsWithExercises = (0..5).map {
+    val workoutsWithExercises = (0..0).map {
         UiWorkoutWithExercisesAndSets(
             workout = UiWorkout(
                 id = Random.nextLong(),
-                title = "Workout $it",
+                title = "Chest on \uD83D\uDD25",
                 completed = LocalDateTime.now().minusDays(it.toLong() * 2),
-                timeElapsed = Random.nextInt(0, 90)
+                timeElapsed = 593
             ),
             exercisesWithSets = persistentListOf()
         )
@@ -467,7 +487,7 @@ private fun ProfileScreenPreview() {
 
     val listChartData = workoutsWithExercises.map {
         Point(
-            yValues = listOf(it.workout.timeElapsed.toDouble()),
+            yValues = listOf(it.workout.timeElapsed.toDouble() / 60),
             xValue = Formatter.getShortDateFromLocalDate(it.workout.completed),
             workoutId = it.workout.id
         )
@@ -535,7 +555,7 @@ private fun ProfileScreenPreview() {
                     ProfileScreenContent(
                         innerPadding = innerPadding,
                         navController = rememberNavController(),
-                        weekStreak = 2,
+                        weekStreak = 0,
                         points = listChartData,
                         workoutChart = WorkoutChart.DURATION,
                         workoutsWithExercises = workoutsWithExercises,

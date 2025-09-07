@@ -23,6 +23,7 @@ import kotlinx.serialization.Serializable
 import org.librefit.db.entity.ExerciseDC
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.enums.SuccessMessage
+import org.librefit.enums.pages.TutorialContent
 
 
 sealed class Route {
@@ -91,6 +92,12 @@ sealed class Route {
 
     @Serializable
     object SupportScreen
+
+    @Serializable
+    data class TutorialScreen(
+        val tutorialContent: TutorialContent = TutorialContent.CREATE_ROUTINE,
+        val fromWelcomeScreen: Boolean = false
+    )
 
     @Serializable
     data class WorkoutScreen(

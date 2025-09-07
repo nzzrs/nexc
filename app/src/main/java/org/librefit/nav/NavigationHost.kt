@@ -53,6 +53,7 @@ import org.librefit.ui.screens.settings.SettingsScreen
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.ui.screens.shared.SuccessScreen
 import org.librefit.ui.screens.shared.SupportScreen
+import org.librefit.ui.screens.shared.TutorialScreen
 import org.librefit.ui.screens.statistics.StatisticsScreen
 import org.librefit.ui.screens.workout.WorkoutScreen
 import kotlin.reflect.typeOf
@@ -65,7 +66,6 @@ fun NavigationHost() {
 
     val sharedViewModel: SharedViewModel = viewModel()
 
-    //TODO: create tutorial screen
 
     SharedTransitionLayout {
         NavHost(
@@ -167,6 +167,13 @@ fun NavigationHost() {
             }
             composable<Route.StatisticsScreen> {
                 StatisticsScreen(navController = navController)
+            }
+            composable<Route.TutorialScreen> {
+                TutorialScreen(
+                    tutorialContent = it.toRoute<Route.TutorialScreen>().tutorialContent,
+                    fromWelcomeScreen = it.toRoute<Route.TutorialScreen>().fromWelcomeScreen,
+                    navController = navController
+                )
             }
             composable<Route.WorkoutScreen> {
                 WorkoutScreen(

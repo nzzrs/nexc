@@ -63,6 +63,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import org.librefit.R
+import org.librefit.enums.pages.TutorialContent
 import org.librefit.nav.Route
 import org.librefit.ui.components.HeadlineText
 import org.librefit.ui.components.LibreFitLazyColumn
@@ -146,10 +147,29 @@ private fun SharedTransitionScope.CalendarScreenContent(
                         verticalArrangement = Arrangement.Center
                     ) {
                         EmptyLottie()
-                        Text(
-                            text = stringResource(R.string.nothing_to_show),
-                            textAlign = TextAlign.Center
-                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                modifier = Modifier.weight(1f, false),
+                                text = stringResource(R.string.start_completing_workout),
+                                textAlign = TextAlign.Center,
+                            )
+                            IconButton(
+                                onClick = {
+                                    navController.navigate(Route.TutorialScreen(TutorialContent.START_WORKOUT)) {
+                                        launchSingleTop = true
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_help),
+                                    contentDescription = stringResource(R.string.help)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -242,7 +262,7 @@ private fun CalendarScreenPreview() {
                 CalendarScreenContent(
                     navController = rememberNavController(),
                     datePickerState = rememberDatePickerState(),
-                    workoutsFromDate = listOf(UiWorkout(title = "Name workout")),
+                    workoutsFromDate = listOf(),
                     animatedVisibilityScope = this,
                 )
             }

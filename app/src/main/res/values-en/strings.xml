@@ -47,6 +47,7 @@
     <string name="version">Version</string>
     <string name="dependencies">Dependencies</string>
     <string name="lets_build_it_together">Let\'s build it together</string>
+    <string name="tutorial_desc">Learn how to create routines and track your workouts.</string>
     <string name="unlink_routine_question">Unlink routine?</string>
     <string name="unlink_routine_text">Linking routines allows to measure progress of workouts over time. If you unlink this workout from a routine, the latter will not be deleted and any workout linked to that routine will remain unchanged. The unlink will affect only the current workout.</string>
     <string name="overview">Overview</string>
@@ -228,6 +229,7 @@
     <string name="edit_routine">Edit routine</string>
     <string name="start_creating_routine">Start by creating a new routine</string>
 
+    <string name="start_completing_workout">Start by completing a workout</string>
     <string name="privacy">Privacy</string>
     <string name="privacy_notice">Privacy notice</string>
     <string name="privacy_notice_summary">LibreFit provides **maximum privacy** as it **cannot access the Internet**. In addition, all permissions are **optional** and do not allow data collection.</string>

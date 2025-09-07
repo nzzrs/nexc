@@ -59,6 +59,7 @@
     <string name="version">Version</string>
     <string name="dependencies">Dependencies</string>
     <string name="lets_build_it_together">Let\'s build it together</string>
+    <string name="tutorial_desc">Learn how to create routines and track your workouts.</string>
 
 
     <!--Before saving screen-->
@@ -189,6 +190,7 @@
     <string name="calendar">Calendar</string>
     <string name="min">min</string>
     <string name="week_streak">Week streak:</string>
+    <string name="start_completing_workout">Start by completing a workout</string>
 
 
     <!-- Privacy screen-->
@@ -389,5 +391,6 @@
     <string name="add">Add</string>
     <string name="save">Save</string>
     <string name="others">Others</string>
+    <string name="help">Help</string>
 
 </resources>

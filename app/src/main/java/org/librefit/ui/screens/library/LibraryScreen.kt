@@ -20,20 +20,17 @@
 package org.librefit.ui.screens.library
 
 import androidx.compose.animation.animateColorAsState
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -43,20 +40,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import androidx.graphics.shapes.CornerRounding
-import androidx.graphics.shapes.Morph
-import androidx.graphics.shapes.RoundedPolygon
-import androidx.graphics.shapes.star
 import kotlinx.coroutines.delay
 import org.librefit.R
+import org.librefit.enums.pages.MainScreenPages
+import org.librefit.ui.components.LibreFitAppName.GetAppNameInAnnotatedBuilder
 import org.librefit.ui.components.LibreFitScaffold
-import org.librefit.ui.components.animations.morphShape.CustomRotatingMorphShape
+import org.librefit.ui.components.animations.morphShape.AnimatedMorphShapes
 import org.librefit.ui.theme.LibreFitTheme
-import kotlin.random.Random
 
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
@@ -67,45 +62,20 @@ fun LibraryScreen(
 
     //TODO: implement a default routine
 
-    var shapeA by remember {
-        mutableStateOf(
-            RoundedPolygon(
-                numVertices = 6,
-                rounding = CornerRounding(0.1f)
-            )
-        )
+    val morphIntervalMillis = remember { 4000L }
+
+    val polygons = remember {
+        listOf(
+            MaterialShapes.SoftBurst,
+            MaterialShapes.Cookie6Sided,
+            MaterialShapes.Pentagon,
+            MaterialShapes.Pill,
+            MaterialShapes.Diamond,
+            MaterialShapes.Slanted,
+            MaterialShapes.Gem,
+            MaterialShapes.Oval,
+        ).shuffled()
     }
-    // Shape B can remain static for this example, but could also be stateful
-    var shapeB by remember {
-        mutableStateOf(
-            RoundedPolygon.star(
-                numVerticesPerRadius = 6,
-                rounding = CornerRounding(1f)
-            )
-        )
-    }
-    val infiniteTransition = rememberInfiniteTransition("infinite outline movement")
-    val morph = remember(shapeA, shapeB) {
-        Morph(shapeA, shapeB)
-    }
-    val animatedProgress = infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 1f,
-        animationSpec = infiniteRepeatable(
-            tween(2000),
-            repeatMode = RepeatMode.Reverse
-        ),
-        label = "animatedMorphProgress"
-    )
-    val animatedRotation = infiniteTransition.animateFloat(
-        initialValue = 0f,
-        targetValue = 360f,
-        animationSpec = infiniteRepeatable(
-            tween(6000, easing = LinearEasing),
-            repeatMode = RepeatMode.Restart
-        ),
-        label = "animatedMorphProgress"
-    )
 
     val colors = mapOf(
         MaterialTheme.colorScheme.primaryContainer to MaterialTheme.colorScheme.onPrimaryContainer,
@@ -120,29 +90,18 @@ fun LibraryScreen(
         mutableStateOf(colors.keys.random())
     }
 
-
+    /**
+     * Only used to preview animation in android studio
+     */
     val animatedColor by animateColorAsState(
         targetValue = currentColor,
         animationSpec = MaterialTheme.motionScheme.slowEffectsSpec(),
         label = "ColorAnimation"
     )
-    // Change shape and color
+    // Change color
     LaunchedEffect(Unit) {
         while (true) {
-            delay(Random.nextLong(2, 6) * 1000)
-
-            shapeA = RoundedPolygon(
-                numVertices = Random.nextInt(3, 8),
-                rounding = CornerRounding(0.2f)
-            )
-
-            shapeB = RoundedPolygon.star(
-                numVerticesPerRadius = Random.nextInt(3, 8),
-                rounding = CornerRounding(1f)
-            )
-
-            delay(Random.nextLong(2, 6) * 1000)
-
+            delay(morphIntervalMillis)
             currentColor = colors.keys.random()
         }
     }
@@ -152,34 +111,82 @@ fun LibraryScreen(
             .padding(innerPadding),
         contentAlignment = Alignment.Center
     ) {
-        Box(
-            modifier = Modifier
-                .clip(
-                    CustomRotatingMorphShape(
-                        morph,
-                        animatedProgress.value,
-                        animatedRotation.value
-                    )
-                )
-                .size(400.dp)
-                .background(animatedColor),
-            contentAlignment = Alignment.Center
-        ) {
-            Text(
-                text = stringResource(R.string.coming_soon),
-                style = MaterialTheme.typography.headlineSmallEmphasized,
-                color = colors.getValue(currentColor)
-            )
-        }
+        AnimatedMorphShapes(
+            morphIntervalMillis = morphIntervalMillis,
+            globalRotationDurationMillis = 8000,
+            color = currentColor,
+            shapeSize = 400.dp,
+            roundedPolygons = polygons
+        )
+        Text(
+            text = stringResource(R.string.coming_soon),
+            style = MaterialTheme.typography.headlineSmallEmphasized,
+            color = colors.getValue(currentColor)
+        )
     }
 
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Preview
 @Composable
 private fun LibraryScreenPreview() {
-    LibreFitTheme(dynamicColor = false, darkTheme = false) {
-        LibreFitScaffold { innerPadding ->
+
+    val pagerState = rememberPagerState(
+        initialPage = MainScreenPages.LIBRARY.ordinal,
+        pageCount = { MainScreenPages.entries.size }
+    )
+    LibreFitTheme(dynamicColor = false, darkTheme = true) {
+        LibreFitScaffold(
+            title = buildAnnotatedString {
+                GetAppNameInAnnotatedBuilder(MaterialTheme.typography.titleLargeEmphasized)
+            },
+            actions = listOf({ }, { }),
+            actionsIcons = listOf(
+                painterResource(R.drawable.ic_info),
+                painterResource(R.drawable.ic_settings)
+            ),
+            actionsElevated = listOf(false, false),
+            bottomBar = {
+                NavigationBar {
+                    MainScreenPages.entries.forEach { page ->
+                        NavigationBarItem(
+                            selected = pagerState.currentPage == page.ordinal,
+                            onClick = { },
+                            icon = {
+                                Icon(
+                                    painter = painterResource(
+                                        id = when (page) {
+                                            MainScreenPages.LIBRARY -> R.drawable.ic_library
+                                            MainScreenPages.HOME -> R.drawable.ic_home
+                                            MainScreenPages.PROFILE -> R.drawable.ic_person
+                                        }
+                                    ),
+                                    contentDescription = stringResource(
+                                        id = when (page) {
+                                            MainScreenPages.LIBRARY -> R.string.library
+                                            MainScreenPages.HOME -> R.string.home
+                                            MainScreenPages.PROFILE -> R.string.profile
+                                        }
+                                    )
+                                )
+                            },
+                            label = {
+                                Text(
+                                    text = stringResource(
+                                        id = when (page) {
+                                            MainScreenPages.LIBRARY -> R.string.library
+                                            MainScreenPages.HOME -> R.string.home
+                                            MainScreenPages.PROFILE -> R.string.profile
+                                        }
+                                    )
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+        ) { innerPadding ->
             LibraryScreen(innerPadding)
         }
     }

@@ -37,11 +37,13 @@ import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.LoadingIndicatorDefaults.ContainerHeight
 import androidx.compose.material3.LoadingIndicatorDefaults.ContainerWidth
 import androidx.compose.material3.LoadingIndicatorDefaults.IndicatorSize
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -76,11 +78,14 @@ fun AnimatedMorphShapes(
     morphIntervalMillis: Long,
     globalRotationDurationMillis: Int,
     shapeSize: Dp,
-    color: Color,
+    colors: List<Color>,
     roundedPolygons: List<RoundedPolygon>,
+    onColorUpdate: ((Color) -> Unit)? = null,
 ) {
     val fullRotation = remember { 360f }
     val quarterRotation = remember { fullRotation / 4f }
+    val defaultColor = MaterialTheme.colorScheme.primaryContainer
+    var color by remember { mutableStateOf(colors.randomOrNull() ?: defaultColor) }
 
     val activeIndicatorScale = remember {
         IndicatorSize.value / min(ContainerWidth.value, ContainerHeight.value)
@@ -111,9 +116,8 @@ fun AnimatedMorphShapes(
                 val morphAnimationSpec =
                     spring(dampingRatio = 0.6f, stiffness = 200f, visibilityThreshold = 0.1f)
                 while (true) {
-                    // Async launch of a spring that will finish in less than 650ms
-                    // (MorphIntervalMillis). We then delay the entire while loop by 650ms till the
-                    // next morph starts.
+                    // Async launch of a spring that will finish in less than MorphIntervalMillis.
+                    // We then delay the entire while loop by X ms till the next morph starts.
                     val deferred = async {
                         val animationResult =
                             morphProgress.animateTo(
@@ -127,6 +131,8 @@ fun AnimatedMorphShapes(
                                 (morphRotationTargetAngle + quarterRotation) % fullRotation
                         }
                     }
+                    color = colors.randomOrNull() ?: defaultColor
+                    onColorUpdate?.invoke(color)
                     delay(morphIntervalMillis)
                     deferred.await()
                 }

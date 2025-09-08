@@ -33,7 +33,6 @@ import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -45,7 +44,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import kotlinx.coroutines.delay
 import org.librefit.R
 import org.librefit.enums.pages.MainScreenPages
 import org.librefit.ui.components.LibreFitAppName.GetAppNameInAnnotatedBuilder
@@ -98,13 +96,6 @@ fun LibraryScreen(
         animationSpec = MaterialTheme.motionScheme.slowEffectsSpec(),
         label = "ColorAnimation"
     )
-    // Change color
-    LaunchedEffect(Unit) {
-        while (true) {
-            delay(morphIntervalMillis)
-            currentColor = colors.keys.random()
-        }
-    }
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -114,9 +105,10 @@ fun LibraryScreen(
         AnimatedMorphShapes(
             morphIntervalMillis = morphIntervalMillis,
             globalRotationDurationMillis = 8000,
-            color = currentColor,
+            colors = colors.keys.toList(),
             shapeSize = 400.dp,
-            roundedPolygons = polygons
+            roundedPolygons = polygons,
+            onColorUpdate = { currentColor = it }
         )
         Text(
             text = stringResource(R.string.coming_soon),

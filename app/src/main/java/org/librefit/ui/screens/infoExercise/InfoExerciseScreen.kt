@@ -29,6 +29,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -38,6 +39,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
@@ -80,6 +82,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -105,7 +108,6 @@ import org.librefit.enums.exercise.Muscle
 import org.librefit.enums.pages.InfoExercisePages
 import org.librefit.nav.Route
 import org.librefit.ui.components.HeadlineText
-import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.animations.EmptyLottie
 import org.librefit.ui.components.charts.LibreFitCartesianChart
@@ -167,96 +169,258 @@ private fun SharedTransitionScope.InfoExerciseScreenContent(
     val pagerState = rememberPagerState(pageCount = { InfoExercisePages.entries.size })
     val coroutineScope = rememberCoroutineScope()
 
-    val stringId = if (id == 0L) "" else id.toString()
+    val stringId = remember { if (id == 0L) "" else id.toString() }
 
     LibreFitScaffold(
         navigateBack = navController::navigateUp
     ) { innerPadding ->
-        LibreFitLazyColumn(
-            innerPadding = innerPadding,
-            startEndPadding = 0.dp
+        BoxWithConstraints(
+            modifier = Modifier.padding(innerPadding)
         ) {
-            item {
-                Text(
-                    modifier = Modifier.padding(start = 10.dp, end = 10.dp),
-                    text = exerciseDC.name,
-                    style = MaterialTheme.typography.displaySmall,
-                    fontWeight = FontWeight.SemiBold,
-                    textAlign = TextAlign.Center
-                )
-            }
-            item {
-                AlternatingImages(stringId, exerciseDC, animatedVisibilityScope)
-            }
-            item {
-                PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
-                    InfoExercisePages.entries.forEachIndexed { i, enum ->
-                        Tab(
-                            selected = pagerState.currentPage == i,
-                            onClick = {
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(i)
+            LazyColumn(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                item {
+                    Text(
+                        modifier = Modifier.padding(start = 10.dp, end = 10.dp),
+                        text = exerciseDC.name,
+                        style = MaterialTheme.typography.displaySmall,
+                        fontWeight = FontWeight.SemiBold,
+                        textAlign = TextAlign.Center
+                    )
+                }
+                item {
+                    AlternatingImages(stringId, exerciseDC, animatedVisibilityScope)
+                }
+                stickyHeader {
+                    PrimaryTabRow(selectedTabIndex = pagerState.currentPage) {
+                        InfoExercisePages.entries.forEachIndexed { i, enum ->
+                            Tab(
+                                selected = pagerState.currentPage == i,
+                                onClick = {
+                                    if (pagerState.currentPage != i) {
+                                        coroutineScope.launch {
+                                            pagerState.animateScrollToPage(i)
+                                        }
+                                    }
+                                },
+                                text = {
+                                    Text(
+                                        text = stringResource(
+                                            id = when (enum) {
+                                                InfoExercisePages.DETAILS -> R.string.details
+                                                InfoExercisePages.INSTRUCTIONS -> R.string.instructions
+                                                InfoExercisePages.HISTORY -> R.string.history
+                                            }
+                                        )
+                                    )
+                                },
+                                icon = {
+                                    Icon(
+                                        painter = painterResource(
+                                            id = when (enum) {
+                                                InfoExercisePages.DETAILS -> R.drawable.ic_badge
+                                                InfoExercisePages.INSTRUCTIONS -> R.drawable.ic_reference
+                                                InfoExercisePages.HISTORY -> R.drawable.ic_history
+                                            }
+                                        ),
+                                        contentDescription = stringResource(
+                                            id = when (enum) {
+                                                InfoExercisePages.DETAILS -> R.string.details
+                                                InfoExercisePages.INSTRUCTIONS -> R.string.instructions
+                                                InfoExercisePages.HISTORY -> R.string.history
+                                            }
+                                        )
+                                    )
                                 }
-                            },
-                            text = {
-                                Text(
-                                    text = stringResource(
-                                        id = when (enum) {
-                                            InfoExercisePages.DETAILS -> R.string.details
-                                            InfoExercisePages.INSTRUCTIONS -> R.string.instructions
-                                            InfoExercisePages.HISTORY -> R.string.history
-                                        }
-                                    )
-                                )
-                            },
-                            icon = {
-                                Icon(
-                                    painter = painterResource(
-                                        id = when (enum) {
-                                            InfoExercisePages.DETAILS -> R.drawable.ic_badge
-                                            InfoExercisePages.INSTRUCTIONS -> R.drawable.ic_reference
-                                            InfoExercisePages.HISTORY -> R.drawable.ic_history
-                                        }
-                                    ),
-                                    contentDescription = stringResource(
-                                        id = when (enum) {
-                                            InfoExercisePages.DETAILS -> R.string.details
-                                            InfoExercisePages.INSTRUCTIONS -> R.string.instructions
-                                            InfoExercisePages.HISTORY -> R.string.history
-                                        }
-                                    )
-                                )
-                            }
-                        )
+                            )
+                        }
                     }
                 }
-            }
-            item {
-                HorizontalPager(
-                    state = pagerState,
-                    contentPadding = PaddingValues(start = 15.dp, end = 15.dp),
-                    pageSpacing = 20.dp,
-                    verticalAlignment = Alignment.Top,
-                    modifier = Modifier.wrapContentHeight()
-                ) { pageIndex ->
-                    val enum = InfoExercisePages.entries[pageIndex]
-
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        verticalArrangement = Arrangement.spacedBy(10.dp)
-                    ) {
-                        when (enum) {
-                            InfoExercisePages.DETAILS -> DetailsPage(exerciseDC)
+                item {
+                    HorizontalPager(
+                        state = pagerState,
+                        contentPadding = PaddingValues(start = 15.dp, end = 15.dp),
+                        pageSpacing = 20.dp,
+                        verticalAlignment = Alignment.Top,
+                        modifier = Modifier.wrapContentHeight()
+                    ) { pageIndex ->
+                        when (InfoExercisePages.entries.getOrNull(pageIndex)) {
+                            InfoExercisePages.DETAILS -> DetailsPage(maxHeight, exerciseDC)
                             InfoExercisePages.HISTORY -> HistoryPage(
                                 workoutsWithExercises = workoutsWithExercises,
                                 points = points,
                                 exerciseChart = exerciseChart,
                                 navController = navController,
                                 updateExerciseChart = updateExerciseChart,
+                                maxHeight = maxHeight,
                                 animatedVisibilityScope = animatedVisibilityScope
                             )
 
-                            InfoExercisePages.INSTRUCTIONS -> InstructionsPage(exerciseDC.instructions)
+                            InfoExercisePages.INSTRUCTIONS -> InstructionsPage(
+                                maxHeight,
+                                exerciseDC.instructions
+                            )
+
+                            null -> error("Invalid page index: $pageIndex. Expected: ${0..InfoExercisePages.entries.size}")
+                        }
+
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun DetailsPage(
+    maxHeight: Dp,
+    exercise: UiExerciseDC
+) {
+    LazyColumn(
+        modifier = Modifier.height(maxHeight),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        item {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (exercise.force != null) {
+                    OutlinedTextField(
+                        shape = MaterialTheme.shapes.large,
+                        modifier = Modifier.weight(1f),
+                        value = stringResource(Formatter.exerciseEnumToStringId(exercise.force)),
+                        label = { Text(stringResource(R.string.force)) },
+                        onValueChange = {},
+                        readOnly = true,
+                        singleLine = true,
+                    )
+                }
+                OutlinedTextField(
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.weight(1f),
+                    value = stringResource(Formatter.exerciseEnumToStringId(exercise.level)),
+                    label = { Text(stringResource(R.string.level)) },
+                    onValueChange = {},
+                    readOnly = true,
+                    singleLine = true,
+                )
+                if (exercise.mechanic != null) {
+                    OutlinedTextField(
+                        shape = MaterialTheme.shapes.large,
+                        modifier = Modifier.weight(1f),
+                        value = stringResource(Formatter.exerciseEnumToStringId(exercise.mechanic)),
+                        label = { Text(stringResource(R.string.mechanic)) },
+                        onValueChange = {},
+                        readOnly = true,
+                        singleLine = true,
+                    )
+                }
+            }
+        }
+        item {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                if (exercise.equipment != null) {
+                    OutlinedTextField(
+                        shape = MaterialTheme.shapes.large,
+                        modifier = Modifier.weight(1f),
+                        value = stringResource(Formatter.exerciseEnumToStringId(exercise.equipment)),
+                        label = { Text(stringResource(R.string.equipment)) },
+                        onValueChange = {},
+                        readOnly = true,
+                        singleLine = true,
+                    )
+                }
+                OutlinedTextField(
+                    shape = MaterialTheme.shapes.large,
+                    modifier = Modifier.weight(1f),
+                    value = stringResource(Formatter.exerciseEnumToStringId(exercise.category)),
+                    label = { Text(stringResource(R.string.category)) },
+                    onValueChange = {},
+                    readOnly = true,
+                    singleLine = true,
+                )
+            }
+        }
+
+        item {
+            if (exercise.primaryMuscles.isNotEmpty()) {
+                HeadlineText(text = stringResource(id = R.string.primary_muscles))
+                LazyRow(
+                    modifier = Modifier.padding(top = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(exercise.primaryMuscles) { muscle ->
+                        ElevatedCard(shape = MaterialTheme.shapes.extraLarge) {
+                            Column(
+                                modifier = Modifier.padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Image(
+                                    painter = painterResource(
+                                        id = Formatter.muscleToVectorId(
+                                            muscle
+                                        )
+                                    ),
+                                    contentDescription = stringResource(
+                                        Formatter.exerciseEnumToStringId(
+                                            muscle
+                                        )
+                                    ),
+                                    modifier = Modifier.size(150.dp)
+                                )
+                                Spacer(Modifier.height(15.dp))
+
+                                Text(
+                                    text = stringResource(Formatter.exerciseEnumToStringId(muscle)),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        item {
+            if (exercise.secondaryMuscles.isNotEmpty()) {
+                HeadlineText(text = stringResource(id = R.string.secondary_muscles))
+                LazyRow(
+                    modifier = Modifier.padding(top = 10.dp),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    items(exercise.secondaryMuscles) { muscle ->
+                        ElevatedCard {
+                            Column(
+                                modifier = Modifier.padding(20.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Image(
+                                    painter = painterResource(
+                                        id = Formatter.muscleToVectorId(
+                                            muscle
+                                        )
+                                    ),
+                                    contentDescription = stringResource(
+                                        Formatter.exerciseEnumToStringId(
+                                            muscle
+                                        )
+                                    ),
+                                    modifier = Modifier.size(150.dp)
+                                )
+                                Spacer(Modifier.height(15.dp))
+
+                                Text(
+                                    text = stringResource(Formatter.exerciseEnumToStringId(muscle)),
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            }
                         }
                     }
                 }
@@ -266,154 +430,29 @@ private fun SharedTransitionScope.InfoExerciseScreenContent(
 }
 
 @Composable
-private fun DetailsPage(exercise: UiExerciseDC) {
-
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        if (exercise.force != null) {
-            OutlinedTextField(
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.weight(1f),
-                value = stringResource(Formatter.exerciseEnumToStringId(exercise.force)),
-                label = { Text(stringResource(R.string.force)) },
-                onValueChange = {},
-                readOnly = true,
-                singleLine = true,
-            )
-        }
-        OutlinedTextField(
-            shape = MaterialTheme.shapes.large,
-            modifier = Modifier.weight(1f),
-            value = stringResource(Formatter.exerciseEnumToStringId(exercise.level)),
-            label = { Text(stringResource(R.string.level)) },
-            onValueChange = {},
-            readOnly = true,
-            singleLine = true,
-        )
-        if (exercise.mechanic != null) {
-            OutlinedTextField(
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.weight(1f),
-                value = stringResource(Formatter.exerciseEnumToStringId(exercise.mechanic)),
-                label = { Text(stringResource(R.string.mechanic)) },
-                onValueChange = {},
-                readOnly = true,
-                singleLine = true,
-            )
-        }
-    }
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(10.dp)
-    ) {
-        if (exercise.equipment != null) {
-            OutlinedTextField(
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.weight(1f),
-                value = stringResource(Formatter.exerciseEnumToStringId(exercise.equipment)),
-                label = { Text(stringResource(R.string.equipment)) },
-                onValueChange = {},
-                readOnly = true,
-                singleLine = true,
-            )
-        }
-        OutlinedTextField(
-            shape = MaterialTheme.shapes.large,
-            modifier = Modifier.weight(1f),
-            value = stringResource(Formatter.exerciseEnumToStringId(exercise.category)),
-            label = { Text(stringResource(R.string.category)) },
-            onValueChange = {},
-            readOnly = true,
-            singleLine = true,
-        )
-    }
-
-    if (exercise.primaryMuscles.isNotEmpty()) {
-        HeadlineText(text = stringResource(id = R.string.primary_muscles))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(exercise.primaryMuscles) { muscle ->
-                ElevatedCard {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Image(
-                            painter = painterResource(
-                                id = Formatter.muscleToVectorId(
-                                    muscle
-                                )
-                            ),
-                            contentDescription = stringResource(
-                                Formatter.exerciseEnumToStringId(
-                                    muscle
-                                )
-                            ),
-                            modifier = Modifier.size(150.dp)
-                        )
-                        Spacer(Modifier.height(15.dp))
-
-                        Text(
-                            text = stringResource(Formatter.exerciseEnumToStringId(muscle)),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-            }
-        }
-    }
-
-    if (exercise.secondaryMuscles.isNotEmpty()) {
-        HeadlineText(text = stringResource(id = R.string.secondary_muscles))
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(exercise.secondaryMuscles) { muscle ->
-                ElevatedCard {
-                    Column(
-                        modifier = Modifier.padding(20.dp),
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Image(
-                            painter = painterResource(
-                                id = Formatter.muscleToVectorId(
-                                    muscle
-                                )
-                            ),
-                            contentDescription = stringResource(
-                                Formatter.exerciseEnumToStringId(
-                                    muscle
-                                )
-                            ),
-                            modifier = Modifier.size(150.dp)
-                        )
-                        Spacer(Modifier.height(15.dp))
-
-                        Text(
-                            text = stringResource(Formatter.exerciseEnumToStringId(muscle)),
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 private fun InstructionsPage(
+    maxHeight: Dp,
     instructions: List<String>,
 ) {
-    Text(
-        text = buildString {
-            instructions.forEachIndexed { index, instruction ->
-                // For all items except the first, add the separator BEFORE the item.
-                if (index > 0) {
-                    append("\n\n")
+    LazyColumn(
+        modifier = Modifier.height(maxHeight),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        item {
+            Text(
+                text = buildString {
+                    instructions.forEachIndexed { index, instruction ->
+                        // For all items except the first, add the separator BEFORE the item.
+                        if (index > 0) {
+                            append("\n\n")
+                        }
+                        append("${index + 1}. $instruction")
+                    }
                 }
-                append("${index + 1}. $instruction")
-            }
+            )
         }
-    )
+    }
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -424,192 +463,207 @@ private fun SharedTransitionScope.HistoryPage(
     exerciseChart: ExerciseChart,
     navController: NavHostController,
     animatedVisibilityScope: AnimatedVisibilityScope,
+    maxHeight: Dp,
     updateExerciseChart: (ExerciseChart) -> Unit
 ) {
-    LibreFitCartesianChart(
-        format = when (exerciseChart) {
-            BodyweightChart.MOST_REPS, BodyweightChart.SESSION_REPS, LoadChart.TOTAL_REPS,
-            WeightedBodyweightChart.TOTAL_REPS -> DecimalFormat()
+    LazyColumn(
+        modifier = Modifier.height(maxHeight),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        item {
+            LibreFitCartesianChart(
+                format = when (exerciseChart) {
+                    BodyweightChart.MOST_REPS, BodyweightChart.SESSION_REPS, LoadChart.TOTAL_REPS,
+                    WeightedBodyweightChart.TOTAL_REPS -> DecimalFormat()
 
-            TimeChart.BEST_TIME, TimeChart.TOTAL_TIME -> DecimalFormat("# " + stringResource(R.string.second_abbreviation))
-            else -> DecimalFormat("#.# " + stringResource(R.string.kg))
-        },
-        points = points,
-        chartMode = exerciseChart,
-        updateChartMode = { updateExerciseChart(it as ExerciseChart) },
-        navController = navController
-    )
-
-    HeadlineText(stringResource(R.string.past_workouts))
-
-    if (workoutsWithExercises.isEmpty()) {
-        EmptyLottie()
-        Text(
-            text = stringResource(R.string.nothing_to_show),
-            textAlign = TextAlign.Center
-        )
-    }
-
-    workoutsWithExercises.forEach { workoutWithExercisesAndSets ->
-        val workout = workoutWithExercisesAndSets.workout
-        ElevatedCard(
-            onClick = {
-                navController.navigate(Route.InfoWorkoutScreen(workout.id))
-            },
-            shape = MaterialTheme.shapes.extraLarge,
-            modifier = Modifier.sharedBounds(
-                sharedContentState = rememberSharedContentState(workout.id),
-                animatedVisibilityScope = animatedVisibilityScope
-            )
-        ) {
-            Column(
-                modifier = Modifier.padding(10.dp),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
-            ) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        modifier = Modifier
-                            .weight(1f)
-                            .sharedElement(
-                                sharedContentState = rememberSharedContentState(
-                                    key = workout.id.toString() + workout.title
-                                ),
-                                animatedVisibilityScope = animatedVisibilityScope
-                            ),
-                        text = workout.title,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis
-                    )
-
-                    IconButton(
-                        onClick = {
-                            navController.navigate(Route.InfoWorkoutScreen(workout.id))
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_info),
-                            contentDescription = stringResource(R.string.info)
+                    TimeChart.BEST_TIME, TimeChart.TOTAL_TIME -> DecimalFormat(
+                        "# " + stringResource(
+                            R.string.second_abbreviation
                         )
-                    }
-                }
-                Text(
-                    text = formatDetails(
-                        stringResource(R.string.label_when),
-                        Formatter.getFullDateFromLocalDate(workout.completed)
                     )
+
+                    else -> DecimalFormat("#.# " + stringResource(R.string.kg))
+                },
+                points = points,
+                chartMode = exerciseChart,
+                updateChartMode = { updateExerciseChart(it as ExerciseChart) },
+                navController = navController
+            )
+        }
+        item {
+            HeadlineText(stringResource(R.string.past_workouts))
+        }
+
+        if (workoutsWithExercises.isEmpty()) {
+            item {
+                EmptyLottie()
+                Text(
+                    text = stringResource(R.string.nothing_to_show),
+                    textAlign = TextAlign.Center
                 )
-
-                workoutWithExercisesAndSets.exercisesWithSets.forEach { exerciseWithSets ->
-                    OutlinedCard(
-                        shape = MaterialTheme.shapes.extraLarge
+            }
+        }
+        items(workoutsWithExercises, key = { it.workout.id }) { workoutWithExercisesAndSets ->
+            val workout = workoutWithExercisesAndSets.workout
+            ElevatedCard(
+                onClick = {
+                    navController.navigate(Route.InfoWorkoutScreen(workout.id))
+                },
+                shape = MaterialTheme.shapes.extraLarge,
+                modifier = Modifier.sharedBounds(
+                    sharedContentState = rememberSharedContentState(workout.id),
+                    animatedVisibilityScope = animatedVisibilityScope
+                )
+            ) {
+                Column(
+                    modifier = Modifier.padding(20.dp),
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Column(
-                            modifier = Modifier.padding(10.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        Text(
+                            modifier = Modifier
+                                .weight(1f)
+                                .sharedElement(
+                                    sharedContentState = rememberSharedContentState(
+                                        key = workout.id.toString() + workout.title
+                                    ),
+                                    animatedVisibilityScope = animatedVisibilityScope
+                                ),
+                            text = workout.title,
+                            style = MaterialTheme.typography.titleLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+
+                        IconButton(
+                            onClick = {
+                                navController.navigate(Route.InfoWorkoutScreen(workout.id))
+                            }
                         ) {
-                            if (exerciseWithSets.exercise.notes.isNotBlank()) {
-                                Text(
-                                    formatDetails(
-                                        stringResource(R.string.notes),
-                                        exerciseWithSets.exercise.notes
-                                    )
-                                )
-                                HorizontalDivider()
-                            }
-
-                            Text(
-                                text = formatDetails(
-                                    stringResource(R.string.type_of_set),
-                                    stringResource(
-                                        Formatter.setModeToStringId(exerciseWithSets.exercise.setMode)
-                                    )
-                                )
+                            Icon(
+                                painter = painterResource(R.drawable.ic_info),
+                                contentDescription = stringResource(R.string.info)
                             )
+                        }
+                    }
+                    Text(
+                        text = formatDetails(
+                            stringResource(R.string.label_when),
+                            Formatter.getFullDateFromLocalDate(workout.completed)
+                        )
+                    )
 
-                            if (exerciseWithSets.exercise.restTime != 0) {
-                                Text(
-                                    formatDetails(
-                                        stringResource(R.string.rest_time),
-                                        exerciseWithSets.exercise.restTime.toString()
-                                                + " " + stringResource(R.string.seconds).replaceFirstChar { it.lowercase() })
-                                )
-                            }
-
-
-                            if (exerciseWithSets.sets.isNotEmpty()) {
-                                HorizontalDivider()
-
-                                val setMode = exerciseWithSets.exercise.setMode
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceAround
-                                ) {
-                                    Text(stringResource(R.string.set))
-                                    if (setMode == SetMode.DURATION) {
-                                        Text(stringResource(R.string.time))
-                                    } else {
-                                        Text(stringResource(R.string.reps))
-                                        if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
-                                            Text(
-                                                stringResource(R.string.load) + " (" + stringResource(
-                                                    R.string.kg
-                                                ) + ")"
-                                            )
-                                        }
-                                    }
-                                    Icon(
-                                        painter = painterResource(R.drawable.ic_check),
-                                        contentDescription = stringResource(R.string.done)
+                    workoutWithExercisesAndSets.exercisesWithSets.forEach { exerciseWithSets ->
+                        OutlinedCard(
+                            shape = MaterialTheme.shapes.extraLarge
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(10.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                                verticalArrangement = Arrangement.spacedBy(10.dp)
+                            ) {
+                                if (exerciseWithSets.exercise.notes.isNotBlank()) {
+                                    Text(
+                                        formatDetails(
+                                            stringResource(R.string.notes),
+                                            exerciseWithSets.exercise.notes
+                                        )
                                     )
-
+                                    HorizontalDivider()
                                 }
 
-                                Column {
-                                    exerciseWithSets.sets.forEachIndexed { index, set ->
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .clip(
-                                                    RoundedCornerShape(
-                                                        topStart = CornerSize(if (index == 0) 25 else 0),
-                                                        topEnd = CornerSize(if (index == 0) 25 else 0),
-                                                        bottomEnd = CornerSize(
-                                                            if (index == exerciseWithSets.sets.lastIndex) 25 else 0
-                                                        ),
-                                                        bottomStart = CornerSize(
-                                                            if (index == exerciseWithSets.sets.lastIndex) 25 else 0
-                                                        ),
-                                                    )
-                                                )
-                                                .background(
-                                                    if (set.completed) MaterialTheme.colorScheme.secondaryContainer
-                                                    else Color.Unspecified
-                                                )
-                                                .padding(5.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.SpaceAround
-                                        ) {
-                                            Text("${index + 1}")
-                                            if (setMode == SetMode.DURATION) {
-                                                Text(formatTime(set.elapsedTime).substring(3))
-                                            } else {
-                                                Text("${set.reps}")
-                                                if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
-                                                    Text("${set.load}")
-                                                }
-                                            }
-                                            Checkbox(
-                                                checked = set.completed,
-                                                onCheckedChange = null
-                                            )
+                                Text(
+                                    text = formatDetails(
+                                        stringResource(R.string.type_of_set),
+                                        stringResource(
+                                            Formatter.setModeToStringId(exerciseWithSets.exercise.setMode)
+                                        )
+                                    )
+                                )
 
+                                if (exerciseWithSets.exercise.restTime != 0) {
+                                    Text(
+                                        formatDetails(
+                                            stringResource(R.string.rest_time),
+                                            exerciseWithSets.exercise.restTime.toString()
+                                                    + " " + stringResource(R.string.seconds).replaceFirstChar { it.lowercase() })
+                                    )
+                                }
+
+
+                                if (exerciseWithSets.sets.isNotEmpty()) {
+                                    HorizontalDivider()
+
+                                    val setMode = exerciseWithSets.exercise.setMode
+                                    Row(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceAround
+                                    ) {
+                                        Text(stringResource(R.string.set))
+                                        if (setMode == SetMode.DURATION) {
+                                            Text(stringResource(R.string.time))
+                                        } else {
+                                            Text(stringResource(R.string.reps))
+                                            if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
+                                                Text(
+                                                    stringResource(R.string.load) + " (" + stringResource(
+                                                        R.string.kg
+                                                    ) + ")"
+                                                )
+                                            }
+                                        }
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_check),
+                                            contentDescription = stringResource(R.string.done)
+                                        )
+
+                                    }
+
+                                    Column {
+                                        exerciseWithSets.sets.forEachIndexed { index, set ->
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .clip(
+                                                        RoundedCornerShape(
+                                                            topStart = CornerSize(if (index == 0) 45 else 0),
+                                                            topEnd = CornerSize(if (index == 0) 45 else 0),
+                                                            bottomEnd = CornerSize(
+                                                                if (index == exerciseWithSets.sets.lastIndex) 45 else 0
+                                                            ),
+                                                            bottomStart = CornerSize(
+                                                                if (index == exerciseWithSets.sets.lastIndex) 45 else 0
+                                                            ),
+                                                        )
+                                                    )
+                                                    .background(
+                                                        if (set.completed) MaterialTheme.colorScheme.tertiaryContainer
+                                                        else Color.Unspecified
+                                                    )
+                                                    .padding(5.dp),
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.SpaceAround
+                                            ) {
+                                                Text("${index + 1}")
+                                                if (setMode == SetMode.DURATION) {
+                                                    Text(formatTime(set.elapsedTime).substring(3))
+                                                } else {
+                                                    Text("${set.reps}")
+                                                    if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
+                                                        Text("${set.load}")
+                                                    }
+                                                }
+                                                Checkbox(
+                                                    checked = set.completed,
+                                                    onCheckedChange = null
+                                                )
+                                            }
                                         }
                                     }
                                 }
@@ -617,11 +671,9 @@ private fun SharedTransitionScope.HistoryPage(
                         }
                     }
                 }
-
             }
         }
     }
-
 }
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)

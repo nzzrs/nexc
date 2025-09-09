@@ -211,7 +211,7 @@ class WorkoutService : Service() {
         restTimerJob = serviceScope.launch {
             while (restTime.value > 0) {
                 delay(1000)
-                _restTime.update { it - 1 }
+                _restTime.update { (it - 1).coerceAtLeast(0) }
             }
             if (!isFocused) {
                 notificationHelper.notifyTimerIsOver()
@@ -231,7 +231,7 @@ class WorkoutService : Service() {
                 } else {
                     0
                 }
-            }
+            }.coerceAtLeast(0)
         }
     }
 }

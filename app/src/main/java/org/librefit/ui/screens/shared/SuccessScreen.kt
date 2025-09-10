@@ -19,23 +19,32 @@
 
 package org.librefit.ui.screens.shared
 
+import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialShapes
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -46,13 +55,23 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
 import org.librefit.R
 import org.librefit.enums.SuccessMessage
+import org.librefit.nav.Route
+import org.librefit.ui.components.LibreFitAppName.GetAppNameInAnnotatedBuilder
+import org.librefit.ui.components.LibreFitButton
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.animations.SuccessLottie
 import org.librefit.ui.theme.LibreFitTheme
@@ -60,7 +79,7 @@ import org.librefit.ui.theme.LibreFitTheme
 @Composable
 fun SuccessScreen(
     message: SuccessMessage,
-    navigateBack: () -> Unit
+    navController: NavHostController
 ) {
     LibreFitScaffold { innerPadding ->
         BoxWithConstraints(
@@ -75,7 +94,18 @@ fun SuccessScreen(
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.SpaceAround
                 ) {
-                    successScreenContent(message, navigateBack, maxHeight, maxWidth)
+                    successScreenContent(
+                        message = message,
+                        navigateBack = navController::navigateUp,
+                        navigateToSupportScreen = {
+                            navController.navigate(Route.SupportScreen) {
+                                launchSingleTop = true
+                                popUpTo(Route.MainScreen)
+                            }
+                        },
+                        maxHeight = maxHeight,
+                        maxWidth = maxWidth
+                    )
                 }
             } else {
                 LazyRow(
@@ -86,7 +116,18 @@ fun SuccessScreen(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceAround
                 ) {
-                    successScreenContent(message, navigateBack, maxHeight, maxWidth)
+                    successScreenContent(
+                        message = message,
+                        navigateBack = navController::navigateUp,
+                        navigateToSupportScreen = {
+                            navController.navigate(Route.SupportScreen) {
+                                launchSingleTop = true
+                                popUpTo(Route.MainScreen)
+                            }
+                        },
+                        maxHeight = maxHeight,
+                        maxWidth = maxWidth
+                    )
                 }
             }
         }
@@ -97,54 +138,124 @@ fun SuccessScreen(
 private fun LazyListScope.successScreenContent(
     message: SuccessMessage,
     navigateBack: () -> Unit,
+    navigateToSupportScreen: () -> Unit,
     maxHeight: Dp,
     maxWidth: Dp
 ) {
     item {
-        Text(
-            text = when (message) {
-                SuccessMessage.ROUTINE_SAVED -> stringResource(R.string.routine_saved)
-                SuccessMessage.WORKOUT_SAVED -> stringResource(R.string.workout_saved)
-            },
-            style = MaterialTheme.typography.displaySmallEmphasized,
-            textAlign = TextAlign.Center
-        )
-    }
-
-    item {
-        val size = remember(maxHeight, maxWidth) { min(maxHeight, maxWidth) / 2 }
-        val infiniteTransition = rememberInfiniteTransition()
-        val rotation by infiniteTransition.animateFloat(
-            initialValue = 0f,
-            targetValue = 360f,
-            animationSpec = infiniteRepeatable(tween(4000))
-        )
-        Box(contentAlignment = Alignment.Center) {
-            ElevatedCard(
-                modifier = Modifier
-                    .rotate(rotation)
-                    .size(size.times(1.2f)),
-                shape = MaterialShapes.Cookie7Sided.toShape()
-            ) { }
-            SuccessLottie(Modifier.size(size))
+        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+            Text(
+                modifier = Modifier.padding(bottom = 20.dp),
+                text = when (message) {
+                    SuccessMessage.ROUTINE_SAVED -> stringResource(R.string.routine_saved)
+                    SuccessMessage.WORKOUT_SAVED -> stringResource(R.string.workout_saved)
+                },
+                style = MaterialTheme.typography.displaySmallEmphasized,
+                textAlign = TextAlign.Center
+            )
+            val size = remember(maxHeight, maxWidth) { min(maxHeight, maxWidth) / 2 }
+            val infiniteTransition = rememberInfiniteTransition()
+            val rotation by infiniteTransition.animateFloat(
+                initialValue = 0f,
+                targetValue = 360f,
+                animationSpec = infiniteRepeatable(tween(4000))
+            )
+            Box(contentAlignment = Alignment.Center) {
+                ElevatedCard(
+                    modifier = Modifier
+                        .rotate(rotation)
+                        .size(size.times(1.2f)),
+                    shape = MaterialShapes.Cookie7Sided.toShape()
+                ) { }
+                SuccessLottie(Modifier.size(size))
+            }
         }
     }
 
-    // TODO: add donation notice when workout is saved
-
     item {
-        Button(
-            onClick = navigateBack
+        ElevatedCard(
+            modifier = Modifier.padding(20.dp),
+            shape = MaterialTheme.shapes.extraLargeIncreased
         ) {
-            Text(stringResource(R.string.label_continue))
+            Column(
+                modifier = Modifier.padding(25.dp),
+                verticalArrangement = Arrangement.spacedBy(30.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Text(
+                    text = buildAnnotatedString {
+                        GetAppNameInAnnotatedBuilder(MaterialTheme.typography.titleLargeEmphasized)
+                        append(" ")
+                        append(stringResource(R.string.librefit_made_by_you))
+                    },
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.titleLarge
+                )
+                BoxWithConstraints {
+                    val spaceMaxWidth =
+                        with(LocalDensity.current) { this@BoxWithConstraints.maxWidth.toPx() }
+
+                    val infiniteTransition = rememberInfiniteTransition()
+                    val animationProgress = infiniteTransition.animateFloat(
+                        initialValue = 0.1f,
+                        targetValue = spaceMaxWidth * 5,
+                        animationSpec = infiniteRepeatable(
+                            animation = tween(3000),
+                            repeatMode = RepeatMode.Restart
+                        )
+                    )
+
+                    val a = Brush.radialGradient(
+                        colors = listOf(
+                            MaterialTheme.colorScheme.primary,
+                            MaterialTheme.colorScheme.inversePrimary,
+                            MaterialTheme.colorScheme.primary
+                        ),
+                        radius = animationProgress.value
+                    )
+
+                    Button(
+                        onClick = navigateToSupportScreen,
+                        shapes = ButtonDefaults.shapes(),
+                        contentPadding = ButtonDefaults.MediumContentPadding,
+                        border = BorderStroke(
+                            width = 3.dp,
+                            brush = a
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_favorite),
+                                contentDescription = null
+                            )
+                            Spacer(Modifier.width(ButtonDefaults.IconSpacing))
+                            Text(
+                                text = stringResource(R.string.lets_build_it_together),
+                                style = MaterialTheme.typography.titleSmallEmphasized,
+                                textAlign = TextAlign.Center
+                            )
+                        }
+                    }
+                }
+                LibreFitButton(
+                    onClick = navigateBack,
+                    text = stringResource(R.string.home),
+                    icon = painterResource(R.drawable.ic_home),
+                    elevated = false
+                )
+            }
         }
     }
 }
 
-@Preview(device = "spec:parent=pixel_5,orientation=landscape")
+@Preview
 @Composable
 private fun SuccessScreenPreview() {
     LibreFitTheme(dynamicColor = false, darkTheme = true) {
-        SuccessScreen(SuccessMessage.WORKOUT_SAVED) { }
+        SuccessScreen(SuccessMessage.WORKOUT_SAVED, rememberNavController())
     }
 }

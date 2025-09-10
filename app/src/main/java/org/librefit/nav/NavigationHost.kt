@@ -172,7 +172,7 @@ fun NavigationHost() {
             composable<Route.SuccessScreen> {
                 SuccessScreen(
                     message = it.toRoute<Route.SuccessScreen>().message,
-                    navigateBack = navController::navigateUp
+                    navController = navController
                 )
             }
             composable<Route.SupportScreen> {

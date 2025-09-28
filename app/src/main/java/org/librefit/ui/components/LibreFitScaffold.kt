@@ -191,8 +191,8 @@ fun LibreFitScaffold(
             if (fabIcon != null) {
                 AnimatedVisibility(
                     visible = fabAction != null,
-                    enter = slideInHorizontally(initialOffsetX = { it }),
-                    exit = slideOutHorizontally(targetOffsetX = { it })
+                    enter = slideInHorizontally(initialOffsetX = { it * 2 }),
+                    exit = slideOutHorizontally(targetOffsetX = { it * 2 })
                 ) {
                     FloatingActionButton(
                         onClick = { fabAction?.invoke() }

@@ -26,6 +26,7 @@ import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.BoxWithConstraints
@@ -48,10 +49,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -89,10 +92,12 @@ fun AboutScreen(navController: NavHostController) {
         LibreFitLazyColumn(innerPadding) {
             item {
                 Image(
-                    painter = painterResource(id = R.drawable.ic_logo),
+                    painter = painterResource(id = R.drawable.ic_launcher_foreground),
                     contentDescription = stringResource(R.string.app_name),
                     modifier = Modifier
-                        .size(160.dp)
+                        .size(220.dp)
+                        .clip(CircleShape)
+                        .background(colorResource(R.color.ic_launcher_background))
                         .border(
                             BorderStroke(1.dp, MaterialTheme.colorScheme.surfaceContainer),
                             CircleShape

@@ -22,21 +22,21 @@
 
 package org.librefit.ui.screens.about
 
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import org.librefit.R
-import org.librefit.ui.components.LibreFitButton
 import org.librefit.ui.components.LibreFitLazyColumn
 import org.librefit.ui.components.LibreFitScaffold
 import org.librefit.ui.components.MarkdownText
@@ -46,12 +46,17 @@ import org.librefit.ui.theme.LibreFitTheme
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LicenseScreen(navigateBack: () -> Unit) {
+    val noticeText = rememberSaveable { mutableStateOf("") }
     val licenseText = rememberSaveable { mutableStateOf("") }
 
     val resources = LocalResources.current
 
     LaunchedEffect(Unit) {
         licenseText.value = resources.openRawResource(R.raw.license)
+            .bufferedReader()
+            .use { it.readText() }
+
+        noticeText.value = resources.openRawResource(R.raw.license_notice)
             .bufferedReader()
             .use { it.readText() }
     }
@@ -67,16 +72,14 @@ fun LicenseScreen(navigateBack: () -> Unit) {
         title = AnnotatedString(stringResource(id = R.string.license)),
         navigateBack = navigateBack,
     ) { innerPadding ->
-        // This box is used to constrain width in landscape mode
         LibreFitLazyColumn(innerPadding) {
+
             item {
-                LibreFitButton(
-                    text = stringResource(R.string.view_online_version),
-                    icon = painterResource(R.drawable.ic_exit_to_app),
-                    onClick = {
-                        url.value = resources.getString(R.string.url_gpl3)
-                    }
-                )
+                MarkdownText(noticeText.value)
+            }
+
+            item {
+                Spacer(Modifier.height(60.dp))
             }
 
             item {
@@ -89,7 +92,7 @@ fun LicenseScreen(navigateBack: () -> Unit) {
 @Preview
 @Composable
 private fun LicenseScreenPreview() {
-    LibreFitTheme(false, true) {
+    LibreFitTheme(dynamicColor = false, darkTheme = true) {
         LicenseScreen { }
     }
 }

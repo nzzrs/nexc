@@ -43,7 +43,7 @@ fun DependenciesScreen(navigateBack: () -> Unit) {
         UrlActionDialog(it) { url.value = null }
     }
 
-    val libs = produceLibraries()
+    val libs = produceLibraries(R.raw.aboutlibraries)
 
     LibreFitScaffold(
         title = AnnotatedString(stringResource(R.string.dependencies)),
@@ -63,7 +63,7 @@ fun DependenciesScreen(navigateBack: () -> Unit) {
 @Preview
 @Composable
 private fun LibrariesScreenPreview() {
-    LibreFitTheme(false, true) {
+    LibreFitTheme(dynamicColor = false, darkTheme = true) {
         DependenciesScreen { }
     }
 }

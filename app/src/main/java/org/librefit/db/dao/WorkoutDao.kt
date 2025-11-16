@@ -50,13 +50,6 @@ interface WorkoutDao {
     fun getWorkoutsWithExercisesAndSetsByState(state: WorkoutState): Flow<List<WorkoutWithExercisesAndSets>>
 
     /**
-     * BE CAREFUL WITH THIS FUNCTION BECAUSE IT CAN DELETE ALL USER PROGRESS.
-     * It is currently used to delete the running workout without having its id or instance
-     */
-    @Query("DELETE FROM workouts WHERE state = :state")
-    suspend fun deleteAllWorkoutsByState(state: WorkoutState)
-
-    /**
      * Returns a flow that emits a stream of [Workout]s which have the requested [state]. They are
      * ordered by date from newest to latest ([Workout.completed])
      */

@@ -139,6 +139,8 @@ fun SharedTransitionScope.WorkoutScreen(
     val previousPerformances by viewModel.previousPerformances.collectAsStateWithLifecycle()
 
     val restTimerProgress by viewModel.restTimerProgress.collectAsStateWithLifecycle()
+
+    val runningWorkoutId by viewModel.runningWorkoutId.collectAsStateWithLifecycle(initialValue = null)
     
 
     //It keeps the screen turned on
@@ -183,8 +185,9 @@ fun SharedTransitionScope.WorkoutScreen(
                             completed = LocalDateTime.now()
                         ).toEntity(),
                         exercisesWithSets = exercisesWithSets.map { it.toEntity() },
-                    )
-                )
+                    ),
+                    runningWorkoutId = runningWorkoutId
+                ),
             ) { launchSingleTop = true }
         },
         actionsEnabled = listOf(!exercisesWithSets.isEmpty()),

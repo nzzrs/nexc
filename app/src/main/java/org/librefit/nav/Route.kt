@@ -35,7 +35,8 @@ sealed class Route {
 
     @Serializable
     data class BeforeSavingScreen(
-        val workoutWithExercisesAndSets: WorkoutWithExercisesAndSets
+        val workoutWithExercisesAndSets: WorkoutWithExercisesAndSets,
+        val runningWorkoutId: Long? = null
     )
 
     @Serializable

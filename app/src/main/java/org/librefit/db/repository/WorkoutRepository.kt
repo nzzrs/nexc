@@ -80,9 +80,6 @@ class WorkoutRepository @Inject constructor(
         workoutDao.deleteWorkout(workout)
     }
 
-    suspend fun deleteAllRunningWorkouts() {
-        workoutDao.deleteAllWorkoutsByState(WorkoutState.RUNNING)
-    }
 
 
 

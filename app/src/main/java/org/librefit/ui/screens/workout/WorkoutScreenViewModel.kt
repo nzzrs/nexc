@@ -490,19 +490,21 @@ class WorkoutScreenViewModel @Inject constructor(
     ) { w, e, t -> Triple(w, e, t) }
         .debounce(500L)
 
-    var id = 0L
+    private val _runningWorkoutId = MutableStateFlow(0L)
+    val runningWorkoutId = _runningWorkoutId.asStateFlow()
     suspend fun saveRunningWorkout(state: Triple<UiWorkout, List<UiExerciseWithSets>, Int>) {
         val (w, e, t) = state
-        id = workoutRepository.addWorkoutWithExercisesAndSets(
-            WorkoutWithExercisesAndSets(
-                workout = w.copy(
-                    id = id,
-                    state = WorkoutState.RUNNING,
-                    timeElapsed = t
-                ).toEntity(),
-                exercisesWithSets = e.map { it.toEntity() },
+        _runningWorkoutId.update { id ->
+            workoutRepository.addWorkoutWithExercisesAndSets(
+                WorkoutWithExercisesAndSets(
+                    workout = w.copy(
+                        id = id,
+                        state = WorkoutState.RUNNING,
+                        timeElapsed = t
+                    ).toEntity(),
+                    exercisesWithSets = e.map { it.toEntity() },
+                )
             )
-        )
-
+        }
     }
 }

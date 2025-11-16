@@ -61,6 +61,7 @@ class BeforeSavingScreenViewModel @Inject constructor(
 
     companion object {
         private const val WORKOUT_WITH_EXERCISES_AND_SET_KEY = "workoutWithExercisesAndSets"
+        private const val RUNNING_WORKOUT_ID_KEY = "runningWorkoutId"
     }
 
     private val workoutWithExercisesAndSetsJson = savedStateHandle
@@ -72,6 +73,9 @@ class BeforeSavingScreenViewModel @Inject constructor(
         Json.decodeFromString<WorkoutWithExercisesAndSets>(
             Uri.decode(workoutWithExercisesAndSetsJson)
         ).toUi()
+
+
+    private val runningWorkoutId = savedStateHandle.get<Long>(RUNNING_WORKOUT_ID_KEY)
 
 
     val exercises = workoutWithExercisesAndSets.exercisesWithSets
@@ -165,11 +169,12 @@ class BeforeSavingScreenViewModel @Inject constructor(
         workoutServiceManager.stopService()
 
         viewModelScope.launch {
-            workoutRepository.deleteAllRunningWorkouts()
-
             workoutRepository.addWorkoutWithExercisesAndSets(
                 WorkoutWithExercisesAndSets(
-                    workout = workout.value.copy(id = 0, state = WorkoutState.COMPLETED).toEntity(),
+                    workout = workout.value.copy(
+                        id = runningWorkoutId ?: workout.value.id,
+                        state = WorkoutState.COMPLETED
+                    ).toEntity(),
                     exercisesWithSets = exercises.map { exercise ->
                         exercise.toEntity().copy(
                             sets = exercise.toEntity().sets.map {

@@ -50,6 +50,7 @@ import org.librefit.db.entity.ExerciseDC
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.db.repository.UserPreferencesRepository
 import org.librefit.db.repository.WorkoutRepository
+import org.librefit.enums.PreviousPerformanceSet
 import org.librefit.enums.SetMode
 import org.librefit.enums.WorkoutState
 import org.librefit.enums.exercise.Category
@@ -62,7 +63,6 @@ import org.librefit.ui.models.UiSet
 import org.librefit.ui.models.UiWorkout
 import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.models.mappers.toUi
-import org.librefit.util.Formatter
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -114,7 +114,7 @@ class WorkoutScreenViewModel @Inject constructor(
     private val _exercises = MutableStateFlow<List<UiExerciseWithSets>>(emptyList())
     val exercises = _exercises.asStateFlow()
 
-    val previousPerformances: StateFlow<List<List<String>>> =
+    val previousPerformances: StateFlow<List<List<PreviousPerformanceSet>>> =
         combine(exercises, workout) { list, w ->
             list.map { eWs ->
                 val list = workoutRepository.getCompletedWorkoutsWithExercisesWithIdExerciseDC(
@@ -137,10 +137,14 @@ class WorkoutScreenViewModel @Inject constructor(
 
 
                     when (eWs.exercise.setMode) {
-                        SetMode.LOAD -> "$load ${context.getString(R.string.kg)} * $reps"
-                        SetMode.BODYWEIGHT -> "$reps"
-                        SetMode.BODYWEIGHT_WITH_LOAD -> "$load ${context.getString(R.string.kg)} * $reps"
-                        SetMode.DURATION -> Formatter.formateSecondsInMinutesAndSeconds(time)
+                        SetMode.LOAD -> PreviousPerformanceSet(load = load, reps = reps)
+                        SetMode.BODYWEIGHT -> PreviousPerformanceSet(reps = reps)
+                        SetMode.BODYWEIGHT_WITH_LOAD -> PreviousPerformanceSet(
+                            load = load,
+                            reps = reps
+                        )
+
+                        SetMode.DURATION -> PreviousPerformanceSet(time = time)
                     }
 
                 }
@@ -153,52 +157,36 @@ class WorkoutScreenViewModel @Inject constructor(
             )
 
     fun applyPreviousSetPerformance(setId: Long) {
-        val weightAndRepsRegex = Regex("""^([\d.]+)\s*kg\s*\*\s*(\d+)$""")
-
         exercises.value.forEachIndexed { index, eWs ->
             val setToUpdateIndex =
-                eWs.sets.indexOfFirst { it.id == setId }.takeIf { it != -1 } ?: return
+                eWs.sets.indexOfFirst { it.id == setId }
 
-            val rawValue =
-                previousPerformances.value.getOrNull(index)?.getOrNull(setToUpdateIndex) ?: return
+            val previousPerformanceSet =
+                previousPerformances.value.getOrNull(index)?.getOrNull(setToUpdateIndex)
 
-            when (eWs.exercise.setMode) {
-                SetMode.LOAD -> {
-                    val matchResult = weightAndRepsRegex.matchEntire(rawValue.trim())
-                        ?: error("Invalid format for weightAndRepsRegex: $rawValue")
-                    val (weightStr, repsStr) = matchResult.destructured
-                    val weight = weightStr.toDoubleOrNull()
-                        ?: error("Parsing from string to double error: $weightStr")
-                    val reps =
-                        repsStr.toIntOrNull() ?: error("Parsing from string to int error: $repsStr")
-                    updateSetLoad(weight, setId)
-                    updateSetReps(reps, setId)
-                }
+            previousPerformanceSet?.let { values ->
+                val (reps, load, time) = values
+                when (eWs.exercise.setMode) {
+                    SetMode.LOAD -> {
+                        updateSetLoad(load, setId)
+                        updateSetReps(reps, setId)
+                    }
 
-                SetMode.BODYWEIGHT -> {
-                    val reps = rawValue.toIntOrNull() ?: error("Invalid reps: $rawValue")
-                    updateSetReps(reps, setId)
-                }
+                    SetMode.BODYWEIGHT -> {
+                        updateSetReps(reps, setId)
+                    }
 
-                SetMode.BODYWEIGHT_WITH_LOAD -> {
-                    val matchResult = weightAndRepsRegex.matchEntire(rawValue.trim())
-                        ?: error("Invalid format for weightAndRepsRegex: $rawValue")
-                    val (weightStr, repsStr) = matchResult.destructured
-                    val weight = weightStr.toDoubleOrNull()
-                        ?: error("Parsing from string to double error: $weightStr")
-                    val reps =
-                        repsStr.toIntOrNull() ?: error("Parsing from string to int error: $repsStr")
-                    updateSetLoad(weight, setId)
-                    updateSetReps(reps, setId)
-                }
+                    SetMode.BODYWEIGHT_WITH_LOAD -> {
+                        updateSetLoad(load, setId)
+                        updateSetReps(reps, setId)
+                    }
 
-                SetMode.DURATION -> {
-                    val (minutes, seconds) = rawValue.split(":")
-                    updateSetTime(minutes.toInt() * 60 + seconds.toInt(), setId)
+                    SetMode.DURATION -> {
+                        updateSetTime(time, setId)
+                    }
                 }
             }
         }
-
     }
 
     // A Job to hold the running set's stopwatch coroutine

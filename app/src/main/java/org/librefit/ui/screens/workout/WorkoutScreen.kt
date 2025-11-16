@@ -86,6 +86,7 @@ import kotlinx.collections.immutable.persistentListOf
 import org.librefit.R
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.enums.InfoMode
+import org.librefit.enums.PreviousPerformanceSet
 import org.librefit.enums.SetMode
 import org.librefit.enums.exercise.Category
 import org.librefit.enums.exercise.Equipment
@@ -274,7 +275,7 @@ fun SharedTransitionScope.WorkoutScreen(
 private fun SharedTransitionScope.WorkoutScreenContent(
     animatedVisibilityScope: AnimatedVisibilityScope,
     exercisesWithSets: List<UiExerciseWithSets>,
-    previousPerformances: List<List<String>?>,
+    previousPerformances: List<List<PreviousPerformanceSet>?>,
     timeElapsed: Int,
     isStopwatchPaused: Boolean,
     workoutProgress: Pair<Int, Int>,

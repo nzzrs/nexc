@@ -95,6 +95,7 @@ import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toImmutableList
 import org.librefit.R
 import org.librefit.enums.InfoMode
+import org.librefit.enums.PreviousPerformanceSet
 import org.librefit.enums.SetMode
 import org.librefit.ui.models.UiExercise
 import org.librefit.ui.models.UiExerciseDC
@@ -163,7 +164,7 @@ fun SharedTransitionScope.ExerciseCard(
     modifier: Modifier = Modifier,
     animatedVisibilityScope: AnimatedVisibilityScope,
     exerciseWithSets: UiExerciseWithSets,
-    previousPerformances: List<String>? = null,
+    previousPerformances: List<PreviousPerformanceSet>? = null,
     workout: Boolean = false,
     idSetWithRunningStopwatch: Long? = null,
     addSet: (Long) -> Unit,
@@ -346,7 +347,7 @@ fun SharedTransitionScope.ExerciseCard(
                         expanded = expanded,
                         onDismissRequest = { expanded = false }
                     ) {
-                        SetMode.entries.forEachIndexed { index, mode ->
+                        SetMode.entries.forEachIndexed { _, mode ->
                             DropdownMenuItem(
                                 onClick = {
                                     updateExerciseSetMode(mode, exerciseWithSets.exercise.id)
@@ -470,7 +471,7 @@ fun SharedTransitionScope.ExerciseCard(
 private fun Set(
     i: Int,
     set: UiSet,
-    previousSet: String? = null,
+    previousSet: PreviousPerformanceSet? = null,
     lastIndex: Int,
     setMode: SetMode,
     isStopwatchRunning: Boolean,
@@ -566,20 +567,20 @@ private fun Set(
                 modifier = Modifier.padding(start = 20.dp)
             )
 
-            previousSet?.let { value ->
+            previousSet?.let { values ->
                 TextButton(
                     onClick = { applyPreviousSet(set.id) },
                     modifier = Modifier.wrapContentWidth()
                 ) {
+                    val (previousReps, previousLoad, previousTime) = values
+                    val text = when (setMode) {
+                        SetMode.LOAD -> "$previousLoad" + stringResource(R.string.kg) + " * $previousReps"
+                        SetMode.BODYWEIGHT -> "$previousReps"
+                        SetMode.BODYWEIGHT_WITH_LOAD -> "$previousLoad" + stringResource(R.string.kg)
+                        SetMode.DURATION -> Formatter.formateSecondsInMinutesAndSeconds(previousTime)
+                    }
                     Text(
-                        text = if (value.contains("*"))
-                            "${
-                                value.substring(
-                                    0,
-                                    value.indexOf("*")
-                                )
-                            }\n${value.substring(value.indexOf("*"))}"
-                        else value,
+                        text = text,
                         color = MaterialTheme.colorScheme.onSurface,
                         textAlign = TextAlign.Center,
                     )
@@ -689,9 +690,9 @@ private fun Set(
 @Preview
 @Composable
 private fun ExerciseCardPreview() {
-    var currentIdSetWithRunningSet by remember { mutableStateOf<Long?>(null) }
+    val currentIdSetWithRunningSet = remember { mutableStateOf<Long?>(null) }
 
-    var e by remember {
+    val e = remember {
         mutableStateOf(
             UiExerciseWithSets(
                 exercise = UiExercise(
@@ -708,12 +709,12 @@ private fun ExerciseCardPreview() {
         )
     }
 
-    val previousPerformances = e.sets.map { set ->
-        when (e.exercise.setMode) {
-            SetMode.BODYWEIGHT -> "10"
-            SetMode.DURATION -> Formatter.formateSecondsInMinutesAndSeconds(124)
-            SetMode.BODYWEIGHT_WITH_LOAD -> "12 kg * 10"
-            SetMode.LOAD -> "10 kg * 12"
+    val previousPerformances = e.value.sets.map { _ ->
+        when (e.value.exercise.setMode) {
+            SetMode.BODYWEIGHT -> PreviousPerformanceSet(reps = 10)
+            SetMode.DURATION -> PreviousPerformanceSet(time = 124)
+            SetMode.BODYWEIGHT_WITH_LOAD -> PreviousPerformanceSet(reps = 10, load = 12.0)
+            SetMode.LOAD -> PreviousPerformanceSet(reps = 10, load = 12.0)
         }
     }
 
@@ -722,70 +723,78 @@ private fun ExerciseCardPreview() {
             AnimatedVisibility(visible = true) {
                 ExerciseCard(
                     animatedVisibilityScope = this,
-                    exerciseWithSets = e,
+                    exerciseWithSets = e.value,
                     previousPerformances = previousPerformances,
                     addSet = {
-                        val newSets = e.sets.toMutableList() + UiSet()
-                        e = e.copy(sets = newSets.toImmutableList())
+                        val newSets = e.value.sets.toMutableList() + UiSet()
+                        e.value = e.value.copy(sets = newSets.toImmutableList())
                     },
                     onDetail = { _, _ -> },
                     onDelete = {},
                     deleteSet = { id ->
-                        e = e.copy(sets = e.sets.filter { it.id != id }.toImmutableList())
-                        if (id == currentIdSetWithRunningSet) currentIdSetWithRunningSet = null
+                        e.value = e.value.copy(sets = e.value.sets.filter { it.id != id }
+                            .toImmutableList())
+                        if (id == currentIdSetWithRunningSet.value) currentIdSetWithRunningSet.value =
+                            null
                     },
                     showInfo = {},
-                    idSetWithRunningStopwatch = currentIdSetWithRunningSet,
-                    updateIdSetWithRunningStopwatch = { currentIdSetWithRunningSet = it },
+                    idSetWithRunningStopwatch = currentIdSetWithRunningSet.value,
+                    updateIdSetWithRunningStopwatch = { currentIdSetWithRunningSet.value = it },
                     workout = true,
                     updateExerciseNotes = { notes, _ ->
-                        e = e.copy(exercise = e.exercise.copy(notes = notes))
+                        e.value = e.value.copy(exercise = e.value.exercise.copy(notes = notes))
                     },
                     updateExerciseRestTime = { restTime, _ ->
-                        e = e.copy(exercise = e.exercise.copy(restTime = restTime))
+                        e.value =
+                            e.value.copy(exercise = e.value.exercise.copy(restTime = restTime))
                     },
                     updateExerciseSetMode = { setMode, _ ->
-                        e = e.copy(exercise = e.exercise.copy(setMode = setMode))
+                        e.value = e.value.copy(exercise = e.value.exercise.copy(setMode = setMode))
                     },
                     updateSetTime = { time, id ->
-                        e = e.copy(
-                            sets = e.sets.map {
+                        e.value = e.value.copy(
+                            sets = e.value.sets.map {
                                 if (it.id == id) it.copy(elapsedTime = time) else it
                             }.toImmutableList()
                         )
                     },
                     updateSetReps = { reps, id ->
-                        e = e.copy(
-                            sets = e.sets.map {
+                        e.value = e.value.copy(
+                            sets = e.value.sets.map {
                                 if (it.id == id) it.copy(reps = reps) else it
                             }.toImmutableList()
                         )
                     },
                     updateSetLoad = { load, id ->
-                        e = e.copy(
-                            sets = e.sets.map {
+                        e.value = e.value.copy(
+                            sets = e.value.sets.map {
                                 if (it.id == id) it.copy(load = load) else it
                             }.toImmutableList()
                         )
                     },
                     updateSetCompleted = { completed, id ->
-                        e = e.copy(
-                            sets = e.sets.map {
+                        e.value = e.value.copy(
+                            sets = e.value.sets.map {
                                 if (it.id == id) it.copy(completed = completed) else it
                             }.toImmutableList()
                         )
                     },
                     applyPreviousSetPerformance = { id ->
-                        val index = e.sets.indexOfFirst { it.id == id }
+                        val index = e.value.sets.indexOfFirst { it.id == id }
                         previousPerformances.getOrNull(index)?.let { p ->
-                            e = e.copy(
-                                sets = e.sets.map {
-                                    if (it.id == id) {
-                                        when (e.exercise.setMode) {
-                                            SetMode.BODYWEIGHT -> it.copy(reps = p.toInt())
-                                            else -> it // The missing logic is in the view model
+                            e.value = e.value.copy(
+                                sets = e.value.sets.map { set ->
+                                    if (set.id == id) {
+                                        when (e.value.exercise.setMode) {
+                                            SetMode.BODYWEIGHT -> set.copy(reps = p.reps)
+                                            SetMode.LOAD -> set.copy(load = p.load)
+                                            SetMode.DURATION -> set.copy(elapsedTime = p.time)
+                                            SetMode.BODYWEIGHT_WITH_LOAD -> set.copy(
+                                                load = p.load,
+                                                reps = p.reps
+                                            )
                                         }
-                                    } else it
+                                    } else set
                                 }.toImmutableList()
                             )
                         }

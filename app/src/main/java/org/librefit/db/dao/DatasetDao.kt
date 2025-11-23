@@ -32,7 +32,7 @@ import org.librefit.db.entity.ExerciseDC
 @Dao
 interface DatasetDao {
     @Insert(onConflict = REPLACE)
-    fun setDataset(exercises: List<ExerciseDC>)
+    suspend fun setDataset(exercises: List<ExerciseDC>)
 
     @Query("SELECT * FROM dataset ")
     fun getDataset(): Flow<List<ExerciseDC>>

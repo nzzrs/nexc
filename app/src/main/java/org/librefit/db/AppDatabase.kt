@@ -58,18 +58,19 @@ abstract class AppDatabase : RoomDatabase() {
 
         class PrepopulateCallback(
             private val context: Context,
-            private val daoProvider: Provider<DatasetDao>
+            private val daoProvider: Provider<DatasetDao>,
+            private val scope: CoroutineScope
         ) : Callback() {
 
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
                 // The dataset is parsed only once, when the database is first created.
-                CoroutineScope(Dispatchers.IO).launch {
+                scope.launch(Dispatchers.IO) {
                     prepopulateDatabase()
                 }
             }
 
-            private fun prepopulateDatabase() {
+            private suspend fun prepopulateDatabase() {
                 try {
                     val jsonFile =
                         context.resources.openRawResource(R.raw.exercises).bufferedReader().use {

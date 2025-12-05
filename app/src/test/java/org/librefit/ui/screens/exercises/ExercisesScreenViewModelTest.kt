@@ -15,6 +15,9 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
+ *
+ * LibreFit is subject to additional terms covering author attribution and
+ * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md file.
  */
 
 package org.librefit.ui.screens.exercises
@@ -31,6 +34,7 @@ import org.junit.Rule
 import org.junit.Test
 import org.librefit.MainDispatcherRule
 import org.librefit.db.repository.DatasetRepository
+import org.librefit.db.repository.UserPreferencesRepository
 import org.librefit.enums.exercise.FilterValue
 import org.librefit.enums.exercise.Force
 import org.librefit.ui.models.UiExerciseDC
@@ -45,8 +49,12 @@ class ExercisesScreenViewModelTest {
     // The mock repository
     private lateinit var datasetRepository: DatasetRepository
 
+    private lateinit var userPreferencesRepository: UserPreferencesRepository
+
     // A controllable flow to simulate repository emissions
     private lateinit var datasetFlow: MutableStateFlow<List<UiExerciseDC>>
+
+    private lateinit var isSupporterFlow: MutableStateFlow<Boolean>
 
     // Test dataset
     private val dataset = listOf(
@@ -63,11 +71,18 @@ class ExercisesScreenViewModelTest {
         datasetRepository = mockk()
         datasetFlow = MutableStateFlow(dataset)
 
-        // Arrange: Tell the mock what to return when `dataset` is accessed
+        userPreferencesRepository = mockk()
+        isSupporterFlow = MutableStateFlow(false)
+
+        // Arrange: Tell the mock what to return when a variable is accessed
         every { datasetRepository.dataset } returns datasetFlow
+        every { userPreferencesRepository.isSupporter } returns isSupporterFlow
 
         // Instantiate the ViewModel directly, passing in test data
-        viewModel = ExercisesScreenViewModel(datasetRepository = datasetRepository)
+        viewModel = ExercisesScreenViewModel(
+            datasetRepository = datasetRepository,
+            userPreferencesRepository = userPreferencesRepository
+        )
     }
 
     @Test

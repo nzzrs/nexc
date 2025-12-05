@@ -108,6 +108,8 @@ fun SharedTransitionScope.ExercisesScreen(
 
     val selectedExercisesIds by viewModel.selectedExerciseIds.collectAsStateWithLifecycle()
 
+    val isSupporter by viewModel.isSupporter.collectAsStateWithLifecycle()
+
 
 
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -153,7 +155,9 @@ fun SharedTransitionScope.ExercisesScreen(
             navController.navigate(Route.InfoExerciseScreen(0L, it)) { launchSingleTop = true }
         },
         navigateToEditExercise = {
-            navController.navigate(Route.EditExerciseScreen()) { launchSingleTop = true }
+            navController.navigate(
+                if (isSupporter) Route.EditExerciseScreen() else Route.SupportScreen(supporterInfo = true)
+            ) { launchSingleTop = true }
         }
     )
 

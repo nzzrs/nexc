@@ -36,6 +36,7 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import org.librefit.db.repository.DatasetRepository
+import org.librefit.db.repository.UserPreferencesRepository
 import org.librefit.enums.exercise.FilterValue
 import org.librefit.ui.models.UiExerciseDC
 import org.librefit.util.fuzzySearch.FuzzySearch
@@ -43,7 +44,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class ExercisesScreenViewModel @Inject constructor(
-    datasetRepository: DatasetRepository
+    datasetRepository: DatasetRepository,
+    userPreferencesRepository: UserPreferencesRepository
 ) : ViewModel() {
     private val _query = MutableStateFlow("")
     val query = _query.asStateFlow()
@@ -139,4 +141,7 @@ class ExercisesScreenViewModel @Inject constructor(
             }
         }
     }
+
+
+    val isSupporter: StateFlow<Boolean> = userPreferencesRepository.isSupporter
 }

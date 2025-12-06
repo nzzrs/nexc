@@ -4,7 +4,7 @@ datastore = "1.2.0"
 kotlin = "2.2.21"
 junit = "4.13.2"
 espressoCore = "3.7.0"
-composeBom = "2025.11.01"
+composeBom = "2025.12.00"
 roomVersion = "2.8.4"
 appcompat = "1.7.1"
 ksp = "2.2.20-2.0.3"
@@ -36,7 +36,7 @@ junit = { group = "junit", name = "junit", version.ref = "junit" }
 androidx-junit = { group = "androidx.test.ext", name = "junit", version = "1.3.0" }
 androidx-espresso-core = { group = "androidx.test.espresso", name = "espresso-core", version.ref = "espressoCore" }
 androidx-lifecycle-runtime-ktx = { group = "androidx.lifecycle", name = "lifecycle-runtime-ktx", version = "2.10.0" }
-androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version = "1.12.0" }
+androidx-activity-compose = { group = "androidx.activity", name = "activity-compose", version = "1.12.1" }
 androidx-compose-bom = { group = "androidx.compose", name = "compose-bom-alpha", version.ref = "composeBom" }
 androidx-ui = { group = "androidx.compose.ui", name = "ui" }
 androidx-ui-graphics = { group = "androidx.compose.ui", name = "ui-graphics" }

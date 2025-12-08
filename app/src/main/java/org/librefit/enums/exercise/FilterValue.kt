@@ -29,4 +29,5 @@ data class FilterValue(
     val equipment: Equipment? = null,
     val muscles: Muscle? = null,
     val category: Category? = null,
+    val showOnlyCustomExercises: Boolean = false
 )

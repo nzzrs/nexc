@@ -359,6 +359,7 @@
     <!--Filter card-->
     <string name="any">Any</string>
     <string name="checkbox">Checkbox</string>
+    <string name="show_only_custom_exercises">Show only custom exercises</string>
 
 
     <!--Notification and channels-->

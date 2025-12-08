@@ -113,6 +113,7 @@ class ExercisesScreenViewModel @Inject constructor(
             (muscles != null && muscles !in exercise.primaryMuscles
                     && muscles !in exercise.secondaryMuscles) -> false
             (category != null && category != exercise.category) -> false
+            (showOnlyCustomExercises && !exercise.isCustomExercise) -> false
             else -> true
         }
     }

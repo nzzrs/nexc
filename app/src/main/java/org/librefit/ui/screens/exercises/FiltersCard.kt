@@ -44,6 +44,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -58,6 +59,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import org.librefit.R
@@ -128,7 +130,7 @@ fun FiltersCard(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(start = 15.dp, end = 15.dp, bottom = 15.dp),
+                    .padding(start = 20.dp, end = 20.dp, bottom = 15.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(20.dp)
             ) {
@@ -144,6 +146,25 @@ fun FiltersCard(
                             value = filterValue
                         )
                     }
+                }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Text(
+                        text = stringResource(R.string.show_only_custom_exercises),
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(end = 10.dp),
+                        textAlign = TextAlign.Center
+                    )
+                    Switch(
+                        checked = filterValue.showOnlyCustomExercises,
+                        onCheckedChange = {
+                            updateFilter(filterValue.copy(showOnlyCustomExercises = it))
+                        }
+                    )
                 }
             }
         }

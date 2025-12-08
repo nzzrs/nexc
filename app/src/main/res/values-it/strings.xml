@@ -217,6 +217,7 @@
     <string name="seconds">Secondi</string>
     <string name="notifications_permission">Notifiche</string>
     <string name="checkbox">Casella di spunta</string>
+    <string name="show_only_custom_exercises">Mostra solo esercizi personalizzati</string>
     <string name="workout_info_channel_title">Informazioni in tempo reale sull\'allenamento</string>
     <string name="workout_info_channel_desc">Questo canale viene utilizzato per fornire aggiornamenti in tempo reale sull\'allenamento in corso.</string>
     <string name="rest_timer_channel_title">Avvisi sui tempi di riposo</string>

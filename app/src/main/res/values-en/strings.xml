@@ -215,6 +215,7 @@
     <string name="seconds">Seconds</string>
     <string name="notifications_permission">Notifications</string>
     <string name="checkbox">Checkbox</string>
+    <string name="show_only_custom_exercises">Show only custom exercises</string>
     <string name="workout_info_channel_title">Real-time workout information</string>
     <string name="workout_info_channel_desc">This channel is used to provide real-time updates on the ongoing workout.</string>
     <string name="rest_timer_channel_title">Rest time alerts</string>

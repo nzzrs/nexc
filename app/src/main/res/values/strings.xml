@@ -1,5 +1,5 @@
 <!--
-  ~ Copyright (c) 2024-2025. LibreFit
+  ~ Copyright (c) 2024-2025. LibreFit Team
   ~
   ~ This file is part of LibreFit
   ~
@@ -17,7 +17,7 @@
   ~ along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
   ~
   ~ LibreFit is subject to additional terms covering author attribution and
-  ~ trademark usage, as found in the accompanying ADDITIONAL_TERMS.md file.
+  ~ trademark usage, as found in the accompanying ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md.
   -->
 
 <resources>
@@ -348,6 +348,7 @@
     <string name="rest_time">Rest time</string>
     <string name="kg" translatable="false">kg</string>
     <string name="type_of_set">Type of set</string>
+    <string name="previous">Previous</string>
 
 
     <!--Chart-->

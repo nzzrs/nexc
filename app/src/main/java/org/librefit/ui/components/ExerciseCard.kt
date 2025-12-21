@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025. LibreFit
+ * Copyright (c) 2024-2025. LibreFit Team
  *
  * This file is part of LibreFit
  *
@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  *
  * LibreFit is subject to additional terms covering author attribution and
- * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md file.
+ * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md.
  */
 
 package org.librefit.ui.components
@@ -404,7 +404,7 @@ fun SharedTransitionScope.ExerciseCard(
 
                     if (previousPerformances != null) {
                         Text(
-                            text = "Previous",
+                            text = stringResource(R.string.previous),
                             color = MaterialTheme.colorScheme.secondary
                         )
                     }

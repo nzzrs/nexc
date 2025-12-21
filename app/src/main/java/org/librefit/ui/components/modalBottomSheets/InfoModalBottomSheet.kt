@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025. LibreFit
+ * Copyright (c) 2024-2025. LibreFit Team
  *
  * This file is part of LibreFit
  *
@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  *
  * LibreFit is subject to additional terms covering author attribution and
- * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md file.
+ * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md.
  */
 
 package org.librefit.ui.components.modalBottomSheets
@@ -65,7 +65,6 @@ fun InfoModalBottomSheet(
             InfoMode.BEFORE_SAVING_STATS -> stringResource(R.string.statistics)
             InfoMode.MUSCLE_DISTRIBUTION -> stringResource(R.string.muscles_distribution)
             InfoMode.EXERCISES_DISTRIBUTION -> stringResource(R.string.exercises_distribution)
-            else -> ""
         }
 
         val text = when (infoMode) {
@@ -74,7 +73,6 @@ fun InfoModalBottomSheet(
             InfoMode.BEFORE_SAVING_STATS -> stringResource(R.string.statistics_desc)
             InfoMode.MUSCLE_DISTRIBUTION -> stringResource(R.string.muscle_distribution_desc)
             InfoMode.EXERCISES_DISTRIBUTION -> stringResource(R.string.exercises_distribution_desc)
-            else -> ""
         }
 
         ModalBottomSheet(

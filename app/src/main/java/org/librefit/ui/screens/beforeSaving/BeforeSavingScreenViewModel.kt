@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025. LibreFit
+ * Copyright (c) 2024-2025. LibreFit Team
  *
  * This file is part of LibreFit
  *
@@ -17,12 +17,11 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  *
  * LibreFit is subject to additional terms covering author attribution and
- * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md file.
+ * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md.
  */
 
 package org.librefit.ui.screens.beforeSaving
 
-import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -32,7 +31,6 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
 import org.librefit.db.entity.Workout
 import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.db.repository.WorkoutRepository
@@ -40,8 +38,8 @@ import org.librefit.enums.SetMode
 import org.librefit.enums.WorkoutState
 import org.librefit.helpers.DataHelper
 import org.librefit.services.WorkoutServiceManager
+import org.librefit.ui.models.UiExerciseWithSets
 import org.librefit.ui.models.UiWorkout
-import org.librefit.ui.models.UiWorkoutWithExercisesAndSets
 import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.models.mappers.toUi
 import java.time.Instant
@@ -60,33 +58,36 @@ class BeforeSavingScreenViewModel @Inject constructor(
 ) : ViewModel() {
 
     companion object {
-        private const val WORKOUT_WITH_EXERCISES_AND_SET_KEY = "workoutWithExercisesAndSets"
         private const val RUNNING_WORKOUT_ID_KEY = "runningWorkoutId"
     }
 
-    private val workoutWithExercisesAndSetsJson = savedStateHandle
-        .get<String>(WORKOUT_WITH_EXERCISES_AND_SET_KEY)
-        ?: error("WORKOUT_WITH_EXERCISES_AND_SET_KEY does not match `Route.BeforeSavingScreen` parameter")
-
-
-    private val workoutWithExercisesAndSets: UiWorkoutWithExercisesAndSets =
-        Json.decodeFromString<WorkoutWithExercisesAndSets>(
-            Uri.decode(workoutWithExercisesAndSetsJson)
-        ).toUi()
-
 
     private val runningWorkoutId = savedStateHandle.get<Long>(RUNNING_WORKOUT_ID_KEY)
+        ?: error("RUNNING_WORKOUT_ID_KEY does not match `Route.BeforeSavingScreen` parameter")
 
 
-    val exercises = workoutWithExercisesAndSets.exercisesWithSets
+    private val _exercises = MutableStateFlow<List<UiExerciseWithSets>>(emptyList())
+    val exercises = _exercises.asStateFlow()
 
     private val _volume = MutableStateFlow("0.00")
     val volume = _volume.asStateFlow()
 
+    private val _workout = MutableStateFlow(UiWorkout())
+    val workout = _workout.asStateFlow()
+
     init {
         viewModelScope.launch {
+            val runningWorkoutWithExercises =
+                workoutRepository.getWorkoutWithExercisesAndSets(runningWorkoutId)
+
+            val e = runningWorkoutWithExercises.exercisesWithSets
+
+            _exercises.update { e }
+
+            _workout.update { runningWorkoutWithExercises.workout }
+
             val volume = dataHelper.fetchVolumeFromWorkout(
-                WorkoutWithExercisesAndSets(Workout(), exercises.map { it.toEntity() })
+                WorkoutWithExercisesAndSets(Workout(), e.map { it.toEntity() })
             )
 
             _volume.update {
@@ -96,8 +97,7 @@ class BeforeSavingScreenViewModel @Inject constructor(
     }
 
 
-    private val _workout = MutableStateFlow(workoutWithExercisesAndSets.workout)
-    val workout = _workout.asStateFlow()
+
 
 
     fun setTimeElapsed(timeElapsed: Int) {
@@ -172,10 +172,10 @@ class BeforeSavingScreenViewModel @Inject constructor(
             workoutRepository.addWorkoutWithExercisesAndSets(
                 WorkoutWithExercisesAndSets(
                     workout = workout.value.copy(
-                        id = runningWorkoutId ?: workout.value.id,
+                        id = runningWorkoutId,
                         state = WorkoutState.COMPLETED
                     ).toEntity(),
-                    exercisesWithSets = exercises.map { exercise ->
+                    exercisesWithSets = exercises.value.map { exercise ->
                         exercise.toEntity().copy(
                             sets = exercise.toEntity().sets.map {
                                 // This keeps only relevant data on the actual type of set

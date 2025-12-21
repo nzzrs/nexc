@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025. LibreFit
+ * Copyright (c) 2024-2025. LibreFit Team
  *
  * This file is part of LibreFit
  *
@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  *
  * LibreFit is subject to additional terms covering author attribution and
- * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md file.
+ * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md.
  */
 
 package org.librefit.nav
@@ -39,9 +39,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
 import org.librefit.db.entity.ExerciseDC
-import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.nav.types.ExerciseDCNavType
-import org.librefit.nav.types.WorkoutWithExercisesAndSetsNavType
 import org.librefit.ui.screens.MainScreen
 import org.librefit.ui.screens.about.AboutScreen
 import org.librefit.ui.screens.about.DependenciesScreen
@@ -96,11 +94,7 @@ fun NavigationHost() {
             composable<Route.AboutScreen> {
                 AboutScreen(navController = navController)
             }
-            composable<Route.BeforeSavingScreen>(
-                typeMap = mapOf(
-                    typeOf<WorkoutWithExercisesAndSets>() to WorkoutWithExercisesAndSetsNavType()
-                )
-            ) {
+            composable<Route.BeforeSavingScreen> {
                 BeforeSavingScreen(
                     navController = navController,
                     animatedVisibilityScope = this

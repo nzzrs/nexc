@@ -24,7 +24,6 @@ package org.librefit.nav
 
 import kotlinx.serialization.Serializable
 import org.librefit.db.entity.ExerciseDC
-import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.enums.SuccessMessage
 import org.librefit.enums.pages.TutorialContent
 
@@ -35,8 +34,7 @@ sealed interface Route {
 
     @Serializable
     data class BeforeSavingScreen(
-        val workoutWithExercisesAndSets: WorkoutWithExercisesAndSets,
-        val runningWorkoutId: Long? = null
+        val runningWorkoutId: Long
     )
 
     @Serializable

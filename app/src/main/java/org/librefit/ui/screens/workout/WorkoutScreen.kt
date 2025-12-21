@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2024-2025. LibreFit
+ * Copyright (c) 2024-2025. LibreFit Team
  *
  * This file is part of LibreFit
  *
@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  *
  * LibreFit is subject to additional terms covering author attribution and
- * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md file.
+ * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md.
  */
 
 package org.librefit.ui.screens.workout
@@ -84,7 +84,6 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
 import kotlinx.collections.immutable.persistentListOf
 import org.librefit.R
-import org.librefit.db.relations.WorkoutWithExercisesAndSets
 import org.librefit.enums.InfoMode
 import org.librefit.enums.PreviousPerformanceSet
 import org.librefit.enums.SetMode
@@ -105,7 +104,6 @@ import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.screens.shared.SharedViewModel
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter
-import java.time.LocalDateTime
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -130,8 +128,6 @@ fun SharedTransitionScope.WorkoutScreen(
 
     val keepWorkoutScreenOn by viewModel.keepScreenOn.collectAsStateWithLifecycle()
 
-    val workout by viewModel.workout.collectAsStateWithLifecycle()
-
     val restTime by viewModel.restTime.collectAsStateWithLifecycle()
 
     val idSetWithRunningStopwatch by viewModel.idSetWithRunningStopwatch.collectAsStateWithLifecycle()
@@ -142,7 +138,7 @@ fun SharedTransitionScope.WorkoutScreen(
 
     val restTimerProgress by viewModel.restTimerProgress.collectAsStateWithLifecycle()
 
-    val runningWorkoutId by viewModel.runningWorkoutId.collectAsStateWithLifecycle(initialValue = null)
+    val runningWorkoutId by viewModel.runningWorkoutId.collectAsStateWithLifecycle()
     
 
     //It keeps the screen turned on
@@ -180,14 +176,6 @@ fun SharedTransitionScope.WorkoutScreen(
         actions = listOf {
             navController.navigate(
                 Route.BeforeSavingScreen(
-                    WorkoutWithExercisesAndSets(
-                        workout = workout.copy(
-                            id = 0,
-                            timeElapsed = timeElapsed,
-                            completed = LocalDateTime.now()
-                        ).toEntity(),
-                        exercisesWithSets = exercisesWithSets.map { it.toEntity() },
-                    ),
                     runningWorkoutId = runningWorkoutId
                 ),
             ) { launchSingleTop = true }

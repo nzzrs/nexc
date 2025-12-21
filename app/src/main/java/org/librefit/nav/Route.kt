@@ -30,90 +30,90 @@ import org.librefit.enums.pages.TutorialContent
 
 sealed interface Route {
     @Serializable
-    data object AboutScreen
+    data object AboutScreen : Route
 
     @Serializable
     data class BeforeSavingScreen(
         val runningWorkoutId: Long
-    )
+    ) : Route
 
     @Serializable
-    data object CalendarScreen
+    data object CalendarScreen : Route
 
     @Serializable
     data class EditExerciseScreen(
         val id: Long = 0,
         val exerciseDCid: String = ""
-    )
+    ) : Route
 
     @Serializable
     data class EditWorkoutScreen(
         val workoutId: Long
-    )
+    ) : Route
 
     @Serializable
     data class ExercisesScreen(
         val addExercises: Boolean
-    )
+    ) : Route
 
     @Serializable
     data class InfoExerciseScreen(
         val id: Long,
         val exerciseDC: ExerciseDC
-    )
+    ) : Route
 
     @Serializable
     data class InfoWorkoutScreen(
         val workoutId: Long
-    )
+    ) : Route
 
     @Serializable
-    data object MainScreen
+    data object MainScreen : Route
 
     @Serializable
-    data object MeasurementScreen
+    data object MeasurementScreen : Route
 
     @Serializable
-    data object PrivacyScreen
+    data object PrivacyScreen : Route
 
     @Serializable
     data class RequestPermissionScreen(
         val workoutId: Long
-    )
+    ) : Route
 
     @Serializable
-    data object LibrariesScreen
+    data object LibrariesScreen : Route
 
     @Serializable
-    data object LicenseScreen
+    data object LicenseScreen : Route
 
     @Serializable
-    data object SettingsScreen
+    data object SettingsScreen : Route
 
     @Serializable
-    data object StatisticsScreen
+    data object StatisticsScreen : Route
 
     @Serializable
     data class SuccessScreen(
         val message: SuccessMessage,
-    )
+    ) : Route
 
     @Serializable
     data class SupportScreen(
         val supporterInfo: Boolean = false
-    )
+    ) : Route
 
     @Serializable
     data class TutorialScreen(
         val tutorialContent: TutorialContent = TutorialContent.CREATE_ROUTINE,
         val fromWelcomeScreen: Boolean = false
-    )
+    ) : Route
 
     @Serializable
-    data object WelcomeScreen
+    data object WelcomeScreen : Route
 
     @Serializable
     data class WorkoutScreen(
         val workoutId: Long
-    )
+    ) : Route
 }

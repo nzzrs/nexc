@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2025. LibreFit
+ * Copyright (c) 2025. LibreFit Team
  *
  * This file is part of LibreFit
  *
@@ -17,7 +17,7 @@
  * along with LibreFit.  If not, see <https://www.gnu.org/licenses/>.
  *
  * LibreFit is subject to additional terms covering author attribution and
- * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md file.
+ * trademark usage, as found in the accompanying ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md.
  */
 
 package org.librefit.ui.components
@@ -47,12 +47,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -180,7 +180,7 @@ fun SharedTransitionScope.ExerciseCardSmall(
                 ElevatedCard(
                     shape = MaterialTheme.shapes.largeIncreased,
                     colors = CardDefaults.elevatedCardColors(
-                        containerColor = MaterialTheme.colorScheme.surfaceContainerHigh
+                        containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
                     )
                 ) {
                     Row(
@@ -210,6 +210,11 @@ fun SharedTransitionScope.ExerciseCardSmall(
                     }
                     Column {
                         exerciseWithSets.sets.forEachIndexed { index, set ->
+                            val backgroundColor = if (!isRoutine && set.completed) {
+                                MaterialTheme.colorScheme.tertiaryContainer
+                            } else {
+                                MaterialTheme.colorScheme.surfaceContainerHighest
+                            }
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -225,22 +230,31 @@ fun SharedTransitionScope.ExerciseCardSmall(
                                             ),
                                         )
                                     )
-                                    .background(
-                                        if (!isRoutine && set.completed) MaterialTheme.colorScheme.tertiaryContainer
-                                        else Color.Unspecified
-                                    )
+                                    .background(backgroundColor)
                                     .padding(5.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                                 horizontalArrangement = Arrangement.SpaceAround
                             ) {
-                                Text("${index + 1}")
+                                Text(
+                                    text = "${index + 1}",
+                                    color = contentColorFor(backgroundColor)
+                                )
                                 if (setMode == SetMode.DURATION) {
-                                    Text(formatTime(set.elapsedTime).substring(3))
+                                    Text(
+                                        text = formatTime(set.elapsedTime).substring(3),
+                                        color = contentColorFor(backgroundColor)
+                                    )
                                 } else {
                                     if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
-                                        Text("${set.load}")
+                                        Text(
+                                            text = "${set.load}",
+                                            color = contentColorFor(backgroundColor)
+                                        )
                                     }
-                                    Text("${set.reps}")
+                                    Text(
+                                        text = "${set.reps}",
+                                        color = contentColorFor(backgroundColor)
+                                    )
                                 }
                                 if (!isRoutine) {
                                     Checkbox(

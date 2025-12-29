@@ -27,6 +27,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -34,6 +35,7 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -395,13 +397,9 @@ fun SharedTransitionScope.ExerciseCard(
                         .padding(10.dp)
                         .fillMaxWidth(),
                     verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = if (previousPerformances != null) Arrangement.SpaceBetween else Arrangement.SpaceAround
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    Text(
-                        text = stringResource(id = R.string.set),
-                        color = MaterialTheme.colorScheme.secondary
-                    )
-
+                    Spacer(Modifier)
                     if (previousPerformances != null) {
                         Text(
                             text = stringResource(R.string.previous),
@@ -545,6 +543,22 @@ private fun Set(
             }
         }
     ) {
+        val backgroundColor by animateColorAsState(
+            targetValue = if (set.completed) {
+                MaterialTheme.colorScheme.tertiaryContainer
+            } else {
+                MaterialTheme.colorScheme.surfaceContainerHighest
+            },
+            label = "animated_color_for_set_background"
+        )
+        val contentColor by animateColorAsState(
+            targetValue = if (set.completed) {
+                MaterialTheme.colorScheme.onTertiaryContainer
+            } else {
+                MaterialTheme.colorScheme.onSurface
+            },
+            label = "animated_color_for_set_content"
+        )
         Row(
             modifier = Modifier
                 .clip(
@@ -559,17 +573,14 @@ private fun Set(
                         ),
                     )
                 )
-                .background(
-                    if (set.completed) MaterialTheme.colorScheme.tertiaryContainer
-                    else MaterialTheme.colorScheme.surfaceContainerHighest
-                )
+                .background(backgroundColor)
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = if (previousSet != null) Arrangement.SpaceBetween else Arrangement.SpaceAround
+            horizontalArrangement = Arrangement.SpaceBetween
         ) {
             Text(
                 text = "${i + 1}",
-                color = MaterialTheme.colorScheme.onSurface,
+                color = contentColor,
                 modifier = Modifier.padding(start = 20.dp)
             )
 
@@ -587,7 +598,7 @@ private fun Set(
                     }
                     Text(
                         text = text,
-                        color = MaterialTheme.colorScheme.onSurface,
+                        color = contentColor,
                         textAlign = TextAlign.Center,
                     )
                 }
@@ -610,6 +621,7 @@ private fun Set(
                                     if (isThisSetStopwatchRunning)
                                         R.drawable.ic_pause else R.drawable.ic_play_arrow
                                 ),
+                                tint = contentColor,
                                 contentDescription = if (isThisSetStopwatchRunning)
                                     stringResource(R.string.resume) else
                                     stringResource(R.string.pause)
@@ -632,7 +644,9 @@ private fun Set(
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.Transparent,
                             focusedBorderColor = Color.Transparent,
-                            disabledBorderColor = Color.Transparent
+                            disabledBorderColor = Color.Transparent,
+                            focusedTextColor = contentColor,
+                            unfocusedTextColor = contentColor,
                         )
                     )
                 }
@@ -652,7 +666,9 @@ private fun Set(
                         colors = OutlinedTextFieldDefaults.colors(
                             unfocusedBorderColor = Color.Transparent,
                             focusedBorderColor = Color.Transparent,
-                            disabledBorderColor = Color.Transparent
+                            disabledBorderColor = Color.Transparent,
+                            focusedTextColor = contentColor,
+                            unfocusedTextColor = contentColor,
                         )
                     )
                 }
@@ -670,7 +686,9 @@ private fun Set(
                     colors = OutlinedTextFieldDefaults.colors(
                         unfocusedBorderColor = Color.Transparent,
                         focusedBorderColor = Color.Transparent,
-                        disabledBorderColor = Color.Transparent
+                        disabledBorderColor = Color.Transparent,
+                        focusedTextColor = contentColor,
+                        unfocusedTextColor = contentColor,
                     )
                 )
             }
@@ -704,7 +722,7 @@ private fun ExerciseCardPreview() {
                 exercise = UiExercise(
                     notes = "This is a note!",
                     restTime = 90,
-                    setMode = SetMode.BODYWEIGHT_WITH_LOAD
+                    setMode = SetMode.DURATION
                 ),
                 sets = persistentListOf(UiSet(completed = true), UiSet(elapsedTime = 100)),
                 exerciseDC = UiExerciseDC(

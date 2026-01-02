@@ -8,7 +8,6 @@
 
 package org.librefit.ui.screens.infoExercise
 
-import android.net.Uri
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -20,12 +19,11 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.Json
-import org.librefit.db.entity.ExerciseDC
 import org.librefit.db.repository.DatasetRepository
 import org.librefit.db.repository.WorkoutRepository
 import org.librefit.enums.chart.BodyweightChart
@@ -52,26 +50,20 @@ class InfoExerciseScreenViewModel @Inject constructor(
 ) : ViewModel() {
 
     companion object {
-        private const val EXERCISE_DC_KEY = "exerciseDC"
+        private const val ID_EXERCISE_DC_KEY = "idExerciseDC"
     }
 
-    private val exerciseDCjson = savedStateHandle.get<String>(EXERCISE_DC_KEY)
-        ?: error("EXERCISE_DC_KEY does not match `Route.InfoExerciseScreen` parameter")
-
-
-    private val exerciseDC: UiExerciseDC = exerciseDCjson
-        .let {
-            Json.decodeFromString<ExerciseDC>(Uri.decode(it)).toUi()
-        }
+    private val idExerciseDC = savedStateHandle.get<String>(ID_EXERCISE_DC_KEY)
+        ?: error("ID_EXERCISE_DC_KEY does not match `Route.InfoExerciseScreen` parameter")
 
     // Keeps track of changes (e.g. the user edits the exercise)
-    val uiExerciseDC = datasetRepository.getExerciseFlowFromId(exerciseDC.id)
-        .map { it ?: exerciseDC }
+    val uiExerciseDC = datasetRepository.getExerciseFlowFromId(idExerciseDC)
+        .map { it ?: error("Invalid `exerciseDCid`: $idExerciseDC") }
         .distinctUntilChanged()
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
-            initialValue = exerciseDC
+            initialValue = UiExerciseDC()
         )
 
     fun deleteExercise() {
@@ -81,7 +73,7 @@ class InfoExerciseScreenViewModel @Inject constructor(
     }
 
     val workoutsWithExercises: StateFlow<List<UiWorkoutWithExercisesAndSets>> = workoutRepository
-        .getCompletedWorkoutsWithExercisesWithIdExerciseDC(exerciseDC.id)
+        .getCompletedWorkoutsWithExercisesWithIdExerciseDC(idExerciseDC)
         .distinctUntilChanged()
         .map { list -> list.map { it.toUi() } }
         .stateIn(
@@ -90,23 +82,30 @@ class InfoExerciseScreenViewModel @Inject constructor(
             initialValue = emptyList()
         )
 
+    // Arbitrary ExerciseChart
+    private val _exerciseChart = MutableStateFlow<ExerciseChart>(LoadChart.HEAVIEST_WEIGHT)
+    val exerciseChart = _exerciseChart.asStateFlow()
 
-    val defaultExerciseChart: ExerciseChart = when (exerciseDC.category) {
-        Category.STRETCHING, Category.CARDIO -> TimeChart.BEST_TIME
-        else -> when (exerciseDC.equipment) {
-            Equipment.BODY_ONLY, Equipment.FOAM_ROLL, Equipment.EXERCISE_BALL,
-            Equipment.MEDICINE_BALL, Equipment.BANDS -> if (exerciseDC.name.contains(
-                    "Weighted",
-                    true
-                )
-            )
-                WeightedBodyweightChart.HEAVIEST_WEIGHT else BodyweightChart.MOST_REPS
+    init {
+        viewModelScope.launch {
+            val exerciseDC = uiExerciseDC.first()
+            val defaultExerciseChart: ExerciseChart = when (exerciseDC.category) {
+                Category.STRETCHING, Category.CARDIO -> TimeChart.BEST_TIME
+                else -> when (exerciseDC.equipment) {
+                    Equipment.BODY_ONLY, Equipment.FOAM_ROLL, Equipment.EXERCISE_BALL,
+                    Equipment.MEDICINE_BALL, Equipment.BANDS ->
+                        if (exerciseDC.name.contains("Weighted", true))
+                            WeightedBodyweightChart.HEAVIEST_WEIGHT else BodyweightChart.MOST_REPS
 
-            else -> LoadChart.HEAVIEST_WEIGHT
+                    else -> LoadChart.HEAVIEST_WEIGHT
+                }
+            }
+
+            _exerciseChart.update {
+                defaultExerciseChart
+            }
         }
     }
-    private val _exerciseChart = MutableStateFlow(defaultExerciseChart)
-    val exerciseChart = _exerciseChart.asStateFlow()
 
     fun updateExerciseChart(newValue: ExerciseChart) {
         _exerciseChart.update {
@@ -116,7 +115,7 @@ class InfoExerciseScreenViewModel @Inject constructor(
 
     val points: StateFlow<List<Point>> = combine(
         exerciseChart,
-        workoutRepository.getCompletedWorkoutsWithExercisesWithIdExerciseDC(exerciseDC.id)
+        workoutRepository.getCompletedWorkoutsWithExercisesWithIdExerciseDC(idExerciseDC)
     ) { c, workouts ->
         dataHelper.fetchPointsForExercisesChart(c, workouts)
     }

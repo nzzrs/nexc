@@ -9,7 +9,6 @@
 package org.librefit.nav
 
 import kotlinx.serialization.Serializable
-import org.librefit.db.entity.ExerciseDC
 import org.librefit.enums.SuccessMessage
 import org.librefit.enums.pages.TutorialContent
 
@@ -45,7 +44,7 @@ sealed interface Route {
     @Serializable
     data class InfoExerciseScreen(
         val id: Long,
-        val exerciseDC: ExerciseDC
+        val idExerciseDC: String
     ) : Route
 
     @Serializable

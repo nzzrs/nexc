@@ -24,8 +24,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
-import org.librefit.db.entity.ExerciseDC
-import org.librefit.nav.types.ExerciseDCNavType
 import org.librefit.ui.screens.MainScreen
 import org.librefit.ui.screens.about.AboutScreen
 import org.librefit.ui.screens.about.DependenciesScreen
@@ -48,7 +46,6 @@ import org.librefit.ui.screens.shared.SuccessScreen
 import org.librefit.ui.screens.shared.SupportScreen
 import org.librefit.ui.screens.statistics.StatisticsScreen
 import org.librefit.ui.screens.workout.WorkoutScreen
-import kotlin.reflect.typeOf
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -115,11 +112,7 @@ fun NavigationHost() {
                     animatedVisibilityScope = this
                 )
             }
-            composable<Route.InfoExerciseScreen>(
-                typeMap = mapOf(
-                    typeOf<ExerciseDC>() to ExerciseDCNavType()
-                )
-            ) {
+            composable<Route.InfoExerciseScreen> {
                 InfoExerciseScreen(
                     id = it.toRoute<Route.InfoExerciseScreen>().id,
                     animatedVisibilityScope = this,

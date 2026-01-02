@@ -725,12 +725,12 @@ private fun SharedTransitionScope.AlternatingImages(
     var isRunning by rememberSaveable { mutableStateOf(true) }
 
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(exercise.images) {
         while (exercise.images.isNotEmpty()) {
-            delay(1000)
             if (isRunning) {
                 currentImageIndex = (currentImageIndex + 1) % exercise.images.size
             }
+            delay(1000)
         }
     }
 

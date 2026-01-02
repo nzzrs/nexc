@@ -61,7 +61,6 @@ import org.librefit.ui.models.UiExerciseDC
 import org.librefit.ui.models.UiExerciseWithSets
 import org.librefit.ui.models.UiSet
 import org.librefit.ui.models.UiWorkout
-import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter
 import org.librefit.util.Formatter.formatDetails
@@ -383,7 +382,7 @@ private fun SharedTransitionScope.InfoWorkoutScreenContent(
                     navController.navigate(
                         Route.InfoExerciseScreen(
                             e.exercise.id,
-                            e.exerciseDC.toEntity()
+                            e.exerciseDC.id
                         )
                     ) { launchSingleTop = true }
                 }

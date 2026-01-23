@@ -33,6 +33,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLocale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -69,7 +70,6 @@ import java.text.DecimalFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
-import java.util.Locale
 import kotlin.random.Random
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -215,17 +215,6 @@ private fun SharedTransitionScope.InfoWorkoutScreenContent(
                             )
                         )
 
-                        if (workout.notes.isNotBlank()) {
-                            HorizontalDivider()
-
-                            Text(
-                                formatDetails(
-                                    stringResource(R.string.notes),
-                                    workout.notes
-                                )
-                            )
-                        }
-
                         HorizontalDivider()
 
                         if (!isRoutine) {
@@ -276,6 +265,35 @@ private fun SharedTransitionScope.InfoWorkoutScreenContent(
                             )
                         )
                     }
+                }
+            }
+
+            if (workout.notes.isNotBlank()) {
+                item {
+                    ElevatedCard(
+                        shape = MaterialTheme.shapes.extraLarge
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(20.dp),
+                            verticalArrangement = Arrangement.spacedBy(10.dp)
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Icon(painterResource(R.drawable.ic_info), contentDescription = null)
+                                Text(
+                                    text = stringResource(R.string.notes),
+                                    style = MaterialTheme.typography.titleMedium
+                                )
+                            }
+                            Text(workout.notes)
+                        }
+                    }
+
+
                 }
             }
 
@@ -344,7 +362,7 @@ private fun SharedTransitionScope.InfoWorkoutScreenContent(
                                                 routine.created.format(
                                                     DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
                                                         .withLocale(
-                                                            Locale.getDefault()
+                                                            LocalLocale.current.platformLocale
                                                         )
                                                 )
                                     )

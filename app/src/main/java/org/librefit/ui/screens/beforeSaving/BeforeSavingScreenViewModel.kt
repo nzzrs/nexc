@@ -70,7 +70,9 @@ class BeforeSavingScreenViewModel @Inject constructor(
 
             _exercises.update { e }
 
-            _workout.update { runningWorkoutWithExercises.workout }
+            _workout.update {
+                runningWorkoutWithExercises.workout.copy(completed = LocalDateTime.now())
+            }
 
             val volume = dataHelper.fetchVolumeFromWorkout(
                 WorkoutWithExercisesAndSets(Workout(), e.map { it.toEntity() })
@@ -144,7 +146,7 @@ class BeforeSavingScreenViewModel @Inject constructor(
                 _routine.update {
                     workoutRepository.getRoutineFromRoutineID(workout.value.routineId).toUi()
                 }
-                delay(100)
+                delay(200)
             }
         }
     }

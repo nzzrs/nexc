@@ -577,9 +577,9 @@ private fun Set(
                 ) {
                     val (previousReps, previousLoad, previousTime) = values
                     val text = when (setMode) {
-                        SetMode.LOAD -> "$previousLoad" + stringResource(R.string.kg) + " * $previousReps"
+                        SetMode.LOAD -> "$previousLoad" + stringResource(R.string.kg) + "\n* $previousReps"
                         SetMode.BODYWEIGHT -> "$previousReps"
-                        SetMode.BODYWEIGHT_WITH_LOAD -> "$previousLoad" + stringResource(R.string.kg)
+                        SetMode.BODYWEIGHT_WITH_LOAD -> "$previousLoad" + stringResource(R.string.kg) + "\n* $previousReps"
                         SetMode.DURATION -> Formatter.formateSecondsInMinutesAndSeconds(previousTime)
                     }
                     Text(

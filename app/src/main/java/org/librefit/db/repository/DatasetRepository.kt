@@ -64,29 +64,24 @@ class DatasetRepository @Inject constructor(
 
             // Update dataset only on app update
             if (pastVersion != currentVersion) {
-                try {
-                    val jsonFile =
-                        context.resources.openRawResource(R.raw.exercises).bufferedReader().use {
-                            it.readText()
-                        }
+                val jsonFile =
+                    context.resources.openRawResource(R.raw.exercises).bufferedReader().use {
+                        it.readText()
+                    }
 
-                    val json = Json
+                val json = Json
 
-                    // All entries of all enums must be annotated with @SerialName with its corresponding value in json file
-                    val exercises = json.decodeFromString<List<ExerciseDC>>(jsonFile)
+                // All entries of all enums must be annotated with @SerialName with its corresponding value in json file
+                val exercises = json.decodeFromString<List<ExerciseDC>>(jsonFile)
 
-                    // Set the dataset into the database using the DAO
-                    datasetDao.setDataset(exercises)
+                // Set the dataset into the database using the DAO
+                datasetDao.setDataset(exercises)
 
-                    // Save version
-                    userPreferencesRepository.savePreference(
-                        key = UserPreferencesRepository.pastVersionCodeKey,
-                        value = currentVersion
-                    )
-
-                } catch (e: Exception) {
-                    error(e.message.toString())
-                }
+                // Save version
+                userPreferencesRepository.savePreference(
+                    key = UserPreferencesRepository.pastVersionCodeKey,
+                    value = currentVersion
+                )
             }
         }
     }

@@ -244,9 +244,10 @@ fun SharedTransitionScope.ExerciseCard(
             )
 
             //Rest timer slider
-            var restTime by remember { mutableIntStateOf(exerciseWithSets.exercise.restTime) }
-            var showSlider by rememberSaveable { mutableStateOf(false) }
             Column {
+                var showSlider by rememberSaveable { mutableStateOf(false) }
+                var restTime by remember { mutableIntStateOf(exerciseWithSets.exercise.restTime) }
+                val haptic = LocalHapticFeedback.current
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceAround,
@@ -273,6 +274,7 @@ fun SharedTransitionScope.ExerciseCard(
                         checked = showSlider,
                         onCheckedChange = {
                             showSlider = it
+                            haptic.performHapticFeedback(if (it) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff)
                         }
                     ) {
                         Icon(
@@ -282,7 +284,6 @@ fun SharedTransitionScope.ExerciseCard(
                     }
                 }
                 AnimatedVisibility(visible = showSlider) {
-                    val haptic = LocalHapticFeedback.current
                     Slider(
                         value = restTime.toFloat(),
                         onValueChange = {
@@ -302,7 +303,6 @@ fun SharedTransitionScope.ExerciseCard(
                     )
                 }
             }
-
 
             HorizontalDivider()
 

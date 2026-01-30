@@ -43,6 +43,7 @@ import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -621,6 +622,9 @@ private fun Set(
                         IconButton(
                             enabled = (isStopwatchRunning || isThisSetStopwatchRunning)
                                     && !set.completed,
+                            colors = IconButtonDefaults.iconButtonColors(
+                                contentColor = contentColor
+                            ),
                             onClick = {
                                 val newId = if (isThisSetStopwatchRunning) null else set.id
                                 updateIdSetWithRunningStopwatch(newId)
@@ -631,7 +635,6 @@ private fun Set(
                                     if (isThisSetStopwatchRunning)
                                         R.drawable.ic_pause else R.drawable.ic_play_arrow
                                 ),
-                                tint = contentColor,
                                 contentDescription = if (isThisSetStopwatchRunning)
                                     stringResource(R.string.resume) else
                                     stringResource(R.string.pause)

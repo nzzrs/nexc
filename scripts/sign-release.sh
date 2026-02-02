@@ -25,8 +25,18 @@ fi
 
 echo "🔧 Aligning and Signing..."
 
+if docker --version | grep -qi "podman"; then
+    # Podman: Maps user automatically
+    CONTAINER_ARGS="--userns=keep-id"
+    PERMISSION_FIX=""
+else
+    # Docker: Runs as root. Chown the 'repro-out' folder at the end so files aren't locked as root on the host.
+    CONTAINER_ARGS=""
+    PERMISSION_FIX="&& chown -R $(id -u):$(id -g) repro-out"
+fi
+
 docker run --rm \
-    --userns=keep-id \
+    $CONTAINER_ARGS \
     -v "$PWD":/project:z \
     -e KS_PASS="$KEYSTORE_PASS" \
     android-repro-check \
@@ -48,6 +58,8 @@ docker run --rm \
 
         # Verify
         apksigcopier compare $FINAL_APK --unsigned $INPUT_APK
-    "
 
+        # Run permission fix if on standard Docker
+        $PERMISSION_FIX
+    "
 echo "✅ Signed & Verified: $FINAL_APK"

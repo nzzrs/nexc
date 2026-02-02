@@ -200,7 +200,7 @@ object Formatter {
         val finalString = if (decimalSeparatorIndex != -1) {
             // Remove all other separators (which are now group separators)
             val integerPart = sanitized
-                .substring(0, decimalSeparatorIndex)
+                .take(decimalSeparatorIndex)
                 .replace(".", "")
             val fractionalPart = sanitized
                 .substring(decimalSeparatorIndex + 1)
@@ -247,7 +247,7 @@ object Formatter {
         val value = if (decimalSeparatorIndex != -1) {
             // Remove all other separators (which are now group separators)
             val integerPart = sanitized
-                .substring(0, decimalSeparatorIndex)
+                .take(decimalSeparatorIndex)
                 .replace(".", "")
                 .take(maxIntegerDigits)
             val fractionalPart = sanitized

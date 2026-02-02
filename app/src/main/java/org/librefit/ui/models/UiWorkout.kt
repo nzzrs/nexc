@@ -22,7 +22,7 @@ import kotlin.random.Random
 @Immutable
 data class UiWorkout(
     val id: Long = 0,
-    val routineId: Long = Random.Default.nextLong(),
+    val routineId: Long = Random.nextLong(),
     val notes: String = "",
     val title: String = "",
     val state: WorkoutState = WorkoutState.COMPLETED,

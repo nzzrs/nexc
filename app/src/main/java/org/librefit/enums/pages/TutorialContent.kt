@@ -8,9 +8,12 @@
 
 package org.librefit.enums.pages
 
+import androidx.annotation.Keep
+
 /**
  * IMPORTANT: Keep in sync with [org.librefit.ui.screens.about.TutorialScreen]
  */
+@Keep
 enum class TutorialContent(
     val lazyColumnIndex: Int,
     val pageIndex: Int = 0

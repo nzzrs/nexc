@@ -120,7 +120,7 @@ class InfoWorkoutScreenViewModel @Inject constructor(
     fun detachWorkoutFromRoutine() {
         _workout.update { currentWorkout ->
             currentWorkout.copy(
-                routineId = Random.Default.nextLong()
+                routineId = Random.nextLong()
             )
         }
 

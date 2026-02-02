@@ -123,7 +123,7 @@ class EditWorkoutScreenViewModel @Inject constructor(
             exercises.map { exercise ->
                 if (exercise.exercise.id == exerciseId) {
                     val newSet = exercise.sets
-                        .lastOrNull()?.copy(id = Random.Default.nextLong())
+                        .lastOrNull()?.copy(id = Random.nextLong())
                         ?: UiSet()
 
                     val newSets = exercise.sets.toMutableList() + newSet

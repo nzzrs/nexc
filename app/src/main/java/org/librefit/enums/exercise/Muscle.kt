@@ -14,53 +14,53 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class Muscle : ExerciseProperty {
     @SerialName(value = "abdominals")
-    ABDOMINALS(),
+    ABDOMINALS,
 
     @SerialName(value = "abductors")
-    ABDUCTORS(),
+    ABDUCTORS,
 
     @SerialName(value = "adductors")
-    ADDUCTORS(),
+    ADDUCTORS,
 
     @SerialName(value = "biceps")
-    BICEPS(),
+    BICEPS,
 
     @SerialName(value = "calves")
-    CALVES(),
+    CALVES,
 
     @SerialName(value = "chest")
-    CHEST(),
+    CHEST,
 
     @SerialName(value = "forearms")
-    FOREARMS(),
+    FOREARMS,
 
     @SerialName(value = "glutes")
-    GLUTES(),
+    GLUTES,
 
     @SerialName(value = "hamstrings")
-    HAMSTRINGS(),
+    HAMSTRINGS,
 
     @SerialName(value = "lats")
-    LATS(),
+    LATS,
 
     @SerialName(value = "lower back")
-    LOWER_BACK(),
+    LOWER_BACK,
 
     @SerialName(value = "middle back")
-    MIDDLE_BACK(),
+    MIDDLE_BACK,
 
     @SerialName(value = "neck")
-    NECK(),
+    NECK,
 
     @SerialName(value = "quadriceps")
-    QUADRICEPS(),
+    QUADRICEPS,
 
     @SerialName(value = "shoulders")
-    SHOULDERS(),
+    SHOULDERS,
 
     @SerialName(value = "traps")
-    TRAPS(),
+    TRAPS,
 
     @SerialName(value = "triceps")
-    TRICEPS();
+    TRICEPS;
 }

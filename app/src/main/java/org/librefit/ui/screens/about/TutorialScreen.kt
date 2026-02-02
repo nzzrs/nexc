@@ -171,7 +171,7 @@ fun TutorialScreen(
                                         2 -> R.string.tut_create_routine_3
                                         3 -> R.string.tut_create_routine_4
                                         4 -> R.string.tut_create_routine_5
-                                        else -> error("Invalid page index: $page. Expected: ${0..pages - 1}")
+                                        else -> error("Invalid page index: $page. Expected: ${0..<pages}")
                                     }
                                 ),
                                 textAlign = TextAlign.Center
@@ -268,7 +268,7 @@ fun TutorialScreen(
                                                 3 -> R.drawable.tut_complete_workout_4
                                                 4 -> R.drawable.tut_complete_workout_5
                                                 5 -> R.drawable.tut_complete_workout_6
-                                                else -> error("Invalid page index: $page. Expected: ${0..pages - 1}")
+                                                else -> error("Invalid page index: $page. Expected: ${0..<pages}")
                                             }
                                         )
                                     ),

@@ -14,23 +14,23 @@ import kotlinx.serialization.Serializable
 @Serializable
 enum class Category : ExerciseProperty {
     @SerialName(value = "powerlifting")
-    POWERLIFTING(),
+    POWERLIFTING,
 
     @SerialName(value = "strength")
-    STRENGTH(),
+    STRENGTH,
 
     @SerialName(value = "stretching")
-    STRETCHING(),
+    STRETCHING,
 
     @SerialName(value = "cardio")
-    CARDIO(),
+    CARDIO,
 
     @SerialName(value = "olympic weightlifting")
-    OLYMPIC_WEIGHTLIFTING(),
+    OLYMPIC_WEIGHTLIFTING,
 
     @SerialName(value = "strongman")
-    STRONGMAN(),
+    STRONGMAN,
 
     @SerialName(value = "plyometrics")
-    PLYOMETRICS();
+    PLYOMETRICS;
 }

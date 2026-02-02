@@ -30,6 +30,16 @@ class GlobalExceptionHandler @Inject constructor(
     private val userPreferencesRepository: UserPreferencesRepository
 ) : Thread.UncaughtExceptionHandler {
 
+    private var defaultHandler: Thread.UncaughtExceptionHandler? = null
+
+    fun initialize() {
+        // Get the current existing handler (e.g., Crashlytics)
+        this.defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
+
+        // Set this class as the new handler
+        Thread.setDefaultUncaughtExceptionHandler(this)
+    }
+
     override fun uncaughtException(thread: Thread, exception: Throwable) {
         Log.d("Handler", "Exception: $exception ")
         // Create a PendingIntent to restart the app
@@ -56,6 +66,8 @@ class GlobalExceptionHandler @Inject constructor(
             addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
         }
         context.startActivity(errorIntent)
+
+        defaultHandler?.uncaughtException(thread, exception)
 
         // Terminate the current process
         Process.killProcess(Process.myPid())

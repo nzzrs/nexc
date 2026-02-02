@@ -8,6 +8,9 @@
 
 package org.librefit.enums
 
+import androidx.annotation.Keep
+
+@Keep
 enum class SuccessMessage {
     WORKOUT_SAVED,
     ROUTINE_SAVED,

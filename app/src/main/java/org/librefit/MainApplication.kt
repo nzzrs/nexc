@@ -25,7 +25,7 @@ class MainApplication : Application() {
     override fun onCreate() {
         super.onCreate()
         // Setup global exception handler
-        Thread.setDefaultUncaughtExceptionHandler(globalExceptionHandler)
+        globalExceptionHandler.initialize()
 
         // Update dataset on each app update
         datasetRepository.updateDatasetOnAppUpdate()

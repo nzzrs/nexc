@@ -41,6 +41,7 @@ jobs:
         with:
           files: |
             repro-out/app-release-unsigned.apk
-              repro-out/app-release.apk
+            repro-out/app-release.apk
+            app/build/outputs/mapping/release/mapping.txt
           body: |
             ## TODO

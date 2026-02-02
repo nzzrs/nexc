@@ -136,12 +136,10 @@ In short, this means you are free to use, modify, and distribute the code, but y
 
 ### ™️ Branding and Assets
 
-The "LibreFit" name and logos are trademarks. Their use is governed by
-the [Trademark Policy](TRADEMARK_POLICY.md).
+The "LibreFit" name and logos are trademarks. **All Rights Reserved**.
 
-The source design files for the brand assets are located in the `/assets` directory and are licensed
-under [CC BY-NC-ND 4.0](assets/LICENSE.md). The compiled assets included in the application's
-`/src/main/res` directory are subject to these same restrictions.
+Their use is governed by the [Trademark Policy](TRADEMARK_POLICY.md) which applies to relevant files located in
+`assets` and `app/src/main/res`.
 
 ## 👥 Credits
 

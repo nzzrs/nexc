@@ -3,7 +3,7 @@
 This project supports [Reproducible Builds](https://reproducible-builds.org/).
 This means you can verify that the APK distributed on GitHub or F-Droid matches the source code exactly, proving no hidden code was injected during the release process.
 
-## Build Environment
+## Build environment
 To ensure determinism, a containerized build environment is used.
 
 *   **OS:** Ubuntu 22.04 (Pinned Digest)
@@ -18,7 +18,7 @@ To ensure determinism, a containerized build environment is used.
 
 ---
 
-## 1. How to Build from Source
+## How to build from source
 To reproduce the **Unsigned APK** exactly as it was built by the CI server:
 
 1.  **Clone the repository and checkout the tag/commit you want to verify:**
@@ -29,24 +29,24 @@ To reproduce the **Unsigned APK** exactly as it was built by the CI server:
     git checkout v0.0.1
     ```
 
-2.  **Build the Docker Image:**
+2.  **Build the Docker image:**
     ```bash
     docker build -t android-repro-check -f Dockerfile.build .
     ```
 
-3.  **Run the Build Script:**
+3.  **Run the build script:**
     ```bash
     chmod +x scripts/build.sh
     ./scripts/build.sh
     ```
 
-4.  **Check the Output:**
+4.  **Check the output:**
     The artifact will be at `repro-out/app-release-unsigned.apk`.
-    The script will output the **SHA-256 hash**.
+    The script will output the **SHA-256 hash**. Verification is successful if and only if hashes match.
 
 ---
 
-## 2. How to Verify a Signed Release
+## How to verify a signed release
 Because this app targets Android 15 (Build Tools 36+), it requires specific **16KB page alignment**. Standard tools (like `unzip` or `sha256sum`) cannot directly compare the Signed APK to the Source Code because the signing process alters the binary padding.
 
 Use `apksigcopier` instead to compare the APKs.
@@ -62,16 +62,16 @@ Use `apksigcopier` instead to compare the APKs.
 3.  **Run Comparison:**
     Compare the official release against your local build:
     ```bash
-    apksigcopier compare app-release-signed.apk --unsigned repro-out/app-release-unsigned.apk
+    apksigcopier compare app-release.apk --unsigned repro-out/app-release-unsigned.apk
     ```
 
-### Interpreting Results
+### Results
 *   **Exit Code 0 (No Output):** ✅ **SUCCESS.** The signed APK contains *exactly* the same compiled code, resources, and assets as the source code.
 *   **Exit Code 1 (Failure):** ❌ **MISMATCH.** The binary content differs. Open an issue if this error persists.
 
 ---
 
-## Technical Details for F-Droid / Auditors
+## Technical Details
 *   **Root Directory:** `/project`
 *   **Build Command:** `./gradlew clean assembleRelease --no-daemon`
 *   **Environment Variables:**

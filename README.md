@@ -119,6 +119,8 @@ We will then take care of the question as soon as possible.
     ```bash
     ./gradlew assembleDebug
     ```
+   
+> Note: this project supports [reproducible builds](https://reproducible-builds.org/). See [REPRODUCIBLE.md](REPRODUCIBLE.md)
 
 ## 📜 License
 

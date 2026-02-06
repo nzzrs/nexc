@@ -13,6 +13,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -110,6 +111,7 @@ import org.librefit.ui.components.rememberAssetAspectRatio
 import org.librefit.ui.models.UiExercise
 import org.librefit.ui.models.UiExerciseDC
 import org.librefit.ui.models.UiExerciseWithSets
+import org.librefit.ui.models.UiSet
 import org.librefit.ui.models.UiWorkout
 import org.librefit.ui.models.UiWorkoutWithExercisesAndSets
 import org.librefit.ui.theme.LibreFitTheme
@@ -664,6 +666,22 @@ private fun SharedTransitionScope.HistoryPage(
 
                                     Column {
                                         exerciseWithSets.sets.forEachIndexed { index, set ->
+                                            val backgroundColor by animateColorAsState(
+                                                targetValue = if (set.completed) {
+                                                    MaterialTheme.colorScheme.tertiaryContainer
+                                                } else {
+                                                    Color.Unspecified
+                                                },
+                                                label = "animated_color_for_set_background"
+                                            )
+                                            val contentColor by animateColorAsState(
+                                                targetValue = if (set.completed) {
+                                                    MaterialTheme.colorScheme.onTertiaryContainer
+                                                } else {
+                                                    Color.Unspecified
+                                                },
+                                                label = "animated_color_for_set_content"
+                                            )
                                             Row(
                                                 modifier = Modifier
                                                     .fillMaxWidth()
@@ -679,21 +697,24 @@ private fun SharedTransitionScope.HistoryPage(
                                                             ),
                                                         )
                                                     )
-                                                    .background(
-                                                        if (set.completed) MaterialTheme.colorScheme.tertiaryContainer
-                                                        else Color.Unspecified
-                                                    )
+                                                    .background(backgroundColor)
                                                     .padding(5.dp),
                                                 verticalAlignment = Alignment.CenterVertically,
                                                 horizontalArrangement = Arrangement.SpaceAround
                                             ) {
-                                                Text("${index + 1}")
+                                                Text(
+                                                    text = "${index + 1}",
+                                                    color = contentColor
+                                                )
                                                 if (setMode == SetMode.DURATION) {
-                                                    Text(formatTime(set.elapsedTime).substring(3))
+                                                    Text(
+                                                        text=formatTime(set.elapsedTime).substring(3),
+                                                        color=contentColor
+                                                    )
                                                 } else {
-                                                    Text("${set.reps}")
+                                                    Text(text="${set.reps}", color=contentColor)
                                                     if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
-                                                        Text("${set.load}")
+                                                        Text(text = "${set.load}", color = contentColor)
                                                     }
                                                 }
                                                 Checkbox(
@@ -811,7 +832,7 @@ private fun InfoExercisePreview() {
                     animatedVisibilityScope = this,
                     workoutsWithExercises = listOf(
                         UiWorkoutWithExercisesAndSets(
-                            workout = UiWorkout(title = "My first workout", notes = "Very funny"),
+                            workout = UiWorkout(id = Random.nextLong(), title = "My first workout", notes = "Very funny"),
                             exercisesWithSets = persistentListOf(
                                 UiExerciseWithSets(
                                     exercise = UiExercise(
@@ -820,13 +841,17 @@ private fun InfoExercisePreview() {
                                         notes = "This is the first exercise",
                                         workoutId = Random.nextLong()
                                     ),
-                                    sets = persistentListOf()
+                                    sets = persistentListOf(
+                                        UiSet(
+                                            completed = true
+                                        )
+                                    )
                                 ),
                                 UiExerciseWithSets()
                             )
                         ),
                         UiWorkoutWithExercisesAndSets(
-                            workout = UiWorkout(title = "My second workout"),
+                            workout = UiWorkout(id = Random.nextLong(), title = "My second workout"),
                             exercisesWithSets = persistentListOf(
                                 UiExerciseWithSets(
                                     exercise = UiExercise(

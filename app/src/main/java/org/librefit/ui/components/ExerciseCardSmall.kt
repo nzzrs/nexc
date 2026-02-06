@@ -13,6 +13,7 @@ import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.animation.SharedTransitionLayout
 import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -33,8 +34,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -196,11 +197,22 @@ fun SharedTransitionScope.ExerciseCardSmall(
                     }
                     Column {
                         exerciseWithSets.sets.forEachIndexed { index, set ->
-                            val backgroundColor = if (!isRoutine && set.completed) {
-                                MaterialTheme.colorScheme.tertiaryContainer
-                            } else {
-                                MaterialTheme.colorScheme.surfaceContainerHighest
-                            }
+                            val backgroundColor by animateColorAsState(
+                                targetValue = if (set.completed) {
+                                    MaterialTheme.colorScheme.tertiaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.surfaceContainerHighest
+                                },
+                                label = "animated_color_for_set_background"
+                            )
+                            val contentColor by animateColorAsState(
+                                targetValue = if (set.completed) {
+                                    MaterialTheme.colorScheme.onTertiaryContainer
+                                } else {
+                                    MaterialTheme.colorScheme.onSurface
+                                },
+                                label = "animated_color_for_set_content"
+                            )
                             Row(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -223,23 +235,23 @@ fun SharedTransitionScope.ExerciseCardSmall(
                             ) {
                                 Text(
                                     text = "${index + 1}",
-                                    color = contentColorFor(backgroundColor)
+                                    color = contentColor
                                 )
                                 if (setMode == SetMode.DURATION) {
                                     Text(
                                         text = formatTime(set.elapsedTime).substring(3),
-                                        color = contentColorFor(backgroundColor)
+                                        color = contentColor
                                     )
                                 } else {
                                     if (setMode == SetMode.LOAD || setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
                                         Text(
                                             text = "${set.load}",
-                                            color = contentColorFor(backgroundColor)
+                                            color = contentColor
                                         )
                                     }
                                     Text(
                                         text = "${set.reps}",
-                                        color = contentColorFor(backgroundColor)
+                                        color = contentColor
                                     )
                                 }
                                 if (!isRoutine) {

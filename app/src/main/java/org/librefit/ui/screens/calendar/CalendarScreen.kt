@@ -181,7 +181,7 @@ private fun SharedTransitionScope.CalendarScreenContent(
                     Column(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(15.dp)
+                            .padding(20.dp)
                     ) {
                         Row(
                             modifier = Modifier.fillMaxWidth(),

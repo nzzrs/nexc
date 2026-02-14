@@ -447,7 +447,7 @@ private fun MeasurementScreenContent(
                                 verticalArrangement = Arrangement.spacedBy(10.dp)
                             ) {
                                 Text(
-                                    text = Formatter.getFullDateFromLocalDate(m.date)
+                                    text = Formatter.getDateTimeFromLocalDateTime(m.date)
                                         .replaceFirstChar { it.uppercase() },
                                     style = MaterialTheme.typography.labelMedium
                                 )
@@ -543,7 +543,7 @@ private fun MeasurementScreenContent(
     }
 }
 
-@Preview
+@Preview(locale = "it")
 @Composable
 private fun MeasurementScreenPreview() {
     val shortDate: DateTimeFormatter? = DateTimeFormatter

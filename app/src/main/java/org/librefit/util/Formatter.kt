@@ -182,6 +182,14 @@ object Formatter {
         )
     }
 
+    fun getDateTimeFromLocalDateTime(date: LocalDateTime): String {
+        return date.format(
+            DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM).withLocale(
+                Locale.getDefault()
+            )
+        )
+    }
+
     /**
      * It is used to process user input in [org.librefit.ui.components.ExerciseCard]
      * text field and return the corresponding float.

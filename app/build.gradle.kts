@@ -39,6 +39,7 @@ configure<ApplicationExtension> {
     }
 
     lint {
+        baseline = file("lint-baseline.xml")
         checkGeneratedSources = false
     }
 

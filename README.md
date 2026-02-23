@@ -24,7 +24,7 @@ During workouts, track every set, rep, rest interval, and load in real time.
 - ⚡ [Building LibreFit from source](README.md#-building-librefit-from-source)
 - 📜 [License](README.md#-license)
     - ™️ [Branding](README.md#-branding)
-    - 📷 [Exercises' images](README.md#-images-of-exercises)
+    - 📷 [Images of exercises](README.md#-images-of-exercises)
 - 👥 [Credits](README.md#-credits)
 
 ## 🚀 Features

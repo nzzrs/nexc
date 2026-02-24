@@ -151,7 +151,7 @@ class UserPreferencesRepository @Inject constructor(
         // Register the callback
         application.registerComponentCallbacks(callback)
 
-        // Unregister the callback when the flow is cancelled
+        // Unregister the callback when the flow is canceled
         awaitClose {
             application.unregisterComponentCallbacks(callback)
         }
@@ -162,8 +162,9 @@ class UserPreferencesRepository @Inject constructor(
         .map { newLocale ->
             // If newLanguage is null, follow system otherwise find the associated enum
             newLocale?.language?.let { newLanguage ->
-                Language.entries.find { it.code == newLanguage }
-                    ?: error("Unknown language: $newLanguage")
+                checkNotNull(Language.entries.find { it.code == newLanguage }) {
+                    "Unknown language: $newLanguage"
+                }
             } ?: Language.SYSTEM
         }
         .stateIn(

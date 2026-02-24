@@ -116,8 +116,8 @@ val legendLabelKey = ExtraStore.Key<List<String>>()
  * Leave empty in order to use the default format.
  * @param points A list of [Point]s containing the actual points of the chart. The sizes of [Point.yValues]
  * list must be not over 4. If [points] is empty, a placeholder is shown. Leave all [Point.xValue]s blank in order to display default ordinal numeration in x axis.
- * @param useColumns When `true`, the chart will use lines instead of columns.
- * @param chartMode A [ChartMode] to display which [FilterChip] is selected. If `null`, none filter chips
+ * @param useColumns When `true`, the chart will use columns instead of lines.
+ * @param chartMode A [ChartMode] to display which [FilterChip] is selected. If `null`, no filter chips
  * will be displayed.
  * @param updateChartMode It's triggered when any [FilterChip] is clicked. It passes the corresponding
  * [ChartMode] value.
@@ -286,7 +286,7 @@ fun LibreFitCartesianChart(
             }
 
             // Columns' style
-            val columnComponents = colorPalette.mapIndexed { i, c ->
+            val columnComponents = colorPalette.map { c ->
                 rememberLineComponent(
                     fill = fill(c),
                     thickness = 32.dp,

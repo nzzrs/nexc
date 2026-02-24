@@ -80,8 +80,9 @@ fun TutorialScreen(
     }
 
     val lazyListState = rememberLazyListState(
-        initialFirstVisibleItemIndex = tutorialContent.lazyColumnIndex.takeIf { it in headlinesIndexes }
-            ?: error("Invalid initial index: ${tutorialContent.lazyColumnIndex}. Possible indexes: $headlinesIndexes")
+        initialFirstVisibleItemIndex = checkNotNull(tutorialContent.lazyColumnIndex.takeIf { it in headlinesIndexes }) {
+            "Invalid initial index: ${tutorialContent.lazyColumnIndex}. Possible indexes: $headlinesIndexes"
+        }
     )
 
     val navigateBack: (() -> Unit)? = if (fromWelcomeScreen) null else navController::navigateUp

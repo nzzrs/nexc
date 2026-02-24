@@ -81,13 +81,15 @@ class SettingsScreenViewModelTest {
             val value = valueKey.captured
             when (key.captured) {
                 UserPreferencesRepository.languageKey -> {
-                    language.value = Language.entries.find { it.code == value }
-                        ?: error("Invalid language value")
+                    language.value = checkNotNull(Language.entries.find { it.code == value }) {
+                        "Invalid language value: $value"
+                    }
                 }
 
                 UserPreferencesRepository.themeModeKey -> {
-                    themeMode.value =
-                        ThemeMode.entries.find { it.value == value } ?: error("Invalid theme value")
+                    themeMode.value = checkNotNull(ThemeMode.entries.find { it.value == value }) {
+                        "Invalid theme value: $value"
+                    }
                 }
 
                 UserPreferencesRepository.keepOnWorkoutScreenKey -> {

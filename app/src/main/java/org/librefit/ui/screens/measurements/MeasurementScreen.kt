@@ -86,6 +86,7 @@ import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlin.math.round
 import kotlin.random.Random
 
 
@@ -411,6 +412,8 @@ private fun MeasurementScreenContent(
 
             item { HeadlineText(stringResource(R.string.past_measurement)) }
 
+            // TODO: weekly average toggle
+
             if (measurements.isEmpty()) {
                 item {
                     Column(
@@ -564,7 +567,7 @@ private fun MeasurementScreenPreview() {
             Measurement(
                 id = it.toLong(),
                 notes = if (Random.nextBoolean()) "This is the note of the ${it + 1}° measurement" else "",
-                bodyWeight = Random.nextDouble(60.0, 80.0),
+                bodyWeight = round(Random.nextDouble(60.0, 80.0) * 100) / 100,
                 bodyFatPercentage = if (Random.nextBoolean()) Random.nextInt(10, 80) else 0,
                 muscleMassPercentage = if (Random.nextBoolean()) Random.nextInt(20, 80) else 0,
                 date = LocalDateTime.ofEpochSecond(

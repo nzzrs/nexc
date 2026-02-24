@@ -43,8 +43,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -155,8 +155,10 @@ private fun LazyListScope.successScreenContent(
             Box(contentAlignment = Alignment.Center) {
                 ElevatedCard(
                     modifier = Modifier
-                        .rotate(rotation)
-                        .size(size.times(1.2f)),
+                        .size(size.times(1.2f))
+                        .graphicsLayer {
+                            this.rotationZ = rotation
+                        },
                     shape = MaterialShapes.Cookie7Sided.toShape()
                 ) { }
                 SuccessLottie(Modifier.size(size))

@@ -369,7 +369,7 @@ fun StreakCard(weekStreak: Int) {
      * It counts how many times the user clicks the card. Higher the value, higher the speed animations
      * It decreased of 1 every second until reaching 0.
      */
-    var clicks by rememberSaveable { mutableIntStateOf(120) }
+    var clicks by rememberSaveable { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
         while (true) {

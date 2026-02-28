@@ -49,8 +49,6 @@ if [ -f "$APK_PATH" ]; then
     # Print Hash for logs
     echo "🔒 SHA-256:"
     sha256sum "$OUTPUT_DIR/app-release-unsigned.apk"
-
-    echo "Mapping file available at: $OUTPUT_DIR/mapping.txt"
 else
     echo "❌ Build Failed: APK not found."
     exit 1

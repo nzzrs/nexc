@@ -22,3 +22,6 @@
 
 # The code is open source, so no need to hide class names
 -dontobfuscate
+
+# Disable bytecode optimization to keep stack traces unchanged
+-dontoptimize

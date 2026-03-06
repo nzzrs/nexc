@@ -33,7 +33,6 @@ import org.librefit.ui.components.charts.LibreFitCartesianChart
 import org.librefit.ui.components.charts.Point
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter
-import java.text.DecimalFormat
 import kotlin.random.Random
 
 @Composable
@@ -92,11 +91,15 @@ private fun StatisticsScreenContent(
             }
             item {
                 LibreFitCartesianChart(
-                    format = when (muscleDistributionStatisticsChart) {
-                        StatisticsChart.LOAD -> DecimalFormat("#.## " + stringResource(R.string.kg))
-                        StatisticsChart.REPS -> DecimalFormat()
-                        StatisticsChart.VOLUME -> DecimalFormat("#.## " + stringResource(R.string.kg))
-                        StatisticsChart.DURATION -> DecimalFormat("# " + stringResource(R.string.min))
+                    decimalCount = when (exercisesDistributionStatisticsChart) {
+                        StatisticsChart.DURATION -> 0
+                        else -> 2
+                    },
+                    suffix = when (exercisesDistributionStatisticsChart) {
+                        StatisticsChart.LOAD -> stringResource(R.string.kg)
+                        StatisticsChart.REPS -> ""
+                        StatisticsChart.VOLUME -> stringResource(R.string.kg)
+                        StatisticsChart.DURATION -> stringResource(R.string.min)
                     },
                     points = muscleDistributionPoints,
                     legendList = muscleDistributionLegendIds.map { pair ->
@@ -118,11 +121,15 @@ private fun StatisticsScreenContent(
             }
             item {
                 LibreFitCartesianChart(
-                    format = when (exercisesDistributionStatisticsChart) {
-                        StatisticsChart.LOAD -> DecimalFormat("#.## " + stringResource(R.string.kg))
-                        StatisticsChart.REPS -> DecimalFormat()
-                        StatisticsChart.VOLUME -> DecimalFormat("#.## " + stringResource(R.string.kg))
-                        StatisticsChart.DURATION -> DecimalFormat("# " + stringResource(R.string.min))
+                    decimalCount = when (exercisesDistributionStatisticsChart) {
+                        StatisticsChart.DURATION -> 0
+                        else -> 2
+                    },
+                    suffix = when (exercisesDistributionStatisticsChart) {
+                        StatisticsChart.LOAD -> stringResource(R.string.kg)
+                        StatisticsChart.REPS -> ""
+                        StatisticsChart.VOLUME -> stringResource(R.string.kg)
+                        StatisticsChart.DURATION -> stringResource(R.string.min)
                     },
                     points = exercisesDistributionPoints,
                     legendList = exercisesDistributionLegendIds.map { pair ->

@@ -65,7 +65,6 @@ import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLine
 import com.patrykandpatrick.vico.compose.cartesian.layer.rememberLineCartesianLayer
 import com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarker
 import com.patrykandpatrick.vico.compose.cartesian.marker.CartesianMarkerVisibilityListener
-import com.patrykandpatrick.vico.compose.cartesian.marker.DefaultCartesianMarker
 import com.patrykandpatrick.vico.compose.cartesian.rememberCartesianChart
 import com.patrykandpatrick.vico.compose.cartesian.rememberVicoZoomState
 import com.patrykandpatrick.vico.compose.common.Fill
@@ -93,7 +92,6 @@ import org.librefit.nav.Route
 import org.librefit.ui.components.LibreFitButton
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter
-import java.text.DecimalFormat
 import java.time.LocalDateTime
 import kotlin.random.Random
 
@@ -104,8 +102,8 @@ val legendLabelKey = ExtraStore.Key<List<String>>()
 /**
  * A custom [com.patrykandpatrick.vico.compose.cartesian.CartesianChart]
  *
- * @param format It is used by [VerticalAxis] to display Y axis values following the provided format.
- * Leave empty in order to use the default format.
+ * @param decimalCount The number of decimal digits in the y-axis. Default is 2 decimal digits.
+ * @param suffix to be applied at all values in y-axis. Default is no suffix (empty string). Keep in mind a blank space is added before suffix.
  * @param points A list of [Point]s containing the actual points of the chart. The sizes of [Point.yValues]
  * list must be not over 4. If [points] is empty, a placeholder is shown. Leave all [Point.xValue]s blank in order to display default ordinal numeration in x axis.
  * @param useColumns When `true`, the chart will use columns instead of lines.
@@ -122,7 +120,8 @@ val legendLabelKey = ExtraStore.Key<List<String>>()
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun LibreFitCartesianChart(
-    format: DecimalFormat = DecimalFormat(),
+    decimalCount: Int = 2,
+    suffix : String = "",
     points: List<Point>,
     useColumns: Boolean = false,
     chartMode: ChartMode? = null,
@@ -211,15 +210,17 @@ fun LibreFitCartesianChart(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             if (chartMode != null) {
-                val options = when (chartMode) {
-                    is WorkoutChart -> WorkoutChart.entries
-                    is MeasurementChart -> MeasurementChart.entries
-                    is StatisticsChart -> StatisticsChart.entries
-                    is TimeChart -> TimeChart.entries
-                    is WeightedBodyweightChart -> WeightedBodyweightChart.entries
-                    is BodyweightChart -> BodyweightChart.entries
-                    is LoadChart -> LoadChart.entries
-                }.map { it as ChartMode }.toList()
+                val options = rememberSaveable(chartMode){
+                    when (chartMode) {
+                        is WorkoutChart -> WorkoutChart.entries
+                        is MeasurementChart -> MeasurementChart.entries
+                        is StatisticsChart -> StatisticsChart.entries
+                        is TimeChart -> TimeChart.entries
+                        is WeightedBodyweightChart -> WeightedBodyweightChart.entries
+                        is BodyweightChart -> BodyweightChart.entries
+                        is LoadChart -> LoadChart.entries
+                    }.map { it as ChartMode }.toList()
+                }
 
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
@@ -342,9 +343,8 @@ fun LibreFitCartesianChart(
                                         pointSpacing = 80.dp
                                     ),
                                     marker = rememberLibreFitMarker(
-                                        valueFormatter = DefaultCartesianMarker.ValueFormatter.default(
-                                            suffix = format.negativeSuffix
-                                        ),
+                                        decimalCount = decimalCount,
+                                        suffix = suffix,
                                         style = materialStyle
                                     ),
                                     markerVisibilityListener = object :
@@ -377,11 +377,10 @@ fun LibreFitCartesianChart(
                                     },
                                     startAxis = VerticalAxis.rememberStart(
                                         label = labelComponent,
-                                        valueFormatter = remember(format) {
-                                            CartesianValueFormatter.decimal(
-                                                suffix = format.negativeSuffix
-                                            )
-                                        }
+                                        valueFormatter = CartesianValueFormatter.decimal(
+                                            decimalCount = decimalCount,
+                                            suffix = " $suffix"
+                                        )
                                     ),
                                     bottomAxis = HorizontalAxis.rememberBottom(
                                         label = labelComponent,
@@ -473,7 +472,8 @@ private fun LibreFitCartesianChartPreview() {
 
     LibreFitTheme(dynamicColor = false, themeMode = ThemeMode.DARK) {
         LibreFitCartesianChart(
-            format = DecimalFormat("#.# %"),
+            decimalCount = 2,
+            suffix = " %",
             points = (0..10).map {
                 Point(
                     yValues = (0..numRandomEntries).map { Random.nextDouble() },

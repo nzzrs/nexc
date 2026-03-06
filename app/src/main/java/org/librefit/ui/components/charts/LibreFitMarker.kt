@@ -29,8 +29,8 @@ import com.patrykandpatrick.vico.compose.common.component.rememberTextComponent
  */
 @Composable
 fun rememberLibreFitMarker(
-    valueFormatter: DefaultCartesianMarker.ValueFormatter =
-        DefaultCartesianMarker.ValueFormatter.default(),
+    decimalCount: Int = 2,
+    suffix : String = "",
     showIndicator: Boolean = true,
     style: TextStyle
 ): CartesianMarker {
@@ -55,7 +55,10 @@ fun rememberLibreFitMarker(
 
     return rememberDefaultCartesianMarker(
         label = label,
-        valueFormatter = valueFormatter,
+        valueFormatter = DefaultCartesianMarker.ValueFormatter.default(
+            decimalCount = decimalCount,
+            suffix = suffix
+        ),
         indicator =
             if (showIndicator) {
                 { color ->

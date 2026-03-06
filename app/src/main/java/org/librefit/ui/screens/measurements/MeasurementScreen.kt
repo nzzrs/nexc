@@ -79,7 +79,6 @@ import org.librefit.ui.components.dialogs.ConfirmDialog
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter
 import org.librefit.util.Formatter.formatDetails
-import java.text.DecimalFormat
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
@@ -229,10 +228,14 @@ private fun MeasurementScreenContent(
         LibreFitLazyColumn(innerPadding, lazyListState = lazyListState) {
             item {
                 LibreFitCartesianChart(
-                    format = when (measurementChart) {
-                        MeasurementChart.BODY_WEIGHT -> DecimalFormat("# " + stringResource(R.string.kg))
-                        MeasurementChart.FAT_MASS -> DecimalFormat("0' %'")
-                        MeasurementChart.LEAN_MASS -> DecimalFormat("0' %'")
+                    decimalCount = when (measurementChart) {
+                        MeasurementChart.BODY_WEIGHT -> 0
+                        else -> 2
+                    },
+                    suffix = when (measurementChart) {
+                        MeasurementChart.BODY_WEIGHT -> stringResource(R.string.kg)
+                        MeasurementChart.FAT_MASS -> "%"
+                        MeasurementChart.LEAN_MASS ->  "%"
                     },
                     points = listChartData,
                     chartMode = measurementChart,

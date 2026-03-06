@@ -90,7 +90,6 @@ import org.librefit.ui.models.UiWorkoutWithExercisesAndSets
 import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter
 import org.librefit.util.Formatter.formatTime
-import java.text.DecimalFormat
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
@@ -235,10 +234,15 @@ private fun SharedTransitionScope.ProfileScreenContent(
 
         item {
             LibreFitCartesianChart(
-                format = when (workoutChart) {
-                    WorkoutChart.DURATION -> DecimalFormat("# " + stringResource(R.string.min))
-                    WorkoutChart.VOLUME -> DecimalFormat("#.## " + stringResource(R.string.kg))
-                    WorkoutChart.REPS -> DecimalFormat()
+                decimalCount = when (workoutChart) {
+                    WorkoutChart.DURATION -> 0
+                    WorkoutChart.VOLUME -> 2
+                    WorkoutChart.REPS -> 2
+                },
+                suffix = when (workoutChart) {
+                    WorkoutChart.DURATION -> stringResource(R.string.min)
+                    WorkoutChart.VOLUME -> stringResource(R.string.kg)
+                    WorkoutChart.REPS -> ""
                 },
                 points = points,
                 useColumns = true,

@@ -119,7 +119,6 @@ import org.librefit.ui.theme.LibreFitTheme
 import org.librefit.util.Formatter
 import org.librefit.util.Formatter.formatDetails
 import org.librefit.util.Formatter.formatTime
-import java.text.DecimalFormat
 import kotlin.random.Random
 
 @OptIn(ExperimentalSharedTransitionApi::class)
@@ -513,17 +512,17 @@ private fun SharedTransitionScope.HistoryPage(
     ) {
         item {
             LibreFitCartesianChart(
-                format = when (exerciseChart) {
+                decimalCount = when (exerciseChart) {
                     BodyweightChart.MOST_REPS, BodyweightChart.SESSION_REPS, LoadChart.TOTAL_REPS,
-                    WeightedBodyweightChart.TOTAL_REPS -> DecimalFormat()
-
-                    TimeChart.BEST_TIME, TimeChart.TOTAL_TIME -> DecimalFormat(
-                        "# " + stringResource(
-                            R.string.second_abbreviation
-                        )
-                    )
-
-                    else -> DecimalFormat("#.# " + stringResource(R.string.kg))
+                    WeightedBodyweightChart.TOTAL_REPS -> 2
+                    TimeChart.BEST_TIME, TimeChart.TOTAL_TIME -> 0
+                    else -> 1
+                },
+                suffix = when (exerciseChart) {
+                    BodyweightChart.MOST_REPS, BodyweightChart.SESSION_REPS, LoadChart.TOTAL_REPS,
+                    WeightedBodyweightChart.TOTAL_REPS -> ""
+                    TimeChart.BEST_TIME, TimeChart.TOTAL_TIME ->  stringResource(R.string.second_abbreviation)
+                    else -> stringResource(R.string.kg)
                 },
                 points = points,
                 chartMode = exerciseChart,

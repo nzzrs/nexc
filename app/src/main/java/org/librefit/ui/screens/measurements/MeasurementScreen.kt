@@ -238,8 +238,9 @@ private fun MeasurementScreenContent(
                         MeasurementChart.LEAN_MASS ->  "%"
                     },
                     points = listChartData,
+                    chartModes = MeasurementChart.entries,
                     chartMode = measurementChart,
-                    updateChartMode = { updateChartMode(it as MeasurementChart) }
+                    updateChartMode = updateChartMode
                 )
             }
 

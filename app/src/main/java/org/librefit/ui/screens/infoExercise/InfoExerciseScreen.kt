@@ -520,13 +520,19 @@ private fun SharedTransitionScope.HistoryPage(
                 },
                 suffix = when (exerciseChart) {
                     BodyweightChart.MOST_REPS, BodyweightChart.SESSION_REPS, LoadChart.TOTAL_REPS,
-                    WeightedBodyweightChart.TOTAL_REPS -> ""
+                    WeightedBodyweightChart.TOTAL_REPS -> null
                     TimeChart.BEST_TIME, TimeChart.TOTAL_TIME ->  stringResource(R.string.second_abbreviation)
                     else -> stringResource(R.string.kg)
                 },
                 points = points,
                 chartMode = exerciseChart,
-                updateChartMode = { updateExerciseChart(it as ExerciseChart) },
+                chartModes = when(exerciseChart) {
+                    is BodyweightChart -> BodyweightChart.entries
+                    is LoadChart -> LoadChart.entries
+                    is WeightedBodyweightChart -> WeightedBodyweightChart.entries
+                    is TimeChart -> TimeChart.entries
+                },
+                updateChartMode = updateExerciseChart,
                 navController = navController
             )
         }

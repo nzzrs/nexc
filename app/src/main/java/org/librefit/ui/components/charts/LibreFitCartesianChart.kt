@@ -103,12 +103,12 @@ val legendLabelKey = ExtraStore.Key<List<String>>()
  * A custom [com.patrykandpatrick.vico.compose.cartesian.CartesianChart]
  *
  * @param decimalCount The number of decimal digits in the y-axis. Default is 2 decimal digits.
- * @param suffix to be applied at all values in y-axis. Default is no suffix (empty string). Keep in mind a blank space is added before suffix.
+ * @param suffix to be applied at all values in y-axis. Keep in mind a blank space is added before suffix.
  * @param points A list of [Point]s containing the actual points of the chart. The sizes of [Point.yValues]
  * list must be not over 4. If [points] is empty, a placeholder is shown. Leave all [Point.xValue]s blank in order to display default ordinal numeration in x axis.
  * @param useColumns When `true`, the chart will use columns instead of lines.
- * @param chartMode A [ChartMode] to display which [FilterChip] is selected. If `null`, no filter chips
- * will be displayed.
+ * @param chartMode A [ChartMode] to display which [FilterChip] is selected. If null, no chip is selected.
+ * @param chartModes The list of [FilterChip]s displayed at the top of the chart. If empty, no chip will be displayed.
  * @param updateChartMode It's triggered when any [FilterChip] is clicked. It passes the corresponding
  * [ChartMode] value.
  * @param navController When not null, a button is shown in order to navigate to [org.librefit.ui.screens.infoWorkout.InfoWorkoutScreen]
@@ -119,15 +119,16 @@ val legendLabelKey = ExtraStore.Key<List<String>>()
  */
 @OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
-fun LibreFitCartesianChart(
+fun <T : ChartMode> LibreFitCartesianChart(
     decimalCount: Int = 2,
-    suffix : String = "",
+    suffix : String? = null,
     points: List<Point>,
     useColumns: Boolean = false,
-    chartMode: ChartMode? = null,
+    chartMode: T? = null,
+    chartModes: List<T> = emptyList(),
     navController: NavHostController? = null,
     legendList: List<String>? = null,
-    updateChartMode: ((ChartMode) -> Unit)? = null
+    updateChartMode: (T) -> Unit = {}
 ) {
     val modelProducer = remember { CartesianChartModelProducer() }
 
@@ -209,30 +210,18 @@ fun LibreFitCartesianChart(
                 .padding(15.dp),
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
-            if (chartMode != null) {
-                val options = rememberSaveable(chartMode){
-                    when (chartMode) {
-                        is WorkoutChart -> WorkoutChart.entries
-                        is MeasurementChart -> MeasurementChart.entries
-                        is StatisticsChart -> StatisticsChart.entries
-                        is TimeChart -> TimeChart.entries
-                        is WeightedBodyweightChart -> WeightedBodyweightChart.entries
-                        is BodyweightChart -> BodyweightChart.entries
-                        is LoadChart -> LoadChart.entries
-                    }.map { it as ChartMode }.toList()
-                }
-
+            if (chartModes.isNotEmpty()) {
                 LazyRow(
                     horizontalArrangement = Arrangement.spacedBy(ButtonGroupDefaults.ConnectedSpaceBetween),
                 ) {
-                    itemsIndexed(items = options) { index, mode ->
+                    itemsIndexed(items = chartModes) { index, mode ->
                         OutlinedToggleButton(
                             checked = chartMode == mode,
-                            onCheckedChange = { updateChartMode?.invoke(mode) },
+                            onCheckedChange = { updateChartMode(mode) },
                             modifier = Modifier.semantics { role = Role.RadioButton },
                             shapes = when (index) {
                                 0 -> ButtonGroupDefaults.connectedLeadingButtonShapes()
-                                options.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
+                                chartModes.lastIndex -> ButtonGroupDefaults.connectedTrailingButtonShapes()
                                 else -> ButtonGroupDefaults.connectedMiddleButtonShapes()
                             },
                         ) {
@@ -344,7 +333,7 @@ fun LibreFitCartesianChart(
                                     ),
                                     marker = rememberLibreFitMarker(
                                         decimalCount = decimalCount,
-                                        suffix = suffix,
+                                        suffix = suffix?.let { " $it"} ?: "",
                                         style = materialStyle
                                     ),
                                     markerVisibilityListener = object :
@@ -377,10 +366,12 @@ fun LibreFitCartesianChart(
                                     },
                                     startAxis = VerticalAxis.rememberStart(
                                         label = labelComponent,
-                                        valueFormatter = CartesianValueFormatter.decimal(
-                                            decimalCount = decimalCount,
-                                            suffix = " $suffix"
-                                        )
+                                        valueFormatter = remember(decimalCount, suffix){
+                                            CartesianValueFormatter.decimal(
+                                                decimalCount = decimalCount,
+                                                suffix = suffix?.let { " $it" } ?: ""
+                                            )
+                                        }
                                     ),
                                     bottomAxis = HorizontalAxis.rememberBottom(
                                         label = labelComponent,

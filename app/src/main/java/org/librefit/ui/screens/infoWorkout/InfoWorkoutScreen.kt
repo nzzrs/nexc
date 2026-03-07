@@ -30,6 +30,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -129,7 +130,7 @@ private fun SharedTransitionScope.InfoWorkoutScreenContent(
     detachWorkoutFromRoutine: () -> Unit,
     updateChartMode: (WorkoutChart) -> Unit
 ) {
-    var showConfirmDialog by remember { mutableStateOf(false) }
+    var showConfirmDialog by rememberSaveable { mutableStateOf(false) }
 
     if (showConfirmDialog) {
         ConfirmDialog(
@@ -152,7 +153,7 @@ private fun SharedTransitionScope.InfoWorkoutScreenContent(
     }
 
 
-    var showUnlikeRoutineDialog by remember { mutableStateOf(false) }
+    var showUnlikeRoutineDialog by rememberSaveable { mutableStateOf(false) }
 
     if (showUnlikeRoutineDialog) {
         ConfirmDialog(
@@ -309,11 +310,12 @@ private fun SharedTransitionScope.InfoWorkoutScreenContent(
                         suffix = when (workoutChart) {
                             WorkoutChart.DURATION -> stringResource(R.string.min)
                             WorkoutChart.VOLUME -> stringResource(R.string.kg)
-                            WorkoutChart.REPS -> ""
+                            WorkoutChart.REPS -> null
                         },
                         points = points,
+                        chartModes = WorkoutChart.entries,
                         chartMode = workoutChart,
-                        updateChartMode = { updateChartMode(it as WorkoutChart) },
+                        updateChartMode = updateChartMode,
                         navController = navController
                     )
                 }

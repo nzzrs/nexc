@@ -97,7 +97,7 @@ private fun StatisticsScreenContent(
                     },
                     suffix = when (exercisesDistributionStatisticsChart) {
                         StatisticsChart.LOAD -> stringResource(R.string.kg)
-                        StatisticsChart.REPS -> ""
+                        StatisticsChart.REPS -> null
                         StatisticsChart.VOLUME -> stringResource(R.string.kg)
                         StatisticsChart.DURATION -> stringResource(R.string.min)
                     },
@@ -107,9 +107,10 @@ private fun StatisticsScreenContent(
                             ": " + pair.second
                         } else ""
                     },
+                    chartModes = StatisticsChart.entries,
                     chartMode = muscleDistributionStatisticsChart,
                     useColumns = true,
-                    updateChartMode = { updateMuscleDistributionStatisticsChart(it as StatisticsChart) }
+                    updateChartMode = updateMuscleDistributionStatisticsChart
                 )
             }
 
@@ -127,7 +128,7 @@ private fun StatisticsScreenContent(
                     },
                     suffix = when (exercisesDistributionStatisticsChart) {
                         StatisticsChart.LOAD -> stringResource(R.string.kg)
-                        StatisticsChart.REPS -> ""
+                        StatisticsChart.REPS -> null
                         StatisticsChart.VOLUME -> stringResource(R.string.kg)
                         StatisticsChart.DURATION -> stringResource(R.string.min)
                     },
@@ -137,9 +138,10 @@ private fun StatisticsScreenContent(
                             ": " + pair.second
                         } else ""
                     },
+                    chartModes = StatisticsChart.entries,
                     chartMode = exercisesDistributionStatisticsChart,
                     useColumns = true,
-                    updateChartMode = { updateExercisesDistributionStatisticsChart(it as StatisticsChart) }
+                    updateChartMode = { updateExercisesDistributionStatisticsChart(it) }
                 )
             }
         }

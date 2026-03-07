@@ -86,7 +86,7 @@ class InfoExerciseScreenViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             val exerciseDC = uiExerciseDC.first()
-            val defaultExerciseChart: ExerciseChart = when (exerciseDC.category) {
+            val defaultExerciseChart: ExerciseChart = when (exerciseDC.category) { // TODO: Assign & save this to room entries
                 Category.STRETCHING, Category.CARDIO -> TimeChart.BEST_TIME
                 else -> when (exerciseDC.equipment) {
                     Equipment.BODY_ONLY, Equipment.FOAM_ROLL, Equipment.EXERCISE_BALL,

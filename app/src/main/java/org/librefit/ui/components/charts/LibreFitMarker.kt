@@ -8,9 +8,11 @@
 
 package org.librefit.ui.components.charts
 
+import android.util.Log
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.dp
 import com.patrykandpatrick.vico.compose.cartesian.axis.rememberAxisGuidelineComponent
@@ -55,10 +57,13 @@ fun rememberLibreFitMarker(
 
     return rememberDefaultCartesianMarker(
         label = label,
-        valueFormatter = DefaultCartesianMarker.ValueFormatter.default(
-            decimalCount = decimalCount,
-            suffix = suffix
-        ),
+        valueFormatter = remember(decimalCount, suffix) {
+            Log.d("Marker", "Suffix value:`$suffix`")
+            DefaultCartesianMarker.ValueFormatter.default(
+                decimalCount = decimalCount,
+                suffix = suffix
+            )
+        },
         indicator =
             if (showIndicator) {
                 { color ->

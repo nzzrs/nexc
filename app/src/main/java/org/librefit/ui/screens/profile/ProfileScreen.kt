@@ -242,12 +242,13 @@ private fun SharedTransitionScope.ProfileScreenContent(
                 suffix = when (workoutChart) {
                     WorkoutChart.DURATION -> stringResource(R.string.min)
                     WorkoutChart.VOLUME -> stringResource(R.string.kg)
-                    WorkoutChart.REPS -> ""
+                    WorkoutChart.REPS -> null
                 },
                 points = points,
                 useColumns = true,
+                chartModes = WorkoutChart.entries,
                 chartMode = workoutChart,
-                updateChartMode = { updateChartMode(it as WorkoutChart) },
+                updateChartMode = updateChartMode,
                 navController = navController
             )
         }

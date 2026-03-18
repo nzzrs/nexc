@@ -46,8 +46,8 @@ During workouts, track every set, rep, rest interval, and load in real time.
 
 Currently, the available options are:
 
-[<img src="assets/badge-github.png" alt="Download APK" height="40">](https://github.com/LibreFitOrg/LibreFit/releases/latest/LibreFit.apk)
-[<img src="assets/badge-obtainium.png" alt="Obtainium" height="40">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/LibreFitOrg/LibreFit/)
+[<img src="assets/badge-github.png" alt="Download APK" height="80">](https://github.com/LibreFitOrg/LibreFit/releases/latest/LibreFit.apk)
+[<img src="assets/badge-obtainium.png" alt="Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/LibreFitOrg/LibreFit/)
 
 ## 🤝 Let's Build LibreFit Together
 

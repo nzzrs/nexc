@@ -17,6 +17,7 @@ During workouts, track every set, rep, rest interval, and load in real time.
 ## Table of Contents
 
 - 🚀 [Features](README.md#-features)
+- 📥 [Install](README.md#-install)
 - 🤝 [Let's Build LibreFit Together](README.md#-lets-build-librefit-together)
     - 💖 [Donating](README.md#-donate)
     - 🏗️ [Contributing to the source code](README.md#-contribute-to-source-code)
@@ -40,6 +41,13 @@ During workouts, track every set, rep, rest interval, and load in real time.
   information remains private and secure.
 - 🎨 **Material Design 3 Expressive**: Enjoy a sleek and modern user interface that enhances your
   experience.
+
+## 📥 Install
+
+Currently, the available options are:
+
+[<img src="assets/badge-github.png" alt="Download APK" height="40">](https://github.com/LibreFitOrg/LibreFit/releases/latest/LibreFit.apk)
+[<img src="assets/badge-obtainium.png" alt="Obtainium" height="40">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/LibreFitOrg/LibreFit/)
 
 ## 🤝 Let's Build LibreFit Together
 

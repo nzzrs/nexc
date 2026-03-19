@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="assets/logo.svg" alt="Logo" style="width: 50%">
+    <img src="assets/logo.svg" alt="Logo" style="width: 60%">
 </div>
 
 # LibreFit - The free and private workout tracker
@@ -46,8 +46,8 @@ During workouts, track every set, rep, rest interval, and load in real time.
 
 Currently, the available options are:
 
-[<img src="assets/badge-github.png" alt="Download APK" height="80">](https://github.com/LibreFitOrg/LibreFit/releases/latest/LibreFit.apk)
-[<img src="assets/badge-obtainium.png" alt="Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/LibreFitOrg/LibreFit/)
+[<img src="assets/badge-github.png" alt="Download APK" height="80">](https://github.com/LibreFitOrg/LibreFit/releases/latest/download/LibreFit.apk)
+[<img src="assets/badge-obtainium.png" alt="Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22org.librefit.app%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FLibreFitOrg%2FLibreFit%22%2C%22author%22%3A%22LibreFitOrg%22%2C%22name%22%3A%22LibreFit%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22filterReleaseNotesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22verifyLatestTag%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22useLatestAssetDateAsReleaseDate%5C%22%3Afalse%2C%5C%22releaseTitleAsVersion%5C%22%3Afalse%2C%5C%22trackOnly%5C%22%3Afalse%2C%5C%22versionExtractionRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22matchGroupToUse%5C%22%3A%5C%22%5C%22%2C%5C%22versionDetection%5C%22%3Atrue%2C%5C%22releaseDateAsVersion%5C%22%3Afalse%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Afalse%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22-unsigned%5C%22%2C%5C%22invertAPKFilter%5C%22%3Atrue%2C%5C%22autoApkFilterByArch%5C%22%3Atrue%2C%5C%22appName%5C%22%3A%5C%22%5C%22%2C%5C%22appAuthor%5C%22%3A%5C%22%5C%22%2C%5C%22shizukuPretendToBeGooglePlay%5C%22%3Afalse%2C%5C%22allowInsecure%5C%22%3Afalse%2C%5C%22exemptFromBackgroundUpdates%5C%22%3Afalse%2C%5C%22skipUpdateNotifications%5C%22%3Afalse%2C%5C%22about%5C%22%3A%5C%22%5C%22%2C%5C%22refreshBeforeDownload%5C%22%3Afalse%2C%5C%22includeZips%5C%22%3Afalse%2C%5C%22zippedApkFilterRegEx%5C%22%3A%5C%22%5C%22%7D%22%2C%22overrideSource%22%3A%22GitHub%22%7D)
 
 ## 🤝 Let's Build LibreFit Together
 

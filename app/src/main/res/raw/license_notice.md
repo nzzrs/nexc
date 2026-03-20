@@ -9,4 +9,4 @@ In short, this means you are free to use, modify, and distribute the code, but y
 
 ## Branding and Trademarks
 
-The "LibreFit" name and logos are trademarks and are not licensed under the GPL. Their use is governed by the [Trademark Policy](https://github.com/IamDg/blob/main/TRADEMARK_POLICY.md)
+The "LibreFit" name and logos are trademarks and are not licensed under the GPL. Their use is governed by the [Trademark Policy](https://github.com/LibreFitOrg/LibreFit/blob/main/TRADEMARK_POLICY.md)

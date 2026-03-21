@@ -55,7 +55,7 @@ jobs:
             "$ALIGNED_APK"
           
           # Clean up the keystore
-          rm release.keystore
+          rm release.jks
 
       # This is just for testing the manual run
       - name: Upload artifacts if not releasing

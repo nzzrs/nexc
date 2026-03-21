@@ -34,9 +34,9 @@ jobs:
           KEY_PASSWORD: ${{ secrets.KEYSTORE_PASS }}
         run: |
           # Decode keystore from Base64
-          echo "$KEYSTORE_BASE64" | base64 --decode > release.keystore
+          echo "$KEYSTORE_BASE64" | base64 --decode > release.jks
           
-          UNSIGNED_APK="app/build/outputs/apk/release/LibreFit-unsigned.apk"
+          UNSIGNED_APK="app/build/outputs/apk/release/LibreFit-release-unsigned.apk"
           ALIGNED_APK="app/build/outputs/apk/release/LibreFit-aligned.apk"
           SIGNED_APK="app/build/outputs/apk/release/LibreFit.apk"
           BUILD_TOOLS_DIR="$ANDROID_HOME/build-tools/36.0.0"
@@ -47,7 +47,7 @@ jobs:
           # Sign with preservation: --alignment-preserved prevents apksigner from changing the padding bytes
           # Use "env:" to pass passwords securely without exposing them in CI logs
           $BUILD_TOOLS_DIR/apksigner sign \
-            --ks release.keystore \
+            --ks release.jks \
             --ks-key-alias "$KEY_ALIAS" \
             --ks-pass "env:KEYSTORE_PASSWORD" \
             --key-pass "env:KEY_PASSWORD" \

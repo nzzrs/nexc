@@ -23,8 +23,10 @@ jobs:
           cache: 'gradle'         # Speeds up builds
 
       - name: Build Unsigned Release APK
+        env:
+          SOURCE_DATE_EPOCH: 1700000000
         # --no-daemon ensures a fresh, reproducible environment in CI
-        run: ./gradlew assembleRelease --no-daemon
+        run: ./gradlew clean assembleRelease --no-daemon
 
       - name: Sign APK
         env:
@@ -36,7 +38,8 @@ jobs:
           # Decode keystore from Base64
           echo "$KEYSTORE_BASE64" | base64 --decode > release.jks
           
-          cp "app/build/outputs/apk/release/LibreFit-release-unsigned.apk" "app/build/outputs/apk/release/LibreFit-unsigned.apk"
+          # Rename unsigned apk
+          mv "app/build/outputs/apk/release/LibreFit-release-unsigned.apk" "app/build/outputs/apk/release/LibreFit-unsigned.apk"
           
           UNSIGNED_APK="app/build/outputs/apk/release/LibreFit-unsigned.apk"
           ALIGNED_APK="app/build/outputs/apk/release/LibreFit-aligned.apk"
@@ -53,6 +56,7 @@ jobs:
             --ks-key-alias "$KEY_ALIAS" \
             --ks-pass "env:KEYSTORE_PASSWORD" \
             --key-pass "env:KEY_PASSWORD" \
+            --alignment-preserved \
             --out "$SIGNED_APK" \
             "$ALIGNED_APK"
           

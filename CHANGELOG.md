@@ -22,6 +22,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - 
 
+## [0.1.4] - 2026-02-22
+
+New release just for f-droid submission (pt. 3). No need to update.
+
+## [0.1.3] - 2026-02-22
+
+New release just for f-droid submission (pt. 4). No need to update.
+
 ## [0.1.2] - 2026-02-22
 
 New release just for f-droid submission. No need to update.
@@ -44,8 +52,9 @@ f-droid
 
 First public release. Bugs are expected! Report them so they can be fixed.
 
-[Unreleased]: https://github.com/LibreFitOrg/LibreFit/compare/v0.1.2...HEAD
-
+[Unreleased]: https://github.com/LibreFitOrg/LibreFit/compare/v0.1.4...HEAD
+[0.1.3]: https://github.com/LibreFitOrg/LibreFit/releases/tag/v0.1.4
+[0.1.3]: https://github.com/LibreFitOrg/LibreFit/releases/tag/v0.1.3
 [0.1.2]: https://github.com/LibreFitOrg/LibreFit/releases/tag/v0.1.2
 [0.1.1]: https://github.com/LibreFitOrg/LibreFit/releases/tag/v0.1.1
 [0.1.0]: https://github.com/LibreFitOrg/LibreFit/releases/tag/v0.1.0

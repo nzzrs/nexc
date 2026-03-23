@@ -11,6 +11,14 @@ This means the APK distributed on GitHub or F-Droid matches the source code exac
 The proof of a reproducible build is when the SHA-256 hash of a locally built APK matches the CI's build.
 This guarantees the compiler, code, and resources are exactly the same.
 
+## Prerequisites
+- Git
+- JDK 21
+
+> Version 21 because F-droid use it so CI use it to ensure reproducibility, however other versions may work (e.g. 17) 
+
+## Guide
+
 To reproduce the **APKs** exactly as it was built by the CI server:
 
 1.  **Clone the repository and checkout the tag/commit to verify:**
@@ -28,10 +36,11 @@ To reproduce the **APKs** exactly as it was built by the CI server:
     The APK will be at `app/build/outputs/apk/release/LibreFit-release-unsigned.apk`.
 
 3.  **Verify unsigned APK built by CI server:**
-    Download the unsigned APK (`Librefit-unsigned.apk`) from CI server. To ensure the APKs are identical, their SHA-256 must match.
-    A possible method is the following:
+    Download the unsigned APK (`Librefit-unsigned.apk`) from CI server.
+    To ensure the APKs are identical, their SHA-256 must match.
+    For instance, the following command computes both their hashes:
     ```bash
-    # Output SHA-256 of CI's APK and local APK
+    # Output SHA-256 of CI's APK and locally built APK
     sha256sum LibreFit-unsigned.apk LibreFit-release-unsigned.apk
     ```
-    ✅ Verification is successful if and only if their hashes are identical.
+    ✅ Verification is successful if and only if hashes are identical.

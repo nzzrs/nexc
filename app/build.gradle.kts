@@ -9,8 +9,6 @@
 import com.android.build.api.dsl.ApplicationExtension
 import org.gradle.api.JavaVersion.VERSION_17
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-import java.io.FileInputStream
-import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -21,14 +19,6 @@ plugins {
     alias(libs.plugins.about.libraries)
 }
 
-
-val versionProps = Properties().apply {
-    load(FileInputStream(rootProject.file("version.properties")))
-}
-val vMajor = versionProps.getProperty("major").toInt()
-val vMinor = versionProps.getProperty("minor").toInt()
-val vPatch = versionProps.getProperty("patch").toInt()
-val vBuild = versionProps.getProperty("build").toInt()
 
 configure<ApplicationExtension> {
     namespace = "org.librefit"
@@ -48,8 +38,8 @@ configure<ApplicationExtension> {
         minSdk = 26
         targetSdk = 36
 
-        versionName = "$vMajor.$vMinor.$vPatch"
-        versionCode = (vMajor * 1_000_000) + (vMinor * 10_000) + (vPatch * 100) + vBuild
+        versionName = "0.1.5"
+        versionCode = 10501
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

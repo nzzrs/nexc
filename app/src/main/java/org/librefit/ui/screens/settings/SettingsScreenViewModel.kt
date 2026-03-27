@@ -50,13 +50,12 @@ class SettingsScreenViewModel @Inject constructor(
     }
 
 
-    val _preferences = MutableStateFlow<List<DialogPreference>?>(null)
+    private val _preferences = MutableStateFlow<List<DialogPreference>?>(null)
     val preferences = _preferences.asStateFlow()
 
     fun updatePreferences(preferences: List<DialogPreference>?) {
-        _preferences.update {
-            require(preferences?.isNotEmpty() ?: true) { "Preferences must be not empty" }
-            preferences
+        _preferences.update { current ->
+            preferences?.ifEmpty { current }
         }
     }
 
@@ -79,7 +78,7 @@ class SettingsScreenViewModel @Inject constructor(
             initialValue = null
         )
 
-    fun updatePreference(newPreference: DialogPreference) {
+    fun updateDialogPreference(newPreference: DialogPreference) {
         when (newPreference) {
             is Language -> savePreference(
                 UserPreferencesRepository.languageKey,

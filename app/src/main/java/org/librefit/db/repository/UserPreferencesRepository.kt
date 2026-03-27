@@ -146,6 +146,9 @@ class UserPreferencesRepository @Inject constructor(
      * A Flow that emits the new Locale whenever the app's configuration changes.
      */
     private val currentLocale: Flow<Locale?> = callbackFlow {
+        // Emit current state
+        trySend(AppCompatDelegate.getApplicationLocales()[0])
+
         val callback = object : ComponentCallbacks {
             override fun onConfigurationChanged(newConfig: Configuration) {
                 // It's null when no app-specific locales are set so LANGUAGE.SYSTEM is chosen
@@ -171,9 +174,7 @@ class UserPreferencesRepository @Inject constructor(
         .map { newLocale ->
             // If newLanguage is null, follow system otherwise find the associated enum
             newLocale?.language?.let { newLanguage ->
-                checkNotNull(Language.entries.find { it.code == newLanguage }) {
-                    "Unknown language: $newLanguage"
-                }
+                Language.entries.find { it.code == newLanguage }
             } ?: Language.SYSTEM
         }
         .stateIn(

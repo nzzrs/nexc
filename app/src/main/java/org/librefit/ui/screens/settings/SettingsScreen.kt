@@ -88,7 +88,7 @@ fun SettingsScreen(
         PreferenceDialog(
             currentPreference = currentPreference,
             preferences = it,
-            updatePreference = viewModel::updatePreference,
+            updatePreference = viewModel::updateDialogPreference,
         ) {
             viewModel.updatePreferences(null)
         }

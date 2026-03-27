@@ -229,20 +229,6 @@ class SettingsScreenViewModelTest {
             }
         }
 
-
-    @Test
-    fun `when updating preferences with empty list - it must throw an illegal argument exception`() =
-        runTest {
-            // Arrange: update preferences with a empty list
-            val exception = assertThrows(IllegalArgumentException::class.java) {
-                viewModel.updatePreferences(emptyList())
-            }
-
-            // Assert: the correct exception is thrown
-            assertThat(exception).isInstanceOf(IllegalArgumentException::class.java)
-            assertThat(exception).hasMessageThat().isEqualTo("Preferences must be not empty")
-        }
-
     @Test
     fun `language updates correctly`() = runTest {
         // Arrange: set expected value

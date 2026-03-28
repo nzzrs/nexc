@@ -13,7 +13,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.os.Process
-import android.util.Log
 import dagger.hilt.android.qualifiers.ApplicationContext
 import org.librefit.activities.ErrorActivity
 import org.librefit.db.repository.UserPreferencesRepository
@@ -33,7 +32,7 @@ class GlobalExceptionHandler @Inject constructor(
     private var defaultHandler: Thread.UncaughtExceptionHandler? = null
 
     fun initialize() {
-        // Get the current existing handler (e.g., Crashlytics)
+        // Get the current existing handler
         this.defaultHandler = Thread.getDefaultUncaughtExceptionHandler()
 
         // Set this class as the new handler
@@ -41,7 +40,6 @@ class GlobalExceptionHandler @Inject constructor(
     }
 
     override fun uncaughtException(thread: Thread, exception: Throwable) {
-        Log.d("Handler", "Exception: $exception ")
         // Create a PendingIntent to restart the app
         val restartIntent = Intent(context, mainActivityClass).apply {
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)

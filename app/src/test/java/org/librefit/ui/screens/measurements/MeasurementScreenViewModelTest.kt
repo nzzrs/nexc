@@ -85,7 +85,7 @@ class MeasurementScreenViewModelTest {
         }
 
 
-        viewModel = MeasurementScreenViewModel(measurementRepository)
+        viewModel = MeasurementScreenViewModel(measurementRepository, defaultDispatcher = mainDispatcherRule.testDispatcher)
     }
 
     @Test
@@ -140,8 +140,6 @@ class MeasurementScreenViewModelTest {
             measurementsFlow.value = allMeasurements
 
             viewModel.points.test {
-                // The initial emission is empty
-                assertThat(awaitItem()).isEmpty()
 
                 // Assert: The flow should emit list of `ChartData` having yValue equal to the respective bodyweight
                 val actual = awaitItem().map { it.yValues.first() }
@@ -158,8 +156,6 @@ class MeasurementScreenViewModelTest {
             measurementsFlow.value = allMeasurements
 
             viewModel.points.test {
-                // The initial emission is empty
-                assertThat(awaitItem()).isEmpty()
 
                 // Assert: The flow should emit list of `ChartData` having yValue equal to the respective bodyweight
                 var actual = awaitItem().map { it.yValues.first() }
@@ -190,8 +186,6 @@ class MeasurementScreenViewModelTest {
             viewModel.updateMeasurementChart(MeasurementChart.FAT_MASS)
 
             viewModel.points.test {
-                // The initial emission is empty
-                assertThat(awaitItem()).isEmpty()
 
                 // Assert: The flow should emit list of `ChartData` having yValue equal to the respective fat mass
                 val actual = awaitItem().map { it.yValues.first() }

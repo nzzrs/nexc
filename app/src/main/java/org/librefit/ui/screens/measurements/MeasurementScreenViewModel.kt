@@ -11,7 +11,7 @@ package org.librefit.ui.screens.measurements
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +24,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.librefit.db.entity.Measurement
 import org.librefit.db.repository.MeasurementRepository
+import org.librefit.di.qualifiers.DefaultDispatcher
 import org.librefit.enums.MeasurementCardState
 import org.librefit.enums.chart.MeasurementChart
 import org.librefit.ui.components.charts.Point
@@ -33,7 +34,8 @@ import javax.inject.Inject
 
 @HiltViewModel
 class MeasurementScreenViewModel @Inject constructor(
-    private val measurementRepository: MeasurementRepository
+    private val measurementRepository: MeasurementRepository,
+    @param:DefaultDispatcher private val defaultDispatcher: CoroutineDispatcher
 ) : ViewModel() {
     private val _measurementChart = MutableStateFlow(MeasurementChart.BODY_WEIGHT)
     val measurementChart = _measurementChart.asStateFlow()
@@ -79,7 +81,7 @@ class MeasurementScreenViewModel @Inject constructor(
                 }
         }
             .distinctUntilChanged()
-            .flowOn(Dispatchers.Default)
+            .flowOn(defaultDispatcher)
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5000),

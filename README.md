@@ -32,13 +32,13 @@ During workouts, **track** every set, rep, rest interval, and load in **real tim
 - 🚀 [Features](README.md#-features)
 - 📥 [Install](README.md#-install)
 - 🤝 [Let's Build LibreFit Together](README.md#-lets-build-librefit-together)
-    - 💖 [Donating](README.md#-donate)
-    - 🏗️ [Contributing to the source code](README.md#-contribute-to-source-code)
+    - 💖 [Donate](README.md#-donate)
+    - 🏗️ [Contribute to the source code](README.md#-contribute-to-source-code)
 - ❓ [I Have A Question](README.md#-i-have-a-question)
 - ⚡ [Building LibreFit from source](README.md#-building-librefit-from-source)
 - 📜 [License](README.md#-license)
     - ™️ [Branding](README.md#-branding)
-    - 📷 [Images of exercises](README.md#-images-of-exercises)
+    - 📷 [Images](README.md#-images)
 - 👥 [Credits](README.md#-credits)
 
 ## 💡 Motivation
@@ -77,10 +77,10 @@ Thank you for considering improving LibreFit!
 
 You can actively contribute to the project and become a **supporter** in one of the following ways:
 
-- 💖 [Donating](README.md#-donate)
-- 🏗️ [Contributing to the source code](README.md#-contribute-to-source-code)
-- 🌐 [Translating](README.md#-translations)
-- 🏋️ [Improving the exercise dataset](README.md#-improve-the-exercise-dataset)
+- 💖 [Donations](README.md#-donate)
+- 🏗️ [Contributions to the source code](README.md#-contribute-to-source-code)
+- 🌐 [Translations](README.md#-translations)
+- 🏋️ [Improvements to the exercise dataset](README.md#-improve-the-exercise-dataset)
 
 Every **supporter** will be _credited_ in the about page of the app and in
 [credits section](README.md#-credits), and it will be able to request the **supporter version** of
@@ -176,7 +176,7 @@ The "LibreFit" name and logos are trademarks. **All Rights Reserved**.
 Their use is governed by the [Trademark Policy](TRADEMARK_POLICY.md) which applies to relevant files located in
 `assets` and `app/src/main/res`.
 
-### 📷 Images of exercises
+### 📷 Images
 
 > [!CAUTION]
 > Due to the nature of AI generation, these images may contain inaccuracies and/or artifacts.

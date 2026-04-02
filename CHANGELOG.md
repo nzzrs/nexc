@@ -22,6 +22,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - 
 
+> `LibreFit-unsigned.apk` should be used **only** for [verification](https://github.com/LibreFitOrg/LibreFit/blob/main/REPRODUCIBLE.md). 
+> For normal use, download `LibreFit.apk`
+
+## [0.1.6] - 2026-MM-DD
+
+### Changed
+- Show warning in images by default
+
+### Fixed
+- Incorrect date when in different time zones [#14](https://github.com/LibreFitOrg/LibreFit/issues/14)
+
+> `LibreFit-unsigned.apk` should be used **only** for [verification](https://github.com/LibreFitOrg/LibreFit/blob/main/REPRODUCIBLE.md).
+> For normal use, download `LibreFit.apk`
+
 ## [0.1.5] - 2026-02-23
 
 First public release. Bugs are expected! Report them so they can be fixed.

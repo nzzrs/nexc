@@ -753,7 +753,7 @@ private fun SharedTransitionScope.AlternatingImages(
 
     var isRunning by rememberSaveable { mutableStateOf(true) }
 
-    var showWarning by rememberSaveable { mutableStateOf(false) }
+    var showWarning by rememberSaveable { mutableStateOf(true) }
 
 
     LaunchedEffect(exercise.images) {

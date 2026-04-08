@@ -129,7 +129,7 @@
     <string name="app_works_without_permission">De app werkt ook zonder deze toestemming.</string>
     <string name="dont_ask_again">Vraag niet opnieuw</string>
     <string name="skip_for_now">Voor nu overslaan</string>
-    <string name="label_continue">Doorgaan</string>
+    <string name="label_continue">Verder</string>
     <string name="coming_soon">Komt binnenkort</string>
     <string name="your_workouts">Jouw workouts</string>
     <string name="finished_on">Beëindigd op</string>
@@ -282,7 +282,7 @@
     <string name="equipment_medicine_ball">Medicijnbal</string>
     <string name="equipment_body_only">Alleen lichaam</string>
     <string name="equipment_bands">Banden</string>
-    <string name="equipment_dumbbell">Halter</string>
+    <string name="equipment_dumbbell">Handhalter</string>
     <string name="equipment_kettlebells">Kettlebells</string>
     <string name="equipment_foam_roll">Foamroller</string>
     <string name="equipment_cable">Kabel</string>
@@ -321,7 +321,7 @@
     <string name="url_dialog">URL</string>
     <string name="unlink_dialog">Ontkoppelen</string>
     <string name="discard_changes_question">Wijzigingen negeren?</string>
-    <string name="discard_dialog">Verwijderen</string>
+    <string name="discard_dialog">Weggooien</string>
     <string name="discard_changes_text">Weet je zeker dat je wilt afsluiten? Je wijzigingen worden niet opgeslagen</string>
     <string name="delete">Verwijderen</string>
     <string name="seconds">Seconden</string>

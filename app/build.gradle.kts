@@ -30,6 +30,8 @@ android {
     lint {
         baseline = file("lint-baseline.xml")
         checkGeneratedSources = false
+
+        warning += listOf("MissingTranslation")
     }
 
     defaultConfig {
@@ -45,7 +47,7 @@ android {
             useSupportLibrary = true
         }
         androidResources {
-            localeFilters.addAll(listOf("en", "it"))
+            localeFilters += listOf("en", "it")
         }
 
         // Do not use System.currentTimeMillis()

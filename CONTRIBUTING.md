@@ -190,11 +190,16 @@ the latest Android toolkit:
 
 ### Translations
 
+> [!CAUTION]
+> Unfortunately, there isn't the automatic reward system for translators yet! To get the supporter code, send a message by visiting [contact page](https://librefit.org/contact)
+
 We want LibreFit to be accessible to everyone!
 
 - We use **Weblate** for translations. Join our project here: https://hosted.weblate.org/projects/librefit/librefit/
 - Please **do not** submit Pull Requests for `strings.xml` files directly, as they will be
   overwritten by the translation platform sync.
+
+> Thanks to [Weblate](https://weblate.org) for hosting LibreFit's translations!
 
 ## Attribution
 

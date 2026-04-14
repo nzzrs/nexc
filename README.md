@@ -120,7 +120,11 @@ See [Contributing to source code](CONTRIBUTING.md#your-first-code-contribution)
 
 ### 🌐 Translations
 
-See [Contributing to translations](CONTRIBUTING.md#translations)
+See [Contributing to translations](CONTRIBUTING.md#translations) to discover how to contribute.
+
+[![Translation status](https://hosted.weblate.org/widget/librefit/librefit/horizontal-auto.svg)](https://hosted.weblate.org/engage/librefit/)
+
+> Thanks to [Weblate](https://weblate.org) for hosting the LibreFit's translations!
 
 ### 🏋 Improve the exercise dataset
 

@@ -31,26 +31,12 @@ import org.librefit.ui.models.UiExercise
 import org.librefit.ui.models.UiExerciseWithSets
 import org.librefit.ui.models.UiSet
 import org.librefit.ui.models.UiWorkout
+import org.librefit.ui.models.moveExercise
+import org.librefit.ui.models.withNormalizedExercisePositions
 import org.librefit.ui.models.mappers.toEntity
 import org.librefit.ui.models.mappers.toUi
 import javax.inject.Inject
 import kotlin.random.Random
-
-internal fun List<UiExerciseWithSets>.withNormalizedExercisePositions(): List<UiExerciseWithSets> {
-    return mapIndexed { index, exerciseWithSets ->
-        exerciseWithSets.copy(exercise = exerciseWithSets.exercise.copy(position = index))
-    }
-}
-
-internal fun List<UiExerciseWithSets>.moveExercise(fromIndex: Int, toIndex: Int): List<UiExerciseWithSets> {
-    if (fromIndex == toIndex || fromIndex !in indices || toIndex !in indices) return this
-
-    return toMutableList()
-        .apply {
-            add(toIndex, removeAt(fromIndex))
-        }
-        .withNormalizedExercisePositions()
-}
 
 @HiltViewModel
 class EditWorkoutScreenViewModel @Inject constructor(

@@ -12,6 +12,8 @@ import com.google.common.truth.Truth.assertThat
 import org.junit.Test
 import org.librefit.ui.models.UiExercise
 import org.librefit.ui.models.UiExerciseWithSets
+import org.librefit.ui.models.moveExercise
+import org.librefit.ui.models.withNormalizedExercisePositions
 
 class EditWorkoutScreenViewModelTest {
 

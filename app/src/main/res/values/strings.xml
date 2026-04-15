@@ -94,6 +94,7 @@
     <string name="edit_workout">Edit workout</string>
     <string name="quit_routine_creation_question">Quit routine creation?</string>
     <string name="warning_delete_exercise_from_routine">Warning! Deleting exercises from existing routines will unlink all exercises of derivative workouts.</string>
+    <string name="reorder">Reorder</string>
 
 
     <!-- Error screen-->
@@ -102,7 +103,6 @@
     <string name="crash_log">Crash log</string>
     <string name="report_github">Report on GitHub</string>
     <string name="url_github_search_issue" translatable="false">https://github.com/LibreFitOrg/LibreFit/issues?q=</string>
-    <string name="reorder">Reorder</string>
     <string name="stack_trace_not_available">Stack trace not available</string>
 
 

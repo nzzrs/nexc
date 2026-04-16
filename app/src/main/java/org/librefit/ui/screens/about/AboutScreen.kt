@@ -285,11 +285,6 @@ fun AboutScreen(navController: NavHostController) {
                 )
             }
 
-
-            item {
-                HeadlineText(stringResource(R.string.contributors))
-            }
-
             item {
                 AboutItem(
                     icon = painterResource(R.drawable.ic_person),
@@ -298,6 +293,17 @@ fun AboutScreen(navController: NavHostController) {
                     onClick = {
                         url.value = resources.getString(R.string.url_IamDg)
                     }
+                )
+            }
+
+            item {
+                HeadlineText(stringResource(R.string.donators))
+            }
+
+            item {
+                AboutItem(
+                    icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.FlashyGhost)
                 )
             }
 
@@ -319,10 +325,40 @@ fun AboutScreen(navController: NavHostController) {
             item {
                 AboutItem(
                     icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.kid1412621),
+                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_chinese_simplified),
+                    onClick = {
+                        url.value = resources.getString(R.string.url_kid1412621)
+                    }
+                )
+            }
+
+            item {
+                AboutItem(
+                    icon = painterResource(R.drawable.ic_person),
                     text = stringResource(R.string.mwesten),
                     description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_dutch),
                     onClick = {
                         url.value = resources.getString(R.string.url_mwesten)
+                    }
+                )
+            }
+
+            item {
+                AboutItem(
+                    icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.Odweta),
+                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_czech)
+                )
+            }
+
+            item {
+                AboutItem(
+                    icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.VA5H_One),
+                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_spanish),
+                    onClick = {
+                        url.value = resources.getString(R.string.url_VA5H_One)
                     }
                 )
             }
@@ -336,7 +372,7 @@ private fun AboutItem(
     icon: Painter,
     text: String,
     description: String = "",
-    onClick: () -> Unit
+    onClick: () -> Unit = {}
 ) {
 
     Button(

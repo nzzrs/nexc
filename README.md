@@ -200,6 +200,7 @@ Thanks to everyone who helped the project!
 
 ### 💖 Donators
 
+- FlashyGhost
 - Anonymous donators
 
 > [Donate](README.md#-donate) to be listed here.
@@ -211,8 +212,11 @@ Thanks to everyone who helped the project!
 
 ### 🌐 Translators
 
-- [mwesten](https://github.com/mwesten) 🇳🇱
 - [doen1el](https://github.com/doen1el)  🇩🇪
+- Odweta 🇨🇿
+- [kid1412621](https://github.com/kid1412621) 🇨🇳
+- [mwesten](https://github.com/mwesten) 🇳🇱
+- [VA5H-One](https://github.com/VA5H-One) 🇪🇸
 
 > [Contribute to translations](CONTRIBUTING.md#translations) to be listed here.
 

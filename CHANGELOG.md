@@ -32,7 +32,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 > Now you can support LibreFit by making it available in your language. See more [here](https://github.com/LibreFitOrg/LibreFit/blob/main/CONTRIBUTING.md#translations)
 
 ### Added
-- New languages: Dutch 🇳🇱, German 🇩🇪
+
+- New languages: Dutch 🇳🇱, German 🇩🇪, Spanish 🇪🇸, Czech 🇨🇿 and Simplified Chinese 🇨🇳
 
 ### Changed
 - Show warning in images by default

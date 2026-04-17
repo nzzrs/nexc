@@ -18,6 +18,8 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -182,6 +184,10 @@ fun SharedTransitionScope.ExerciseCard(
     updateIdSetWithRunningStopwatch: (Long?) -> Unit = {},
     applyPreviousSetPerformance: (Long) -> Unit = {}
 ) {
+    val dragHandleInteractionSource = remember { MutableInteractionSource() }
+    val isDragHandlePressed by dragHandleInteractionSource.collectIsPressedAsState()
+    val isCollapsed = isDragging || isDragHandlePressed
+
     ElevatedCard(
         modifier = modifier,
         shape = MaterialTheme.shapes.extraLarge
@@ -239,6 +245,7 @@ fun SharedTransitionScope.ExerciseCard(
                     if (showDragHandle) {
                         IconButton(
                             modifier = dragHandleModifier,
+                            interactionSource = dragHandleInteractionSource,
                             onClick = {}
                         ) {
                             Icon(
@@ -256,7 +263,7 @@ fun SharedTransitionScope.ExerciseCard(
                 }
             }
 
-            AnimatedVisibility(visible = !isDragging) {
+            AnimatedVisibility(visible = !isCollapsed) {
                 Column(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalAlignment = Alignment.CenterHorizontally,

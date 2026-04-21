@@ -1,6 +1,7 @@
 name: Validate exercises JSON
 
 on:
+  workflow_dispatch:
   push:
     paths:
       - 'app/src/main/res/raw/exercises.json'

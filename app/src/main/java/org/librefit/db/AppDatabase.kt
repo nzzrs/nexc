@@ -8,11 +8,11 @@
 
 package org.librefit.db
 
-import androidx.room.migration.Migration
 import androidx.room.AutoMigration
 import androidx.room.Database
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import org.librefit.db.converters.ExerciseDCConverter
 import org.librefit.db.converters.LocalDateTimeConverter
@@ -39,14 +39,14 @@ abstract class AppDatabase : RoomDatabase() {
         const val NAME = "librefit_database"
 
         val MIGRATION_2_3 = object : Migration(2, 3) {
-            override fun migrate(database: SupportSQLiteDatabase) {
-                database.execSQL(
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
                     """
                     ALTER TABLE exercises
                     ADD COLUMN position INTEGER NOT NULL DEFAULT 0
                     """.trimIndent()
                 )
-                database.execSQL(
+                db.execSQL(
                     """
                     UPDATE exercises AS current
                     SET position = (
@@ -57,13 +57,13 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                     """.trimIndent()
                 )
-                database.execSQL(
+                db.execSQL(
                     """
                     CREATE INDEX IF NOT EXISTS index_exercises_workoutId_position
                     ON exercises(workoutId, position)
                     """.trimIndent()
                 )
-                database.execSQL(
+                db.execSQL(
                     """
                     CREATE INDEX IF NOT EXISTS index_exercises_idExerciseDC
                     ON exercises(idExerciseDC)

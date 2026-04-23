@@ -57,7 +57,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -407,9 +406,7 @@ private fun SharedTransitionScope.WorkoutScreenContent(
             ) { i, exerciseWithSets ->
                 ReorderableItem(reorderableLazyListState, key = exerciseWithSets.exercise.id) { isDragging ->
                     ExerciseCard(
-                        modifier = Modifier
-                            .animateItem()
-                            .then(if (isDragging) Modifier.shadow(10.dp) else Modifier),
+                        modifier = Modifier.animateItem(),
                         animatedVisibilityScope = animatedVisibilityScope,
                         exerciseWithSets = exerciseWithSets,
                         previousPerformances = previousPerformances.getOrNull(i),
@@ -428,6 +425,7 @@ private fun SharedTransitionScope.WorkoutScreenContent(
                                 hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureEnd)
                             }
                         ),
+                        isDragging = isDragging,
                         onReorderRequest = { isReorderingEnabled = true },
                         deleteSet = deleteSet,
                         showInfo = showInfo,

@@ -71,6 +71,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -119,9 +120,10 @@ import kotlin.math.roundToInt
  * the [org.librefit.ui.screens.infoExercise.InfoExerciseScreen].
  * @param onDelete A lambda function executed when the *Delete* icon is clicked, it should result in
  * the removal of the card.
- * @param isCollapsed When `true`, the card collapses its editable body to provide clearer reorder feedback. So it's true only when reordering.
+ * @param isCollapsed When `true`, the card collapses its editable body to provide clearer reorder feedback. So it's true only when reordering one of exercises in the list.
  * @param dragHandleModifier Modifier applied to the optional drag handle.
  * @param onReorderRequest A lambda triggered when the `reorder` option from dropdown menu is pressed.
+ * @param isDragging when `true`, it applies a shadow to further emphasize with a shadow that the card is dragged.
  * @param updateExerciseNotes A function to update notes based on [UiExercise.id]. For more details, refer to
  * [org.librefit.ui.screens.workout.WorkoutScreenViewModel.updateExerciseNotes] and
  * [org.librefit.ui.screens.editWorkout.EditWorkoutScreenViewModel.updateExerciseNotes].
@@ -173,6 +175,7 @@ fun SharedTransitionScope.ExerciseCard(
     onDelete: (Long) -> Unit,
     isCollapsed: Boolean = false,
     dragHandleModifier: Modifier = Modifier,
+    isDragging: Boolean,
     onReorderRequest: () -> Unit,
     deleteSet: (Long) -> Unit,
     updateExerciseNotes: (String, Long) -> Unit,
@@ -187,9 +190,15 @@ fun SharedTransitionScope.ExerciseCard(
     applyPreviousSetPerformance: (Long) -> Unit = {}
 ) {
     var showMenu by rememberSaveable { mutableStateOf(false) }
+    val shape = MaterialTheme.shapes.extraLarge
     ElevatedCard(
-        modifier = modifier,
-        shape = MaterialTheme.shapes.extraLarge
+        modifier = modifier.then(
+            if (isDragging) Modifier.shadow(
+                10.dp,
+                shape = shape
+            ) else Modifier
+        ),
+        shape = shape
     ) {
         Column(
             modifier = Modifier
@@ -856,6 +865,7 @@ private fun ExerciseCardPreview() {
                     idSetWithRunningStopwatch = currentIdSetWithRunningSet.value,
                     updateIdSetWithRunningStopwatch = { currentIdSetWithRunningSet.value = it },
                     workout = true,
+                    isDragging = false,
                     updateExerciseNotes = { notes, _ ->
                         e.value = e.value.copy(exercise = e.value.exercise.copy(notes = notes))
                     },
@@ -914,7 +924,7 @@ private fun ExerciseCardPreview() {
                             )
                         }
                     },
-                    onReorderRequest = {}
+                    onReorderRequest = {},
                 )
             }
         }

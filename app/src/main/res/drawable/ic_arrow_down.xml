@@ -1,0 +1,17 @@
+<!--
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  ~ Copyright (c) 2025-2026. The Nexc Contributors
+  ~
+  ~ Nexc is subject to additional terms covering author attribution and trademark usage;
+  ~ see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
+  -->
+
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="960"
+    android:viewportHeight="960">
+  <path
+      android:pathData="M480,680L720,440L664,384L520,528L520,160L440,160L440,528L296,384L240,440L480,680ZM160,840L160,760L800,760L800,840L160,840Z"
+      android:fillColor="#000000"/>
+</vector>

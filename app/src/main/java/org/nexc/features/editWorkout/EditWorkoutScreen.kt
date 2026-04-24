@@ -80,8 +80,16 @@ fun SharedTransitionScope.EditWorkoutScreen(
     val showRpe by viewModel.showRpe.collectAsStateWithLifecycle(initialValue = false)
     val intensityScale by viewModel.intensityScale.collectAsStateWithLifecycle(initialValue = org.nexc.core.enums.userPreferences.IntensityScale.RPE)
 
+    var exerciseIndexToReplace by rememberSaveable { mutableStateOf<Int?>(null) }
+
     LaunchedEffect(Unit) {
-        sharedViewModel.getSelectedExercisesList().forEach(viewModel::addExerciseWithSets)
+        sharedViewModel.getSelectedExercisesList().forEach { exerciseDC ->
+            exerciseIndexToReplace?.let { index ->
+                viewModel.replaceExercise(index, exerciseDC)
+                exerciseIndexToReplace = null
+            } ?: viewModel.addExerciseWithSets(exerciseDC)
+        }
+        sharedViewModel.setSelectedExercisesList(emptyList())
     }
 
     val idExerciseToDelete = rememberSaveable { mutableStateOf<Long?>(null) }
@@ -129,7 +137,14 @@ fun SharedTransitionScope.EditWorkoutScreen(
         onSupersetToggle = viewModel::toggleSuperset,
         showRpe = showRpe,
         intensityScale = intensityScale,
-        saveWorkoutWithExercisesInDB = viewModel::saveWorkoutWithExercisesInDB
+        saveWorkoutWithExercisesInDB = viewModel::saveWorkoutWithExercisesInDB,
+        moveExercise = viewModel::moveExercise,
+        onReplace = { id ->
+            exerciseIndexToReplace = exercises.indexOfFirst { it.exercise.id == id }
+            navController.navigate(Route.ExercisesScreen(addExercises = true)) {
+                launchSingleTop = true
+            }
+        }
     )
 }
 
@@ -160,7 +175,9 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
     onSupersetToggle: (Long) -> Unit,
     showRpe: Boolean,
     intensityScale: org.nexc.core.enums.userPreferences.IntensityScale,
-    saveWorkoutWithExercisesInDB: () -> Unit
+    saveWorkoutWithExercisesInDB: () -> Unit,
+    moveExercise: (Int, Int) -> Unit,
+    onReplace: (Long) -> Unit
 ) {
 
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -302,7 +319,7 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
                 itemsIndexed(
                     items = exercisesWithSets,
                     key = { _, e -> e.exercise.id }
-                ) { _, exerciseWithSets ->
+                ) { index, exerciseWithSets ->
                     val supersetId = exerciseWithSets.exercise.supersetId
                     ExerciseCard(
                         modifier = Modifier.animateItem(),
@@ -331,6 +348,17 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
                         updateSetRir = updateSetRir,
                         updateSetCompleted = updateSetCompleted,
                         onSupersetToggle = onSupersetToggle,
+                        onReplace = onReplace,
+                        onMoveUp = { id ->
+                            val index = exercisesWithSets.indexOfFirst { it.exercise.id == id }
+                            if (index > 0) moveExercise(index, index - 1)
+                        },
+                        onMoveDown = { id ->
+                            val index = exercisesWithSets.indexOfFirst { it.exercise.id == id }
+                            if (index < exercisesWithSets.size - 1) moveExercise(index, index + 1)
+                        },
+                        isFirst = index == 0,
+                        isLast = index == exercisesWithSets.size - 1,
                         showRpe = showRpe,
                         intensityScale = intensityScale,
                         supersetLabel = supersetLabels[supersetId],
@@ -405,7 +433,9 @@ private fun EditWorkoutScreenPreview() {
                     updateSetRpe = { _, _ -> },
                     updateSetRir = { _, _ -> },
                     intensityScale = org.nexc.core.enums.userPreferences.IntensityScale.RPE,
-                    onSupersetToggle = { }
+                    onSupersetToggle = { },
+                    moveExercise = { _, _ -> },
+                    onReplace = { }
                 )
             }
         }

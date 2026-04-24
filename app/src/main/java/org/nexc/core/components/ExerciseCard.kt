@@ -184,6 +184,11 @@ fun SharedTransitionScope.ExerciseCard(
     updateIdSetWithRunningStopwatch: (Long?) -> Unit = {},
     applyPreviousSetPerformance: (Long) -> Unit = {},
     onSupersetToggle: (Long) -> Unit = {},
+    onReplace: (Long) -> Unit = {},
+    onMoveUp: (Long) -> Unit = {},
+    onMoveDown: (Long) -> Unit = {},
+    isFirst: Boolean = false,
+    isLast: Boolean = false,
     supersetLabel: String? = null,
     supersetColor: Color? = null
 ) {
@@ -226,6 +231,12 @@ fun SharedTransitionScope.ExerciseCard(
                         },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
+                    Icon(
+                        painter = painterResource(R.drawable.ic_drag_handle),
+                        contentDescription = null,
+                        modifier = Modifier.padding(end = 10.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)
+                    )
                     val model =
                         remember(exerciseWithSets.exerciseDC.images) { exerciseWithSets.exerciseDC.images.firstOrNull() }
                     AsyncImage(
@@ -254,23 +265,93 @@ fun SharedTransitionScope.ExerciseCard(
                         modifier = Modifier.weight(1f)
                     )
                 }
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onClick = { onSupersetToggle(exerciseWithSets.exercise.id) }) {
+                var menuExpanded by remember { mutableStateOf(false) }
+                Box {
+                    IconButton(onClick = { menuExpanded = true }) {
                         Icon(
-                            painter = painterResource(
-                                if (exerciseWithSets.exercise.supersetId != null) R.drawable.ic_unlink else R.drawable.ic_link
-                            ),
-                            tint = if (exerciseWithSets.exercise.supersetId != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            contentDescription = "Toggle Superset"
+                            painter = painterResource(R.drawable.ic_more_vert),
+                            contentDescription = stringResource(R.string.more_options)
                         )
                     }
-                    IconButton(onClick = { onDelete(exerciseWithSets.exercise.id) }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_delete),
-                            contentDescription = stringResource(R.string.delete)
+                    androidx.compose.material3.DropdownMenu(
+                        expanded = menuExpanded,
+                        onDismissRequest = { menuExpanded = false }
+                    ) {
+                        DropdownMenuItem(
+                            text = { Text(stringResource(if (exerciseWithSets.exercise.supersetId != null) R.string.unlink_superset else R.string.link_superset)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(
+                                        if (exerciseWithSets.exercise.supersetId != null) R.drawable.ic_unlink else R.drawable.ic_link
+                                    ),
+                                    contentDescription = null
+                                )
+                            },
+                            onClick = {
+                                onSupersetToggle(exerciseWithSets.exercise.id)
+                                menuExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.replace_exercise)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_replace),
+                                    contentDescription = null
+                                )
+                            },
+                            onClick = {
+                                onReplace(exerciseWithSets.exercise.id)
+                                menuExpanded = false
+                            }
+                        )
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.move_up)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_arrow_up),
+                                    contentDescription = null
+                                )
+                            },
+                            enabled = !isFirst,
+                            onClick = {
+                                onMoveUp(exerciseWithSets.exercise.id)
+                                menuExpanded = false
+                            }
+                        )
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.move_down)) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_arrow_down),
+                                    contentDescription = null
+                                )
+                            },
+                            enabled = !isLast,
+                            onClick = {
+                                onMoveDown(exerciseWithSets.exercise.id)
+                                menuExpanded = false
+                            }
+                        )
+                        HorizontalDivider()
+                        DropdownMenuItem(
+                            text = { Text(stringResource(R.string.delete), color = MaterialTheme.colorScheme.error) },
+                            leadingIcon = {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_delete),
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            },
+                            onClick = {
+                                onDelete(exerciseWithSets.exercise.id)
+                                menuExpanded = false
+                            }
                         )
                     }
                 }
+
             }
 
             OutlinedTextField(

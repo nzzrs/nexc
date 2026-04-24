@@ -110,6 +110,17 @@ class EditWorkoutScreenViewModel @Inject constructor(
         }
     }
 
+    fun replaceExercise(index: Int, exerciseDC: ExerciseDC) {
+        val newExercise = addExerciseToWorkoutUseCase(exerciseDC)
+        _exercises.update { currentExercises ->
+            val mutableList = currentExercises.toMutableList()
+            if (index in mutableList.indices) {
+                mutableList[index] = newExercise
+            }
+            mutableList
+        }
+    }
+
     fun addSetToExercise(exerciseId: Long) {
         _exercises.update { exercises ->
             manageSetUseCase.addSet(exercises, exerciseId)
@@ -195,6 +206,17 @@ class EditWorkoutScreenViewModel @Inject constructor(
         }
     }
 
+    fun moveExercise(fromIndex: Int, toIndex: Int) {
+        _exercises.update { currentExercises ->
+            val mutableList = currentExercises.toMutableList()
+            if (fromIndex in mutableList.indices && toIndex in mutableList.indices) {
+                val item = mutableList.removeAt(fromIndex)
+                mutableList.add(toIndex, item)
+            }
+            mutableList
+        }
+    }
+
 
     fun updateTitle(string: String) {
         _workout.update { it.copy(title = string) }
@@ -220,7 +242,9 @@ class EditWorkoutScreenViewModel @Inject constructor(
             saveWorkoutUseCase(
                 WorkoutWithExercisesAndSets(
                     workout = workout.value.copy(state = state).toEntity(),
-                    exercisesWithSets = exercises.value.map { it.toEntity() }
+                    exercisesWithSets = exercises.value.mapIndexed { index, it ->
+                        it.copy(exercise = it.exercise.copy(position = index)).toEntity()
+                    }
                 )
             )
         }

@@ -459,4 +459,11 @@
     <string name="do_not_show_again">Do not show again</string>
 
     <string name="exercises_backup_desc">Import or export your custom exercises as portable JSON files</string>
+
+    <!-- Exercise actions -->
+    <string name="replace_exercise">Replace exercise</string>
+    <string name="move_up">Move up</string>
+    <string name="move_down">Move down</string>
+    <string name="link_superset">Link superset</string>
+    <string name="unlink_superset">Unlink superset</string>
 </resources>

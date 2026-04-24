@@ -355,6 +355,57 @@ class WorkoutScreenViewModel @Inject constructor(
         }
     }
 
+    fun moveExerciseUp(exerciseId: Long) {
+        _exercises.update { currentList ->
+            val index = currentList.indexOfFirst { it.exercise.id == exerciseId }
+            if (index > 0) {
+                val mutableList = currentList.toMutableList()
+                val item = mutableList.removeAt(index)
+                mutableList.add(index - 1, item)
+                mutableList.toImmutableList()
+            } else currentList
+        }
+    }
+
+    fun moveExerciseDown(exerciseId: Long) {
+        _exercises.update { currentList ->
+            val index = currentList.indexOfFirst { it.exercise.id == exerciseId }
+            if (index != -1 && index < currentList.size - 1) {
+                val mutableList = currentList.toMutableList()
+                val item = mutableList.removeAt(index)
+                mutableList.add(index + 1, item)
+                mutableList.toImmutableList()
+            } else currentList
+        }
+    }
+
+    fun replaceExercise(oldExerciseId: Long, newExerciseDC: ExerciseDC) {
+        _exercises.update { currentList ->
+            val index = currentList.indexOfFirst { it.exercise.id == oldExerciseId }
+            if (index != -1) {
+                val oldExercise = currentList[index]
+                val newExercise = UiExercise(
+                    idExerciseDC = newExerciseDC.id,
+                    workoutId = workoutId,
+                    supersetId = oldExercise.exercise.supersetId,
+                    notes = oldExercise.exercise.notes,
+                    restTime = oldExercise.exercise.restTime,
+                    setMode = oldExercise.exercise.setMode
+                )
+                val sets = listOf(UiSet(exerciseId = newExercise.id))
+                val newExerciseWithSets = UiExerciseWithSets(
+                    exercise = newExercise,
+                    sets = sets.toImmutableList(),
+                    exerciseDC = newExerciseDC.toUi()
+                )
+
+                val mutableList = currentList.toMutableList()
+                mutableList[index] = newExerciseWithSets
+                mutableList.toImmutableList()
+            } else currentList
+        }
+    }
+
     fun updateSetRpe(rpe: String, id: Long) {
         val currentScale = intensityScale.value
         _exercises.update { currentExercises ->
@@ -466,6 +517,44 @@ class WorkoutScreenViewModel @Inject constructor(
         }
         _exercises.update { currentExercises ->
             currentExercises.filter { it.exercise.id != exerciseId }
+        }
+    }
+
+    fun swapExercise(oldExerciseId: Long, newExerciseDC: ExerciseDC) {
+        _exercises.update { currentExercises ->
+            currentExercises.map { eWs ->
+                if (eWs.exercise.id == oldExerciseId) {
+                    UiExerciseWithSets(
+                        exercise = eWs.exercise.copy(
+                            idExerciseDC = newExerciseDC.id,
+                            setMode = when (newExerciseDC.category) {
+                                Category.STRETCHING, Category.CARDIO -> SetMode.DURATION
+                                else -> when (newExerciseDC.equipment) {
+                                    Equipment.BODY_ONLY, Equipment.FOAM_ROLL, Equipment.EXERCISE_BALL,
+                                    Equipment.MEDICINE_BALL, Equipment.BANDS -> SetMode.BODYWEIGHT
+
+                                    else -> if (newExerciseDC.name.contains("Weighted", true))
+                                        SetMode.BODYWEIGHT_WITH_LOAD else SetMode.LOAD
+                                }
+                            }
+                        ),
+                        exerciseDC = newExerciseDC.toUi(),
+                        sets = kotlinx.collections.immutable.persistentListOf(UiSet())
+                    )
+                } else eWs
+            }
+        }
+    }
+
+
+    fun moveExercise(fromIndex: Int, toIndex: Int) {
+        _exercises.update { currentExercises ->
+            val list = currentExercises.toMutableList()
+            if (fromIndex in list.indices && toIndex in list.indices) {
+                val element = list.removeAt(fromIndex)
+                list.add(toIndex, element)
+            }
+            list.toImmutableList()
         }
     }
 

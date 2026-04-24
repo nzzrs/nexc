@@ -109,7 +109,14 @@ fun SharedTransitionScope.WorkoutScreen(
 
     LaunchedEffect(Unit) {
         //It adds the selected exercises from AddExerciseScreen
-        sharedViewModel.getSelectedExercisesList().forEach(viewModel::addExerciseWithSets)
+        val selected = sharedViewModel.getSelectedExercisesList()
+        val replaceId = sharedViewModel.getExerciseToReplaceId()
+
+        if (replaceId != null && selected.isNotEmpty()) {
+            viewModel.replaceExercise(replaceId, selected.first())
+        } else {
+            selected.forEach(viewModel::addExerciseWithSets)
+        }
     }
 
     val timeElapsed by viewModel.timeElapsed.collectAsStateWithLifecycle()
@@ -287,7 +294,13 @@ fun SharedTransitionScope.WorkoutScreen(
                     idExerciseToDelete.value = id
                 },
                 showInfo = { infoMode.value = it },
-                applyPreviousSetPerformance = viewModel::applyPreviousSetPerformance
+                applyPreviousSetPerformance = viewModel::applyPreviousSetPerformance,
+                onMoveUp = viewModel::moveExerciseUp,
+                onMoveDown = viewModel::moveExerciseDown,
+                onReplace = { id ->
+                    sharedViewModel.setExerciseToReplaceId(id)
+                    navController.navigate(Route.ExercisesScreen(addExercises = true))
+                }
             )
         }
     }
@@ -353,7 +366,10 @@ private fun SharedTransitionScope.WorkoutScreenContent(
     updateSetRpe: (String, Long) -> Unit,
     updateSetRir: (String, Long) -> Unit,
     onSupersetToggle: (Long) -> Unit,
-    applyPreviousSetPerformance: (Long) -> Unit
+    applyPreviousSetPerformance: (Long) -> Unit,
+    onMoveUp: (Long) -> Unit,
+    onMoveDown: (Long) -> Unit,
+    onReplace: (Long) -> Unit
 ) {
     NexcLazyColumn {
         val headerContent: @Composable LazyItemScope.() -> Unit = {
@@ -472,6 +488,11 @@ private fun SharedTransitionScope.WorkoutScreenContent(
                     updateSetRir = updateSetRir,
                     applyPreviousSetPerformance = applyPreviousSetPerformance,
                     onSupersetToggle = onSupersetToggle,
+                    onReplace = onReplace,
+                    onMoveUp = onMoveUp,
+                    onMoveDown = onMoveDown,
+                    isFirst = i == 0,
+                    isLast = i == exercisesWithSets.size - 1,
                     supersetLabel = supersetLabels[supersetId],
                     supersetColor = supersetColorMap[supersetId]
                 )
@@ -698,7 +719,7 @@ private fun WorkoutScreenPreview() {
                             deleteExercise = {},
                             onSelectedExerciseIdChange = { _, _ -> },
                             showInfo = {},
-                             showRpe = false, intensityScale = org.nexc.core.enums.userPreferences.IntensityScale.RPE, updateSetRpe = { _, _ -> }, updateSetRir = { _, _ -> }, onSupersetToggle = {}, applyPreviousSetPerformance = {}
+                             showRpe = false, intensityScale = org.nexc.core.enums.userPreferences.IntensityScale.RPE, updateSetRpe = { _, _ -> }, updateSetRir = { _, _ -> }, onSupersetToggle = {}, applyPreviousSetPerformance = {}, onMoveUp = {}, onMoveDown = {}, onReplace = {}
                         )
                         FloatingWorkoutActionBar(
                             restTimerProgress = 97f / 120,

@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Nexc</string>
+    <string name="home">Inicio</string>
+    <string name="profile">Perfil</string>
+    <string name="settings">Ajustes</string>
+    <string name="about">Acerca de</string>
+    <string name="add_exercise">Añadir ejercicio</string>
+    <string name="replace_exercise">Reemplazar ejercicio</string>
+    <string name="move_up">Subir</string>
+    <string name="move_down">Bajar</string>
+</resources>

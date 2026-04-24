@@ -35,6 +35,18 @@ class SharedViewModel @Inject constructor(
         selectedExercisesList = exerciseList
     }
 
+    private var exerciseToReplaceId: Long? = null
+
+    fun setExerciseToReplaceId(id: Long?) {
+        exerciseToReplaceId = id
+    }
+
+    fun getExerciseToReplaceId(): Long? {
+        val id = exerciseToReplaceId
+        exerciseToReplaceId = null
+        return id
+    }
+
 
     // Used by WelcomeScreen
     val showWelcomeScreen = userPreferencesRepository.showWelcomeScreen

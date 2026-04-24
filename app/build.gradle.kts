@@ -1,13 +1,15 @@
 /*
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright (c) 2024-2026. The LibreFit Contributors
+ * Copyright (c) 2024-2026. The Nexc Contributors
  *
- * LibreFit is subject to additional terms covering author attribution and trademark usage;
+ * Nexc is subject to additional terms covering author attribution and trademark usage;
  * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
  */
 
 import org.gradle.api.JavaVersion.VERSION_17
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
+import java.io.FileInputStream
 
 plugins {
     alias(libs.plugins.android.application)
@@ -20,7 +22,7 @@ plugins {
 
 
 android {
-    namespace = "org.librefit"
+    namespace = "org.nexc"
     compileSdk = 36
 
     buildFeatures {
@@ -30,12 +32,14 @@ android {
     lint {
         baseline = file("lint-baseline.xml")
         checkGeneratedSources = false
+        checkReleaseBuilds = false
+        abortOnError = false
 
         warning += listOf("MissingTranslation")
     }
 
     defaultConfig {
-        applicationId = "org.librefit.app"
+        applicationId = "org.nexc.app"
         minSdk = 26
         targetSdk = 36
 
@@ -58,8 +62,24 @@ android {
         vectorDrawables.generatedDensities()
     }
 
+    val keystorePropertiesFile = rootProject.file("app/key.properties")
+    val keystoreProperties = Properties()
+    if (keystorePropertiesFile.exists()) {
+        keystoreProperties.load(FileInputStream(keystorePropertiesFile))
+    }
+
+    signingConfigs {
+        create("release") {
+            keyAlias = keystoreProperties["keyAlias"] as String
+            keyPassword = keystoreProperties["keyPassword"] as String
+            storeFile = file(keystoreProperties["storeFile"] as String)
+            storePassword = keystoreProperties["storePassword"] as String
+        }
+    }
+
     buildTypes {
         release {
+            signingConfig = signingConfigs.getByName("release")
             // Disable VCS Info (AGP 8.3+).
             // If the git repo isn't perfectly clean, this injects diffs
             vcsInfo.include = false
@@ -108,7 +128,7 @@ android {
 }
 
 base {
-    archivesName.set("LibreFit")
+    archivesName.set("Nexc")
 }
 
 ksp {

@@ -1,54 +1,70 @@
 <!--
   ~ SPDX-License-Identifier: GPL-3.0-or-later
-  ~ Copyright (c) 2024-2026. The LibreFit Contributors
+  ~ Copyright (c) 2024-2026. The Nexc Contributors
   ~
-  ~ LibreFit is subject to additional terms covering author attribution and trademark usage;
+  ~ Nexc is subject to additional terms covering author attribution and trademark usage;
   ~ see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
   -->
 
 <resources>
-    <string name="app_name">LibreFit</string>
+    <string name="app_name">Nexc</string>
 
     <!--Navigation-->
     <string name="home">Home</string>
     <string name="profile">Profile</string>
     <string name="settings">Settings</string>
     <string name="about">About</string>
+    <string name="one_rep_max_formula">1RM Formula</string>
+    <string name="formula_balanced">Balanced</string>
+    <string name="formula_epley">Epley</string>
+    <string name="formula_brzycki">Brzycki</string>
+    <string name="formula_mcglothin">McGlothin</string>
+    <string name="formula_lombardi">Lombardi</string>
+    <string name="formula_mayhew">Mayhew</string>
+    <string name="formula_o_conner">O\'Conner</string>
+    <string name="formula_wathen">Wathen</string>
+    <string name="front">Front</string>
+    <string name="back">Back</string>
+    <string name="muscle_heatmap">Muscle Heatmap</string>
+    <string name="sleep_mode">Sleep Mode</string>
+    <string name="sleep_mode_desc">Automatically dim the screen during rest timers to save battery.</string>
+    <string name="sleep_mode_on_desc">Screen will dim during rest.</string>
+    <string name="sleep_mode_off_desc">Screen brightness will remain normal.</string>
+    <string name="rpe_rir_intensity">RPE/RIR Intensity</string>
+    <string name="intensity_scale">Intensity Scale</string>
+    <string name="intensity_both">Both (RPE &amp; RIR)</string>
+    <string name="rpe_on_desc">Enable tracking of perceived effort (RPE) or reps in reserve (RIR).</string>
+    <string name="rpe_off_desc">Intensity tracking is disabled.</string>
+    <string name="rpe_rir">RPE/RIR</string>
+    <string name="rpe">RPE</string>
+    <string name="rir">RIR</string>
     <string name="add_exercise">Add exercise</string>
     <string name="more_options">More options</string>
     <string name="navigate_back">Back to the previous screen</string>
-    <string name="library">Library</string>
+    <string name="import_success">Import completed successfully!</string>
+
 
 
 
     <!--About screen-->
     <string name="open">Open</string>
     <string name="copy">Copy</string>
-    <string name="support_project">Support the project</string>
-    <string name="donate">Donate</string>
-    <string name="contribute">Contribute</string>
     <string name="info">Info</string>
     <string name="privacy_policy">Privacy policy</string>
-    <string name="privacy_policy_desc">LibreFit cannot access the Internet. This means user data never leaves the device.</string>
-    <string name="website">Website</string>
+    <string name="privacy_policy_desc">Nexc cannot access the Internet. This means user data never leaves the device.</string>
     <string name="source_code">Source code</string>
     <string name="license">License</string>
-    <string name="license_desc">LibreFit is licensed under the GNU General Public License v3.0 (GPL-3).</string>
-    <string name="url_source_code" translatable="false">https://github.com/LibreFitOrg/LibreFit</string>
-    <string name="url_privacy" translatable="false">https://librefit.org/privacy</string>
-    <string name="url_website" translatable="false">https://librefit.org</string>
-    <string name="contributors">Contributors</string>
-    <string name="url_IamDg" translatable="false">https://github.com/IamDg</string>
-    <string name="founder">Founder</string>
-    <string name="translators">Translators</string>
-    <string name="contributed_to">Contributed to: </string>
+    <string name="license_desc">Nexc is a modified version of LibreFit and is licensed under the GNU General Public License v3.0 (GPL-3).</string>
+    <string name="url_source_code" translatable="false">https://github.com/nzzrs/Nexc</string>
+    <string name="url_privacy" translatable="false">https://nexc.org/privacy</string>
     <string name="view_online_version">View online version</string>
     <string name="url_gpl3" translatable="false">https://www.gnu.org/licenses/gpl-3.0.en.html#license-text</string>
     <string name="github" translatable="false">GitHub</string>
     <string name="version">Version</string>
     <string name="dependencies">Dependencies</string>
-    <string name="lets_build_it_together">Let\'s build it together</string>
+    <string name="lets_build_it_together">System Information</string>
     <string name="tutorial_desc">Learn how to create routines and track your workouts.</string>
+
 
     <!-- username and url of contributors and translators -->
     <string name="doen1el" translatable="false">doen1el</string>
@@ -81,6 +97,8 @@
     <string name="exit_create_routine">Are you sure you want to quit? Your routine won\'t be saved</string>
     <string name="title">Title</string>
     <string name="set">Set</string>
+    <string name="undo">Undo</string>
+    <string name="item_deleted">Item deleted</string>
     <string name="reps">Reps</string>
     <string name="bodyweight">Bodyweight</string>
     <string name="load_only">Load only</string>
@@ -101,7 +119,7 @@
     <string name="restart_app">Restart</string>
     <string name="crash_log">Crash log</string>
     <string name="report_github">Report on GitHub</string>
-    <string name="url_github_search_issue" translatable="false">https://github.com/LibreFitOrg/LibreFit/issues?q=</string>
+    <string name="url_github_search_issue" translatable="false">https://github.com/NexcOrg/Nexc/issues?q=</string>
     <string name="stack_trace_not_available">Stack trace not available</string>
 
 
@@ -178,7 +196,7 @@
 
     <!--Permission request screen-->
     <string name="before_starting_the_workout">Before starting the workout</string>
-    <string name="best_experience_permissions">For the best experience in LibreFit, the following permission has to be granted:</string>
+    <string name="best_experience_permissions">For the best experience in Nexc, the following permission has to be granted:</string>
     <string name="notifications_permission">Notifications</string>
     <string name="notifications_permission_desc">It allows to send notifications about the ongoing workouts and rest intervals.</string>
     <string name="app_works_without_permission">The app will work even without this permission.</string>
@@ -188,7 +206,7 @@
 
 
     <!--Profile screen-->
-    <string name="coming_soon">Coming soon</string>
+
     <string name="your_workouts">Your workouts</string>
     <string name="finished_on">Finished on</string>
     <string name="duration">Duration</string>
@@ -203,11 +221,11 @@
     <!-- Privacy screen-->
     <string name="privacy">Privacy</string>
     <string name="privacy_notice">Privacy notice</string>
-    <string name="privacy_notice_summary">LibreFit provides **maximum privacy** as it **cannot access the Internet**. In addition, all permissions are **optional** and do not allow data collection.</string>
+    <string name="privacy_notice_summary">Nexc provides **maximum privacy** as it **cannot access the Internet**. In addition, all permissions are **optional** and do not allow data collection.</string>
     <string name="privacy_notice_optional_perm">Optional permissions</string>
     <string name="privacy_notice_notification_perm">**Notifications**: This permission allows the app to send notifications about your ongoing workout sessions and alerts when rest periods are over.</string>
     <string name="privacy_notice_default_perm">Permission granted by default</string>
-    <string name="privacy_notice_foreground_perm">**Foreground Service**: This permission is automatically granted when LibreFit is installed and this allows it to run in the foreground during a workout.</string>
+    <string name="privacy_notice_foreground_perm">**Foreground Service**: This permission is automatically granted when Nexc is installed and this allows it to run in the foreground during a workout.</string>
 
     <!-- Workout screen -->
     <string name="workout">Workout</string>
@@ -246,9 +264,22 @@
     <string name="rest_timer_sound">Rest timer sound</string>
     <string name="rest_timer_sound_on_desc">Play a sound when rest timer ends</string>
     <string name="rest_timer_sound_off_desc">Rest timer alerts will be silent</string>
+    <string name="rest_timer_vibration">Rest timer vibration</string>
+    <string name="rest_timer_vibration_on_desc">Vibrate when rest timer ends</string>
+    <string name="rest_timer_vibration_off_desc">Rest timer vibration is disabled</string>
     <string name="stick_status_bar">Stick status bar</string>
     <string name="stick_status_bar_desc">The status bar of ongoing workout will be stuck at the top of the screen</string>
     <string name="not_stick_status_bar_desc">The status bar of ongoing workout won\'t be stuck at the top of the screen</string>
+    <string name="backup_and_restore">Backup and Restore</string>
+    <string name="backup_and_restore_desc">Manage your data exports and imports</string>
+    <string name="database">Database</string>
+    <string name="database_backup_desc">Backup or restore the full application database (.db file)</string>
+    <string name="workout_plans">Workout Plans</string>
+    <string name="plans_backup_desc">Import or export your routines as portable JSON files</string>
+    <string name="import_label">Import</string>
+    <string name="export">Export</string>
+    <string name="export_reports">Export History</string>
+    <string name="export_reports_desc">Export workout history as CSV</string>
 
 
     <!-- Statistics screen-->
@@ -269,50 +300,23 @@
     <!-- Success screen-->
     <string name="workout_saved">Workout saved</string>
     <string name="routine_saved">Routine saved</string>
-    <string name="librefit_made_by_you">is made with ❤\n for you by people like you</string>
-    <string name="supporter_version">Supporter Version</string>
-    <string name="supporter_version_desc_1">Become a supporter by donating, contributing to source code, translating or adding an exercise to the dataset.</string>
-    <string name="supporter_version_desc_2">Every supporter can request the Supporter Version that includes:</string>
-    <string name="create_exercises">Create exercises</string>
-    <string name="companion_app_desc">Just install the companion app and click the button below.</string>
-    <string name="thank_supporter">Thank you - you contribution matters.</string>
-    <string name="verify_companion_app">Verify companion app</string>
-    <string name="status">Status</string>
-    <string name="to_verify">To verify</string>
-    <string name="verify_code">Verify code</string>
-    <string name="code_desc">Paste the code and click the button below.</string>
-    <string name="verify_companion_or_code">Verify or the companion app or the code.</string>
-    <string name="exercise_saved">Exercise saved</string>
+    <string name="copy_to_clipboard">Copy to clipboard</string>
+    <string name="workout_copied">Workout copied! 📋</string>
+    <string name="nexc_made_by_you">is optimized for privacy\and performance locally</string>
 
-    <string name="valid_companion_app_signature">Valid companion app</string>
-    <string name="invalid_companion_app_signature">Invalid companion app</string>
-    <string name="librefit_app_not_found">LibreFit not found</string>
-    <string name="librefit_signature_error">LibreFit signature error</string>
-    <string name="companion_app_not_found">Companion app not found</string>
-    <string name="companion_signature_error">Companion app signature error</string>
-    <string name="valid_code">Valid code</string>
-    <string name="invalid_code">Invalid code</string>
-    <string name="public_key_not_initialized_properly">Public key not initialized properly</string>
-    <string name="invalid_public_key">Invalid public key</string>
-    <string name="inappropriate_public_key_string">Inappropriate public key string</string>
-    <string name="algorithm_not_available">Algorithm not available</string>
-    <string name="invalid_signature_encoding">Invalid signature\'s encoding</string>
-    <string name="malformed_code">Malformed code</string>
-    <string name="missing_dot_separator">Missing dot separator</string>
-    <string name="invalid_public_key_encoding">Invalid public key\'s encoding</string>
-    <string name="unknown_error">Unknown error</string>
+    <!-- Support screen -->
+    <string name="technical_title">Technical</string>
+    <string name="information_title">Information</string>
+    <string name="app_motivation">Nexc is a technical tool designed for those who require precision, efficiency, and absolute data sovereignty. The project focuses on high-performance local tracking without external dependencies or cloud overhead.</string>
+
+    <string name="exercise_saved">Exercise saved</string>
 
 
     <!-- Support screen-->
-    <string name="lets_build">Let\'s build</string>
-    <string name="together">together</string>
-    <string name="motivation_1">LibreFit is a passion project, built by one person who believes software should be open, simple, beautiful, and above all, respectful of your privacy.</string>
-    <string name="motivation_2">I pour countless hours into designing, coding, and refining every detail to create the best possible experience. It\'s a commitment to you, the user, and to a better digital world.</string>
-    <string name="motivation_3">LibreFit is only possible with your support, whether by donating or by contributing to code or translations.</string>
-    <string name="motivation_4">All donators and contributors get the supporter version and a credit in the app and on GitHub.</string>
-    <string name="url_donate" translatable="false">https://librefit.org/donate</string>
-    <string name="url_contribute" translatable="false">https://github.com/LibreFitOrg/LibreFit/main/CONTRIBUTING.md</string>
-    <string name="insert_code">Insert code</string>
+    <string name="lets_build">Technical</string>
+    <string name="together">Information</string>
+
+    <string name="url_contribute" translatable="false">https://github.com/nzzrs/Nexc/main/CONTRIBUTING.md</string>
 
 
     <!-- Tutorial screen-->
@@ -325,7 +329,7 @@
     <string name="tut_create_routine_4">Adjust the sets, reps, and order of your exercises. When you\'re ready, tap the \'Save\' button in the top right.</string>
     <string name="tut_create_routine_5">Congratulations, you\'ve created your first routine! You can now use it to start a workout.</string>
     <string name="complete_workout">Complete workout</string>
-    <string name="tut_complete_workout_headline">When you start a workout, you\'re logging a live session. LibreFit shows your past performance for each set, making it easy to challenge yourself and aim for progressive overload.</string>
+    <string name="tut_complete_workout_headline">When you start a workout, you\'re logging a live session. Nexc shows your past performance for each set, making it easy to challenge yourself and aim for progressive overload.</string>
     <string name="tut_complete_workout_1">To start logging, begin a workout from one of your routines or choose an empty workout for a spontaneous session.</string>
     <string name="tut_complete_workout_2">If you started from a routine, your planned exercises will be pre-loaded. You can still add more on the fly.</string>
     <string name="tut_complete_workout_3">Log the weight and reps for every set. When you mark a set as complete, the rest timer at the bottom of the screen will automatically start.</string>
@@ -343,8 +347,8 @@
     <string name="statistics_desc">- **Time elapsed**: the total duration of the workout session.\n- **Date**: indicates the date on which the workout was completed.\n- **Volume**: the total amount of weight lifted during a workout, calculated by multiplying for each completed set the number of repetitions performed by the weight lifted. Higher volume is associated with greater muscle hypertrophy and strength gains over time.\n- **Exercises**: the total count of exercises included in this workout.\n- **Total sets**: the cumulative number of sets planned for each exercise in a workout. A set is a group of consecutive repetitions performed without resting.\n- **Completed sets**: the number of sets that were finished as planned by the workout.</string>
     <string name="muscle_distribution_desc">- This chart shows the **average performance of each muscle over specific time periods**, based on the chosen parameter.\n- The legend identifies the time period represented by each column.\n- The **Historical** column includes all workouts completed before every time period shown.\n- The parameter can be changed by selecting a new one above the chart.</string>
     <string name="exercises_distribution_desc">- This chart shows the **average performance of each exercise over specific time periods**, based on the chosen parameter.\n- The legend identifies the time period represented by each column.\n- The **Historical** column includes all workouts completed before every time period shown.\n- The parameter can be changed by selecting a new one above the chart.</string>
-    <string name="librefit_is_under_threat">LibreFit is under threat</string>
-    <string name="librefit_is_under_threat_desc">- Starting in September 2026, Google plans to lock down Android by **blocking you from installing any app** unless its developer has paid a fee, registered, and handed over personal ID to Google.\n- This policy destroys Android\'s open ecosystem and **takes away your basic right to choose what software you can run on the device you own**.\n- Please visit [keepandroidopen.org](https://keepandroidopen.org) to learn more about this threat to your digital freedom and how you can help stop it.</string>
+    <string name="nexc_is_under_threat">System Optimization</string>
+    <string name="nexc_is_under_threat_desc">To ensure consistent tracking backgrounds and timer accuracy, it is recommended to disable battery optimizations for Nexc in system settings. Visit the documentation to learn more about achieving maximum stability on your device architecture.</string>
 
 
 
@@ -454,4 +458,5 @@
     <string name="edit">Edit</string>
     <string name="do_not_show_again">Do not show again</string>
 
+    <string name="exercises_backup_desc">Import or export your custom exercises as portable JSON files</string>
 </resources>

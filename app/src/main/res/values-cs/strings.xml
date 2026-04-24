@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">LibreFit</string>
+    <string name="app_name">Nexc</string>
     <string name="home">Domů</string>
     <string name="profile">Profil</string>
     <string name="settings">Nastavení</string>
@@ -11,16 +11,13 @@
     <string name="library">Knihovna</string>
     <string name="open">Otevřít</string>
     <string name="copy">Kopírovat</string>
-    <string name="support_project">Podpořit projekt</string>
-    <string name="donate">Peněžně přispět</string>
-    <string name="contribute">Přispět</string>
     <string name="info">Informace</string>
     <string name="privacy_policy">Zásady ochrany soukromí</string>
-    <string name="privacy_policy_desc">LibreFit nemá přistup k internetu. Uživatelská data proto nikdy neopustí zařízení.</string>
+    <string name="privacy_policy_desc">Nexc nemá přistup k internetu. Uživatelská data proto nikdy neopustí zařízení.</string>
     <string name="website">Webová stránka</string>
     <string name="source_code">Zdrojový kód</string>
     <string name="license">Licence</string>
-    <string name="license_desc">LibreFit je licencovaný pod licencí GNU General Public License v3.0 (GPL-3).</string>
+    <string name="license_desc">Nexc je licencovaný pod licencí GNU General Public License v3.0 (GPL-3).</string>
     <string name="contributors">Přispěvatelé</string>
     <string name="founder">Zakladatel/ka</string>
     <string name="translators">Překladatelé</string>
@@ -123,7 +120,7 @@
     <string name="delete_measurement_question">Smazat měření?</string>
     <string name="delete_measurement_text">Opravdu smazat toto měření? Tuto akci nelze odčinit</string>
     <string name="before_starting_the_workout">Před začátkem workoutu</string>
-    <string name="best_experience_permissions">Pro nejlepší zážitek v LibreFitu musí být povoleno následující oprávnění:</string>
+    <string name="best_experience_permissions">Pro nejlepší zážitek v Nexcu musí být povoleno následující oprávnění:</string>
     <string name="notifications_permission">Oznámení</string>
     <string name="notifications_permission_desc">Ooravňuje posílat oznámení o běžících workoutech a intervalech odpočinku.</string>
     <string name="app_works_without_permission">Aplikace bude fungovat i bez tohoto oprávnění.</string>
@@ -142,11 +139,11 @@
     <string name="start_completing_workout">Začněte dokončením workoutu</string>
     <string name="privacy">Soukromí</string>
     <string name="privacy_notice">Oznámení o ochraně osobních údajů</string>
-    <string name="privacy_notice_summary">LibreFit poskytuje **maximální úroveň soukromí** díky tomu, že **nemá přístup k internetu**. Navíc jsou všechna oprávnění **volitelná** a nepovolují sběr dat.</string>
+    <string name="privacy_notice_summary">Nexc poskytuje **maximální úroveň soukromí** díky tomu, že **nemá přístup k internetu**. Navíc jsou všechna oprávnění **volitelná** a nepovolují sběr dat.</string>
     <string name="privacy_notice_optional_perm">Volitelná oprávnění</string>
     <string name="privacy_notice_notification_perm">**Oznámení**: Toto oprávnění umožňuje aplikaci posílat oznámení o vašich právě probíhajících trénincích a upozornění o konci přestávek.</string>
     <string name="privacy_notice_default_perm">Samovolně udělené oprávnění</string>
-    <string name="privacy_notice_foreground_perm">**Služba v popředí**: Toto oprávnění je automaticky uděleno při instalaci LibreFitu a umožňuje to aplikaci běžet na popředí při tréninku.</string>
+    <string name="privacy_notice_foreground_perm">**Služba v popředí**: Toto oprávnění je automaticky uděleno při instalaci Nexcu a umožňuje to aplikaci běžet na popředí při tréninku.</string>
     <string name="workout">Workout</string>
     <string name="quit_workout_question">Ukončit workout?</string>
     <string name="quit_workout_text">Opravdu ukončit workout? Nebude uložen</string>
@@ -193,6 +190,5 @@
     <string name="exercises_distribution">Distribuce cviků</string>
     <string name="workout_saved">Workout uložen</string>
     <string name="routine_saved">Rutina uložena</string>
-    <string name="librefit_made_by_you">je vytvořen s ❤\n pro vás lidmi, jako jste vy</string>
-    <string name="supporter_version">Verze pro podporovatele</string>
+    <string name="nexc_made_by_you">je vytvořen s ❤\n pro vás lidmi, jako jste vy</string>
 </resources>

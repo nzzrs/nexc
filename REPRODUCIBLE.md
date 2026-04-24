@@ -23,8 +23,8 @@ To reproduce the **APKs** exactly as it was built by the CI server:
 
 1.  **Clone the repository and checkout the tag/commit to verify:**
     ```bash
-    git clone https://github.com/LibreFitOrg/LibreFit.git
-    cd LibreFit
+    git clone https://github.com/NexcOrg/Nexc.git
+    cd Nexc
     # Specify version tag (e.g. v0.1.0)
     git checkout v0.1.0
     ```
@@ -33,7 +33,7 @@ To reproduce the **APKs** exactly as it was built by the CI server:
     ```bash
     ./gradlew clean assembleRelease --no-daemon
     ```
-    The APK will be at `app/build/outputs/apk/release/LibreFit-release-unsigned.apk`.
+    The APK will be at `app/build/outputs/apk/release/Nexc-release-unsigned.apk`.
 
 3.  **Verify unsigned APK built by CI server:**
     Download the unsigned APK (`Librefit-unsigned.apk`) from CI server.
@@ -41,6 +41,6 @@ To reproduce the **APKs** exactly as it was built by the CI server:
     For instance, the following command computes both their hashes:
     ```bash
     # Output SHA-256 of CI's APK and locally built APK
-    sha256sum LibreFit-unsigned.apk LibreFit-release-unsigned.apk
+    sha256sum Nexc-unsigned.apk Nexc-release-unsigned.apk
     ```
     ✅ Verification is successful if and only if hashes are identical.

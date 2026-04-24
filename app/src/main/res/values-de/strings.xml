@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <!--
   ~ SPDX-License-Identifier: GPL-3.0-or-later
-  ~ Copyright (c) 2026. The LibreFit Contributors
+  ~ Copyright (c) 2026. The Nexc Contributors
   ~
-  ~ LibreFit is subject to additional terms covering author attribution and trademark usage;
+  ~ Nexc is subject to additional terms covering author attribution and trademark usage;
   ~ see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
   -->
 
 <resources>
-    <string name="app_name">LibreFit</string>
+    <string name="app_name">Nexc</string>
     <string name="home">Startseite</string>
     <string name="profile">Profil</string>
     <string name="settings">Einstellungen</string>
@@ -18,16 +18,13 @@
     <string name="library">Sammlung</string>
     <string name="open">Offen</string>
     <string name="copy">Kopieren</string>
-    <string name="support_project">Unterstütze das Projekt</string>
-    <string name="donate">Spenden</string>
-    <string name="contribute">Mitwirken</string>
     <string name="info">Info</string>
     <string name="privacy_policy">Datenschutzerklärung</string>
-    <string name="privacy_policy_desc">Da LibreFit keine Verbindung zum Internet herstellen kann, verlassen deine Daten niemals das Gerät.</string>
+    <string name="privacy_policy_desc">Da Nexc keine Verbindung zum Internet herstellen kann, verlassen deine Daten niemals das Gerät.</string>
     <string name="website">Website</string>
     <string name="source_code">Quellcode</string>
     <string name="license">Lizenz</string>
-    <string name="license_desc">LibreFit ist unter der GNU General Public License v3.0 (GPL-3) lizenziert.</string>
+    <string name="license_desc">Nexc ist unter der GNU General Public License v3.0 (GPL-3) lizenziert.</string>
     <string name="contributors">Mitwirkende</string>
     <string name="founder">Gründer</string>
     <string name="translators">Übersetzer</string>
@@ -163,8 +160,6 @@
     <string name="previous">Vorherige</string>
     <string name="type_of_set">Art des Satzes</string>
     <string name="rest_time">Ruhezeit</string>
-    <string name="librefit_is_under_threat_desc">- Ab September 2026 plant Google, Android einzuschränken, indem **die Installation von Apps blockiert wird**, sofern deren Entwickler keine Gebühr entrichtet, sich nicht registriert und Google keine persönlichen Identitätsdaten übermittelt hat.\n- Diese Richtlinie zerstört das offene Ökosystem von Android und **nimmt dir das Grundrecht, selbst zu entscheiden, welche Software du auf deinem eigenem Gerät nutzen darfst**.\n- Bitte besuche [keepandroidopen.org](https://keepandroidopen.org), um mehr über diese Bedrohung deiner digitalen Freiheit zu erfahren und zu erfahren, wie du dazu beitragen kannst.</string>
-    <string name="librefit_is_under_threat">LibreFit ist in Gefahr</string>
     <string name="exercises_distribution_desc">- Diese Grafik zeigt die **durchschnittliche Leistung jeder Übung über bestimmte Zeiträume**, basierend auf dem ausgewählten Parameter.\n- Die Legende gibt an, welchen Zeitraum die einzelnen Spalten darstellen.\n- Die Spalte **Historisch** umfasst alle Trainingseinheiten, die vor den dargestellten Zeiträumen absolviert wurden.\n- Der Parameter kann geändert werden, indem oben über der Grafik ein neuer ausgewählt wird.</string>
     <string name="muscle_distribution_desc">- Diese Grafik zeigt die **durchschnittliche Leistung der einzelnen Muskeln über bestimmte Zeiträume**, basierend auf dem ausgewählten Parameter.\n- Die Legende gibt an, welchen Zeitraum die einzelnen Spalten darstellen.\n- Die Spalte **Historisch** umfasst alle Trainingseinheiten, die vor den dargestellten Zeiträumen absolviert wurden.\n- Der Parameter kann geändert werden, indem oben über der Grafik ein neuer ausgewählt wird.</string>
     <string name="statistics_desc">- **Verstrichene Zeit**: Die Gesamtdauer der Trainingseinheit.\n- **Datum**: Gibt das Datum an, an dem das Training absolviert wurde.\n- **Volumen**: Die Gesamtmenge des während eines Trainings gestützten Gewichts, berechnet durch Multiplikation der Anzahl der durchgeführten Wiederholungen pro absolviertem Satz mit dem gestützten Gewicht. Ein höheres Volumen steht im Zusammenhang mit einer stärkeren Muskelhypertrophie und Kraftzuwächsen im Laufe der Zeit.\n- **Übungen**: Die Gesamtzahl der in diesem Training enthaltenen Übungen.\n- **Gesamtsätze**: Die kumulative Anzahl der für jede Übung in einem Training geplanten Sätze. Ein Satz ist eine Gruppe aufeinanderfolgender Wiederholungen, die ohne Pause ausgeführt werden.\n- **Abgeschlossene Sätze**: Die Anzahl der Sätze, die wie im Trainingsplan vorgesehen absolviert wurden.</string>
@@ -177,24 +172,11 @@
     <string name="tut_create_routine_1">Tippe auf + unten rechts, um einen neuen Trainingsplan zu erstellen.</string>
     <string name="tutorial">Tutorial</string>
     <string name="step">Schritt</string>
-    <string name="insert_code">Code eingeben</string>
-    <string name="motivation_4">Alle Spender und Mitwirkenden erhalten die Unterstützer-Version sowie eine Nennung in der App und auf GitHub.</string>
-    <string name="motivation_3">LibreFit ist nur dank Eurer Unterstützung möglich, sei es durch eine Spende oder durch Beiträge zum Code oder zu Übersetzungen.</string>
-    <string name="motivation_2">Ich investiere unzählige Stunden in das Entwerfen, Programmieren und Verfeinern jedes einzelnen Details, um das bestmögliche Erlebnis zu schaffen. Das ist mein Engagement für Dich als Nutzer und für eine bessere digitale Welt.</string>
-    <string name="motivation_1">LibreFit ist ein Herzensprojekt, das von einer einzigen Person entwickelt wurde, die der Überzeugung ist, dass Software offen, einfach und ansprechend gestaltet sein und vor allem Ihre Privatsphäre respektieren sollte.</string>
     <string name="together">zusammen</string>
     <string name="unknown_error">Unbekannter Fehler</string>
-    <string name="algorithm_not_available">Algorithmus nicht verfügbar</string>
-    <string name="invalid_code">Ungültiger Code</string>
-    <string name="valid_code">Gültiger Code</string>
     <string name="exercise_saved">Übung gespeichert</string>
-    <string name="verify_code">Code überprüfen</string>
     <string name="status">Status</string>
-    <string name="thank_supporter">Vielen Dank – Dein Beitrag ist wichtig.</string>
     <string name="create_exercises">Übungen erstellen</string>
-    <string name="supporter_version_desc_2">Jeder Unterstützer kann die Unterstützer-Version anfordern, die Folgendes enthält:</string>
-    <string name="supporter_version_desc_1">Werde Unterstützer, indem du spendest, zum Quellcode beiträgst, Übersetzungen anfertigst oder eine Übung zum Datensatz hinzufügst.</string>
-    <string name="supporter_version">Unterstützer-Version</string>
     <string name="routine_saved">Trainingsplan gespeichert</string>
     <string name="workout_saved">Training gespeichert</string>
     <string name="years">Jahre</string>
@@ -209,11 +191,11 @@
     <string name="past">Vergangene</string>
     <string name="privacy">Privatssphäre</string>
     <string name="privacy_notice">Datenschutzerklärung</string>
-    <string name="privacy_notice_summary">LibreFit bietet **maximale Privatsphäre**, da es **keinen Zugriff auf das Internet hat**. Darüber hinaus sind alle Berechtigungen **optional** und ermöglichen keine Datenerfassung.</string>
+    <string name="privacy_notice_summary">Nexc bietet **maximale Privatsphäre**, da es **keinen Zugriff auf das Internet hat**. Darüber hinaus sind alle Berechtigungen **optional** und ermöglichen keine Datenerfassung.</string>
     <string name="privacy_notice_optional_perm">Optionale Berechtigungen</string>
     <string name="privacy_notice_notification_perm">**Benachrichtigungen**: Mit dieser Berechtigung kann die App Benachrichtigungen zu deinen laufenden Trainingseinheiten senden und dich darauf hinweisen, wenn Ruhephasen beendet sind.</string>
     <string name="privacy_notice_default_perm">Berechtigung standardmäßig erteilt</string>
-    <string name="privacy_notice_foreground_perm">**Im Vordergrund ausführen**: Diese Berechtigung wird bei der Installation von LibreFit automatisch erteilt und ermöglicht es der App, während des Trainings im Vordergrund zu laufen.</string>
+    <string name="privacy_notice_foreground_perm">**Im Vordergrund ausführen**: Diese Berechtigung wird bei der Installation von Nexc automatisch erteilt und ermöglicht es der App, während des Trainings im Vordergrund zu laufen.</string>
     <string name="workout">Training</string>
     <string name="quit_workout_question">Training beenden?</string>
     <string name="quit_workout_text">Möchtest du wirklich beenden? Dein Training wird nicht gespeichert</string>
@@ -277,7 +259,7 @@
     <string name="edit_measurement">Messung bearbeiten</string>
     <string name="delete_measurement_question">Messung löschen?</string>
     <string name="delete_measurement_text">Möchtest du diese Messung wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden</string>
-    <string name="best_experience_permissions">Um LibreFit optimal nutzen zu können, muss die folgende Berechtigung erteilt werden:</string>
+    <string name="best_experience_permissions">Um Nexc optimal nutzen zu können, muss die folgende Berechtigung erteilt werden:</string>
     <string name="notifications_permission">Benachrichtigungen</string>
     <string name="app_works_without_permission">Die App funktioniert auch ohne diese Berechtigung.</string>
     <string name="dont_ask_again">Nicht erneut fragen</string>
@@ -295,20 +277,11 @@
     <string name="stick_status_bar">Statusleiste</string>
     <string name="muscles_distribution">Muskelverteilung</string>
     <string name="exercises_distribution">Verteilung der Übungen</string>
-    <string name="librefit_made_by_you">mit ❤ gemacht\n für dich von Menschen wie dich</string>
-    <string name="to_verify">Zu überprüfen</string>
-    <string name="code_desc">Füge den Code ein und klicke auf den Bereich unten.</string>
-    <string name="librefit_app_not_found">LibreFit nicht gefunden</string>
-    <string name="librefit_signature_error">LibreFit-Signaturfehler</string>
-    <string name="public_key_not_initialized_properly">Der öffentliche Schlüssel wurde nicht ordnungsgemäß initialisiert</string>
-    <string name="invalid_public_key">Ungültiger öffentlicher Schlüssel</string>
-    <string name="inappropriate_public_key_string">Ungültige Zeichenfolge für den öffentlichen Schlüssel</string>
-    <string name="invalid_signature_encoding">Falsche Kodierung der Signatur</string>
-    <string name="malformed_code">Fehlerhafter Code</string>
-    <string name="missing_dot_separator">Fehlendes Trennzeichen</string>
-    <string name="invalid_public_key_encoding">Fehlerhafte Kodierung des öffentlichen Schlüssels</string>
+    <string name="nexc_made_by_you">mit ❤ gemacht\n für dich von Menschen wie dich</string>
+    <string name="nexc_app_not_found">Nexc nicht gefunden</string>
+    <string name="nexc_signature_error">Nexc-Signaturfehler</string>
     <string name="tut_create_routine_headline">Trainingspläne sind deine wiederverwendbaren Trainingsvorlagen. Plane deine Übungen, Sätze und Wiederholungen einmalig und starte dann jederzeit ein Training aus deinem Trainingsplan, um deine Leistung und deinen Fortschritt im Laufe der Zeit ganz einfach zu verfolgen.</string>
-    <string name="tut_complete_workout_headline">Wenn du ein Training startest, zeichnest du eine Sport-Session auf. LibreFit zeigt dir deine bisherigen Leistungen für jeden Satz an, sodass du dich ganz einfach selbst herausfordern und auf eine progressive Steigerung hinarbeiten kannst.</string>
+    <string name="tut_complete_workout_headline">Wenn du ein Training startest, zeichnest du eine Sport-Session auf. Nexc zeigt dir deine bisherigen Leistungen für jeden Satz an, sodass du dich ganz einfach selbst herausfordern und auf eine progressive Steigerung hinarbeiten kannst.</string>
     <string name="tut_complete_workout_1">Um mit der Aufzeichnung zu beginnen, starte ein Training aus einem deiner Trainingspläne oder wähle ein leeres Training für eine spontane Trainingseinheit aus.</string>
     <string name="open_the_workout">Öffne das Training von</string>
     <string name="workout_info_channel_title">Trainingsdaten in Echtzeit</string>

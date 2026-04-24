@@ -1,13 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?><!--
   ~ SPDX-License-Identifier: GPL-3.0-or-later
-  ~ Copyright (c) 2024-2026. The LibreFit Contributors
+  ~ Copyright (c) 2024-2026. The Nexc Contributors
   ~
-  ~ LibreFit is subject to additional terms covering author attribution and trademark usage;
+  ~ Nexc is subject to additional terms covering author attribution and trademark usage;
   ~ see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
   -->
 
 <resources>
-    <string name="app_name">LibreFit</string>
+    <string name="app_name">Nexc</string>
     <string name="home">Home</string>
     <string name="profile">Profilo</string>
     <string name="settings">Impostazioni</string>
@@ -20,11 +20,8 @@
     <string name="start_empty_workout">Inizia un allenamento vuoto</string>
     <string name="create_routine">Crea routine</string>
     <string name="copy">Copia</string>
-    <string name="support_project">Supporta il progetto</string>
-    <string name="donate">Dona</string>
-    <string name="contribute">Contribuisci</string>
     <string name="info">Info</string>
-    <string name="privacy_policy_desc">LibreFit non può accedere a Internet. Ciò significa che i dati dell\'utente non lasciano mai il dispositivo.</string>
+    <string name="privacy_policy_desc">Nexc non può accedere a Internet. Ciò significa che i dati dell\'utente non lasciano mai il dispositivo.</string>
     <string name="website">Sito web</string>
     <string name="source_code">Codice sorgente</string>
     <string name="privacy_policy">Informativa sulla privacy</string>
@@ -102,7 +99,6 @@
     <string name="language">Lingua</string>
     <string name="cancel_dialog">Annulla</string>
     <string name="quit_dialog">Abbandona</string>
-    <string name="librefit_is_under_threat_desc">- A partire da Settembre 2026, Google pianifica di **impedirti di installare qualsiasi app** a meno che lo sviluppatore non abbia pagato una tassa, non si sia registrato, e non abbia consegnato i suoi dati identificativi personali a Google.\n- Questa politica annienta l\'ecosistema aperto di Android e **ti toglie il diritto fondamentale di scegliere quale software usare nel dispositivo di tua proprietà**.\n- Ti preghiamo di visitare [keepandroidopen.org](https://keepandroidopen.org) per saperne di più su questa minaccia alla tua libertà digitale e cosa puoi fare per fermarla.</string>
     <string name="rest_time">Tempo di riposo</string>
     <string name="type_of_set">Tipologia di serie</string>
     <string name="previous">Precedente</string>
@@ -170,7 +166,7 @@
     <string name="edit_measurement">Modifica misurazione</string>
     <string name="delete_measurement_text">Sei sicuro di voler eliminare questa misurazione? Questa azione non può essere annullata</string>
     <string name="before_starting_the_workout">Prima di iniziare l\'allenamento</string>
-    <string name="best_experience_permissions">Per la migliore esperienza in LibreFit, deve essere concesso il seguente permesso:</string>
+    <string name="best_experience_permissions">Per la migliore esperienza in Nexc, deve essere concesso il seguente permesso:</string>
     <string name="notifications_permission_desc">Consente di inviare notifiche sugli allenamenti in corso e sugli intervalli di riposo.</string>
     <string name="dont_ask_again">Non chiedere di nuovo</string>
     <string name="skip_for_now">Salta per ora</string>
@@ -193,7 +189,7 @@
     <string name="url_dialog">URL</string>
     <string name="discard_changes_text">Sei sicuro di voler abbandonare? Le tue modifiche non saranno salvate</string>
     <string name="delete">Elimina</string>
-    <string name="license_desc">LibreFit è distribuito sotto la licenza GNU General Public License v3.0 (GPL-3).</string>
+    <string name="license_desc">Nexc è distribuito sotto la licenza GNU General Public License v3.0 (GPL-3).</string>
     <string name="view_online_version">Visualizza versione online</string>
     <string name="your_workouts">I tuoi allenamenti</string>
     <string name="load_only">Solo carico</string>
@@ -215,7 +211,6 @@
     <string name="done">Fatto</string>
     <string name="menu">Menu</string>
     <string name="routine_saved">Routine salvata</string>
-    <string name="motivation_4">Tutti i donatori e contributori ottengono la versione supporter e un credito nell\'app e su GitHub.</string>
     <string name="tut_complete_workout_6">Congratulazioni, hai completato il tuo primo allenamento! Puoi revisionare tutte le tue sessioni precedenti nella schermata Profilo.</string>
     <string name="welcome_to">Benvenuto a</string>
     <string name="rest_time_desc">Il periodo di riposo si attiva al completamento di una serie, avviando immediatamente il conto alla rovescia. Al termine del riposo, viene emesso un avviso.</string>
@@ -229,11 +224,11 @@
     <string name="start_completing_workout">Inizia completando un allenamento</string>
     <string name="privacy">Privacy</string>
     <string name="privacy_notice">Nota sulla privacy</string>
-    <string name="privacy_notice_summary">LibreFit garantisce la **massima privacy** in quanto **non può accedere a Internet**. Inoltre, tutte le autorizzazioni sono **facoltative** e non permettono la raccolta di dati.</string>
+    <string name="privacy_notice_summary">Nexc garantisce la **massima privacy** in quanto **non può accedere a Internet**. Inoltre, tutte le autorizzazioni sono **facoltative** e non permettono la raccolta di dati.</string>
     <string name="privacy_notice_optional_perm">Autorizzazioni opzionali</string>
     <string name="privacy_notice_notification_perm">**Notifiche**: Questa autorizzazione consente all\'app di inviare notifiche sulle le sessioni di allenamento in corso e avvisi al termine dei periodi di riposo.</string>
     <string name="privacy_notice_default_perm">Autorizzazione concessa di default</string>
-    <string name="privacy_notice_foreground_perm">**Servizio in primo piano**: Questa autorizzazione viene concessa automaticamente quando si installa LibreFit e gli consente di funzionare in primo piano durante un allenamento.</string>
+    <string name="privacy_notice_foreground_perm">**Servizio in primo piano**: Questa autorizzazione viene concessa automaticamente quando si installa Nexc e gli consente di funzionare in primo piano durante un allenamento.</string>
     <string name="delete_routine_text">Sei sicuro di voler eliminare questa routine? Questa azione non può essere annullata</string>
     <string name="history">Storico</string>
     <string name="second_abbreviation">s</string>
@@ -278,15 +273,11 @@
     <string name="most_reps">Massime ripetizioni</string>
     <string name="session_volume">Volume per sessione</string>
     <string name="rest_timer_sound">Suono timer riposo</string>
-    <string name="librefit_made_by_you">è creato con ❤\n per te da persone come te</string>
+    <string name="nexc_made_by_you">è creato con ❤\n per te da persone come te</string>
     <string name="unknown_error">Errore sconosciuto</string>
     <string name="lets_build">Costruiamo</string>
     <string name="together">insieme</string>
-    <string name="motivation_1">LibreFit è un progetto di passione, creato da una persona che crede fortemente che il software dovrebbe essere aperto, semplice, bello, e soprattutto, rispettoso della tua privacy.</string>
-    <string name="motivation_2">Dedico innumerevoli ore nella progettazione, programmazione, e nella rifinitura di ogni dettaglio per creare la migliore esperienza possibile. È un impegno nei tuoi confronti, l\'utente, e nei confronti di un mondo digitale migliore.</string>
-    <string name="motivation_3">LibreFit è possibile solo grazie al tuo supporto, sia donando che contribuendo al codice o alle traduzioni.</string>
     <string name="help">Aiuto</string>
-    <string name="insert_code">Inserisci codice</string>
     <string name="step">Passo</string>
     <string name="tutorial">Tutorial</string>
     <string name="tut_create_routine_headline">Le routine sono dei piani d\'allenamento riutilizzabili. Programma una sola volta i tuoi esercizi, serie e ripetizioni, così da poter iniziare in qualsiasi momento un allenamento dalla tua routine e tracciare facilmente la tua performance e progresso nel tempo.</string>
@@ -296,41 +287,24 @@
     <string name="tut_create_routine_4">Aggiusta le serie, ripetizioni e l\'ordine dei tuoi esercizi. Quando sei pronto, tocca il pulsante \'Salva\' in alto a destra.</string>
     <string name="tut_create_routine_5">Congratulazioni, hai creato la tua prima routine! Ora puoi usarla per iniziare un allenamento.</string>
     <string name="complete_workout">Completa allenamento</string>
-    <string name="tut_complete_workout_headline">"Quando inizi un allenamento, stai registrando una sessione in tempo reale. LibreFit mostra la tua performance precedente per ogni serie, rendendo facile sfidarti e mirare al sovraccarico progressivo. "</string>
+    <string name="tut_complete_workout_headline">"Quando inizi un allenamento, stai registrando una sessione in tempo reale. Nexc mostra la tua performance precedente per ogni serie, rendendo facile sfidarti e mirare al sovraccarico progressivo. "</string>
     <string name="tut_complete_workout_1">Per iniziare la registrazione, inizia un allenamento da una delle tue routine oppure scegli un allenamento vuoto per una sessione spontanea.</string>
     <string name="tut_complete_workout_2">Se hai iniziato da una routine, i tuoi esercizi programmati saranno precaricati. Puoi comunque aggiungerne altri durante la sessione.</string>
     <string name="tut_complete_workout_3">Registra il peso e le ripetizioni per ogni serie. Quando segni una serie come completata, il timer di riposo in fondo allo schermo partirà automaticamente.</string>
     <string name="tut_complete_workout_4">"Il tuo tempo totale d'allenamento è in cima—clicca il pulsante di pausa per prenderti una pausa. Quando hai terminato, tocca il pulsate 'Fatto' in alto a destra. "</string>
     <string name="tut_complete_workout_5">Nella schermata riassuntiva, puoi modificare il titolo, aggiungere note o cambiare la data. Tocca \'Salva\' in alto a destra per salvare l\'allenamento.</string>
-    <string name="supporter_version">Versione Sostenitore</string>
-    <string name="supporter_version_desc_1">Diventa un sostenitore donando, contribuendo al codice sorgente, traducendo o aggiungendo un esercizio al dataset.</string>
-    <string name="supporter_version_desc_2">Ogni sostenitore può richiedere la Versione Sostenitore che include:</string>
     <string name="create_exercises">Crea esercizi</string>
     <string name="companion_app_desc">Basta installare l\'app companion e cliccare il bottono qui sotto.</string>
-    <string name="thank_supporter">Grazie - il tuo contributo fa la differenza.</string>
     <string name="verify_companion_app">Verifica app companion</string>
     <string name="status">Stato</string>
-    <string name="to_verify">Da verificare</string>
-    <string name="verify_code">Verifica codice</string>
-    <string name="code_desc">Incolla il codice e clicca il bottone qui sotto.</string>
     <string name="verify_companion_or_code">Verifica o l\'app companion o il codice.</string>
     <string name="exercise_saved">Esercizio salvato</string>
     <string name="valid_companion_app_signature">App companion valida</string>
     <string name="invalid_companion_app_signature">App companion non valida</string>
-    <string name="librefit_app_not_found">LibreFit non trovato</string>
-    <string name="librefit_signature_error">Errore nella firma di LibreFit</string>
+    <string name="nexc_app_not_found">Nexc non trovato</string>
+    <string name="nexc_signature_error">Errore nella firma di Nexc</string>
     <string name="companion_app_not_found">App companion non trovata</string>
     <string name="companion_signature_error">Errore nella firma della companion app</string>
-    <string name="valid_code">Codice valido</string>
-    <string name="invalid_code">Codice non valido</string>
-    <string name="public_key_not_initialized_properly">Chiave pubblica non initializzata correttamente</string>
-    <string name="invalid_public_key">Chiave pubblica non valida</string>
-    <string name="inappropriate_public_key_string">Stringa della chiave pubblica impropria</string>
-    <string name="algorithm_not_available">Algoritmo non disponibile</string>
-    <string name="invalid_signature_encoding">Codifica della firma non valida</string>
-    <string name="malformed_code">Codice malformato</string>
-    <string name="missing_dot_separator">Punto separatore mancante</string>
-    <string name="invalid_public_key_encoding">Codifica della chiave pubblica non valida</string>
     <string name="paste">Incolla</string>
     <string name="discard_running_workout_question">Scartare allenamento in corso?</string>
     <string name="delete_running_workout_text">Sei sicuro di voler scartare questo allenamento in corso? Questa azione non può essere annullata.</string>
@@ -340,7 +314,6 @@
     <string name="stick_status_bar">Fissa barra di stato</string>
     <string name="stick_status_bar_desc">La barra di stato dell\'allenamento in corso sarà fissa in cima allo schermo</string>
     <string name="edit">Modifica</string>
-    <string name="librefit_is_under_threat">LibreFit è in pericolo</string>
     <string name="do_not_show_again">Non mostrare di nuovo</string>
 
 </resources>

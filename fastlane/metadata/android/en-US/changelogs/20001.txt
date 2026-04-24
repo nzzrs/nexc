@@ -1,5 +1,5 @@
-⚠️ IMPORTANT: Now you can add your language in LibreFit!
-🔗 https://github.com/LibreFitOrg/LibreFit/blob/main/CONTRIBUTING.md#translations
+⚠️ IMPORTANT: Now you can add your language in Nexc!
+🔗 https://github.com/NexcOrg/Nexc/blob/main/CONTRIBUTING.md#translations
 
 ✨ Added
 - New languages: Dutch 🇳🇱, German 🇩🇪

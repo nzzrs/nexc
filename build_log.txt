@@ -1,0 +1,43 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/home/nzrs/.gradle/wrapper/dists/gradle-9.3.1-bin/23ovyewtku6u96viwx3xl3oks/gradle-9.3.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:prepareLibraryDefinitionsDebug UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:generateDebugRFile UP-TO-DATE
+> Task :app:kspDebugKotlin UP-TO-DATE
+
+> Task :app:compileDebugKotlin FAILED
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt:350:17 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun SharedTransitionScope.EditWorkoutScreenContent(navController: NavHostController, animatedVisibilityScope: AnimatedVisibilityScope, typeOfEdit: Boolean?, exercisesWithSets: List<UiExerciseWithSets>, workout: UiWorkout, isTitleTooLong: Boolean, isTitleEmpty: Boolean, updateTitle: (String) -> Unit, updateNotes: (String) -> Unit, deleteSet: (Long) -> Unit, updateSetTime: (Int, Long) -> Unit, updateSetReps: (Int, Long) -> Unit, updateSetLoad: (Double, Long) -> Unit, updateSetRpe: (String, Long) -> Unit, updateSetCompleted: (Boolean, Long) -> Unit, addSetToExercise: (Long) -> Unit, deleteExercise: (Long) -> Unit, updateExerciseNotes: (String, Long) -> Unit, updateExerciseRestTime: (Int, Long) -> Unit, updateExerciseSetMode: (SetMode, Long) -> Unit, showRpe: Boolean, saveWorkoutWithExercisesInDB: () -> Unit): Unit
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/infoExercise/InfoExerciseScreen.kt:869:17 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun SharedTransitionScope.InfoExerciseScreenContent(id: Long, exerciseDC: UiExerciseDC, animatedVisibilityScope: AnimatedVisibilityScope, workoutsWithExercises: List<UiWorkoutWithExercisesAndSets>, points: List<Point>, exerciseChart: ExerciseChart, showRpe: Boolean, navController: NavHostController, updateExerciseChart: (ExerciseChart) -> Unit, deleteExercise: () -> Unit): Unit
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/infoExercise/InfoExerciseScreen.kt:924:30 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/settings/SettingsScreen.kt:267:55 Unresolved reference 'ic_speed'.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/settings/SettingsScreen.kt:364:13 No value passed for parameter 'showRpe'.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/workout/WorkoutScreen.kt:637:25 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun SharedTransitionScope.WorkoutScreenContent(animatedVisibilityScope: AnimatedVisibilityScope, exercisesWithSets: List<UiExerciseWithSets>, previousPerformances: List<List<PreviousPerformanceSet>?>, timeElapsed: Int, isStopwatchPaused: Boolean, workoutProgress: Pair<Int, Int>, idSetWithRunningStopwatch: Long?, isHeaderSticky: Boolean, toggleStopwatch: () -> Unit, updateIdSetWithRunningStopwatch: (Long?) -> Unit, addSetToExercise: (Long) -> Unit, updateSetTime: (Int, Long) -> Unit, updateSetReps: (Int, Long) -> Unit, updateSetLoad: (Double, Long) -> Unit, updateSetCompleted: (Boolean, Long) -> Unit, deleteSet: (Long) -> Unit, updateExerciseNotes: (String, Long) -> Unit, updateExerciseRestTime: (Int, Long) -> Unit, updateExerciseSetMode: (SetMode, Long) -> Unit, deleteExercise: (Long) -> Unit, onSelectedExerciseIdChange: (Long, String) -> Unit, showInfo: (InfoMode) -> Unit, showRpe: Boolean, updateSetRpe: (String, Long) -> Unit, applyPreviousSetPerformance: (Long) -> Unit): Unit
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 23s
+9 actionable tasks: 1 executed, 8 up-to-date

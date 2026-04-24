@@ -1,0 +1,85 @@
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:prepareLibraryDefinitionsDebug UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:generateDebugRFile UP-TO-DATE
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/activities/ErrorActivity.kt:89:20 'fun getSerializableExtra(p0: String!): Serializable?' is deprecated. Deprecated in Java.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/components/modalBottomSheets/InfoModalBottomSheet.kt:52:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/components/modalBottomSheets/InfoModalBottomSheet.kt:61:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/components/modalBottomSheets/InfoModalBottomSheet.kt:97:25 'when' is exhaustive so 'else' is redundant here.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/db/repository/DatasetRepository.kt:62:102 'field versionCode: Int' is deprecated. Deprecated in Java.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/db/repository/UserPreferencesRepository.kt:183:26 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/helpers/DataHelper.kt:299:27 Redundant call of conversion method.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/util/Formatter.kt:158:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/infoExercise/InfoExerciseScreen.kt:742:72 Elvis operator (?:) always returns the left operand of non-nullable type 'String'.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/settings/SettingsScreenViewModel.kt:76:17 'when' is exhaustive so 'else' is redundant here.
+
+> Task :app:javaPreCompileDebug UP-TO-DATE
+
+> Task :app:compileDebugJavaWithJavac
+warning: The following options were not recognized by any processor: '[dagger.fastInit, dagger.hilt.android.internal.disableAndroidSuperclassValidation, dagger.hilt.android.internal.projectType, dagger.hilt.internal.useAggregatingRootProcessor]'
+1 warning
+
+> Task :app:generateDebugAssets UP-TO-DATE
+> Task :app:mergeDebugAssets UP-TO-DATE
+> Task :app:compressDebugAssets UP-TO-DATE
+> Task :app:desugarDebugFileDependencies UP-TO-DATE
+> Task :app:hiltSyncDebug
+> Task :app:hiltAggregateDepsDebug UP-TO-DATE
+> Task :app:hiltJavaCompileDebug
+> Task :app:checkDebugAarMetadata UP-TO-DATE
+> Task :app:mapDebugSourceSetPaths
+> Task :app:compileDebugNavigationResources UP-TO-DATE
+> Task :app:mergeDebugResources
+> Task :app:createDebugCompatibleScreenManifests UP-TO-DATE
+> Task :app:extractDeepLinksDebug UP-TO-DATE
+> Task :app:processDebugMainManifest UP-TO-DATE
+> Task :app:processDebugManifest UP-TO-DATE
+> Task :app:processDebugManifestForPackage UP-TO-DATE
+warn: removing resource org.nexc.app.debug:string/companion_app_desc without required default value.
+warn: removing resource org.nexc.app.debug:string/companion_app_not_found without required default value.
+warn: removing resource org.nexc.app.debug:string/companion_signature_error without required default value.
+warn: removing resource org.nexc.app.debug:string/create_exercises without required default value.
+warn: removing resource org.nexc.app.debug:string/invalid_companion_app_signature without required default value.
+warn: removing resource org.nexc.app.debug:string/nexc_app_not_found without required default value.
+warn: removing resource org.nexc.app.debug:string/nexc_signature_error without required default value.
+warn: removing resource org.nexc.app.debug:string/status without required default value.
+warn: removing resource org.nexc.app.debug:string/unknown_error without required default value.
+warn: removing resource org.nexc.app.debug:string/valid_companion_app_signature without required default value.
+warn: removing resource org.nexc.app.debug:string/verify_companion_app without required default value.
+warn: removing resource org.nexc.app.debug:string/verify_companion_or_code without required default value.
+
+> Task :app:processDebugResources
+> Task :app:transformDebugClassesWithAsm
+> Task :app:dexBuilderDebug
+> Task :app:mergeDebugGlobalSynthetics
+> Task :app:processDebugJavaRes UP-TO-DATE
+> Task :app:mergeDebugJavaResource UP-TO-DATE
+> Task :app:checkDebugDuplicateClasses UP-TO-DATE
+> Task :app:mergeExtDexDebug UP-TO-DATE
+> Task :app:mergeLibDexDebug UP-TO-DATE
+> Task :app:mergeProjectDexDebug
+> Task :app:mergeDebugJniLibFolders UP-TO-DATE
+> Task :app:mergeDebugNativeLibs UP-TO-DATE
+> Task :app:stripDebugDebugSymbols UP-TO-DATE
+> Task :app:validateSigningDebug UP-TO-DATE
+> Task :app:writeDebugAppMetadata UP-TO-DATE
+> Task :app:writeDebugSigningConfigVersions UP-TO-DATE
+> Task :app:packageDebug
+> Task :app:createDebugApkListingFileRedirect UP-TO-DATE
+> Task :app:assembleDebug
+
+[Incubating] Problems report is available at: file:///home/nzrs/Projects/LibreFit/build/reports/problems/problems-report.html
+
+BUILD SUCCESSFUL in 2m 27s
+44 actionable tasks: 13 executed, 31 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.3.1/userguide/configuration_cache_enabling.html

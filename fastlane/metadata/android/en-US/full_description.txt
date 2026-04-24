@@ -1,4 +1,4 @@
-LibreFit is a free and open-source workout tracker designed with privacy in mind.<br>
+Nexc is a free and open-source workout tracker designed with privacy in mind.<br>
 Create fully personalized workouts assembled from a rich dataset of hundreds of exercises — each exercise paired with images and step-by-step instructions covering setup and execution.<br>
 Schedule single sessions, filter exercises by equipment, muscle group or difficulty with one tap. During workouts, track every set, rep, rest interval, and load in real time.<br>
 
@@ -17,7 +17,5 @@ Your data is stored locally on your device, ensuring that your personal informat
 <b>🎨 Material Design 3 Expressive</b><br>
 Enjoy a sleek and modern user interface that enhances your experience.<br><br>
 
-Website: https://librefit.org<br>
-Open source code: https://github.com/LibreFitOrg/LibreFit<br>
-Donate: https://librefit.org/donate<br>
-Contribute: https://github.com/LibreFitOrg/LibreFit/blob/main/CONTRIBUTING.md<br>
+Website: https://nexc.org<br>
+Open source code: https://github.com/NexcOrg/Nexc<br>

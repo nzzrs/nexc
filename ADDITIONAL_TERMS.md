@@ -13,7 +13,7 @@ as prominent as the attributions for other contributors.
 **2. Trademark and Logo Usage - GPLv3 Section 7e and 7c**
 
 This license does not grant you rights to use the trade names, trademarks, service marks, or product
-names of the Licensor, including the "LibreFit" name and the original project logo.
+names of the Licensor, including the "Nexc" name and the original project logo.
 
 Any modified version of this software that you distribute must be marked in a reasonable way as
 being different from the original version. Specifically, you may not use the original project logo

@@ -1,11 +1,11 @@
 name: ✨ Feature Request
-description: Suggest an idea or enhancement for LibreFit
+description: Suggest an idea or enhancement for Nexc
 labels: [ "enhancement", "needs-triage" ]
 body:
     -   type: markdown
         attributes:
             value: |
-                Thanks for your interest in improving LibreFit!
+                Thanks for your interest in improving Nexc!
                 Please verify that your idea fits the project scope before submitting.
 
     -   type: checkboxes
@@ -13,11 +13,11 @@ body:
         attributes:
             label: Prerequisites
             options:
-                -   label: I have searched the [Existing Discussions](https://github.com/LibreFitOrg/LibreFit/discussions) and this is not a duplicate.
+                -   label: I have searched the [Existing Discussions](https://github.com/NexcOrg/Nexc/discussions) and this is not a duplicate.
                     required: true
-                -   label: I have searched the [Existing Issues](https://github.com/LibreFitOrg/LibreFit/issues) and this is not a duplicate.
+                -   label: I have searched the [Existing Issues](https://github.com/NexcOrg/Nexc/issues) and this is not a duplicate.
                     required: true
-                -   label: I have read the [Contributing Guidelines](https://github.com/LibreFitOrg/LibreFit/blob/main/CONTRIBUTING.md).
+                -   label: I have read the [Contributing Guidelines](https://github.com/NexcOrg/Nexc/blob/main/CONTRIBUTING.md).
                     required: true
 
     -   type: textarea

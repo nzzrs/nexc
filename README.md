@@ -2,16 +2,16 @@
 
 <img src="assets/logo.svg" alt="Logo" style="width: 60%">
 
-# LibreFit - The free and private workout tracker
+# Nexc - The free and private workout tracker
 
-[![GitHub Downloads](https://img.shields.io/github/downloads/LibreFitOrg/LibreFit/total?style=for-the-badge&logo=github&labelColor=20232A&color=82D3E3)](https://tooomm.github.io/github-release-stats/?username=LibreFitOrg&repository=LibreFit)
-[![F-droid Downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Ftotal%2Forg.librefit.app.json&query=%24.total_downloads&style=for-the-badge&label=Downloads&logo=fdroid&labelColor=20232A&color=82D3E3)](https://f-droid.org/packages/org.librefit.app)
-[![Stars](https://img.shields.io/github/stars/LibreFitOrg/LibreFit?style=for-the-badge&logo=github&logoColor=white&labelColor=20232A&color=82D3E3)](https://github.com/LibreFitOrg/LibreFit/stargazers)
-[![GitHub Release](https://img.shields.io/github/v/release/LibreFitOrg/LibreFit?style=for-the-badge&labelColor=20232A&color=82D3E3)](https://github.com/LibreFitOrg/LibreFit/releases)
-[![License](https://img.shields.io/github/license/LibreFitOrg/LibreFit?style=for-the-badge&labelColor=20232A&color=82D3E3)](https://github.com/LibreFitOrg/LibreFit/blob/main/COPYING)
-[![CI Status](https://img.shields.io/github/actions/workflow/status/LibreFitOrg/LibreFit/android-ci.yml?style=for-the-badge&labelColor=20232A&logo=github&logoColor=white)](https://github.com/LibreFitOrg/LibreFit/actions)
+[![GitHub Downloads](https://img.shields.io/github/downloads/NexcOrg/Nexc/total?style=for-the-badge&logo=github&labelColor=20232A&color=82D3E3)](https://tooomm.github.io/github-release-stats/?username=NexcOrg&repository=Nexc)
+[![F-droid Downloads](https://img.shields.io/badge/dynamic/json?url=https%3A%2F%2Fgithub.com%2Fkitswas%2Ffdroid-metrics-dashboard%2Fraw%2Frefs%2Fheads%2Fmain%2Fprocessed%2Ftotal%2Forg.nexc.app.json&query=%24.total_downloads&style=for-the-badge&label=Downloads&logo=fdroid&labelColor=20232A&color=82D3E3)](https://f-droid.org/packages/org.nexc.app)
+[![Stars](https://img.shields.io/github/stars/NexcOrg/Nexc?style=for-the-badge&logo=github&logoColor=white&labelColor=20232A&color=82D3E3)](https://github.com/NexcOrg/Nexc/stargazers)
+[![GitHub Release](https://img.shields.io/github/v/release/NexcOrg/Nexc?style=for-the-badge&labelColor=20232A&color=82D3E3)](https://github.com/NexcOrg/Nexc/releases)
+[![License](https://img.shields.io/github/license/NexcOrg/Nexc?style=for-the-badge&labelColor=20232A&color=82D3E3)](https://github.com/NexcOrg/Nexc/blob/main/COPYING)
+[![CI Status](https://img.shields.io/github/actions/workflow/status/NexcOrg/Nexc/android-ci.yml?style=for-the-badge&labelColor=20232A&logo=github&logoColor=white)](https://github.com/NexcOrg/Nexc/actions)
 
-LibreFit is a **free** and **open-source** _workout tracker_ designed with **privacy** in mind.
+Nexc is a **free** and **open-source** _workout tracker_ designed with **privacy** in mind.
 
 Create fully **personalized workouts** assembled from a **rich dataset** of hundreds of exercises — each
 exercise paired with **images** and step-by-step **instructions** covering setup and execution.
@@ -31,12 +31,12 @@ During workouts, **track** every set, rep, rest interval, and load in **real tim
 - 💡 [Motivation](README.md#-motivation)
 - 🚀 [Features](README.md#-features)
 - 📥 [Install](README.md#-install)
-- 🤝 [Let's Build LibreFit Together](README.md#-lets-build-librefit-together)
+- 🤝 [Let's Build Nexc Together](README.md#-lets-build-nexc-together)
     - 💖 [Donate](README.md#-donate)
     - 🏗️ [Contribute to the source code](README.md#-contribute-to-source-code)
     - 🌐 [Translate](CONTRIBUTING.md#translations)
 - ❓ [I Have A Question](README.md#-i-have-a-question)
-- ⚡ [Building LibreFit from source](README.md#-building-librefit-from-source)
+- ⚡ [Building Nexc from source](README.md#-building-nexc-from-source)
 - 📜 [License](README.md#-license)
     - ™️ [Branding](README.md#-branding)
     - 📷 [Images](README.md#-images)
@@ -44,13 +44,13 @@ During workouts, **track** every set, rep, rest interval, and load in **real tim
 
 ## 💡 Motivation
 
-Hey, it's [IamDg](https://github.com/IamDg) here, the **creator** of LibreFit. Here’s the **motivation** for why I started building it in the first place:
+Hey, it's [IamDg](https://github.com/IamDg) here, the **creator** of Nexc. Here’s the **motivation** for why I started building it in the first place:
 
-LibreFit is a passion project, built by one person who believes **software** should be **open**, **simple**, **beautiful**, and above all, **respectful of your privacy**.
+Nexc is a passion project, built by one person who believes **software** should be **open**, **simple**, **beautiful**, and above all, **respectful of your privacy**.
 
 I pour countless hours into designing, coding, and refining every detail to create the best possible experience. It's a commitment to you, the user, and to a **better digital world**.
 
-LibreFit is only possible with your [support](README.md#-lets-build-librefit-together).
+Nexc is only possible with your [support](README.md#-lets-build-nexc-together).
 
 ## 🚀 Features
 
@@ -68,27 +68,26 @@ LibreFit is only possible with your [support](README.md#-lets-build-librefit-tog
 
 ## 📥 Install
 
-Currently, you can download LibreFit from:
+Currently, you can download Nexc from:
 
-[<img src="assets/badge-fdroid.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/org.librefit.app)
-[<img src="assets/badge-obtainium.png" alt="Get it on Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22org.librefit.app%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FLibreFitOrg%2FLibreFit%22%2C%22author%22%3A%22LibreFitOrg%22%2C%22name%22%3A%22LibreFit%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22filterReleaseNotesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22verifyLatestTag%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22useLatestAssetDateAsReleaseDate%5C%22%3Afalse%2C%5C%22releaseTitleAsVersion%5C%22%3Afalse%2C%5C%22trackOnly%5C%22%3Afalse%2C%5C%22versionExtractionRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22matchGroupToUse%5C%22%3A%5C%22%5C%22%2C%5C%22versionDetection%5C%22%3Atrue%2C%5C%22releaseDateAsVersion%5C%22%3Afalse%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Afalse%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22-unsigned%5C%22%2C%5C%22invertAPKFilter%5C%22%3Atrue%2C%5C%22autoApkFilterByArch%5C%22%3Atrue%2C%5C%22appName%5C%22%3A%5C%22%5C%22%2C%5C%22appAuthor%5C%22%3A%5C%22%5C%22%2C%5C%22shizukuPretendToBeGooglePlay%5C%22%3Afalse%2C%5C%22allowInsecure%5C%22%3Afalse%2C%5C%22exemptFromBackgroundUpdates%5C%22%3Afalse%2C%5C%22skipUpdateNotifications%5C%22%3Afalse%2C%5C%22about%5C%22%3A%5C%22%5C%22%2C%5C%22refreshBeforeDownload%5C%22%3Afalse%2C%5C%22includeZips%5C%22%3Afalse%2C%5C%22zippedApkFilterRegEx%5C%22%3A%5C%22%5C%22%7D%22%2C%22overrideSource%22%3A%22GitHub%22%7D)
-[<img src="assets/badge-openapk.png" alt="Get it on OpenApk" height="80">](https://www.openapk.net/librefit/org.librefit.app/)
-[<img src="assets/badge-github.png" alt="Get it on GitHub" height="80">](https://github.com/LibreFitOrg/LibreFit/releases/latest/download/LibreFit.apk)
+[<img src="assets/badge-fdroid.png" alt="Get it on F-Droid" height="80">](https://f-droid.org/packages/org.nexc.app)
+[<img src="assets/badge-obtainium.png" alt="Get it on Obtainium" height="80">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://app/%7B%22id%22%3A%22org.nexc.app%22%2C%22url%22%3A%22https%3A%2F%2Fgithub.com%2FNexcOrg%2FNexc%22%2C%22author%22%3A%22NexcOrg%22%2C%22name%22%3A%22Nexc%22%2C%22preferredApkIndex%22%3A0%2C%22additionalSettings%22%3A%22%7B%5C%22includePrereleases%5C%22%3Afalse%2C%5C%22fallbackToOlderReleases%5C%22%3Atrue%2C%5C%22filterReleaseTitlesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22filterReleaseNotesByRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22verifyLatestTag%5C%22%3Atrue%2C%5C%22sortMethodChoice%5C%22%3A%5C%22date%5C%22%2C%5C%22useLatestAssetDateAsReleaseDate%5C%22%3Afalse%2C%5C%22releaseTitleAsVersion%5C%22%3Afalse%2C%5C%22trackOnly%5C%22%3Afalse%2C%5C%22versionExtractionRegEx%5C%22%3A%5C%22%5C%22%2C%5C%22matchGroupToUse%5C%22%3A%5C%22%5C%22%2C%5C%22versionDetection%5C%22%3Atrue%2C%5C%22releaseDateAsVersion%5C%22%3Afalse%2C%5C%22useVersionCodeAsOSVersion%5C%22%3Afalse%2C%5C%22apkFilterRegEx%5C%22%3A%5C%22-unsigned%5C%22%2C%5C%22invertAPKFilter%5C%22%3Atrue%2C%5C%22autoApkFilterByArch%5C%22%3Atrue%2C%5C%22appName%5C%22%3A%5C%22%5C%22%2C%5C%22appAuthor%5C%22%3A%5C%22%5C%22%2C%5C%22shizukuPretendToBeGooglePlay%5C%22%3Afalse%2C%5C%22allowInsecure%5C%22%3Afalse%2C%5C%22exemptFromBackgroundUpdates%5C%22%3Afalse%2C%5C%22skipUpdateNotifications%5C%22%3Afalse%2C%5C%22about%5C%22%3A%5C%22%5C%22%2C%5C%22refreshBeforeDownload%5C%22%3Afalse%2C%5C%22includeZips%5C%22%3Afalse%2C%5C%22zippedApkFilterRegEx%5C%22%3A%5C%22%5C%22%7D%22%2C%22overrideSource%22%3A%22GitHub%22%7D)
+[<img src="assets/badge-openapk.png" alt="Get it on OpenApk" height="80">](https://www.openapk.net/nexc/org.nexc.app/)
+[<img src="assets/badge-github.png" alt="Get it on GitHub" height="80">](https://github.com/NexcOrg/Nexc/releases/latest/download/Nexc.apk)
 
-## 🤝 Let's Build LibreFit Together
+## 🤝 Let's Build Nexc Together
 
-Thank you for considering improving LibreFit!
+Thank you for considering improving Nexc!
 
 You can actively contribute to the project and become a **supporter** in one of the following ways:
 
 - 💖 [Donations](README.md#-donate)
-- 🏗️ [Contributions to the source code](README.md#-contribute-to-source-code)
 - 🌐 [Translations](README.md#-translations)
 - 🏋️ [Improvements to the exercise dataset](README.md#-improve-the-exercise-dataset)
 
 Every **supporter** will be _credited_ in the about page of the app and in
-[credits section](README.md#-credits), and it will be able to request [here](https://librefit.org/donate) the **supporter version** of
-LibreFit
+[credits section](README.md#-credits), and it will be able to request [here](https://nexc.org/donate) the **supporter version** of
+Nexc
 which includes:
 
 - 📝 **Custom exercises**: The option to create and use custom exercises as they were in the dataset.
@@ -104,7 +103,7 @@ Donations are the main way to:
 - **Cover costs** (e.g. domain, paid plans for emails, etc.).
 - **Thank and incentivize the creator** to invest more time in the project.
 
-To donate, you can either send use the Monero address below or visit the [donation page](https://librefit.org/donate).
+To donate, you can either send use the Monero address below or visit the [donation page](https://nexc.org/donate).
 
 ```text
 842RPDZ851EitDZZxCEp1sjjyDpsaV74xAJBTPU6X7TrDAbpDrjq5rRfaF3Q8PnXyQeUYs2xLoxFpZb7ZpSJxBvdDgFVpww
@@ -112,7 +111,7 @@ To donate, you can either send use the Monero address below or visit the [donati
 
 > [!IMPORTANT]
 > If you wish the **supporter version**, ensure to donate
-> using the **integrated processor** at [donation page](https://librefit.org/donate)
+> using the **integrated processor** at [donation page](https://nexc.org/donate)
 
 ### 🏗 Contribute to source code
 
@@ -122,9 +121,9 @@ See [Contributing to source code](CONTRIBUTING.md#your-first-code-contribution)
 
 See [Contributing to translations](CONTRIBUTING.md#translations) to discover how to contribute.
 
-[![Translation status](https://hosted.weblate.org/widget/librefit/librefit/horizontal-auto.svg)](https://hosted.weblate.org/engage/librefit/)
+[![Translation status](https://hosted.weblate.org/widget/nexc/nexc/horizontal-auto.svg)](https://hosted.weblate.org/engage/nexc/)
 
-> Thanks to [Weblate](https://weblate.org) for hosting the LibreFit's translations!
+> Thanks to [Weblate](https://weblate.org) for hosting the Nexc's translations!
 
 ### 🏋 Improve the exercise dataset
 
@@ -133,23 +132,23 @@ See [Contributing to translations](CONTRIBUTING.md#translations) to discover how
 ## ❓ I Have a Question
 
 Before you ask a question, it is best to search for
-existing [Discussions](https://github.com/LibreFitOrg/LibreFit/discussions)
-and [Issues](https://github.com/LibreFitOrg/LibreFit/issues) that might help you.
+existing [Discussions](https://github.com/NexcOrg/Nexc/discussions)
+and [Issues](https://github.com/NexcOrg/Nexc/issues) that might help you.
 
 If you then still feel the need to ask a question and need clarification, we recommend the
 following:
 
-- Open a [Discussion](https://github.com/LibreFitOrg/LibreFit/discussions/new).
+- Open a [Discussion](https://github.com/NexcOrg/Nexc/discussions/new).
 - Provide as much context as you can about what you're running into.
 - Provide project and platform versions, depending on what seems relevant.
 
 We will then take care of the question as soon as possible.
 
-## ⚡ Building LibreFit from source
+## ⚡ Building Nexc from source
 
 1. **Clone** the project locally (or download source code as `.zip` file):
     ```bash
-    git clone https://github.com/LibreFitOrg/LibreFit.git
+    git clone https://github.com/NexcOrg/Nexc.git
     ```
 2. **Open in Android Studio:**  Open Android Studio and select _"Open an existing Android Studio
    project"_, pointing to the cloned/downloaded directory.
@@ -165,21 +164,21 @@ We will then take care of the question as soon as possible.
 
 ## 📜 License
 
-LibreFit is licensed under the [GNU General Public License v3.0 (GPL-3)](COPYING), and it is subject
+Nexc is licensed under the [GNU General Public License v3.0 (GPL-3)](COPYING), and it is subject
 to these [additional terms](ADDITIONAL_TERMS.md).
 
 In short, this means you are free to use, modify, and distribute the code, but you must:
 
 - **Share your changes**: If you distribute a modified version, you must also license it under the
   GPLv3.
-- **Give credit:** Keep the original copyright notice and attribute the original work to LibreFit.
+- **Give credit:** Keep the original copyright notice and attribute the original work to Nexc.
 - **Mark your changes:** Clearly indicate that your version is a modification of the original.
-- **Do not use the brand:** You cannot use the name "LibreFit" or its logo to promote your modified
+- **Do not use the brand:** You cannot use the name "Nexc" or its logo to promote your modified
   version.
 
 ### ™️ Branding
 
-The "LibreFit" name and logos are trademarks. **All Rights Reserved**.
+The "Nexc" name and logos are trademarks. **All Rights Reserved**.
 
 Their use is governed by the [Trademark Policy](TRADEMARK_POLICY.md) which applies to relevant files located in
 `assets` and `app/src/main/res`.
@@ -218,4 +217,4 @@ Thanks to everyone who helped the project!
 
 ---
 
-Made with ❤️ by [IamDg](https://github.com/IamDg) and [contributors](https://github.com/LibreFitOrg/LibreFit/graphs/contributors)
+Made with ❤️ by [IamDg](https://github.com/IamDg) and [contributors](https://github.com/NexcOrg/Nexc/graphs/contributors)

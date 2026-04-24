@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?><!--
   ~ SPDX-License-Identifier: GPL-3.0-or-later
-  ~ Copyright (c) 2025-2026. The LibreFit Contributors
+  ~ Copyright (c) 2025-2026. The Nexc Contributors
   ~
-  ~ LibreFit is subject to additional terms covering author attribution and trademark usage;
+  ~ Nexc is subject to additional terms covering author attribution and trademark usage;
   ~ see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
   -->
 
 <resources>
 
-    <style name="Theme.LibreFit" parent="Theme.Material3.Dark.NoActionBar">
+    <style name="Theme.Nexc" parent="Theme.Material3.Dark.NoActionBar">
         <item name="colorPrimary">@color/md_theme_primary</item>
         <item name="colorOnPrimary">@color/md_theme_onPrimary</item>
         <item name="colorPrimaryContainer">@color/md_theme_primaryContainer</item>
@@ -58,10 +58,10 @@
     </style>
 
     <!-- Splash Screen Theme -->
-    <style name="Theme.LibreFit.SplashScreen" parent="Theme.SplashScreen">
+    <style name="Theme.Nexc.SplashScreen" parent="Theme.SplashScreen">
         <!-- The animated icon -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_logo</item>
+        <item name="windowSplashScreenAnimatedIcon">@drawable/avd_nexc_splash</item>
         <!-- The theme to be applied after the splash screen is dismissed. -->
-        <item name="postSplashScreenTheme">@style/Theme.LibreFit</item>
+        <item name="postSplashScreenTheme">@style/Theme.Nexc</item>
     </style>
 </resources>

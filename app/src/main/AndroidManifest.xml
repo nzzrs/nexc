@@ -1,21 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?><!--
   ~ SPDX-License-Identifier: GPL-3.0-or-later
-  ~ Copyright (c) 2024-2026. The LibreFit Contributors
+  ~ Copyright (c) 2024-2026. The Nexc Contributors
   ~
-  ~ LibreFit is subject to additional terms covering author attribution and trademark usage;
+  ~ Nexc is subject to additional terms covering author attribution and trademark usage;
   ~ see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
   -->
 
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
-    <queries>
-        <package android:name="org.librefit.companion" />
-    </queries>
 
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.VIBRATE" />
 
     <application
         android:allowBackup="true"
@@ -25,15 +23,15 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:name=".MainApplication"
-        android:roundIcon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.LibreFit"
+        android:theme="@style/Theme.Nexc"
         android:localeConfig="@xml/locale_config"
         tools:targetApi="tiramisu">
         <activity
-            android:name=".activities.MainActivity"
+            android:name=".core.activities.MainActivity"
             android:exported="true"
-            android:theme="@style/Theme.LibreFit.SplashScreen">
+            android:theme="@style/Theme.Nexc.SplashScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -41,12 +39,12 @@
         </activity>
 
         <activity
-            android:name=".activities.PrivacyActivity"
+            android:name=".core.activities.PrivacyActivity"
             android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
-            android:theme="@style/Theme.LibreFit.SplashScreen"
+            android:theme="@style/Theme.Nexc.SplashScreen"
             android:exported="true">
             <!-- VIEW_PERMISSION_USAGE shows a selectable information icon on
-                 LibreFit permission's page in system settings.
+                 Nexc permission's page in system settings.
                  VIEW_PERMISSION_USAGE_FOR_PERIOD shows a selectable information
                  icon on the Privacy Dashboard screen. -->
             <intent-filter>
@@ -58,9 +56,9 @@
         </activity>
 
         <activity
-            android:name=".activities.ErrorActivity"
+            android:name=".core.activities.ErrorActivity"
             android:exported="true"
-            android:theme="@style/Theme.LibreFit.SplashScreen"
+            android:theme="@style/Theme.Nexc.SplashScreen"
             android:excludeFromRecents="true"
             android:finishOnTaskLaunch="true"
             android:process=":error_process">
@@ -77,7 +75,7 @@
         </service>
 
         <service
-            android:name=".services.WorkoutService"
+            android:name=".core.services.WorkoutService"
             android:foregroundServiceType="dataSync"
             android:exported="false">
         </service>

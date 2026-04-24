@@ -1,4 +1,4 @@
-LibreFit is free software, licensed under the [GNU General Public License v3.0 (GPL-3)](https://www.gnu.org/licenses/gpl-3.0.en.html#license-text), and is subject to [additional terms](https://github.com/LibreFitOrg/LibreFit/blob/main/ADDITIONAL_TERMS.md).
+Nexc is free software, licensed under the [GNU General Public License v3.0 (GPL-3)](https://www.gnu.org/licenses/gpl-3.0.en.html#license-text), and is subject to [additional terms](https://github.com/NexcOrg/Nexc/blob/main/ADDITIONAL_TERMS.md).
 
 In short, this means you are free to use, modify, and distribute the code, but you must:
 
@@ -9,4 +9,4 @@ In short, this means you are free to use, modify, and distribute the code, but y
 
 ## Branding and Trademarks
 
-The "LibreFit" name and logos are trademarks and are not licensed under the GPL. Their use is governed by the [Trademark Policy](https://github.com/LibreFitOrg/LibreFit/blob/main/TRADEMARK_POLICY.md)
+The "Nexc" name and logos are trademarks and are not licensed under the GPL. Their use is governed by the [Trademark Policy](https://github.com/NexcOrg/Nexc/blob/main/TRADEMARK_POLICY.md)

@@ -1,4 +1,4 @@
-# Contributing to LibreFit
+# Contributing to Nexc
 
 First off, thanks for taking the time to contribute! ❤️
 
@@ -31,20 +31,20 @@ community looks forward to your contributions. 🎉
 
 This project and everyone participating in it is governed by
 the [Code of Conduct](CODE_OF_CONDUCT.md). By participating, you are expected to uphold this code.
-Please report unacceptable behavior by filling this [form](https://librefit.org/contact).
+Please report unacceptable behavior by filling this [form](https://nexc.org/contact).
 
 ## I Have a Question
 
 Before you ask a question, it is best to search for
-existing [Discussions](https://github.com/LibreFitOrg/LibreFit/discussions)
-and [Issues](https://github.com/LibreFitOrg/LibreFit/issues) that might help you. In case you have
+existing [Discussions](https://github.com/NexcOrg/Nexc/discussions)
+and [Issues](https://github.com/NexcOrg/Nexc/issues) that might help you. In case you have
 found a suitable issue and still need clarification, you can write your question in this discussion.
 It is also advisable to search the internet for answers first.
 
 If you then still feel the need to ask a question and need clarification, we recommend the
 following:
 
-- Open an [Discussion](https://github.com/LibreFitOrg/LibreFit/discussions/new).
+- Open an [Discussion](https://github.com/NexcOrg/Nexc/discussions/new).
 - Provide as much context as you can about what you're running into.
 - Provide project and platform versions, depending on what seems relevant.
 
@@ -58,7 +58,7 @@ under the project licence.
 
 ### License
 
-By contributing to **LibreFit**, you agree that your contributions will be licensed under the **GNU
+By contributing to **Nexc**, you agree that your contributions will be licensed under the **GNU
 General Public License v3.0 (GPLv3)**.
 
 ### Reporting Bugs
@@ -76,7 +76,7 @@ possible.
   looking for support, you might want to check [this section](CONTRIBUTING.md#i-have-a-question)).
 - To see if other users have experienced (and potentially already solved) the same issue you are
   having, check if there is not already a bug report existing for your bug or error in
-  the [bug tracker](https://github.com/LibreFitOrg/LibreFit/issues?q=label%3Abug).
+  the [bug tracker](https://github.com/NexcOrg/Nexc/issues?q=label%3Abug).
 - Also make sure to search the internet to see if users outside of the GitHub community have
   discussed the issue.
 
@@ -84,11 +84,11 @@ possible.
 
 > You must never report security related issues, vulnerabilities or bugs including sensitive
 > information to the issue tracker, or elsewhere in public. Instead sensitive bugs must be sent using
-> the [GitHub vulnerability report](https://github.com/LibreFitOrg/LibreFit/security/advisories/new).
+> the [GitHub vulnerability report](https://github.com/NexcOrg/Nexc/security/advisories/new).
 
 We use GitHub issues to track bugs and errors. If you run into an issue with the project:
 
-- Open an [Issue](https://github.com/LibreFitOrg/LibreFit/issues/new). (Since we can't be sure at
+- Open an [Issue](https://github.com/NexcOrg/Nexc/issues/new). (Since we can't be sure at
   this point whether it is a bug or not, we ask you not to talk about a bug yet and not to label the
   issue.)
 - Fill the provided template.
@@ -109,7 +109,7 @@ Once it's filed:
 
 ### Suggesting Enhancements
 
-This section guides you through submitting an enhancement suggestion for LibreFit, **including
+This section guides you through submitting an enhancement suggestion for Nexc, **including
 completely new features and minor improvements to existing functionality**. Following these
 guidelines will help maintainers and the community to understand your suggestion and find related
 suggestions.
@@ -119,8 +119,8 @@ suggestions.
 - Make sure that you are using the latest version.
 - Read the [README.md](README.md) carefully and find out if the functionality is already covered,
   maybe by an individual configuration.
-- Perform a search in [Existing Issues](https://github.com/LibreFitOrg/LibreFit/issues)
-  and [Existing Discussions](https://github.com/LibreFitOrg/LibreFit/discussions) to see if the
+- Perform a search in [Existing Issues](https://github.com/NexcOrg/Nexc/issues)
+  and [Existing Discussions](https://github.com/NexcOrg/Nexc/discussions) to see if the
   enhancement has already been suggested. If it has, add a comment to the existing issue/discussion
   instead of opening a new one.
 - Find out whether your idea fits with the scope and aims of the project. It's up to you to make a
@@ -130,7 +130,7 @@ suggestions.
 #### How Do I Submit a Good Enhancement Suggestion?
 
 Enhancement suggestions are tracked
-as [GitHub issues](https://github.com/LibreFitOrg/LibreFit/issues).
+as [GitHub issues](https://github.com/NexcOrg/Nexc/issues).
 
 Fill the provided template. In particular:
 
@@ -141,7 +141,7 @@ Fill the provided template. In particular:
   why. At this point you can also tell which alternatives do not work for you.
 - You may want to **include screenshots or screen recordings** which help you demonstrate the steps
   or point out the part which the suggestion is related to.
-- **Explain why this enhancement would be useful** to most LibreFit users. You may also want to
+- **Explain why this enhancement would be useful** to most Nexc users. You may also want to
   point out the other projects that solved it better and which could serve as inspiration.
 
 ### Your First Code Contribution
@@ -191,15 +191,15 @@ the latest Android toolkit:
 ### Translations
 
 > [!CAUTION]
-> Unfortunately, there isn't the automatic reward system for translators yet! To get the supporter code, send a message by visiting [contact page](https://librefit.org/contact)
+> Unfortunately, there isn't the automatic reward system for translators yet! To get the supporter code, send a message by visiting [contact page](https://nexc.org/contact)
 
-We want LibreFit to be accessible to everyone!
+We want Nexc to be accessible to everyone!
 
-- We use **Weblate** for translations. Join our project here: https://hosted.weblate.org/projects/librefit/librefit/
+- We use **Weblate** for translations. Join our project here: https://hosted.weblate.org/projects/nexc/nexc/
 - Please **do not** submit Pull Requests for `strings.xml` files directly, as they will be
   overwritten by the translation platform sync.
 
-> Thanks to [Weblate](https://weblate.org) for hosting LibreFit's translations!
+> Thanks to [Weblate](https://weblate.org) for hosting Nexc's translations!
 
 ## Attribution
 

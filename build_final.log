@@ -1,0 +1,50 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/home/nzrs/.gradle/wrapper/dists/gradle-9.3.1-bin/23ovyewtku6u96viwx3xl3oks/gradle-9.3.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+To honour the JVM settings for this build a single-use Daemon process will be forked. For more on this, please refer to https://docs.gradle.org/9.3.1/userguide/gradle_daemon.html#sec:disabling_the_daemon in the Gradle documentation.
+Daemon will be stopped at the end of the build 
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preDebugBuild UP-TO-DATE
+> Task :app:mergeDebugNativeDebugMetadata NO-SOURCE
+> Task :app:generateDebugBuildConfig UP-TO-DATE
+> Task :app:generateDebugResources UP-TO-DATE
+> Task :app:prepareLibraryDefinitionsDebug UP-TO-DATE
+> Task :app:packageDebugResources UP-TO-DATE
+> Task :app:processDebugNavigationResources UP-TO-DATE
+> Task :app:parseDebugLocalResources UP-TO-DATE
+> Task :app:generateDebugRFile UP-TO-DATE
+> Task :app:kspDebugKotlin
+> Task :app:compileDebugKotlin
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/activities/ErrorActivity.kt:89:20 'fun getSerializableExtra(p0: String!): Serializable?' is deprecated. Deprecated in Java.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/components/modalBottomSheets/InfoModalBottomSheet.kt:52:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/components/modalBottomSheets/InfoModalBottomSheet.kt:61:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/components/modalBottomSheets/InfoModalBottomSheet.kt:97:25 'when' is exhaustive so 'else' is redundant here.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/db/repository/DatasetRepository.kt:62:102 'field versionCode: Int' is deprecated. Deprecated in Java.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/db/repository/UserPreferencesRepository.kt:183:26 This declaration overrides a deprecated member but is not marked as deprecated itself. Add the '@Deprecated' annotation or suppress the diagnostic.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/helpers/DataHelper.kt:299:27 Redundant call of conversion method.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/util/Formatter.kt:158:13 'when' is exhaustive so 'else' is redundant here.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/infoExercise/InfoExerciseScreen.kt:742:72 Elvis operator (?:) always returns the left operand of non-nullable type 'String'.
+w: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/settings/SettingsScreenViewModel.kt:76:17 'when' is exhaustive so 'else' is redundant here.
+
+> Task :app:javaPreCompileDebug UP-TO-DATE
+> Task :app:compileDebugJavaWithJavac FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileDebugJavaWithJavac'.
+> Could not resolve all files for configuration ':app:androidJdkImage'.
+   > Failed to transform core-for-system-modules.jar to match attributes {artifactType=_internal_android_jdk_image, org.gradle.libraryelements=jar, org.gradle.usage=java-runtime}.
+      > Execution failed for JdkImageTransform: /opt/android-sdk/platforms/android-36/core-for-system-modules.jar.
+         > Error while executing process /usr/lib/jvm/java-26-openjdk/bin/jlink with arguments {--module-path /home/nzrs/.gradle/caches/9.3.1/transforms/ddb890a4d66f6ff9516b3e52edecd3f7-41537af1-a48f-4c00-96a9-874ce3099e69/transformed/output/temp/jmod --add-modules java.base --output /home/nzrs/.gradle/caches/9.3.1/transforms/ddb890a4d66f6ff9516b3e52edecd3f7-41537af1-a48f-4c00-96a9-874ce3099e69/transformed/output/jdkImage --disable-plugin system-modules}
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 1m 23s
+11 actionable tasks: 3 executed, 8 up-to-date

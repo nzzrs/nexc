@@ -17,6 +17,7 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -31,6 +32,8 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -41,6 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.collections.immutable.persistentListOf
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt
 import org.nexc.R
 import org.nexc.core.enums.InfoMode
 import org.nexc.core.enums.SetMode
@@ -63,6 +67,31 @@ import org.nexc.core.models.UiWorkout
 import org.nexc.features.shared.SharedViewModel
 import org.nexc.core.theme.NexcTheme
 import androidx.compose.ui.graphics.Color
+=======
+import org.librefit.R
+import org.librefit.enums.InfoMode
+import org.librefit.enums.SetMode
+import org.librefit.enums.SuccessMessage
+import org.librefit.enums.exercise.Category
+import org.librefit.enums.exercise.Equipment
+import org.librefit.enums.userPreferences.ThemeMode
+import org.librefit.nav.Route
+import org.librefit.ui.components.ExerciseCard
+import org.librefit.ui.components.LibreFitLazyColumn
+import org.librefit.ui.components.LibreFitScaffold
+import org.librefit.ui.components.animations.DumbbellLottie
+import org.librefit.ui.components.dialogs.ConfirmDialog
+import org.librefit.ui.components.modalBottomSheets.InfoModalBottomSheet
+import org.librefit.ui.models.UiExercise
+import org.librefit.ui.models.UiExerciseDC
+import org.librefit.ui.models.UiExerciseWithSets
+import org.librefit.ui.models.UiSet
+import org.librefit.ui.models.UiWorkout
+import org.librefit.ui.screens.shared.SharedViewModel
+import org.librefit.ui.theme.LibreFitTheme
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreen.kt
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -128,6 +157,7 @@ fun SharedTransitionScope.EditWorkoutScreen(
         updateExerciseNotes = viewModel::updateExerciseNotes,
         updateExerciseRestTime = viewModel::updateExerciseRestTime,
         updateExerciseSetMode = viewModel::updateExerciseSetMode,
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt
         updateSetTime = viewModel::updateSetTime,
         updateSetReps = viewModel::updateSetReps,
         updateSetLoad = viewModel::updateSetLoad,
@@ -137,6 +167,9 @@ fun SharedTransitionScope.EditWorkoutScreen(
         onSupersetToggle = viewModel::toggleSuperset,
         showRpe = showRpe,
         intensityScale = intensityScale,
+=======
+        moveExercise = viewModel::moveExercise,
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreen.kt
         saveWorkoutWithExercisesInDB = viewModel::saveWorkoutWithExercisesInDB,
         moveExercise = viewModel::moveExercise,
         onReplace = { id ->
@@ -172,12 +205,17 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
     updateExerciseNotes: (String, Long) -> Unit,
     updateExerciseRestTime: (Int, Long) -> Unit,
     updateExerciseSetMode: (SetMode, Long) -> Unit,
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt
     onSupersetToggle: (Long) -> Unit,
     showRpe: Boolean,
     intensityScale: org.nexc.core.enums.userPreferences.IntensityScale,
     saveWorkoutWithExercisesInDB: () -> Unit,
     moveExercise: (Int, Int) -> Unit,
     onReplace: (Long) -> Unit
+=======
+    moveExercise: (Int, Int) -> Unit,
+    saveWorkoutWithExercisesInDB: () -> Unit
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreen.kt
 ) {
 
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -216,7 +254,30 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
 
     InfoModalBottomSheet(infoMode) { infoMode = InfoMode.DISMISS }
 
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt
     NexcScaffold(
+=======
+    val lazyListState = rememberLazyListState()
+    val hapticFeedback = LocalHapticFeedback.current
+    // We track the exercise id so a release event from one card can't clear the collapse state while another card is still being pressed or dragged.
+
+    var isReorderingEnabled by rememberSaveable { mutableStateOf(false) }
+
+    val exerciseSectionStartIndex = 3
+    val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        val fromExerciseIndex = from.index - exerciseSectionStartIndex
+        val toExerciseIndex = (to.index - exerciseSectionStartIndex)
+            .coerceIn(0, exercisesWithSets.lastIndex)
+
+        if (fromExerciseIndex in exercisesWithSets.indices && toExerciseIndex in exercisesWithSets.indices) {
+            moveExercise(fromExerciseIndex, toExerciseIndex)
+
+            hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+        }
+    }
+
+    LibreFitScaffold(
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreen.kt
         title = AnnotatedString(
             when (typeOfEdit) {
                 null -> stringResource(R.string.create_routine)
@@ -260,7 +321,11 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
         fabDescription = stringResource(R.string.add_exercise),
         fabText = stringResource(R.string.add_exercise),
     ) { innerPadding ->
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt
         NexcLazyColumn(innerPadding) {
+=======
+        LibreFitLazyColumn(innerPadding, lazyListState = lazyListState) {
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreen.kt
             item {
                 OutlinedTextField(
                     shape = MaterialTheme.shapes.large,
@@ -319,6 +384,7 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
                 itemsIndexed(
                     items = exercisesWithSets,
                     key = { _, e -> e.exercise.id }
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt
                 ) { index, exerciseWithSets ->
                     val supersetId = exerciseWithSets.exercise.supersetId
                     ExerciseCard(
@@ -364,6 +430,48 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
                         supersetLabel = supersetLabels[supersetId],
                         supersetColor = supersetColorMap[supersetId]
                     )
+=======
+                ) { _, exerciseWithSets ->
+                    ReorderableItem(reorderableLazyListState, key = exerciseWithSets.exercise.id) { isDragging ->
+                        ExerciseCard(
+                            modifier = Modifier.animateItem(),
+                            animatedVisibilityScope = animatedVisibilityScope,
+                            exerciseWithSets = exerciseWithSets,
+                            workout = typeOfEdit == false,
+                            addSet = addSetToExercise,
+                            isDragging = isDragging,
+                            onDetail = { id, idExerciseDC ->
+                                navController.navigate(
+                                    Route.InfoExerciseScreen(
+                                        id,
+                                        idExerciseDC
+                                    )
+                                ) { launchSingleTop = true }
+                            },
+                            onDelete = deleteExercise,
+                            isCollapsed = isReorderingEnabled,
+                            dragHandleModifier = Modifier.draggableHandle(
+                                onDragStarted = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                                },
+                                onDragStopped = {
+                                    isReorderingEnabled = false
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                                }
+                            ),
+                            onReorderRequest = { isReorderingEnabled = true },
+                            deleteSet = deleteSet,
+                            updateExerciseNotes = updateExerciseNotes,
+                            updateExerciseRestTime = updateExerciseRestTime,
+                            updateExerciseSetMode = updateExerciseSetMode,
+                            showInfo = onInfoModeChange,
+                            updateSetTime = updateSetTime,
+                            updateSetReps = updateSetReps,
+                            updateSetLoad = updateSetLoad,
+                            updateSetCompleted = updateSetCompleted
+                        )
+                    }
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreen.kt
                 }
             }
         }
@@ -425,6 +533,7 @@ private fun EditWorkoutScreenPreview() {
                     updateExerciseNotes = { _, _ -> },
                     updateExerciseRestTime = { _, _ -> },
                     updateExerciseSetMode = { _, _ -> },
+                    moveExercise = { _, _ -> },
                     updateSetTime = { _, _ -> },
                     updateSetReps = { _, _ -> },
                     updateSetLoad = { _, _ -> },

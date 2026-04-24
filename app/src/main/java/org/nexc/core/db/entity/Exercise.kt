@@ -31,7 +31,13 @@ import kotlin.random.Random
  * @property setMode The mode of the exercise set editable by the user in
  * [org.nexc.features.workout.WorkoutScreen] and [org.nexc.features.editWorkout.EditWorkoutScreen]
  * @property restTime The rest time between sets in seconds editable by the user in
+<<<<<<< HEAD:app/src/main/java/org/nexc/core/db/entity/Exercise.kt
  * [org.nexc.features.workout.WorkoutScreen] and [org.nexc.features.editWorkout.EditWorkoutScreen]
+=======
+ * [org.librefit.ui.screens.workout.WorkoutScreen] and [org.librefit.ui.screens.editWorkout.EditWorkoutScreen]
+ * @property position The explicit position of the exercise in its parent workout. It is used to
+ * keep exercise order stable across reloads and edits.
+>>>>>>> fork/main:app/src/main/java/org/librefit/db/entity/Exercise.kt
  * @property workoutId This is a foreign key reference to the [Workout] entity.
  *
  */
@@ -53,6 +59,10 @@ import kotlin.random.Random
     ],
     indices = [
         Index(value = ["workoutId"]),
+<<<<<<< HEAD:app/src/main/java/org/nexc/core/db/entity/Exercise.kt
+=======
+        Index(value = ["workoutId", "position"]),
+>>>>>>> fork/main:app/src/main/java/org/librefit/db/entity/Exercise.kt
         Index(value = ["idExerciseDC"])
     ]
 )
@@ -63,7 +73,11 @@ data class Exercise(
     val notes: String = "",
     val setMode: SetMode = SetMode.LOAD,
     val restTime: Int = 0,
+<<<<<<< HEAD:app/src/main/java/org/nexc/core/db/entity/Exercise.kt
     @androidx.room.ColumnInfo(defaultValue = "0") val position: Int = 0,
     val supersetId: Long? = null,
+=======
+    val position: Int = 0,
+>>>>>>> fork/main:app/src/main/java/org/librefit/db/entity/Exercise.kt
     val workoutId: Long = 0// Foreign key reference to Workout
 )

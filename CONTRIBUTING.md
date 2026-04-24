@@ -26,6 +26,7 @@ community looks forward to your contributions. 🎉
     - [Suggesting Enhancements](CONTRIBUTING.md#suggesting-enhancements)
     - [Your First Code Contribution](CONTRIBUTING.md#your-first-code-contribution)
     - [Translations](CONTRIBUTING.md#translations)
+  - [Improving exercises' dataset]()
 
 ## Code of Conduct
 
@@ -200,6 +201,46 @@ We want Nexc to be accessible to everyone!
   overwritten by the translation platform sync.
 
 > Thanks to [Weblate](https://weblate.org) for hosting Nexc's translations!
+
+### Improving exercises' dataset
+
+We highly value contributions to the exercise dataset! To ensure data consistency please follow
+these guidelines when adding or modifying exercises:
+
+#### Content Guidelines
+
+* **Copyright:** Only submit images that are your own work or explicitly copyright-free.
+* **Quality**: Instructions must be clear, step-by-step, and coherent with the provided images.
+* **Asset Organization:** Images must be stored in `app/src/main/res/raw/`. Create a folder for each
+  exercise named exactly as the `id` in your JSON. Reference these in the JSON using the relative
+  path.
+* **Consistency:** Ensure the `id` is unique and follows kebab-case. Verify there are no duplicate
+  entries in the JSON array and that all JSON syntax is valid (no trailing commas).
+
+#### Data Validation
+
+All exercises are validated against a JSON Schema. Please ensure your contributions meet these
+standards:
+
+1. **Schema Location:** The data contract is defined in `schemas/exercise-schema.json`.
+2. **IDE Setup:** A schema catalog is used to enable real-time linting in Android Studio.
+3. **Validation:** Before committing, validate your changes locally with this simple command:
+
+```shell
+npx ajv-cli validate -s schemas/exercises-schema.json -d "app/src/main/res/raw/exercises.json"
+```
+
+#### Pull Request Process
+
+1. **Verify:** Run the validation command locally before submitting.
+2. **CI Check:** The CI will automatically validate your PR against the schema.
+3. **Review:** Maintainers will verify that instructions match the exercise form and that assets are
+   correctly organized.
+
+> [!NOTE]
+> If you need to add a new category, muscle group, or equipment type, please open
+> a [Discussion](https://github.com/LibreFitOrg/LibreFit/discussions) to ensure it aligns with the
+> project taxonomy before submitting a PR.
 
 ## Attribution
 

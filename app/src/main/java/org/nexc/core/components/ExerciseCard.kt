@@ -8,6 +8,7 @@
 
 package org.nexc.core.components
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -35,8 +36,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
+<<<<<<< HEAD:app/src/main/java/org/nexc/core/components/ExerciseCard.kt
 import androidx.compose.material3.Card
+=======
+import androidx.compose.material3.DropdownMenuPopup
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/components/ExerciseCard.kt
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -49,6 +55,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
@@ -70,6 +77,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
@@ -119,6 +127,10 @@ import kotlin.math.roundToInt
  * the [org.nexc.features.infoExercise.InfoExerciseScreen].
  * @param onDelete A lambda function executed when the *Delete* icon is clicked, it should result in
  * the removal of the card.
+ * @param isCollapsed When `true`, the card collapses its editable body to provide clearer reorder feedback. So it's true only when reordering one of exercises in the list.
+ * @param dragHandleModifier Modifier applied to the optional drag handle.
+ * @param onReorderRequest A lambda triggered when the `reorder` option from dropdown menu is pressed.
+ * @param isDragging when `true`, it applies a shadow to further emphasize with a shadow that the card is dragged.
  * @param updateExerciseNotes A function to update notes based on [UiExercise.id]. For more details, refer to
  * [org.nexc.features.workout.WorkoutScreenViewModel.updateExerciseNotes] and
  * [org.nexc.features.editWorkout.EditWorkoutScreenViewModel.updateExerciseNotes].
@@ -168,6 +180,10 @@ fun SharedTransitionScope.ExerciseCard(
     addSet: (Long) -> Unit,
     onDetail: (Long, String) -> Unit,
     onDelete: (Long) -> Unit,
+    isCollapsed: Boolean = false,
+    dragHandleModifier: Modifier = Modifier,
+    isDragging: Boolean,
+    onReorderRequest: () -> Unit,
     deleteSet: (Long) -> Unit,
     updateExerciseNotes: (String, Long) -> Unit,
     updateExerciseRestTime: (Int, Long) -> Unit,
@@ -192,6 +208,7 @@ fun SharedTransitionScope.ExerciseCard(
     supersetLabel: String? = null,
     supersetColor: Color? = null
 ) {
+<<<<<<< HEAD:app/src/main/java/org/nexc/core/components/ExerciseCard.kt
     Card(
         modifier = modifier,
         shape = MaterialTheme.shapes.extraLarge,
@@ -199,6 +216,18 @@ fun SharedTransitionScope.ExerciseCard(
         border = if (exerciseWithSets.exercise.supersetId != null)
             BorderStroke(2.dp, supersetColor ?: MaterialTheme.colorScheme.primary)
         else null
+=======
+    var showMenu by rememberSaveable { mutableStateOf(false) }
+    val shape = MaterialTheme.shapes.extraLarge
+    ElevatedCard(
+        modifier = modifier.then(
+            if (isDragging) Modifier.shadow(
+                10.dp,
+                shape = shape
+            ) else Modifier
+        ),
+        shape = shape
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/components/ExerciseCard.kt
     ) {
         Column(
             modifier = Modifier
@@ -226,7 +255,7 @@ fun SharedTransitionScope.ExerciseCard(
                     modifier = Modifier
                         .weight(1f)
                         .clip(MaterialTheme.shapes.medium)
-                        .clickable {
+                        .clickable(enabled = !isCollapsed) {
                             onDetail(exerciseWithSets.exercise.id, exerciseWithSets.exerciseDC.id)
                         },
                     verticalAlignment = Alignment.CenterVertically
@@ -265,6 +294,7 @@ fun SharedTransitionScope.ExerciseCard(
                         modifier = Modifier.weight(1f)
                     )
                 }
+<<<<<<< HEAD:app/src/main/java/org/nexc/core/components/ExerciseCard.kt
                 var menuExpanded by remember { mutableStateOf(false) }
                 Box {
                     IconButton(onClick = { menuExpanded = true }) {
@@ -349,171 +379,149 @@ fun SharedTransitionScope.ExerciseCard(
                                 menuExpanded = false
                             }
                         )
+=======
+                Column {
+                    AnimatedContent(
+                        targetState = isCollapsed,
+                        label = "DragHandleTransition",
+                    ) { isReordering ->
+                        if (isReordering) {
+                            IconButton(
+                                modifier = dragHandleModifier,
+                                onClick = {}
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_drag_handle),
+                                    contentDescription = stringResource(R.string.reorder)
+                                )
+                            }
+                        } else {
+                            IconButton(
+                                onClick = { showMenu = true }
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_more_options),
+                                    contentDescription = stringResource(R.string.more_options)
+                                )
+                            }
+                            DropdownMenuPopup(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }) {
+                                DropdownMenuGroup(
+                                    shapes = MenuDefaults.groupShape(0, 1) // Top-level group shape
+                                ) {
+                                    // MenuDefaults.Label { Text("Header") }
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.reorder)) },
+                                        leadingIcon = {
+                                            Icon(
+                                                painterResource(R.drawable.ic_reorder),
+                                                stringResource(R.string.reorder)
+                                            )
+                                        },
+                                        onClick = {
+                                            onReorderRequest()
+                                            showMenu = false
+                                        }
+                                    )
+                                    DropdownMenuItem(
+                                        text = { Text(stringResource(R.string.delete)) },
+                                        leadingIcon = {
+                                            Icon(
+                                                painterResource(R.drawable.ic_delete),
+                                                stringResource(R.string.delete)
+                                            )
+                                        },
+                                        onClick = {
+                                            onDelete(exerciseWithSets.exercise.id)
+                                            showMenu = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/components/ExerciseCard.kt
                     }
                 }
 
             }
 
-            OutlinedTextField(
-                shape = MaterialTheme.shapes.large,
-                modifier = Modifier.fillMaxWidth(),
-                label = { Text(text = stringResource(id = R.string.notes)) },
-                value = exerciseWithSets.exercise.notes,
-                onValueChange = { updateExerciseNotes(it, exerciseWithSets.exercise.id) }
-            )
-
-            //Rest timer slider
-            Column {
-                var showSlider by rememberSaveable { mutableStateOf(false) }
-                var restTime by remember { mutableIntStateOf(exerciseWithSets.exercise.restTime) }
-                val haptic = LocalHapticFeedback.current
-                Row(
+            AnimatedVisibility(visible = !isCollapsed) {
+                Column(
                     modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceAround,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        IconButton(
-                            // Read more at InfoModalBottomSheet
-                            onClick = { showInfo(InfoMode.REST_TIMER) }
-                        ) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_info),
-                                contentDescription = stringResource(R.string.info)
-                            )
-                        }
-                        Text(
-                            stringResource(R.string.rest_time) + ": " + restTime
-                                    + " " + stringResource(R.string.seconds).replaceFirstChar { it.lowercase() })
-                    }
-                    IconToggleButton(
-                        checked = showSlider,
-                        onCheckedChange = {
-                            showSlider = it
-                            haptic.performHapticFeedback(if (it) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff)
-                        }
-                    ) {
-                        Icon(
-                            painter = painterResource(if (showSlider) R.drawable.ic_check else R.drawable.ic_edit),
-                            contentDescription = stringResource(if (showSlider) R.string.save else R.string.edit)
-                        )
-                    }
-                }
-                AnimatedVisibility(visible = showSlider) {
-                    Slider(
-                        value = restTime.toFloat(),
-                        onValueChange = {
-                            // By dividing first and then multiplying by 5, it rounds to the closest number multiple of 5
-                            restTime = (it / 5).roundToInt() * 5
-                            haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-                        },
-                        onValueChangeFinished = {
-                            updateExerciseRestTime(
-                                restTime,
-                                exerciseWithSets.exercise.id
-                            )
-                        },
-                        valueRange = 0f..300f,
-                        // 19 steps means values multiple of 5
-                        steps = 19
-                    )
-                }
-            }
-
-            HorizontalDivider()
-
-            // Set mode selection
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceAround,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(
-                    modifier = Modifier.weight(0.5f),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center
-                ) {
-                    IconButton(
-                        // Refer to InfoModalBottomSheet to know the reason behind this value.
-                        // Do NOT change it.
-                        onClick = { showInfo(InfoMode.TYPE_OF_SET) }
-                    ) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_info),
-                            contentDescription = stringResource(R.string.info) + ":"
-                        )
-                    }
-                    Text(stringResource(R.string.type_of_set))
-                }
-
-
-                var expanded by remember { mutableStateOf(false) }
-
-                val focusRequester = remember { FocusRequester() }
-
-                // Type of set selector
-                ExposedDropdownMenuBox(
-                    expanded = expanded,
-                    onExpandedChange = { expanded = it },
-                    modifier = Modifier
-                        .padding(start = 10.dp, end = 10.dp)
-                        .weight(0.5f)
-                        .clickable {
-                            expanded = !expanded
-                            focusRequester.requestFocus()
-                        }
-                        .focusRequester(focusRequester)
-                        .focusable()
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(10.dp)
                 ) {
                     OutlinedTextField(
                         shape = MaterialTheme.shapes.large,
-                        readOnly = true,
-                        value = stringResource(Formatter.setModeToStringId(exerciseWithSets.exercise.setMode)),
-                        onValueChange = {},
-                        singleLine = true,
-                        trailingIcon = {
-                            ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-                        },
-                        modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
-                        colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text(text = stringResource(id = R.string.notes)) },
+                        value = exerciseWithSets.exercise.notes,
+                        onValueChange = { updateExerciseNotes(it, exerciseWithSets.exercise.id) }
                     )
-                    ExposedDropdownMenu(
-                        expanded = expanded,
-                        onDismissRequest = { expanded = false }
-                    ) {
-                        SetMode.entries.forEachIndexed { _, mode ->
-                            DropdownMenuItem(
-                                onClick = {
-                                    updateExerciseSetMode(mode, exerciseWithSets.exercise.id)
-                                    expanded = false
+
+                    //Rest timer slider
+                    Column {
+                        var showSlider by rememberSaveable { mutableStateOf(false) }
+                        var restTime by remember { mutableIntStateOf(exerciseWithSets.exercise.restTime) }
+                        val haptic = LocalHapticFeedback.current
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceAround,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                IconButton(
+                                    // Read more at InfoModalBottomSheet
+                                    onClick = { showInfo(InfoMode.REST_TIMER) }
+                                ) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_info),
+                                        contentDescription = stringResource(R.string.info)
+                                    )
+                                }
+                                Text(
+                                    stringResource(R.string.rest_time) + ": " + restTime
+                                            + " " + stringResource(R.string.seconds).replaceFirstChar { it.lowercase() })
+                            }
+                            IconToggleButton(
+                                checked = showSlider,
+                                onCheckedChange = {
+                                    showSlider = it
+                                    haptic.performHapticFeedback(if (it) HapticFeedbackType.ToggleOn else HapticFeedbackType.ToggleOff)
+                                }
+                            ) {
+                                Icon(
+                                    painter = painterResource(if (showSlider) R.drawable.ic_check else R.drawable.ic_edit),
+                                    contentDescription = stringResource(if (showSlider) R.string.save else R.string.edit)
+                                )
+                            }
+                        }
+                        AnimatedVisibility(visible = showSlider) {
+                            Slider(
+                                value = restTime.toFloat(),
+                                onValueChange = {
+                                    // By dividing first and then multiplying by 5, it rounds to the closest number multiple of 5
+                                    restTime = (it / 5).roundToInt() * 5
+                                    haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
                                 },
-                                text = {
-                                    Text(
-                                        text = stringResource(Formatter.setModeToStringId(mode))
+                                onValueChangeFinished = {
+                                    updateExerciseRestTime(
+                                        restTime,
+                                        exerciseWithSets.exercise.id
                                     )
                                 },
-                                trailingIcon = if (exerciseWithSets.exercise.setMode == mode) {
-                                    {
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_check),
-                                            contentDescription = stringResource(R.string.checkbox)
-                                        )
-                                    }
-                                } else null,
-                                modifier = Modifier.background(
-                                    if (exerciseWithSets.exercise.setMode == mode) MaterialTheme.colorScheme.inversePrimary.copy(
-                                        0.3f
-                                    ) else Color.Unspecified
-                                )
+                                valueRange = 0f..300f,
+                                // 19 steps means values multiple of 5
+                                steps = 19
                             )
                         }
                     }
-                }
-            }
 
+<<<<<<< HEAD:app/src/main/java/org/nexc/core/components/ExerciseCard.kt
             ElevatedCard(
                 shape = MaterialTheme.shapes.extraLarge,
                 colors = CardDefaults.elevatedCardColors(
@@ -636,11 +644,182 @@ fun SharedTransitionScope.ExerciseCard(
                                 updateSetRpe = updateSetRpe,
                                 updateSetRir = updateSetRir,
                                 applyPreviousSet = applyPreviousSetPerformance
+=======
+                    HorizontalDivider()
+
+                    // Set mode selection
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceAround,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Row(
+                            modifier = Modifier.weight(0.5f),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center
+                        ) {
+                            IconButton(
+                                // Refer to InfoModalBottomSheet to know the reason behind this value.
+                                // Do NOT change it.
+                                onClick = { showInfo(InfoMode.TYPE_OF_SET) }
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_info),
+                                    contentDescription = stringResource(R.string.info) + ":"
+                                )
+                            }
+                            Text(stringResource(R.string.type_of_set))
+                        }
+
+                        var expanded by remember { mutableStateOf(false) }
+
+                        val focusRequester = remember { FocusRequester() }
+
+                        // Type of set selector
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = it },
+                            modifier = Modifier
+                                .padding(start = 10.dp, end = 10.dp)
+                                .weight(0.5f)
+                                .clickable {
+                                    expanded = !expanded
+                                    focusRequester.requestFocus()
+                                }
+                                .focusRequester(focusRequester)
+                                .focusable()
+                        ) {
+                            OutlinedTextField(
+                                shape = MaterialTheme.shapes.large,
+                                readOnly = true,
+                                value = stringResource(Formatter.setModeToStringId(exerciseWithSets.exercise.setMode)),
+                                onValueChange = {},
+                                singleLine = true,
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                                },
+                                modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
+                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/components/ExerciseCard.kt
                             )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                SetMode.entries.forEachIndexed { _, mode ->
+                                    DropdownMenuItem(
+                                        onClick = {
+                                            updateExerciseSetMode(mode, exerciseWithSets.exercise.id)
+                                            expanded = false
+                                        },
+                                        text = {
+                                            Text(
+                                                text = stringResource(Formatter.setModeToStringId(mode))
+                                            )
+                                        },
+                                        trailingIcon = if (exerciseWithSets.exercise.setMode == mode) {
+                                            {
+                                                Icon(
+                                                    painter = painterResource(R.drawable.ic_check),
+                                                    contentDescription = stringResource(R.string.checkbox)
+                                                )
+                                            }
+                                        } else null,
+                                        modifier = Modifier.background(
+                                            if (exerciseWithSets.exercise.setMode == mode) MaterialTheme.colorScheme.inversePrimary.copy(
+                                                0.3f
+                                            ) else Color.Unspecified
+                                        )
+                                    )
+                                }
+                            }
                         }
                     }
+
+                    ElevatedCard(
+                        shape = MaterialTheme.shapes.extraLarge,
+                        colors = CardDefaults.elevatedCardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
+                        )
+                    ) {
+                        //Headline set
+                        Row(
+                            modifier = Modifier
+                                .padding(10.dp)
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Spacer(Modifier)
+                            if (previousPerformances != null) {
+                                Text(
+                                    text = stringResource(R.string.previous),
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                            if (exerciseWithSets.exercise.setMode == SetMode.DURATION) {
+                                Text(
+                                    text = stringResource(R.string.time),
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                            } else {
+                                if (exerciseWithSets.exercise.setMode == SetMode.LOAD ||
+                                    exerciseWithSets.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD
+                                ) {
+                                    Text(
+                                        text = stringResource(R.string.load) + " (" + stringResource(R.string.kg) + ")",
+                                        color = MaterialTheme.colorScheme.secondary
+                                    )
+                                }
+                                Text(
+                                    text = stringResource(id = R.string.reps),
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                            if (workout) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_check),
+                                    contentDescription = stringResource(R.string.done)
+                                )
+                            }
+                        }
+
+                        //Sets
+                        Column(modifier = Modifier.animateContentSize()) {
+                            exerciseWithSets.sets.forEachIndexed { i, set ->
+                                key(set.id) {
+                                    Set(
+                                        i = i,
+                                        set = set,
+                                        previousSet = previousPerformances?.getOrNull(i),
+                                        lastIndex = exerciseWithSets.sets.lastIndex,
+                                        setMode = exerciseWithSets.exercise.setMode,
+                                        isStopwatchRunning = idSetWithRunningStopwatch == null,
+                                        isThisSetStopwatchRunning = idSetWithRunningStopwatch == set.id,
+                                        workout = workout,
+                                        deleteSet = deleteSet,
+                                        updateIdSetWithRunningStopwatch = updateIdSetWithRunningStopwatch,
+                                        updateSetTime = updateSetTime,
+                                        updateSetReps = updateSetReps,
+                                        updateSetLoad = updateSetLoad,
+                                        updateSetCompleted = updateSetCompleted,
+                                        applyPreviousSet = applyPreviousSetPerformance
+                                    )
+                                }
+                            }
+                        }
+                    }
+
+                    //Add set button
+                    LibreFitButton(
+                        text = stringResource(id = R.string.add_set),
+                        icon = painterResource(R.drawable.ic_add_circle),
+                        onClick = { addSet(exerciseWithSets.exercise.id) },
+                        elevated = false
+                    )
                 }
             }
+<<<<<<< HEAD:app/src/main/java/org/nexc/core/components/ExerciseCard.kt
 
             //Add set button
             NexcButton(
@@ -649,6 +828,8 @@ fun SharedTransitionScope.ExerciseCard(
                 onClick = { addSet(exerciseWithSets.exercise.id) },
                 elevated = false
             )
+=======
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/components/ExerciseCard.kt
         }
     }
 }
@@ -1063,6 +1244,7 @@ private fun ExerciseCardPreview() {
                     idSetWithRunningStopwatch = currentIdSetWithRunningSet.value,
                     updateIdSetWithRunningStopwatch = { currentIdSetWithRunningSet.value = it },
                     workout = true,
+                    isDragging = false,
                     updateExerciseNotes = { notes, _ ->
                         e.value = e.value.copy(exercise = e.value.exercise.copy(notes = notes))
                     },
@@ -1120,7 +1302,8 @@ private fun ExerciseCardPreview() {
                                 }.toImmutableList()
                             )
                         }
-                    }
+                    },
+                    onReorderRequest = {},
                 )
             }
         }

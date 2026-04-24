@@ -2,7 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 3,
+<<<<<<< HEAD:app/schemas/org.nexc.core.db.AppDatabase/3.json
     "identityHash": "8e241f686e912667ef42f575005762b5",
+=======
+    "identityHash": "8e973c578ef7f482bf8261f8db8abc6d",
+>>>>>>> fork/main:app/schemas/org.librefit.db.AppDatabase/3.json
     "entities": [
       {
         "tableName": "workouts",
@@ -66,7 +70,11 @@
       },
       {
         "tableName": "exercises",
+<<<<<<< HEAD:app/schemas/org.nexc.core.db.AppDatabase/3.json
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `idExerciseDC` TEXT NOT NULL, `notes` TEXT NOT NULL, `setMode` TEXT NOT NULL, `restTime` INTEGER NOT NULL, `workoutId` INTEGER NOT NULL, FOREIGN KEY(`workoutId`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`idExerciseDC`) REFERENCES `dataset`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+=======
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `idExerciseDC` TEXT NOT NULL, `notes` TEXT NOT NULL, `setMode` TEXT NOT NULL, `restTime` INTEGER NOT NULL, `position` INTEGER NOT NULL, `workoutId` INTEGER NOT NULL, FOREIGN KEY(`workoutId`) REFERENCES `workouts`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`idExerciseDC`) REFERENCES `dataset`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+>>>>>>> fork/main:app/schemas/org.librefit.db.AppDatabase/3.json
         "fields": [
           {
             "fieldPath": "id",
@@ -99,6 +107,15 @@
             "notNull": true
           },
           {
+<<<<<<< HEAD:app/schemas/org.nexc.core.db.AppDatabase/3.json
+=======
+            "fieldPath": "position",
+            "columnName": "position",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+>>>>>>> fork/main:app/schemas/org.librefit.db.AppDatabase/3.json
             "fieldPath": "workoutId",
             "columnName": "workoutId",
             "affinity": "INTEGER",
@@ -122,6 +139,19 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `index_exercises_workoutId` ON `${TABLE_NAME}` (`workoutId`)"
           },
           {
+<<<<<<< HEAD:app/schemas/org.nexc.core.db.AppDatabase/3.json
+=======
+            "name": "index_exercises_workoutId_position",
+            "unique": false,
+            "columnNames": [
+              "workoutId",
+              "position"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_exercises_workoutId_position` ON `${TABLE_NAME}` (`workoutId`, `position`)"
+          },
+          {
+>>>>>>> fork/main:app/schemas/org.librefit.db.AppDatabase/3.json
             "name": "index_exercises_idExerciseDC",
             "unique": false,
             "columnNames": [
@@ -158,7 +188,11 @@
       },
       {
         "tableName": "sets",
+<<<<<<< HEAD:app/schemas/org.nexc.core.db.AppDatabase/3.json
         "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `load` REAL NOT NULL, `reps` INTEGER NOT NULL, `elapsedTime` INTEGER NOT NULL, `completed` INTEGER NOT NULL, `rpe` REAL, `exerciseId` INTEGER NOT NULL, FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+=======
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `load` REAL NOT NULL, `reps` INTEGER NOT NULL, `elapsedTime` INTEGER NOT NULL, `completed` INTEGER NOT NULL, `exerciseId` INTEGER NOT NULL, FOREIGN KEY(`exerciseId`) REFERENCES `exercises`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+>>>>>>> fork/main:app/schemas/org.librefit.db.AppDatabase/3.json
         "fields": [
           {
             "fieldPath": "id",
@@ -191,11 +225,14 @@
             "notNull": true
           },
           {
+<<<<<<< HEAD:app/schemas/org.nexc.core.db.AppDatabase/3.json
             "fieldPath": "rpe",
             "columnName": "rpe",
             "affinity": "REAL"
           },
           {
+=======
+>>>>>>> fork/main:app/schemas/org.librefit.db.AppDatabase/3.json
             "fieldPath": "exerciseId",
             "columnName": "exerciseId",
             "affinity": "INTEGER",
@@ -365,7 +402,11 @@
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+<<<<<<< HEAD:app/schemas/org.nexc.core.db.AppDatabase/3.json
       "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8e241f686e912667ef42f575005762b5')"
+=======
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '8e973c578ef7f482bf8261f8db8abc6d')"
+>>>>>>> fork/main:app/schemas/org.librefit.db.AppDatabase/3.json
     ]
   }
 }

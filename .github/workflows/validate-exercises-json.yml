@@ -1,0 +1,25 @@
+name: Validate exercises JSON
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'app/src/main/res/raw/exercises.json'
+  pull_request:
+    paths:
+      - 'app/src/main/res/raw/exercises.json'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Validate JSON file
+        run: npx ajv-cli validate -s schemas/exercises-schema.json -d "app/src/main/res/raw/exercises.json"

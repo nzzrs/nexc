@@ -185,6 +185,87 @@ fun AboutScreen(navController: NavHostController) {
                     }
                 )
             }
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/about/AboutScreen.kt
+=======
+
+            item {
+                AboutItem(
+                    icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.url_IamDg).split("/").last(),
+                    description = stringResource(R.string.founder),
+                    onClick = {
+                        url.value = resources.getString(R.string.url_IamDg)
+                    }
+                )
+            }
+
+            item {
+                HeadlineText(stringResource(R.string.donators))
+            }
+
+            item {
+                AboutItem(
+                    icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.FlashyGhost)
+                )
+            }
+
+            item {
+                HeadlineText(stringResource(R.string.translators))
+            }
+
+            item {
+                AboutItem(
+                    icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.doen1el),
+                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_german),
+                    onClick = {
+                        url.value = resources.getString(R.string.url_doen1el)
+                    }
+                )
+            }
+
+            item {
+                AboutItem(
+                    icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.kid1412621),
+                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_chinese_simplified),
+                    onClick = {
+                        url.value = resources.getString(R.string.url_kid1412621)
+                    }
+                )
+            }
+
+            item {
+                AboutItem(
+                    icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.mwesten),
+                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_dutch),
+                    onClick = {
+                        url.value = resources.getString(R.string.url_mwesten)
+                    }
+                )
+            }
+
+            item {
+                AboutItem(
+                    icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.Odweta),
+                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_czech)
+                )
+            }
+
+            item {
+                AboutItem(
+                    icon = painterResource(R.drawable.ic_person),
+                    text = stringResource(R.string.VA5H_One),
+                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_spanish),
+                    onClick = {
+                        url.value = resources.getString(R.string.url_VA5H_One)
+                    }
+                )
+            }
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/about/AboutScreen.kt
         }
     }
 }
@@ -195,7 +276,7 @@ private fun AboutItem(
     icon: Painter,
     text: String,
     description: String = "",
-    onClick: () -> Unit
+    onClick: () -> Unit = {}
 ) {
 
     Button(

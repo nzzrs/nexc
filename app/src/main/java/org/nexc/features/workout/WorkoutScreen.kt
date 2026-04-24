@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ButtonGroup
 import androidx.compose.material3.CircularWavyProgressIndicator
 import androidx.compose.material3.ElevatedCard
@@ -53,11 +54,16 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/workout/WorkoutScreen.kt
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+=======
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/workout/WorkoutScreen.kt
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import kotlinx.coroutines.delay
@@ -74,6 +80,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.navigation.NavHostController
 import kotlinx.collections.immutable.persistentListOf
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/workout/WorkoutScreen.kt
 import org.nexc.R
 import org.nexc.core.enums.InfoMode
 import org.nexc.core.enums.PreviousPerformanceSet
@@ -96,6 +103,31 @@ import org.nexc.features.shared.SharedViewModel
 import org.nexc.core.theme.NexcTheme
 import org.nexc.core.util.Formatter
 import androidx.compose.ui.graphics.Color
+=======
+import org.librefit.R
+import org.librefit.enums.InfoMode
+import org.librefit.enums.PreviousPerformanceSet
+import org.librefit.enums.SetMode
+import org.librefit.enums.exercise.Category
+import org.librefit.enums.exercise.Equipment
+import org.librefit.enums.userPreferences.ThemeMode
+import org.librefit.nav.Route
+import org.librefit.ui.components.ExerciseCard
+import org.librefit.ui.components.LibreFitLazyColumn
+import org.librefit.ui.components.LibreFitScaffold
+import org.librefit.ui.components.animations.DumbbellLottie
+import org.librefit.ui.components.dialogs.ConfirmDialog
+import org.librefit.ui.components.modalBottomSheets.InfoModalBottomSheet
+import org.librefit.ui.models.UiExercise
+import org.librefit.ui.models.UiExerciseDC
+import org.librefit.ui.models.UiExerciseWithSets
+import org.librefit.ui.models.UiSet
+import org.librefit.ui.screens.shared.SharedViewModel
+import org.librefit.ui.theme.LibreFitTheme
+import org.librefit.util.Formatter
+import sh.calvin.reorderable.ReorderableItem
+import sh.calvin.reorderable.rememberReorderableLazyListState
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/workout/WorkoutScreen.kt
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -293,6 +325,7 @@ fun SharedTransitionScope.WorkoutScreen(
                 deleteExercise = { id ->
                     idExerciseToDelete.value = id
                 },
+                moveExercise = viewModel::moveExercise,
                 showInfo = { infoMode.value = it },
                 applyPreviousSetPerformance = viewModel::applyPreviousSetPerformance,
                 onMoveUp = viewModel::moveExerciseUp,
@@ -359,6 +392,7 @@ private fun SharedTransitionScope.WorkoutScreenContent(
     updateExerciseRestTime: (Int, Long) -> Unit,
     updateExerciseSetMode: (SetMode, Long) -> Unit,
     deleteExercise: (Long) -> Unit,
+    moveExercise: (Int, Int) -> Unit,
     onSelectedExerciseIdChange: (Long, String) -> Unit,
     showInfo: (InfoMode) -> Unit,
     showRpe: Boolean,
@@ -371,7 +405,29 @@ private fun SharedTransitionScope.WorkoutScreenContent(
     onMoveDown: (Long) -> Unit,
     onReplace: (Long) -> Unit
 ) {
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/workout/WorkoutScreen.kt
     NexcLazyColumn {
+=======
+    val lazyListState = rememberLazyListState()
+    val hapticFeedback = LocalHapticFeedback.current
+
+    var isReorderingEnabled by rememberSaveable { mutableStateOf(false) }
+
+    val exerciseSectionStartIndex = 1
+    val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
+        val fromExerciseIndex = from.index - exerciseSectionStartIndex
+        val toExerciseIndex = (to.index - exerciseSectionStartIndex)
+            .coerceIn(0, exercisesWithSets.lastIndex)
+
+        hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
+
+        if (fromExerciseIndex in exercisesWithSets.indices && toExerciseIndex in exercisesWithSets.indices) {
+            moveExercise(fromExerciseIndex, toExerciseIndex)
+        }
+    }
+
+    LibreFitLazyColumn(lazyListState = lazyListState) {
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/workout/WorkoutScreen.kt
         val headerContent: @Composable LazyItemScope.() -> Unit = {
             ElevatedCard(shape = MaterialTheme.shapes.extraLargeIncreased) {
                 Column(
@@ -461,6 +517,7 @@ private fun SharedTransitionScope.WorkoutScreenContent(
                 items = exercisesWithSets,
                 key = { _, exercise -> exercise.exercise.id }
             ) { i, exerciseWithSets ->
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/workout/WorkoutScreen.kt
                 val supersetId = exerciseWithSets.exercise.supersetId
                 ExerciseCard(
                     modifier = Modifier.animateItem(),
@@ -496,6 +553,44 @@ private fun SharedTransitionScope.WorkoutScreenContent(
                     supersetLabel = supersetLabels[supersetId],
                     supersetColor = supersetColorMap[supersetId]
                 )
+=======
+                ReorderableItem(reorderableLazyListState, key = exerciseWithSets.exercise.id) { isDragging ->
+                    ExerciseCard(
+                        modifier = Modifier.animateItem(),
+                        animatedVisibilityScope = animatedVisibilityScope,
+                        exerciseWithSets = exerciseWithSets,
+                        previousPerformances = previousPerformances.getOrNull(i),
+                        idSetWithRunningStopwatch = idSetWithRunningStopwatch,
+                        workout = true,
+                        addSet = addSetToExercise,
+                        onDetail = onSelectedExerciseIdChange,
+                        onDelete = deleteExercise,
+                        isCollapsed = isReorderingEnabled,
+                        dragHandleModifier = Modifier.draggableHandle(
+                            onDragStarted = {
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
+                            },
+                            onDragStopped = {
+                                isReorderingEnabled = false
+                                hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureEnd)
+                            }
+                        ),
+                        isDragging = isDragging,
+                        onReorderRequest = { isReorderingEnabled = true },
+                        deleteSet = deleteSet,
+                        showInfo = showInfo,
+                        updateIdSetWithRunningStopwatch = updateIdSetWithRunningStopwatch,
+                        updateExerciseNotes = updateExerciseNotes,
+                        updateExerciseRestTime = updateExerciseRestTime,
+                        updateExerciseSetMode = updateExerciseSetMode,
+                        updateSetTime = updateSetTime,
+                        updateSetReps = updateSetReps,
+                        updateSetLoad = updateSetLoad,
+                        updateSetCompleted = updateSetCompleted,
+                        applyPreviousSetPerformance = applyPreviousSetPerformance
+                    )
+                }
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/workout/WorkoutScreen.kt
             }
         }
     }
@@ -717,6 +812,7 @@ private fun WorkoutScreenPreview() {
                             updateExerciseRestTime = { _, _ -> },
                             updateExerciseSetMode = { _, _ -> },
                             deleteExercise = {},
+                            moveExercise = { _, _ -> },
                             onSelectedExerciseIdChange = { _, _ -> },
                             showInfo = {},
                              showRpe = false, intensityScale = org.nexc.core.enums.userPreferences.IntensityScale.RPE, updateSetRpe = { _, _ -> }, updateSetRir = { _, _ -> }, onSupersetToggle = {}, applyPreviousSetPerformance = {}, onMoveUp = {}, onMoveDown = {}, onReplace = {}

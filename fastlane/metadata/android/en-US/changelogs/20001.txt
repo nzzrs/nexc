@@ -2,7 +2,7 @@
 🔗 https://github.com/NexcOrg/Nexc/blob/main/CONTRIBUTING.md#translations
 
 ✨ Added
-- New languages: Dutch 🇳🇱, German 🇩🇪
+- New languages: Dutch 🇳🇱, German 🇩🇪, Spanish 🇪🇸, Czech 🇨🇿 and Simplified Chinese 🇨🇳
 
 🔧 Changed
 - Show warning in images by default.

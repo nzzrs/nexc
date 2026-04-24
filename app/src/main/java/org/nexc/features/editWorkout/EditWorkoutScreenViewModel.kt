@@ -19,6 +19,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreenViewModel.kt
 import org.nexc.core.db.entity.ExerciseDC
 import org.nexc.core.db.relations.WorkoutWithExercisesAndSets
 import org.nexc.core.db.repository.UserPreferencesRepository
@@ -38,6 +39,24 @@ import org.nexc.domain.usecase.workout.AddExerciseToWorkoutUseCase
 import org.nexc.domain.usecase.workout.ManageSetUseCase
 import org.nexc.domain.usecase.workout.ProcessSupersetUseCase
 import org.nexc.domain.usecase.workout.SaveWorkoutUseCase
+=======
+import org.librefit.db.entity.ExerciseDC
+import org.librefit.db.relations.WorkoutWithExercisesAndSets
+import org.librefit.db.repository.WorkoutRepository
+import org.librefit.enums.SetMode
+import org.librefit.enums.WorkoutState
+import org.librefit.enums.exercise.Category
+import org.librefit.enums.exercise.Equipment
+import org.librefit.nav.Route
+import org.librefit.ui.models.UiExercise
+import org.librefit.ui.models.UiExerciseWithSets
+import org.librefit.ui.models.UiSet
+import org.librefit.ui.models.UiWorkout
+import org.librefit.ui.models.moveExercise
+import org.librefit.ui.models.withNormalizedExercisePositions
+import org.librefit.ui.models.mappers.toEntity
+import org.librefit.ui.models.mappers.toUi
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreenViewModel.kt
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -106,7 +125,7 @@ class EditWorkoutScreenViewModel @Inject constructor(
         val newExercise = addExerciseToWorkoutUseCase(exerciseDC)
 
         _exercises.update { exercises ->
-            exercises + newExercise
+            (exercises + newExercise).withNormalizedExercisePositions()
         }
     }
 
@@ -202,7 +221,15 @@ class EditWorkoutScreenViewModel @Inject constructor(
 
     fun deleteExercise(exerciseId: Long) {
         _exercises.update { currentExercises ->
-            currentExercises.filter { it.exercise.id != exerciseId }
+            currentExercises
+                .filter { it.exercise.id != exerciseId }
+                .withNormalizedExercisePositions()
+        }
+    }
+
+    fun moveExercise(fromIndex: Int, toIndex: Int) {
+        _exercises.update { currentExercises ->
+            currentExercises.moveExercise(fromIndex = fromIndex, toIndex = toIndex)
         }
     }
 
@@ -242,9 +269,15 @@ class EditWorkoutScreenViewModel @Inject constructor(
             saveWorkoutUseCase(
                 WorkoutWithExercisesAndSets(
                     workout = workout.value.copy(state = state).toEntity(),
+<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreenViewModel.kt
                     exercisesWithSets = exercises.value.mapIndexed { index, it ->
                         it.copy(exercise = it.exercise.copy(position = index)).toEntity()
                     }
+=======
+                    exercisesWithSets = exercises.value
+                        .withNormalizedExercisePositions()
+                        .map { it.toEntity() }
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreenViewModel.kt
                 )
             )
         }
@@ -262,4 +295,3 @@ class EditWorkoutScreenViewModel @Inject constructor(
     val showRpe = userPreferences.showRpe
     val intensityScale = userPreferences.intensityScale
 }
-

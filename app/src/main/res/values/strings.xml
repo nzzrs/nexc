@@ -64,13 +64,24 @@
     <string name="dependencies">Dependencies</string>
     <string name="lets_build_it_together">System Information</string>
     <string name="tutorial_desc">Learn how to create routines and track your workouts.</string>
+    <string name="donators">Donators</string>
 
+<<<<<<< HEAD
 
     <!-- username and url of contributors and translators -->
+=======
+    <!-- username and url of donators, contributors and translators -->
+>>>>>>> fork/main
     <string name="doen1el" translatable="false">doen1el</string>
     <string name="url_doen1el" translatable="false">https://github.com/doen1el</string>
     <string name="mwesten" translatable="false">mwesten</string>
     <string name="url_mwesten" translatable="false">https://github.com/mwesten</string>
+    <string name="kid1412621" translatable="false">kid1412621</string>
+    <string name="url_kid1412621" translatable="false">https://github.com/kid1412621</string>
+    <string name="VA5H_One" translatable="false">VA5H-One</string>
+    <string name="url_VA5H_One" translatable="false">https://github.com/VA5H-One</string>
+    <string name="FlashyGhost" translatable="false">FlashyGhost</string>
+    <string name="Odweta" translatable="false">Odweta</string>
 
 
     <!--Before saving screen-->
@@ -112,6 +123,7 @@
     <string name="edit_workout">Edit workout</string>
     <string name="quit_routine_creation_question">Quit routine creation?</string>
     <string name="warning_delete_exercise_from_routine">Warning! Deleting exercises from existing routines will unlink all exercises of derivative workouts.</string>
+    <string name="reorder">Reorder</string>
 
 
     <!-- Error screen-->
@@ -261,6 +273,12 @@
     <string name="language_german">German</string>
     <string name="language_dutch_nt" translatable="false">Nederlands</string>
     <string name="language_dutch">Dutch</string>
+    <string name="language_czech_nt" translatable="false">Čeština</string>
+    <string name="language_czech">Czech</string>
+    <string name="language_spanish_nt" translatable="false">Español</string>
+    <string name="language_spanish">Spanish</string>
+    <string name="language_chinese_simplified_nt" translatable="false">简体中文</string>
+    <string name="language_chinese_simplified">Chinese simplified</string>
     <string name="rest_timer_sound">Rest timer sound</string>
     <string name="rest_timer_sound_on_desc">Play a sound when rest timer ends</string>
     <string name="rest_timer_sound_off_desc">Rest timer alerts will be silent</string>
@@ -313,10 +331,22 @@
 
 
     <!-- Support screen-->
+<<<<<<< HEAD
     <string name="lets_build">Technical</string>
     <string name="together">Information</string>
 
     <string name="url_contribute" translatable="false">https://github.com/nzzrs/Nexc/main/CONTRIBUTING.md</string>
+=======
+    <string name="lets_build">Let\'s build</string>
+    <string name="together">together</string>
+    <string name="motivation_1">LibreFit is a passion project, built by one person who believes software should be open, simple, beautiful, and above all, respectful of your privacy.</string>
+    <string name="motivation_2">I pour countless hours into designing, coding, and refining every detail to create the best possible experience. It\'s a commitment to you, the user, and to a better digital world.</string>
+    <string name="motivation_3">LibreFit is only possible with your support, whether by donating or by contributing to code or translations.</string>
+    <string name="motivation_4">All donators and contributors get the supporter version and a credit in the app and on GitHub.</string>
+    <string name="url_donate" translatable="false">https://librefit.org/donate</string>
+    <string name="url_contribute" translatable="false">https://github.com/LibreFitOrg/LibreFit/blob/main/CONTRIBUTING.md</string>
+    <string name="insert_code">Insert code</string>
+>>>>>>> fork/main
 
 
     <!-- Tutorial screen-->
@@ -458,6 +488,7 @@
     <string name="edit">Edit</string>
     <string name="do_not_show_again">Do not show again</string>
 
+<<<<<<< HEAD
     <string name="exercises_backup_desc">Import or export your custom exercises as portable JSON files</string>
 
     <!-- Exercise actions -->
@@ -467,3 +498,6 @@
     <string name="link_superset">Link superset</string>
     <string name="unlink_superset">Unlink superset</string>
 </resources>
+=======
+</resources>
+>>>>>>> fork/main

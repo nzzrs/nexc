@@ -51,7 +51,7 @@ android {
             useSupportLibrary = true
         }
         androidResources {
-            localeFilters += listOf("en", "it", "de", "nl")
+            localeFilters += listOf("en", "it", "de", "nl", "es", "cs", "zh-rCN")
         }
 
         // Do not use System.currentTimeMillis()
@@ -220,4 +220,7 @@ dependencies {
 
     // Load images asynchronously
     implementation(libs.coil)
+
+    // Reorder items in edit workout/routine lists
+    implementation(libs.reorderable)
 }

@@ -1,0 +1,11 @@
+{
+  "version": 1.0,
+  "schemas": [
+    {
+      "fileMatch": [
+        "app/src/main/res/raw/exercises.json"
+      ],
+      "url": "./schemas/exercises-schema.json"
+    }
+  ]
+}

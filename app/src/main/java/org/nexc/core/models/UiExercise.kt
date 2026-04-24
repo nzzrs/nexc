@@ -27,7 +27,13 @@ data class UiExercise(
     val notes: String = "",
     val setMode: SetMode = SetMode.LOAD,
     val restTime: Int = 0,
+<<<<<<< HEAD:app/src/main/java/org/nexc/core/models/UiExercise.kt
     val supersetId: Long? = null,
     val workoutId: Long = 0,
     val position: Int = 0
 )
+=======
+    val position: Int = 0,
+    val workoutId: Long = 0
+)
+>>>>>>> fork/main:app/src/main/java/org/librefit/ui/models/UiExercise.kt

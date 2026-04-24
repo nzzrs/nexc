@@ -143,6 +143,9 @@ object Formatter {
             Language.ITALIAN -> R.string.language_italian_nt
             Language.GERMAN -> R.string.language_german_nt
             Language.DUTCH -> R.string.language_dutch_nt
+            Language.CZECH -> R.string.language_czech_nt
+            Language.SIMPLIFIED_CHINESE -> R.string.language_chinese_simplified_nt
+            Language.SPANISH -> R.string.language_spanish_nt
             Language.SYSTEM -> R.string.follow_system
             ThemeMode.LIGHT -> R.string.theme_light
             ThemeMode.DARK -> R.string.theme_dark

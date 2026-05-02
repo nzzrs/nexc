@@ -8,26 +8,12 @@
 
 package org.nexc.features.about
 
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.interaction.collectIsPressedAsState
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -35,25 +21,16 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.drawWithCache
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.drawOutline
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalResources
-import androidx.compose.ui.res.colorResource
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
@@ -64,7 +41,6 @@ import org.nexc.core.enums.userPreferences.ThemeMode
 import org.nexc.core.nav.Route
 import org.nexc.core.components.AppNameText
 import org.nexc.core.components.HeadlineText
-import org.nexc.core.components.NexcButton
 import org.nexc.core.components.NexcLazyColumn
 import org.nexc.core.components.NexcScaffold
 import org.nexc.core.components.dialogs.UrlActionDialog
@@ -185,87 +161,6 @@ fun AboutScreen(navController: NavHostController) {
                     }
                 )
             }
-<<<<<<< HEAD:app/src/main/java/org/nexc/features/about/AboutScreen.kt
-=======
-
-            item {
-                AboutItem(
-                    icon = painterResource(R.drawable.ic_person),
-                    text = stringResource(R.string.url_IamDg).split("/").last(),
-                    description = stringResource(R.string.founder),
-                    onClick = {
-                        url.value = resources.getString(R.string.url_IamDg)
-                    }
-                )
-            }
-
-            item {
-                HeadlineText(stringResource(R.string.donators))
-            }
-
-            item {
-                AboutItem(
-                    icon = painterResource(R.drawable.ic_person),
-                    text = stringResource(R.string.FlashyGhost)
-                )
-            }
-
-            item {
-                HeadlineText(stringResource(R.string.translators))
-            }
-
-            item {
-                AboutItem(
-                    icon = painterResource(R.drawable.ic_person),
-                    text = stringResource(R.string.doen1el),
-                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_german),
-                    onClick = {
-                        url.value = resources.getString(R.string.url_doen1el)
-                    }
-                )
-            }
-
-            item {
-                AboutItem(
-                    icon = painterResource(R.drawable.ic_person),
-                    text = stringResource(R.string.kid1412621),
-                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_chinese_simplified),
-                    onClick = {
-                        url.value = resources.getString(R.string.url_kid1412621)
-                    }
-                )
-            }
-
-            item {
-                AboutItem(
-                    icon = painterResource(R.drawable.ic_person),
-                    text = stringResource(R.string.mwesten),
-                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_dutch),
-                    onClick = {
-                        url.value = resources.getString(R.string.url_mwesten)
-                    }
-                )
-            }
-
-            item {
-                AboutItem(
-                    icon = painterResource(R.drawable.ic_person),
-                    text = stringResource(R.string.Odweta),
-                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_czech)
-                )
-            }
-
-            item {
-                AboutItem(
-                    icon = painterResource(R.drawable.ic_person),
-                    text = stringResource(R.string.VA5H_One),
-                    description = stringResource(R.string.contributed_to) + " " + stringResource(R.string.language_spanish),
-                    onClick = {
-                        url.value = resources.getString(R.string.url_VA5H_One)
-                    }
-                )
-            }
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/about/AboutScreen.kt
         }
     }
 }

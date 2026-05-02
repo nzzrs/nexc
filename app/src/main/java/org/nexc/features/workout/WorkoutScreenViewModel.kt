@@ -21,7 +21,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asSharedFlow
@@ -30,12 +29,11 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-<<<<<<< HEAD:app/src/main/java/org/nexc/features/workout/WorkoutScreenViewModel.kt
 import org.nexc.R
 import org.nexc.core.db.entity.ExerciseDC
 import org.nexc.core.db.relations.WorkoutWithExercisesAndSets
@@ -57,30 +55,6 @@ import org.nexc.core.models.UiWorkout
 import org.nexc.core.models.mappers.toEntity
 import org.nexc.core.models.mappers.toUi
 import org.nexc.domain.usecase.workout.ProcessSupersetUseCase
-=======
-import org.librefit.R
-import org.librefit.db.entity.ExerciseDC
-import org.librefit.db.relations.WorkoutWithExercisesAndSets
-import org.librefit.db.repository.DatasetRepository
-import org.librefit.db.repository.UserPreferencesRepository
-import org.librefit.db.repository.WorkoutRepository
-import org.librefit.enums.PreviousPerformanceSet
-import org.librefit.enums.SetMode
-import org.librefit.enums.WorkoutState
-import org.librefit.enums.exercise.Category
-import org.librefit.enums.exercise.Equipment
-import org.librefit.nav.Route
-import org.librefit.services.WorkoutService
-import org.librefit.services.WorkoutServiceManager
-import org.librefit.ui.models.UiExercise
-import org.librefit.ui.models.UiExerciseWithSets
-import org.librefit.ui.models.UiSet
-import org.librefit.ui.models.UiWorkout
-import org.librefit.ui.models.moveExercise
-import org.librefit.ui.models.withNormalizedExercisePositions
-import org.librefit.ui.models.mappers.toEntity
-import org.librefit.ui.models.mappers.toUi
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/workout/WorkoutScreenViewModel.kt
 import javax.inject.Inject
 import kotlin.random.Random
 
@@ -119,15 +93,14 @@ class WorkoutScreenViewModel @Inject constructor(
         val startTime = System.currentTimeMillis()
         val id = set.id
         val initialElapsedTime = if (id in idsOfSetsWithStopwatchNotStartedAtLeastOnce.value) {
-            _idsOfSetsWithStopwatchNotStartedAtLeastOnce.update { set ->
-                set.filter { it != id }.toSet()
+            _idsOfSetsWithStopwatchNotStartedAtLeastOnce.update { sets ->
+                sets.filter { it != id }.toSet()
             }
             0
         } else {
             set.elapsedTime
         }
 
-        // The loop is infinite, but the coroutine will be stopped when its Job is cancelled
         while (true) {
             val currentTime = System.currentTimeMillis()
             val newElapsedTime = initialElapsedTime + ((currentTime - startTime) / 1000)
@@ -138,7 +111,11 @@ class WorkoutScreenViewModel @Inject constructor(
         }
     }
 
-    private val workoutId = savedStateHandle.toRoute<Route.WorkoutScreen>().workoutId
+    private val workoutId = try {
+        savedStateHandle.toRoute<Route.WorkoutScreen>().workoutId
+    } catch (e: Exception) {
+        0L
+    }
 
 
     private val _workout = MutableStateFlow(UiWorkout())
@@ -150,15 +127,12 @@ class WorkoutScreenViewModel @Inject constructor(
     val previousPerformances: StateFlow<List<List<PreviousPerformanceSet>>> =
         combine(exercises, workout) { list, w ->
             list.map { eWs ->
-                val list = workoutRepository.getCompletedWorkoutsWithExercisesWithIdExerciseDC(
+                val history = workoutRepository.getCompletedWorkoutsWithExercisesWithIdExerciseDC(
                     idExerciseDC = eWs.exerciseDC.id
-                ).firstOrNull()
+                ).firstOrNull() ?: emptyList()
 
-                // It tries to find in the completed workouts the previous performance of
-                // the same exercise and in the same routine. If there isn't a linked routine, it takes the
-                // latest workout with that exercise
                 val previousWorkout =
-                    list?.find { it.workout.routineId == w.routineId } ?: list?.firstOrNull()
+                    history.find { it.workout.routineId == w.routineId } ?: history.firstOrNull()
                 val previousEWS =
                     previousWorkout?.exercisesWithSets?.find { it.exerciseDC.id == eWs.exerciseDC.id }
 
@@ -194,35 +168,36 @@ class WorkoutScreenViewModel @Inject constructor(
             val setToUpdateIndex =
                 eWs.sets.indexOfFirst { it.id == setId }
 
-            val previousPerformanceSet =
-                previousPerformances.value.getOrNull(index)?.getOrNull(setToUpdateIndex)
+            if (setToUpdateIndex != -1) {
+                val previousPerformanceSet =
+                    previousPerformances.value.getOrNull(index)?.getOrNull(setToUpdateIndex)
 
-            previousPerformanceSet?.let { values ->
-                val (reps, load, time) = values
-                when (eWs.exercise.setMode) {
-                    SetMode.LOAD -> {
-                        updateSetLoad(load, setId)
-                        updateSetReps(reps, setId)
-                    }
+                previousPerformanceSet?.let { values ->
+                    val (reps, load, time) = values
+                    when (eWs.exercise.setMode) {
+                        SetMode.LOAD -> {
+                            updateSetLoad(load, setId)
+                            updateSetReps(reps, setId)
+                        }
 
-                    SetMode.BODYWEIGHT -> {
-                        updateSetReps(reps, setId)
-                    }
+                        SetMode.BODYWEIGHT -> {
+                            updateSetReps(reps, setId)
+                        }
 
-                    SetMode.BODYWEIGHT_WITH_LOAD -> {
-                        updateSetLoad(load, setId)
-                        updateSetReps(reps, setId)
-                    }
+                        SetMode.BODYWEIGHT_WITH_LOAD -> {
+                            updateSetLoad(load, setId)
+                            updateSetReps(reps, setId)
+                        }
 
-                    SetMode.DURATION -> {
-                        updateSetTime(time, setId)
+                        SetMode.DURATION -> {
+                            updateSetTime(time, setId)
+                        }
                     }
                 }
             }
         }
     }
 
-    // A Job to hold the running set's stopwatch coroutine
     private var stopwatchJob: Job? = null
 
     init {
@@ -235,7 +210,6 @@ class WorkoutScreenViewModel @Inject constructor(
                     workoutWithExercisesAndSets.workout
                 }
 
-                // Delete previous running workout from db as it will be resaved later (see down below)
                 if (workoutWithExercisesAndSets.workout.state == WorkoutState.RUNNING) {
                     workoutRepository.deleteWorkout(workoutWithExercisesAndSets.workout.toEntity())
                     workoutServiceManager.setInitialTimeElapsed(workoutWithExercisesAndSets.workout.timeElapsed)
@@ -253,20 +227,16 @@ class WorkoutScreenViewModel @Inject constructor(
 
         viewModelScope.launch {
             idSetWithRunningStopwatch.collect { runningSetId ->
-                // Whenever the ID changes, cancel any existing timer.
                 stopwatchJob?.cancel()
 
-                // If the new ID is a valid set ID, start a new timer.
                 if (runningSetId != null) {
                     exercises.value.flatMap { it.sets }.find { it.id == runningSetId }?.let {
-                        // Launch a new coroutine for the timer and assign it to the Job.
                         stopwatchJob = launch { startSetStopwatch(it) }
                     }
                 }
             }
         }
 
-        // Keep updated the exerciseDCs based on user changes
         viewModelScope.launch {
             datasetRepository.customExercises
                 .distinctUntilChanged()
@@ -274,7 +244,6 @@ class WorkoutScreenViewModel @Inject constructor(
                     _exercises.update { exercises ->
                         exercises.mapNotNull { exercise ->
                             if (exercise.exerciseDC.isCustomExercise) {
-                                // Fetch updated exerciseDC from DB. If it's deleted, delete also the associated exercises (by returning null in a mapNotNull)
                                 customExercises.find { it.id == exercise.exerciseDC.id }?.let {
                                     exercise.copy(exerciseDC = it.toUi())
                                 }
@@ -306,7 +275,9 @@ class WorkoutScreenViewModel @Inject constructor(
         )
 
         _exercises.update { exercises ->
-            (exercises + newExercise).withNormalizedExercisePositions()
+            (exercises + newExercise).mapIndexed { index, eWs ->
+                eWs.copy(exercise = eWs.exercise.copy(position = index))
+            }
         }
     }
 
@@ -316,8 +287,8 @@ class WorkoutScreenViewModel @Inject constructor(
             exercises.map { exercise ->
                 if (exercise.exercise.id == exerciseId) {
                     val newSet = exercise.sets
-                        .lastOrNull()?.copy(id = newId)
-                        ?: UiSet()
+                        .lastOrNull()?.copy(id = newId, completed = false)
+                        ?: UiSet(id = newId)
 
                     val newSets = exercise.sets.toMutableList() + newSet
                     exercise.copy(sets = newSets.toImmutableList())
@@ -337,7 +308,7 @@ class WorkoutScreenViewModel @Inject constructor(
                     exercise.copy(
                         sets = exercise.sets.map {
                             if (it.id == id) it.copy(
-                                elapsedTime = time.coerceAtMost(60 * 100) // max = 99:59
+                                elapsedTime = time.coerceAtMost(60 * 100)
                             ) else it
                         }.toImmutableList()
                     )
@@ -387,7 +358,7 @@ class WorkoutScreenViewModel @Inject constructor(
                 val mutableList = currentList.toMutableList()
                 val item = mutableList.removeAt(index)
                 mutableList.add(index - 1, item)
-                mutableList.toImmutableList()
+                mutableList.mapIndexed { i, eWs -> eWs.copy(exercise = eWs.exercise.copy(position = i)) }.toImmutableList()
             } else currentList
         }
     }
@@ -399,7 +370,7 @@ class WorkoutScreenViewModel @Inject constructor(
                 val mutableList = currentList.toMutableList()
                 val item = mutableList.removeAt(index)
                 mutableList.add(index + 1, item)
-                mutableList.toImmutableList()
+                mutableList.mapIndexed { i, eWs -> eWs.copy(exercise = eWs.exercise.copy(position = i)) }.toImmutableList()
             } else currentList
         }
     }
@@ -415,7 +386,17 @@ class WorkoutScreenViewModel @Inject constructor(
                     supersetId = oldExercise.exercise.supersetId,
                     notes = oldExercise.exercise.notes,
                     restTime = oldExercise.exercise.restTime,
-                    setMode = oldExercise.exercise.setMode
+                    setMode = when (newExerciseDC.category) {
+                        Category.STRETCHING, Category.CARDIO -> SetMode.DURATION
+                        else -> when (newExerciseDC.equipment) {
+                            Equipment.BODY_ONLY, Equipment.FOAM_ROLL, Equipment.EXERCISE_BALL,
+                            Equipment.MEDICINE_BALL, Equipment.BANDS -> SetMode.BODYWEIGHT
+
+                            else -> if (newExerciseDC.name.contains("Weighted", true))
+                                SetMode.BODYWEIGHT_WITH_LOAD else SetMode.LOAD
+                        }
+                    },
+                    position = index
                 )
                 val sets = listOf(UiSet(exerciseId = newExercise.id))
                 val newExerciseWithSets = UiExerciseWithSets(
@@ -432,31 +413,35 @@ class WorkoutScreenViewModel @Inject constructor(
     }
 
     fun updateSetRpe(rpe: String, id: Long) {
-        val currentScale = intensityScale.value
-        _exercises.update { currentExercises ->
-            currentExercises.map { exercise ->
-                if (exercise.sets.any { it.id == id }) {
-                    exercise.copy(
-                        sets = exercise.sets.map {
-                            if (it.id == id) it.copy(rpe = rpe, intensityScale = currentScale) else it
-                        }.toImmutableList()
-                    )
-                } else exercise
+        viewModelScope.launch {
+            val scale = intensityScale.firstOrNull() ?: org.nexc.core.enums.userPreferences.IntensityScale.RPE
+            _exercises.update { currentExercises ->
+                currentExercises.map { exercise ->
+                    if (exercise.sets.any { it.id == id }) {
+                        exercise.copy(
+                            sets = exercise.sets.map {
+                                if (it.id == id) it.copy(rpe = rpe, intensityScale = scale) else it
+                            }.toImmutableList()
+                        )
+                    } else exercise
+                }
             }
         }
     }
 
     fun updateSetRir(rir: String, id: Long) {
-        val currentScale = intensityScale.value
-        _exercises.update { currentExercises ->
-            currentExercises.map { exercise ->
-                if (exercise.sets.any { it.id == id }) {
-                    exercise.copy(
-                        sets = exercise.sets.map {
-                            if (it.id == id) it.copy(rir = rir, intensityScale = currentScale) else it
-                        }.toImmutableList()
-                    )
-                } else exercise
+        viewModelScope.launch {
+            val scale = intensityScale.firstOrNull() ?: org.nexc.core.enums.userPreferences.IntensityScale.RPE
+            _exercises.update { currentExercises ->
+                currentExercises.map { exercise ->
+                    if (exercise.sets.any { it.id == id }) {
+                        exercise.copy(
+                            sets = exercise.sets.map {
+                                if (it.id == id) it.copy(rir = rir, intensityScale = scale) else it
+                            }.toImmutableList()
+                        )
+                    } else exercise
+                }
             }
         }
     }
@@ -482,19 +467,15 @@ class WorkoutScreenViewModel @Inject constructor(
             viewModelScope.launch {
                 _events.emit(WorkoutEvent.SetCompleted)
                 
-                // Check for Exercise Completed
                 val updatedExercise = exercises.value.find { it.exercise.id == exerciseWithSets.exercise.id }
                 if (updatedExercise?.sets?.all { it.completed } == true) {
                     _events.emit(WorkoutEvent.ExerciseCompleted)
                 }
-
-                // PR check logic could go here if previousPerformances were easier to access
             }
         }
     }
 
     fun deleteSet(id: Long) {
-        // If there's the match, then the set has a running stopwatch and it has to be stopped by assigning null
         if (idSetWithRunningStopwatch.value == id) {
             _idSetWithRunningStopwatch.update { null }
         }
@@ -535,50 +516,14 @@ class WorkoutScreenViewModel @Inject constructor(
     }
 
     fun deleteExercise(exerciseId: Long) {
-        val exerciseWithSets = exercises.value.find { it.exercise.id == exerciseId }!!
-        // If there's the match, then the set has a running stopwatch and it has to be stopped by assign 0
-        if (exerciseWithSets.sets.any { it.id == idSetWithRunningStopwatch.value }) {
-            _idSetWithRunningStopwatch.update { 0L }
-        }
         _exercises.update { currentExercises ->
             currentExercises
                 .filter { it.exercise.id != exerciseId }
-                .withNormalizedExercisePositions()
+                .mapIndexed { index, eWs ->
+                    eWs.copy(exercise = eWs.exercise.copy(position = index))
+                }
         }
     }
-
-    fun moveExercise(fromIndex: Int, toIndex: Int) {
-        _exercises.update { currentExercises ->
-            currentExercises.moveExercise(fromIndex = fromIndex, toIndex = toIndex)
-        }
-    }
-
-    fun swapExercise(oldExerciseId: Long, newExerciseDC: ExerciseDC) {
-        _exercises.update { currentExercises ->
-            currentExercises.map { eWs ->
-                if (eWs.exercise.id == oldExerciseId) {
-                    UiExerciseWithSets(
-                        exercise = eWs.exercise.copy(
-                            idExerciseDC = newExerciseDC.id,
-                            setMode = when (newExerciseDC.category) {
-                                Category.STRETCHING, Category.CARDIO -> SetMode.DURATION
-                                else -> when (newExerciseDC.equipment) {
-                                    Equipment.BODY_ONLY, Equipment.FOAM_ROLL, Equipment.EXERCISE_BALL,
-                                    Equipment.MEDICINE_BALL, Equipment.BANDS -> SetMode.BODYWEIGHT
-
-                                    else -> if (newExerciseDC.name.contains("Weighted", true))
-                                        SetMode.BODYWEIGHT_WITH_LOAD else SetMode.LOAD
-                                }
-                            }
-                        ),
-                        exerciseDC = newExerciseDC.toUi(),
-                        sets = kotlinx.collections.immutable.persistentListOf(UiSet())
-                    )
-                } else eWs
-            }
-        }
-    }
-
 
     fun moveExercise(fromIndex: Int, toIndex: Int) {
         _exercises.update { currentExercises ->
@@ -587,16 +532,17 @@ class WorkoutScreenViewModel @Inject constructor(
                 val element = list.removeAt(fromIndex)
                 list.add(toIndex, element)
             }
-            list.toImmutableList()
+            list.mapIndexed { index, eWs ->
+                eWs.copy(exercise = eWs.exercise.copy(position = index))
+            }.toImmutableList()
         }
     }
+
 
     val workoutProgress: StateFlow<Pair<Int, Int>> = exercises
         .map { list ->
             val totalSets = list.sumOf { it.sets.size }
-
             val completedSets = list.sumOf { it.sets.count { s -> s.completed } }
-
             completedSets to totalSets
         }
         .stateIn(
@@ -624,7 +570,6 @@ class WorkoutScreenViewModel @Inject constructor(
     private fun observeChanges() {
         viewModelScope.launch(Dispatchers.Main) {
             WorkoutService.restTime.collect { newRestTime ->
-                // When timer is over and screen is visible, it plays alert sound only by respecting user preference
                 if (initialRestTime != 1 && newRestTime == 0 && isFocused) {
                     if (userPreferences.restTimerSoundOn.value) {
                         val mediaPlayer = MediaPlayer.create(context, R.raw.alert_notification)
@@ -647,10 +592,6 @@ class WorkoutScreenViewModel @Inject constructor(
         }
     }
 
-    /**
-     * It ensures that [WorkoutService] sends an alert notification only when the app is not focused so
-     * so only when [isFocused] is `false`
-     */
     fun updateFocus(isFocused: Boolean) {
         this.isFocused = isFocused
         workoutServiceManager.updateFocus(isFocused)
@@ -667,7 +608,7 @@ class WorkoutScreenViewModel @Inject constructor(
     }
 
     val restTimerProgress = restTime
-        .map { it.toFloat() / initialRestTime }
+        .map { if (initialRestTime == 0) 0f else it.toFloat() / initialRestTime }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.WhileSubscribed(5000),
@@ -702,9 +643,9 @@ class WorkoutScreenViewModel @Inject constructor(
                         state = WorkoutState.RUNNING,
                         timeElapsed = t
                     ).toEntity(),
-                    exercisesWithSets = e
-                        .withNormalizedExercisePositions()
-                        .map { it.toEntity() },
+                    exercisesWithSets = e.mapIndexed { index, it ->
+                        it.copy(exercise = it.exercise.copy(position = index)).toEntity()
+                    }
                 )
             )
         }

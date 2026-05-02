@@ -8,7 +8,6 @@
 
 package org.nexc.core.components
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.AnimatedVisibilityScope
 import androidx.compose.animation.ExperimentalSharedTransitionApi
@@ -30,19 +29,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.shape.CornerSize
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenuGroup
 import androidx.compose.material3.DropdownMenuItem
-<<<<<<< HEAD:app/src/main/java/org/nexc/core/components/ExerciseCard.kt
-import androidx.compose.material3.Card
-=======
-import androidx.compose.material3.DropdownMenuPopup
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/components/ExerciseCard.kt
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
@@ -55,7 +48,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Slider
@@ -111,60 +103,6 @@ import org.nexc.core.theme.NexcTheme
 import org.nexc.core.util.Formatter
 import kotlin.math.roundToInt
 
-/**
- * A custom [ElevatedCard] designed to display an [UiExerciseWithSets] with a uniform appearance across
- * the app.
- *
- * @param modifier A [Modifier] that should be passed as `Modifier.animateItem` to enable
- * animation for the card within the list.
- * @param animatedVisibilityScope Used for image's animation transition
- * @param exerciseWithSets An instance of [UiExerciseWithSets] containing all the relevant information
- * required for the card display.
- * @param previousPerformances When not null and not empty, it displays the performances of previous set next
- * to the associated set. The strings should be already formatted and ready to be displayed.
- * @param addSet A lambda function invoked when the "Add set" button is clicked.
- * @param onDetail A lambda function triggered when the exercise's name or image is clicked, which should open
- * the [org.nexc.features.infoExercise.InfoExerciseScreen].
- * @param onDelete A lambda function executed when the *Delete* icon is clicked, it should result in
- * the removal of the card.
- * @param isCollapsed When `true`, the card collapses its editable body to provide clearer reorder feedback. So it's true only when reordering one of exercises in the list.
- * @param dragHandleModifier Modifier applied to the optional drag handle.
- * @param onReorderRequest A lambda triggered when the `reorder` option from dropdown menu is pressed.
- * @param isDragging when `true`, it applies a shadow to further emphasize with a shadow that the card is dragged.
- * @param updateExerciseNotes A function to update notes based on [UiExercise.id]. For more details, refer to
- * [org.nexc.features.workout.WorkoutScreenViewModel.updateExerciseNotes] and
- * [org.nexc.features.editWorkout.EditWorkoutScreenViewModel.updateExerciseNotes].
- * @param updateExerciseRestTime A function to update rest time based on [UiExercise.id]. For more details, refer to
- * [org.nexc.features.workout.WorkoutScreenViewModel.updateExerciseRestTime] and
- * [org.nexc.features.editWorkout.EditWorkoutScreenViewModel.updateExerciseRestTime].
- * @param updateExerciseSetMode A function to update the set mode based on.
- * For more details, refer to [org.nexc.features.workout.WorkoutScreenViewModel.updateExerciseSetMode]
- * and [org.nexc.features.editWorkout.EditWorkoutScreenViewModel.updateExerciseSetMode].
- * @param updateSetLoad A function to update load based on [UiSet.id]. For more details, refer to
- * [org.nexc.features.workout.WorkoutScreenViewModel.updateSetLoad] and
- * [org.nexc.features.editWorkout.EditWorkoutScreenViewModel.updateSetLoad].
- * @param updateSetReps A function to update reps based on [UiSet.id]. For more details, refer to
- * [org.nexc.features.workout.WorkoutScreenViewModel.updateSetReps] and
- * [org.nexc.features.editWorkout.EditWorkoutScreenViewModel.updateSetReps].
- * @param updateSetTime A function to update time based on [UiSet.id].. For more details, refer to
- * [org.nexc.features.workout.WorkoutScreenViewModel.updateSetTime] and
- * [org.nexc.features.editWorkout.EditWorkoutScreenViewModel.updateSetTime].
- * @param updateSetCompleted A function to update completed state based on [UiSet.id]. For more details, refer to
- * [org.nexc.features.workout.WorkoutScreenViewModel.updateSetCompleted] and
- * [org.nexc.features.editWorkout.EditWorkoutScreenViewModel.updateSetCompleted].
- * @param deleteSet A function called when the user swipes the set to remove it.
- * @param showInfo A lambda function executed when info icon next to "type of set" or "rest time" text
- * is clicked. The passed parameter is used by [org.nexc.core.components.modalBottomSheets.InfoModalBottomSheet] to show the relevant information.
- * @param idSetWithRunningStopwatch The ID of the set whose stopwatch is currently active. This ensures
- * only one timer runs at a time. The composable will display a running stopwatch for the
- * set matching this ID. Pass null if no timer is active. This parameter is only used when [workout] is `true`.
- * @param updateIdSetWithRunningStopwatch A callback invoked when the user interacts with a set with a
- * running stopwatch. It provides the ID of the set that should become active, or null to stop the current timer.
- * This parameter is only used when [workout] is `true`.
- * @param workout A Boolean flag indicating whether a checkbox should be displayed next to each set.
- * @param applyPreviousSetPerformance Triggered when the user clicks the previous set performance
- * (on the left to the set counter) * and should update the current set with the values of the previous set.
- */
 @OptIn(
     ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
     ExperimentalMaterial3ExpressiveApi::class
@@ -208,26 +146,18 @@ fun SharedTransitionScope.ExerciseCard(
     supersetLabel: String? = null,
     supersetColor: Color? = null
 ) {
-<<<<<<< HEAD:app/src/main/java/org/nexc/core/components/ExerciseCard.kt
     Card(
-        modifier = modifier,
+        modifier = modifier.then(
+            if (isDragging) Modifier.shadow(
+                10.dp,
+                shape = MaterialTheme.shapes.extraLarge
+            ) else Modifier
+        ),
         shape = MaterialTheme.shapes.extraLarge,
         elevation = CardDefaults.elevatedCardElevation(),
         border = if (exerciseWithSets.exercise.supersetId != null)
             BorderStroke(2.dp, supersetColor ?: MaterialTheme.colorScheme.primary)
         else null
-=======
-    var showMenu by rememberSaveable { mutableStateOf(false) }
-    val shape = MaterialTheme.shapes.extraLarge
-    ElevatedCard(
-        modifier = modifier.then(
-            if (isDragging) Modifier.shadow(
-                10.dp,
-                shape = shape
-            ) else Modifier
-        ),
-        shape = shape
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/components/ExerciseCard.kt
     ) {
         Column(
             modifier = Modifier
@@ -294,7 +224,7 @@ fun SharedTransitionScope.ExerciseCard(
                         modifier = Modifier.weight(1f)
                     )
                 }
-<<<<<<< HEAD:app/src/main/java/org/nexc/core/components/ExerciseCard.kt
+
                 var menuExpanded by remember { mutableStateOf(false) }
                 Box {
                     IconButton(onClick = { menuExpanded = true }) {
@@ -379,71 +309,8 @@ fun SharedTransitionScope.ExerciseCard(
                                 menuExpanded = false
                             }
                         )
-=======
-                Column {
-                    AnimatedContent(
-                        targetState = isCollapsed,
-                        label = "DragHandleTransition",
-                    ) { isReordering ->
-                        if (isReordering) {
-                            IconButton(
-                                modifier = dragHandleModifier,
-                                onClick = {}
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_drag_handle),
-                                    contentDescription = stringResource(R.string.reorder)
-                                )
-                            }
-                        } else {
-                            IconButton(
-                                onClick = { showMenu = true }
-                            ) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_more_options),
-                                    contentDescription = stringResource(R.string.more_options)
-                                )
-                            }
-                            DropdownMenuPopup(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false }) {
-                                DropdownMenuGroup(
-                                    shapes = MenuDefaults.groupShape(0, 1) // Top-level group shape
-                                ) {
-                                    // MenuDefaults.Label { Text("Header") }
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.reorder)) },
-                                        leadingIcon = {
-                                            Icon(
-                                                painterResource(R.drawable.ic_reorder),
-                                                stringResource(R.string.reorder)
-                                            )
-                                        },
-                                        onClick = {
-                                            onReorderRequest()
-                                            showMenu = false
-                                        }
-                                    )
-                                    DropdownMenuItem(
-                                        text = { Text(stringResource(R.string.delete)) },
-                                        leadingIcon = {
-                                            Icon(
-                                                painterResource(R.drawable.ic_delete),
-                                                stringResource(R.string.delete)
-                                            )
-                                        },
-                                        onClick = {
-                                            onDelete(exerciseWithSets.exercise.id)
-                                            showMenu = false
-                                        }
-                                    )
-                                }
-                            }
-                        }
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/components/ExerciseCard.kt
                     }
                 }
-
             }
 
             AnimatedVisibility(visible = !isCollapsed) {
@@ -475,7 +342,6 @@ fun SharedTransitionScope.ExerciseCard(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 IconButton(
-                                    // Read more at InfoModalBottomSheet
                                     onClick = { showInfo(InfoMode.REST_TIMER) }
                                 ) {
                                     Icon(
@@ -504,7 +370,6 @@ fun SharedTransitionScope.ExerciseCard(
                             Slider(
                                 value = restTime.toFloat(),
                                 onValueChange = {
-                                    // By dividing first and then multiplying by 5, it rounds to the closest number multiple of 5
                                     restTime = (it / 5).roundToInt() * 5
                                     haptic.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
                                 },
@@ -515,136 +380,11 @@ fun SharedTransitionScope.ExerciseCard(
                                     )
                                 },
                                 valueRange = 0f..300f,
-                                // 19 steps means values multiple of 5
                                 steps = 19
                             )
                         }
                     }
 
-<<<<<<< HEAD:app/src/main/java/org/nexc/core/components/ExerciseCard.kt
-            ElevatedCard(
-                shape = MaterialTheme.shapes.extraLarge,
-                colors = CardDefaults.elevatedCardColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceContainerHighest
-                )
-            ) {
-                //Headline set
-                Row(
-                    modifier = Modifier
-                        .padding(10.dp)
-                        .fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    if (!workout) {
-                        Text(
-                            text = stringResource(R.string.set),
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.width(35.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    
-                    if (previousPerformances != null) {
-                        Text(
-                            text = stringResource(R.string.previous),
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.width(80.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-                    
-                    if (exerciseWithSets.exercise.setMode == SetMode.DURATION) {
-                        Text(
-                            text = stringResource(R.string.time),
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.width(80.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    } else {
-                        if (exerciseWithSets.exercise.setMode == SetMode.LOAD ||
-                            exerciseWithSets.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD
-                        ) {
-                            Text(
-                                text = stringResource(R.string.kg),
-                                color = MaterialTheme.colorScheme.secondary,
-                                modifier = Modifier.width(60.dp),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                        Text(
-                            text = stringResource(id = R.string.reps),
-                            color = MaterialTheme.colorScheme.secondary,
-                            modifier = Modifier.width(60.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    }
-
-                    Spacer(Modifier.weight(1f))
-
-                    if (showRpe) {
-                        if (intensityScale == IntensityScale.BOTH) {
-                            Text(
-                                text = stringResource(R.string.rpe),
-                                color = MaterialTheme.colorScheme.secondary,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.width(55.dp),
-                                textAlign = TextAlign.Center
-                            )
-                            Text(
-                                text = stringResource(R.string.rir),
-                                color = MaterialTheme.colorScheme.secondary,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.width(55.dp),
-                                textAlign = TextAlign.Center
-                            )
-                        } else {
-                            Text(
-                                text = if (intensityScale == IntensityScale.RIR)
-                                    stringResource(R.string.rir)
-                                else
-                                    stringResource(R.string.rpe),
-                                color = MaterialTheme.colorScheme.secondary,
-                                style = MaterialTheme.typography.bodySmall,
-                                modifier = Modifier.width(55.dp),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                    if (workout) {
-                        Box(modifier = Modifier.width(48.dp), contentAlignment = Alignment.Center) {
-                            Icon(
-                                painter = painterResource(R.drawable.ic_check),
-                                contentDescription = stringResource(R.string.done)
-                            )
-                        }
-                    }
-                }
-
-                //Sets
-                Column(modifier = Modifier.animateContentSize()) {
-                    exerciseWithSets.sets.forEachIndexed { i, set ->
-                        key(set.id) {
-                            Set(
-                                i = i,
-                                set = set,
-                                previousSet = previousPerformances?.getOrNull(i),
-                                lastIndex = exerciseWithSets.sets.lastIndex,
-                                setMode = exerciseWithSets.exercise.setMode,
-                                isStopwatchRunning = idSetWithRunningStopwatch == null,
-                                isThisSetStopwatchRunning = idSetWithRunningStopwatch == set.id,
-                                workout = workout,
-                                deleteSet = deleteSet,
-                                updateIdSetWithRunningStopwatch = updateIdSetWithRunningStopwatch,
-                                updateSetTime = updateSetTime,
-                                 updateSetReps = updateSetReps,
-                                updateSetLoad = updateSetLoad,
-                                updateSetCompleted = updateSetCompleted,
-                                showRpe = showRpe,
-                                intensityScale = intensityScale,
-                                updateSetRpe = updateSetRpe,
-                                updateSetRir = updateSetRir,
-                                applyPreviousSet = applyPreviousSetPerformance
-=======
                     HorizontalDivider()
 
                     // Set mode selection
@@ -659,8 +399,6 @@ fun SharedTransitionScope.ExerciseCard(
                             horizontalArrangement = Arrangement.Center
                         ) {
                             IconButton(
-                                // Refer to InfoModalBottomSheet to know the reason behind this value.
-                                // Do NOT change it.
                                 onClick = { showInfo(InfoMode.TYPE_OF_SET) }
                             ) {
                                 Icon(
@@ -672,10 +410,8 @@ fun SharedTransitionScope.ExerciseCard(
                         }
 
                         var expanded by remember { mutableStateOf(false) }
-
                         val focusRequester = remember { FocusRequester() }
 
-                        // Type of set selector
                         ExposedDropdownMenuBox(
                             expanded = expanded,
                             onExpandedChange = { expanded = it },
@@ -700,7 +436,6 @@ fun SharedTransitionScope.ExerciseCard(
                                 },
                                 modifier = Modifier.menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable),
                                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors()
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/components/ExerciseCard.kt
                             )
                             ExposedDropdownMenu(
                                 expanded = expanded,
@@ -747,40 +482,90 @@ fun SharedTransitionScope.ExerciseCard(
                             modifier = Modifier
                                 .padding(10.dp)
                                 .fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.SpaceBetween
+                            verticalAlignment = Alignment.CenterVertically
                         ) {
-                            Spacer(Modifier)
+                            if (!workout) {
+                                Text(
+                                    text = stringResource(R.string.set),
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.width(35.dp),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                            
                             if (previousPerformances != null) {
                                 Text(
                                     text = stringResource(R.string.previous),
-                                    color = MaterialTheme.colorScheme.secondary
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.width(80.dp),
+                                    textAlign = TextAlign.Center
                                 )
                             }
+                            
                             if (exerciseWithSets.exercise.setMode == SetMode.DURATION) {
                                 Text(
                                     text = stringResource(R.string.time),
-                                    color = MaterialTheme.colorScheme.secondary
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.width(80.dp),
+                                    textAlign = TextAlign.Center
                                 )
                             } else {
                                 if (exerciseWithSets.exercise.setMode == SetMode.LOAD ||
                                     exerciseWithSets.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD
                                 ) {
                                     Text(
-                                        text = stringResource(R.string.load) + " (" + stringResource(R.string.kg) + ")",
-                                        color = MaterialTheme.colorScheme.secondary
+                                        text = stringResource(R.string.kg),
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        modifier = Modifier.width(60.dp),
+                                        textAlign = TextAlign.Center
                                     )
                                 }
                                 Text(
                                     text = stringResource(id = R.string.reps),
-                                    color = MaterialTheme.colorScheme.secondary
+                                    color = MaterialTheme.colorScheme.secondary,
+                                    modifier = Modifier.width(60.dp),
+                                    textAlign = TextAlign.Center
                                 )
                             }
+
+                            Spacer(Modifier.weight(1f))
+
+                            if (showRpe) {
+                                if (intensityScale == IntensityScale.BOTH) {
+                                    Text(
+                                        text = stringResource(R.string.rpe),
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.width(55.dp),
+                                        textAlign = TextAlign.Center
+                                    )
+                                    Text(
+                                        text = stringResource(R.string.rir),
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.width(55.dp),
+                                        textAlign = TextAlign.Center
+                                    )
+                                } else {
+                                    Text(
+                                        text = if (intensityScale == IntensityScale.RIR)
+                                            stringResource(R.string.rir)
+                                        else
+                                            stringResource(R.string.rpe),
+                                        color = MaterialTheme.colorScheme.secondary,
+                                        style = MaterialTheme.typography.bodySmall,
+                                        modifier = Modifier.width(55.dp),
+                                        textAlign = TextAlign.Center
+                                    )
+                                }
+                            }
                             if (workout) {
-                                Icon(
-                                    painter = painterResource(R.drawable.ic_check),
-                                    contentDescription = stringResource(R.string.done)
-                                )
+                                Box(modifier = Modifier.width(48.dp), contentAlignment = Alignment.Center) {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_check),
+                                        contentDescription = stringResource(R.string.done)
+                                    )
+                                }
                             }
                         }
 
@@ -803,6 +588,10 @@ fun SharedTransitionScope.ExerciseCard(
                                         updateSetReps = updateSetReps,
                                         updateSetLoad = updateSetLoad,
                                         updateSetCompleted = updateSetCompleted,
+                                        showRpe = showRpe,
+                                        intensityScale = intensityScale,
+                                        updateSetRpe = updateSetRpe,
+                                        updateSetRir = updateSetRir,
                                         applyPreviousSet = applyPreviousSetPerformance
                                     )
                                 }
@@ -811,7 +600,7 @@ fun SharedTransitionScope.ExerciseCard(
                     }
 
                     //Add set button
-                    LibreFitButton(
+                    NexcButton(
                         text = stringResource(id = R.string.add_set),
                         icon = painterResource(R.drawable.ic_add_circle),
                         onClick = { addSet(exerciseWithSets.exercise.id) },
@@ -819,17 +608,6 @@ fun SharedTransitionScope.ExerciseCard(
                     )
                 }
             }
-<<<<<<< HEAD:app/src/main/java/org/nexc/core/components/ExerciseCard.kt
-
-            //Add set button
-            NexcButton(
-                text = stringResource(id = R.string.add_set),
-                icon = painterResource(R.drawable.ic_add_circle),
-                onClick = { addSet(exerciseWithSets.exercise.id) },
-                elevated = false
-            )
-=======
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/components/ExerciseCard.kt
         }
     }
 }

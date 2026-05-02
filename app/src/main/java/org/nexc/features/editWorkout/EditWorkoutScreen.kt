@@ -17,9 +17,7 @@ import androidx.compose.animation.SharedTransitionScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -32,8 +30,7 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -44,7 +41,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import kotlinx.collections.immutable.persistentListOf
-<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt
 import org.nexc.R
 import org.nexc.core.enums.InfoMode
 import org.nexc.core.enums.SetMode
@@ -66,32 +62,6 @@ import org.nexc.core.models.UiSet
 import org.nexc.core.models.UiWorkout
 import org.nexc.features.shared.SharedViewModel
 import org.nexc.core.theme.NexcTheme
-import androidx.compose.ui.graphics.Color
-=======
-import org.librefit.R
-import org.librefit.enums.InfoMode
-import org.librefit.enums.SetMode
-import org.librefit.enums.SuccessMessage
-import org.librefit.enums.exercise.Category
-import org.librefit.enums.exercise.Equipment
-import org.librefit.enums.userPreferences.ThemeMode
-import org.librefit.nav.Route
-import org.librefit.ui.components.ExerciseCard
-import org.librefit.ui.components.LibreFitLazyColumn
-import org.librefit.ui.components.LibreFitScaffold
-import org.librefit.ui.components.animations.DumbbellLottie
-import org.librefit.ui.components.dialogs.ConfirmDialog
-import org.librefit.ui.components.modalBottomSheets.InfoModalBottomSheet
-import org.librefit.ui.models.UiExercise
-import org.librefit.ui.models.UiExerciseDC
-import org.librefit.ui.models.UiExerciseWithSets
-import org.librefit.ui.models.UiSet
-import org.librefit.ui.models.UiWorkout
-import org.librefit.ui.screens.shared.SharedViewModel
-import org.librefit.ui.theme.LibreFitTheme
-import sh.calvin.reorderable.ReorderableItem
-import sh.calvin.reorderable.rememberReorderableLazyListState
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreen.kt
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -157,7 +127,6 @@ fun SharedTransitionScope.EditWorkoutScreen(
         updateExerciseNotes = viewModel::updateExerciseNotes,
         updateExerciseRestTime = viewModel::updateExerciseRestTime,
         updateExerciseSetMode = viewModel::updateExerciseSetMode,
-<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt
         updateSetTime = viewModel::updateSetTime,
         updateSetReps = viewModel::updateSetReps,
         updateSetLoad = viewModel::updateSetLoad,
@@ -167,9 +136,6 @@ fun SharedTransitionScope.EditWorkoutScreen(
         onSupersetToggle = viewModel::toggleSuperset,
         showRpe = showRpe,
         intensityScale = intensityScale,
-=======
-        moveExercise = viewModel::moveExercise,
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreen.kt
         saveWorkoutWithExercisesInDB = viewModel::saveWorkoutWithExercisesInDB,
         moveExercise = viewModel::moveExercise,
         onReplace = { id ->
@@ -205,17 +171,12 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
     updateExerciseNotes: (String, Long) -> Unit,
     updateExerciseRestTime: (Int, Long) -> Unit,
     updateExerciseSetMode: (SetMode, Long) -> Unit,
-<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt
     onSupersetToggle: (Long) -> Unit,
     showRpe: Boolean,
     intensityScale: org.nexc.core.enums.userPreferences.IntensityScale,
     saveWorkoutWithExercisesInDB: () -> Unit,
     moveExercise: (Int, Int) -> Unit,
     onReplace: (Long) -> Unit
-=======
-    moveExercise: (Int, Int) -> Unit,
-    saveWorkoutWithExercisesInDB: () -> Unit
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreen.kt
 ) {
 
     var showConfirmDialog by remember { mutableStateOf(false) }
@@ -246,38 +207,10 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
 
 
     var infoMode by remember { mutableStateOf(InfoMode.DISMISS) }
-    val onInfoModeChange = remember {
-        { newValue: InfoMode ->
-            infoMode = newValue
-        }
-    }
 
     InfoModalBottomSheet(infoMode) { infoMode = InfoMode.DISMISS }
 
-<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt
     NexcScaffold(
-=======
-    val lazyListState = rememberLazyListState()
-    val hapticFeedback = LocalHapticFeedback.current
-    // We track the exercise id so a release event from one card can't clear the collapse state while another card is still being pressed or dragged.
-
-    var isReorderingEnabled by rememberSaveable { mutableStateOf(false) }
-
-    val exerciseSectionStartIndex = 3
-    val reorderableLazyListState = rememberReorderableLazyListState(lazyListState) { from, to ->
-        val fromExerciseIndex = from.index - exerciseSectionStartIndex
-        val toExerciseIndex = (to.index - exerciseSectionStartIndex)
-            .coerceIn(0, exercisesWithSets.lastIndex)
-
-        if (fromExerciseIndex in exercisesWithSets.indices && toExerciseIndex in exercisesWithSets.indices) {
-            moveExercise(fromExerciseIndex, toExerciseIndex)
-
-            hapticFeedback.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick)
-        }
-    }
-
-    LibreFitScaffold(
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreen.kt
         title = AnnotatedString(
             when (typeOfEdit) {
                 null -> stringResource(R.string.create_routine)
@@ -321,11 +254,7 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
         fabDescription = stringResource(R.string.add_exercise),
         fabText = stringResource(R.string.add_exercise),
     ) { innerPadding ->
-<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt
         NexcLazyColumn(innerPadding) {
-=======
-        LibreFitLazyColumn(innerPadding, lazyListState = lazyListState) {
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreen.kt
             item {
                 OutlinedTextField(
                     shape = MaterialTheme.shapes.large,
@@ -384,7 +313,6 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
                 itemsIndexed(
                     items = exercisesWithSets,
                     key = { _, e -> e.exercise.id }
-<<<<<<< HEAD:app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt
                 ) { index, exerciseWithSets ->
                     val supersetId = exerciseWithSets.exercise.supersetId
                     ExerciseCard(
@@ -393,6 +321,7 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
                         exerciseWithSets = exerciseWithSets,
                         workout = typeOfEdit == false,
                         addSet = addSetToExercise,
+                        isDragging = false,
                         onDetail = { id, idExerciseDC ->
                             navController.navigate(
                                 Route.InfoExerciseScreen(
@@ -406,7 +335,7 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
                         updateExerciseNotes = updateExerciseNotes,
                         updateExerciseRestTime = updateExerciseRestTime,
                         updateExerciseSetMode = updateExerciseSetMode,
-                        showInfo = onInfoModeChange,
+                        showInfo = { infoMode = it },
                         updateSetTime = updateSetTime,
                         updateSetReps = updateSetReps,
                         updateSetLoad = updateSetLoad,
@@ -415,14 +344,9 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
                         updateSetCompleted = updateSetCompleted,
                         onSupersetToggle = onSupersetToggle,
                         onReplace = onReplace,
-                        onMoveUp = { id ->
-                            val index = exercisesWithSets.indexOfFirst { it.exercise.id == id }
-                            if (index > 0) moveExercise(index, index - 1)
-                        },
-                        onMoveDown = { id ->
-                            val index = exercisesWithSets.indexOfFirst { it.exercise.id == id }
-                            if (index < exercisesWithSets.size - 1) moveExercise(index, index + 1)
-                        },
+                        onReorderRequest = {},
+                        onMoveUp = { moveExercise(index, index - 1) },
+                        onMoveDown = { moveExercise(index, index + 1) },
                         isFirst = index == 0,
                         isLast = index == exercisesWithSets.size - 1,
                         showRpe = showRpe,
@@ -430,48 +354,6 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
                         supersetLabel = supersetLabels[supersetId],
                         supersetColor = supersetColorMap[supersetId]
                     )
-=======
-                ) { _, exerciseWithSets ->
-                    ReorderableItem(reorderableLazyListState, key = exerciseWithSets.exercise.id) { isDragging ->
-                        ExerciseCard(
-                            modifier = Modifier.animateItem(),
-                            animatedVisibilityScope = animatedVisibilityScope,
-                            exerciseWithSets = exerciseWithSets,
-                            workout = typeOfEdit == false,
-                            addSet = addSetToExercise,
-                            isDragging = isDragging,
-                            onDetail = { id, idExerciseDC ->
-                                navController.navigate(
-                                    Route.InfoExerciseScreen(
-                                        id,
-                                        idExerciseDC
-                                    )
-                                ) { launchSingleTop = true }
-                            },
-                            onDelete = deleteExercise,
-                            isCollapsed = isReorderingEnabled,
-                            dragHandleModifier = Modifier.draggableHandle(
-                                onDragStarted = {
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureThresholdActivate)
-                                },
-                                onDragStopped = {
-                                    isReorderingEnabled = false
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.GestureEnd)
-                                }
-                            ),
-                            onReorderRequest = { isReorderingEnabled = true },
-                            deleteSet = deleteSet,
-                            updateExerciseNotes = updateExerciseNotes,
-                            updateExerciseRestTime = updateExerciseRestTime,
-                            updateExerciseSetMode = updateExerciseSetMode,
-                            showInfo = onInfoModeChange,
-                            updateSetTime = updateSetTime,
-                            updateSetReps = updateSetReps,
-                            updateSetLoad = updateSetLoad,
-                            updateSetCompleted = updateSetCompleted
-                        )
-                    }
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/screens/editWorkout/EditWorkoutScreen.kt
                 }
             }
         }
@@ -482,10 +364,6 @@ private fun SharedTransitionScope.EditWorkoutScreenContent(
 @Preview(device = "id:medium_phone")
 @Composable
 private fun EditWorkoutScreenPreview() {
-    /**
-     * Returns `null` when a new routine is created, `true` when a routine is edited and `false` when
-     * a past workout is edited
-     */
     val typeOfEdit = null
 
     NexcTheme(dynamicColor = false, themeMode = ThemeMode.DARK) {
@@ -494,59 +372,58 @@ private fun EditWorkoutScreenPreview() {
                 this@SharedTransitionLayout.EditWorkoutScreenContent(
                     navController = rememberNavController(),
                     animatedVisibilityScope = this,
-                    typeOfEdit = typeOfEdit,
-                    exercisesWithSets = persistentListOf(
-                        UiExerciseWithSets(
-                            exercise = UiExercise(setMode = SetMode.DURATION, restTime = 0),
-                            exerciseDC = UiExerciseDC(
-                                name = "Running, Treadmill",
-                                images = persistentListOf("Running_Treadmill/0.webp"),
-                                equipment = Equipment.OTHER,
-                                category = Category.CARDIO
+                    typeOfEdit = false,
+                        exercisesWithSets = persistentListOf(
+                            UiExerciseWithSets(
+                                exercise = UiExercise(setMode = SetMode.DURATION, restTime = 60),
+                                exerciseDC = UiExerciseDC(
+                                    name = "Running, Treadmill",
+                                    images = persistentListOf("Running_Treadmill/0.webp"),
+                                    equipment = org.nexc.core.enums.exercise.Equipment.OTHER,
+                                    category = org.nexc.core.enums.exercise.Category.CARDIO
+                                ),
+                                sets = persistentListOf(UiSet(elapsedTime = 600))
                             ),
-                            sets = persistentListOf(UiSet(elapsedTime = 600))
-                        ),
-                        UiExerciseWithSets(
-                            exercise = UiExercise(setMode = SetMode.LOAD, restTime = 120),
-                            exerciseDC = UiExerciseDC(
-                                name = "Barbell Bench Press - Medium Grip",
-                                images = persistentListOf("Barbell_Bench_Press_-_Medium_Grip/0.webp"),
-                                equipment = Equipment.MACHINE,
-                                category = Category.STRENGTH
-                            ),
-                            sets = persistentListOf(
-                                UiSet(load = 80.0, reps = 8),
-                                UiSet(load = 80.0, reps = 8),
-                                UiSet(load = 80.0, reps = 9)
+                            UiExerciseWithSets(
+                                exercise = UiExercise(setMode = SetMode.LOAD, restTime = 120),
+                                exerciseDC = UiExerciseDC(
+                                    name = "Barbell Bench Press - Medium Grip",
+                                    images = persistentListOf("Barbell_Bench_Press_-_Medium_Grip/0.webp"),
+                                    equipment = org.nexc.core.enums.exercise.Equipment.MACHINE,
+                                    category = org.nexc.core.enums.exercise.Category.STRENGTH
+                                ),
+                                sets = persistentListOf(
+                                    UiSet(load = 80.0, reps = 8),
+                                    UiSet(load = 80.0, reps = 8),
+                                    UiSet(load = 80.0, reps = 9)
+                                )
                             )
-                        )
-                    ),
-                    workout = UiWorkout(title = "🏋 Upper body"),
-                    isTitleTooLong = false,
-                    isTitleEmpty = false,
-                    updateTitle = { _ -> },
-                    updateNotes = { _ -> },
-                    addSetToExercise = { _ -> },
-                    deleteExercise = { _ -> },
-                    deleteSet = { _ -> },
-                    saveWorkoutWithExercisesInDB = { },
-                    updateExerciseNotes = { _, _ -> },
-                    updateExerciseRestTime = { _, _ -> },
-                    updateExerciseSetMode = { _, _ -> },
-                    moveExercise = { _, _ -> },
-                    updateSetTime = { _, _ -> },
-                    updateSetReps = { _, _ -> },
-                    updateSetLoad = { _, _ -> },
-                    updateSetCompleted = { _, _ -> },
-                    showRpe = false,
-                    updateSetRpe = { _, _ -> },
-                    updateSetRir = { _, _ -> },
-                    intensityScale = org.nexc.core.enums.userPreferences.IntensityScale.RPE,
-                    onSupersetToggle = { },
-                    moveExercise = { _, _ -> },
-                    onReplace = { }
-                )
+                        ),
+                        workout = UiWorkout(title = "🏋 Upper body"),
+                        isTitleTooLong = false,
+                        isTitleEmpty = false,
+                        updateTitle = { _: String -> },
+                        updateNotes = { _: String -> },
+                        addSetToExercise = { _: Long -> },
+                        deleteExercise = { _: Long -> },
+                        deleteSet = { _: Long -> },
+                        saveWorkoutWithExercisesInDB = { },
+                        updateExerciseNotes = { _: String, _: Long -> },
+                        updateExerciseRestTime = { _: Int, _: Long -> },
+                        updateExerciseSetMode = { _: SetMode, _: Long -> },
+                        moveExercise = { _: Int, _: Int -> },
+                        updateSetTime = { _: Int, _: Long -> },
+                        updateSetReps = { _: Int, _: Long -> },
+                        updateSetLoad = { _: Double, _: Long -> },
+                        updateSetCompleted = { _: Boolean, _: Long -> },
+                        showRpe = false,
+                        updateSetRpe = { _: String, _: Long -> },
+                        updateSetRir = { _: String, _: Long -> },
+                        intensityScale = org.nexc.core.enums.userPreferences.IntensityScale.RPE,
+                        onSupersetToggle = { _: Long -> },
+                        onReplace = { _: Long -> }
+                    )
+                }
             }
-        }
     }
 }

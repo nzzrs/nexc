@@ -18,14 +18,9 @@ fun Exercise.toUi(): UiExercise {
         notes = this.notes,
         setMode = this.setMode,
         restTime = this.restTime,
-<<<<<<< HEAD:app/src/main/java/org/nexc/core/models/mappers/UiExerciseMapper.kt
         supersetId = this.supersetId,
         workoutId = this.workoutId,
         position = this.position
-=======
-        position = this.position,
-        workoutId = this.workoutId
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/models/mappers/UiExerciseMapper.kt
     )
 }
 
@@ -36,13 +31,8 @@ fun UiExercise.toEntity(): Exercise {
         notes = this.notes,
         setMode = this.setMode,
         restTime = this.restTime,
-<<<<<<< HEAD:app/src/main/java/org/nexc/core/models/mappers/UiExerciseMapper.kt
         supersetId = this.supersetId,
         workoutId = this.workoutId,
         position = this.position
-=======
-        position = this.position,
-        workoutId = this.workoutId
->>>>>>> fork/main:app/src/main/java/org/librefit/ui/models/mappers/UiExerciseMapper.kt
     )
 }

@@ -1,0 +1,108 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by net.rubygrapefruit.platform.internal.NativeLibraryLoader in an unnamed module (file:/home/nzrs/.gradle/wrapper/dists/gradle-9.3.1-bin/23ovyewtku6u96viwx3xl3oks/gradle-9.3.1/lib/native-platform-0.22-milestone-29.jar)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+> Task :app:preBuild UP-TO-DATE
+> Task :app:preReleaseBuild UP-TO-DATE
+> Task :app:generateReleaseBuildConfig UP-TO-DATE
+> Task :app:generateReleaseResources UP-TO-DATE
+> Task :app:prepareLibraryDefinitionsRelease UP-TO-DATE
+> Task :app:packageReleaseResources UP-TO-DATE
+> Task :app:processReleaseNavigationResources UP-TO-DATE
+> Task :app:parseReleaseLocalResources UP-TO-DATE
+> Task :app:generateReleaseRFile UP-TO-DATE
+> Task :app:kspReleaseKotlin UP-TO-DATE
+> Task :app:compileReleaseKotlin
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/di/DatabaseModule.kt:38:40 Unresolved reference 'MIGRATION_2_3'.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:11:10 Unresolved reference 'UiExerciseWithSets'.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:11:70 Unresolved reference 'UiExerciseWithSets'.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:12:12 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:12:12 Cannot infer type for type parameter 'R'. Specify it explicitly.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:12:12 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T, R> Iterable<T>.mapIndexed(transform: (Int, T) -> R): List<R>
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:12:32 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:13:26 Unresolved reference 'copy'.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:13:59 Unresolved reference 'exercise'.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:17:10 Unresolved reference 'UiExerciseWithSets'.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:17:79 Unresolved reference 'UiExerciseWithSets'.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:20:12 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:20:12 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun <T> Collection<T>.toMutableList(): MutableList<T>
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:21:10 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:21:16 Cannot infer type for type parameter 'T'. Specify it explicitly.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:22:13 Unresolved reference 'add'.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/core/models/ExerciseOrder.kt:22:26 Unresolved reference 'removeAt'.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreen.kt:318:21 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun SharedTransitionScope.ExerciseCard(modifier: Modifier = ..., animatedVisibilityScope: AnimatedVisibilityScope, exerciseWithSets: UiExerciseWithSets, previousPerformances: List<PreviousPerformanceSet>? = ..., workout: Boolean = ..., idSetWithRunningStopwatch: Long? = ..., addSet: (Long) -> Unit, onDetail: (Long, String) -> Unit, onDelete: (Long) -> Unit, isCollapsed: Boolean = ..., dragHandleModifier: Modifier = ..., isDragging: Boolean, onReorderRequest: () -> Unit, deleteSet: (Long) -> Unit, updateExerciseNotes: (String, Long) -> Unit, updateExerciseRestTime: (Int, Long) -> Unit, updateExerciseSetMode: (SetMode, Long) -> Unit, updateSetTime: (Int, Long) -> Unit, updateSetReps: (Int, Long) -> Unit, updateSetLoad: (Double, Long) -> Unit, updateSetCompleted: (Boolean, Long) -> Unit, showInfo: (InfoMode) -> Unit, showRpe: Boolean = ..., intensityScale: IntensityScale = ..., updateSetRpe: (String, Long) -> Unit = ..., updateSetRir: (String, Long) -> Unit = ..., updateIdSetWithRunningStopwatch: (Long?) -> Unit = ..., applyPreviousSetPerformance: (Long) -> Unit = ..., onSupersetToggle: (Long) -> Unit = ..., onReplace: (Long) -> Unit = ..., onMoveUp: (Long) -> Unit = ..., onMoveDown: (Long) -> Unit = ..., isFirst: Boolean = ..., isLast: Boolean = ..., supersetLabel: String? = ..., supersetColor: Color? = ...): Unit
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreenViewModel.kt:83:33 None of the following candidates is applicable:
+
+fun ExerciseDC.toUi(): UiExerciseDC:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun ExerciseDC.toUi(): UiExerciseDC
+
+fun Exercise.toUi(): UiExercise:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun Exercise.toUi(): UiExercise
+
+fun ExerciseWithSets.toUi(): UiExerciseWithSets:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun ExerciseWithSets.toUi(): UiExerciseWithSets
+
+fun Set.toUi(): UiSet:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun Set.toUi(): UiSet
+
+fun Workout.toUi(): UiWorkout:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun Workout.toUi(): UiWorkout
+
+fun WorkoutWithExercisesAndSets.toUi(): UiWorkoutWithExercisesAndSets:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun WorkoutWithExercisesAndSets.toUi(): UiWorkoutWithExercisesAndSets
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreenViewModel.kt:83:40 Unresolved reference 'copy'.
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/editWorkout/EditWorkoutScreenViewModel.kt:87:76 None of the following candidates is applicable:
+
+fun ExerciseDC.toUi(): UiExerciseDC:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun ExerciseDC.toUi(): UiExerciseDC
+
+fun Exercise.toUi(): UiExercise:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun Exercise.toUi(): UiExercise
+
+fun ExerciseWithSets.toUi(): UiExerciseWithSets:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun ExerciseWithSets.toUi(): UiExerciseWithSets
+
+fun Set.toUi(): UiSet:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun Set.toUi(): UiSet
+
+fun Workout.toUi(): UiWorkout:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun Workout.toUi(): UiWorkout
+
+fun WorkoutWithExercisesAndSets.toUi(): UiWorkoutWithExercisesAndSets:
+  Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun WorkoutWithExercisesAndSets.toUi(): UiWorkoutWithExercisesAndSets
+e: file:///home/nzrs/Projects/LibreFit/app/src/main/java/org/nexc/features/workout/WorkoutScreen.kt:457:17 Unresolved reference. None of the following candidates is applicable because of a receiver type mismatch:
+fun SharedTransitionScope.ExerciseCard(modifier: Modifier = ..., animatedVisibilityScope: AnimatedVisibilityScope, exerciseWithSets: UiExerciseWithSets, previousPerformances: List<PreviousPerformanceSet>? = ..., workout: Boolean = ..., idSetWithRunningStopwatch: Long? = ..., addSet: (Long) -> Unit, onDetail: (Long, String) -> Unit, onDelete: (Long) -> Unit, isCollapsed: Boolean = ..., dragHandleModifier: Modifier = ..., isDragging: Boolean, onReorderRequest: () -> Unit, deleteSet: (Long) -> Unit, updateExerciseNotes: (String, Long) -> Unit, updateExerciseRestTime: (Int, Long) -> Unit, updateExerciseSetMode: (SetMode, Long) -> Unit, updateSetTime: (Int, Long) -> Unit, updateSetReps: (Int, Long) -> Unit, updateSetLoad: (Double, Long) -> Unit, updateSetCompleted: (Boolean, Long) -> Unit, showInfo: (InfoMode) -> Unit, showRpe: Boolean = ..., intensityScale: IntensityScale = ..., updateSetRpe: (String, Long) -> Unit = ..., updateSetRir: (String, Long) -> Unit = ..., updateIdSetWithRunningStopwatch: (Long?) -> Unit = ..., applyPreviousSetPerformance: (Long) -> Unit = ..., onSupersetToggle: (Long) -> Unit = ..., onReplace: (Long) -> Unit = ..., onMoveUp: (Long) -> Unit = ..., onMoveDown: (Long) -> Unit = ..., isFirst: Boolean = ..., isLast: Boolean = ..., supersetLabel: String? = ..., supersetColor: Color? = ...): Unit
+
+> Task :app:compileReleaseKotlin FAILED
+
+FAILURE: Build failed with an exception.
+
+* What went wrong:
+Execution failed for task ':app:compileReleaseKotlin'.
+> A failure occurred while executing org.jetbrains.kotlin.compilerRunner.GradleCompilerRunnerWithWorkers$GradleKotlinCompilerWorkAction
+   > Compilation error. See log for more details
+
+* Try:
+> Run with --stacktrace option to get the stack trace.
+> Run with --info or --debug option to get more log output.
+> Run with --scan to get full insights from a Build Scan (powered by Develocity).
+> Get more help at https://help.gradle.org.
+
+BUILD FAILED in 33s
+9 actionable tasks: 1 executed, 8 up-to-date

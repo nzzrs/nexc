@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  ~ Copyright (c) 2024-2026. The Nexc Contributors
+  ~
+  ~ Nexc is subject to additional terms covering author attribution and trademark usage;
+  ~ see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
+  -->
+
 <resources>
     <string name="home">首页</string>
     <string name="profile">我的</string>
@@ -7,35 +15,35 @@
     <string name="add_exercise">添加训练</string>
     <string name="more_options">更多操作</string>
     <string name="navigate_back">回到上一屏</string>
-    <string name="library">资料库</string>
     <string name="copy">复制</string>
-    <string name="donate">捐赠</string>
-    <string name="contribute">贡献</string>
-    <string name="founder">创始人</string>
-    <string name="translators">翻译者</string>
-    <string name="version">版本</string>
-    <string name="dependencies">依赖</string>
+    <string name="info">信息</string>
     <string name="privacy_policy">隐私政策</string>
-    <string name="privacy_policy_desc">LibreFit 无法访问网络。这意味着用户数据始终保存在该设备中。</string>
-    <string name="website">网站</string>
+    <string name="privacy_policy_desc">Nexc 无法访问网络。这意味着用户数据始终保存在该设备中。</string>
     <string name="source_code">源代码</string>
     <string name="license">授权协议</string>
-    <string name="license_desc">LibreFit 采用 GNU 通用公共许可证第 3.0 版（GPL-3）授权。</string>
-    <string name="info">信息</string>
+    <string name="license_desc">Nexc 采用 GNU 通用公共许可证第 3.0 版（GPL-3）授权。</string>
+    <string name="version">版本</string>
+    <string name="dependencies">依赖</string>
+    <string name="set">组</string>
+    <string name="reps">次</string>
+    <string name="bodyweight">自重</string>
     <string name="add_set">添加组数</string>
     <string name="notes">备注</string>
     <string name="title_cannot_be_empty">标题不能为空</string>
     <string name="title_length_exceeded_30">标题不能多于 30 个字符</string>
     <string name="edit_routine">编辑训练计划</string>
     <string name="quit_routine_creation_question">放弃新建训练计划？</string>
-    <string name="year">年</string>
-    <string name="years">年</string>
+    <string name="mechanic">动作机制</string>
+    <string name="equipment">器械</string>
+    <string name="category">分类</string>
+    <string name="most_reps">最多次数</string>
     <string name="nothing_to_show">暂无数据展示</string>
+    <string name="min">分</string>
     <string name="month">月</string>
     <string name="months">月</string>
+    <string name="year">年</string>
+    <string name="years">年</string>
     <string name="welcome_to">欢迎来到</string>
-    <string name="add">添加</string>
-    <string name="support_project">支持该项目</string>
     <string name="rest">休息</string>
     <string name="time">时间</string>
     <string name="force_static">静态</string>
@@ -44,15 +52,12 @@
     <string name="level_beginner">新手</string>
     <string name="level_intermediate">进阶</string>
     <string name="level_expert">老手</string>
-    <string name="mechanic">动作机制</string>
-    <string name="equipment">器械</string>
-    <string name="category">分类</string>
+    <string name="mechanic_isolation">孤立动作</string>
     <string name="mechanic_compound">复合动作</string>
     <string name="equipment_medicine_ball">药球</string>
     <string name="equipment_body_only">自重</string>
-    <string name="mechanic_isolation">孤立动作</string>
-    <string name="muscle_abductors">外展肌</string>
     <string name="muscle_abdominals">腹肌</string>
+    <string name="muscle_abductors">外展肌</string>
     <string name="muscle_adductors">内收肌</string>
     <string name="muscle_biceps">肱二头肌</string>
     <string name="muscle_calves">小腿肌群</string>
@@ -68,4 +73,9 @@
     <string name="muscle_shoulders">肩部</string>
     <string name="muscle_traps">斜方肌</string>
     <string name="muscle_triceps">肱三头肌</string>
+    <string name="delete">删除</string>
+    <string name="seconds">秒</string>
+    <string name="done">完成</string>
+    <string name="menu">菜单</string>
+    <string name="add">添加</string>
 </resources>

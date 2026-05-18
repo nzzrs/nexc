@@ -1,4 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  ~ Copyright (c) 2024-2026. The Nexc Contributors
+  ~
+  ~ Nexc is subject to additional terms covering author attribution and trademark usage;
+  ~ see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
+  -->
+
 <resources>
     <string name="app_name">Nexc</string>
     <string name="home">Home</string>
@@ -8,20 +16,14 @@
     <string name="add_exercise">Oefening toevoegen</string>
     <string name="more_options">Meer opties</string>
     <string name="navigate_back">Terug naar vorige scherm</string>
-    <string name="library">Bibliotheek</string>
     <string name="open">Openen</string>
     <string name="copy">Kopieer</string>
     <string name="info">Informatie</string>
     <string name="privacy_policy">Privacybeleid</string>
     <string name="privacy_policy_desc">Nexc heeft geen internettoegang. Dit betekent dat jouw data je apparaat niet verlaat.</string>
-    <string name="website">Website</string>
     <string name="source_code">Broncode</string>
     <string name="license">Licentie</string>
     <string name="license_desc">Nexc valt onder de GNU General Public License v3.0 (GPL-3).</string>
-    <string name="contributors">Bijdragers</string>
-    <string name="founder">Grondlegger</string>
-    <string name="translators">Vertalers</string>
-    <string name="contributed_to">Bijgedragen aan:</string>
     <string name="view_online_version">Toon online versie</string>
     <string name="version">Versie</string>
     <string name="dependencies">Afhankelijkheden</string>
@@ -127,7 +129,6 @@
     <string name="dont_ask_again">Vraag niet opnieuw</string>
     <string name="skip_for_now">Voor nu overslaan</string>
     <string name="label_continue">Verder</string>
-    <string name="coming_soon">Komt binnenkort</string>
     <string name="your_workouts">Jouw workouts</string>
     <string name="finished_on">Beëindigd op</string>
     <string name="duration">Duur</string>
@@ -189,19 +190,7 @@
     <string name="workout_saved">Workout opgeslagen</string>
     <string name="routine_saved">Routine opgeslagen</string>
     <string name="nexc_made_by_you">is met ❤ gemaakt\n voor jou, door mensen zoals jij</string>
-    <string name="create_exercises">Aanmaken van Oefeningen</string>
-    <string name="companion_app_desc">Installeer gewoon de partner-app en klik op de onderstaande knop.</string>
-    <string name="verify_companion_app">Controleer op de partner-app</string>
-    <string name="status">Status</string>
-    <string name="verify_companion_or_code">Verifieer via de partner-app of de code.</string>
     <string name="exercise_saved">Oefening opgeslagen</string>
-    <string name="valid_companion_app_signature">Geldige partner-app</string>
-    <string name="invalid_companion_app_signature">Ongeldige partner-app</string>
-    <string name="nexc_app_not_found">Nexc niet gevonden</string>
-    <string name="nexc_signature_error">Nexc handtekening fout</string>
-    <string name="companion_app_not_found">Partner-app niet gevonden</string>
-    <string name="companion_signature_error">Partner-app handtekening fout</string>
-    <string name="unknown_error">Onbekende fout</string>
     <string name="lets_build">Laten we</string>
     <string name="together">samen bouwen</string>
     <string name="step">Stap</string>

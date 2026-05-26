@@ -3,50 +3,65 @@
 <img src="assets/logo.svg" alt="Nexc Logo" style="width: 256px">
 
 # Nexc
-### Private & Minimalist Workout Tracker
+### The Ultimate Private & Minimalist Workout Tracker
 
-Nexc is a high-performance, privacy-first workout tracker built for efficiency.  
-No cloud, no accounts, no tracking — just your data, on your device.
+Nexc is a high-performance, privacy-first workout tracker designed for serious training without the noise.  
+Built for efficiency, it keeps your data where it belongs: on your device.
+
+[**Download Latest APK**](https://github.com/nzzrs/nexc/releases/latest)
 
 </div>
 
 ---
 
-## 🚀 Features
+## ⚡ Why Nexc?
 
-- **Offline-First**: Log workouts anytime, anywhere — no internet required.
-- **Privacy Core**: All data stored locally with SQLite. Zero telemetry.
-- **Extensive Library**: 800+ exercises with categorized data and instructions.
-- **Custom Routines**: Create and manage personalized training templates.
-- **Superset Support**: Link exercises into supersets during active workouts.
-- **Intensity Tracking**: RPE / RIR support per set.
-- **Exercise Management**: Replace or reorder exercises mid-session.
-- **Visual Progress**: Performance charts and volume tracking.
-- **Modern UI**: Built with Jetpack Compose and Material Design 3.
+Nexc is built for those who want a powerful training log without cloud-sync delays, intrusive tracking, or subscription models. It combines a massive exercise database with a fluid, modern interface.
 
-## 🛠️ Building from Source
+### 🛡️ Privacy by Design
+- **Offline-First**: Log workouts in the basement gym or deep in the mountains. No internet required.
+- **Zero Tracking**: No telemetry, no accounts, no ads. Just your progress.
+- **Local Storage**: Your data stays on your device in an encrypted SQLite database.
 
-Requires Android Studio and a recent Android SDK.
+### 🏋️ Pro Training Features
+- **Massive Library**: 800+ built-in exercises with high-quality instructions and categories.
+- **Intelligent Logging**: RPE (Rate of Perceived Exertion) and RIR (Reps in Reserve) support for auto-regulation.
+- **Dynamic Workouts**: Swap exercises or link them into **Supersets** on the fly during your session.
+- **Visual Analytics**: Track your volume and performance trends with interactive charts.
+- **Material 3 Expressive**: A stunning, fluid interface designed for the latest Android standards.
 
-1. **Clone**:
+---
+
+## 🛠️ Build & Development
+
+Nexc is built with Kotlin and Jetpack Compose.
+
+### Prerequisites
+- Android Studio Ladybug+
+- Android SDK 35+
+- JDK 21
+
+### Getting Started
+1. **Clone the repository**:
    ```bash
    git clone https://github.com/nzzrs/nexc.git
    ```
-2. **Open** the root directory in Android Studio.
-3. **Sync Gradle** — dependencies download automatically.
-4. **Run** on a device or emulator:
+2. **Open** in Android Studio.
+3. **Build and Run**:
    ```bash
    ./gradlew assembleDebug
    ```
-   Or generate a release APK:
-   ```bash
-   ./gradlew assembleRelease
-   ```
 
-## ⚖️ License
+---
 
-Nexc is a fork of [LibreFit](https://github.com/LibreFitOrg/LibreFit), licensed under the
-[GNU General Public License v3.0 (GPL-3)](COPYING).
+## ⚖️ License & Attribution
 
-You are free to use, modify, and distribute the code under the same license.  
-You must share changes under GPLv3 and clearly mark modifications as your own.
+Nexc is a fork of [LibreFit](https://github.com/LibreFitOrg/LibreFit). We are proud to build upon the foundation of the open-source community.
+
+Distributed under the **GNU General Public License v3.0**.  
+See [COPYING](COPYING) for full license text.
+
+---
+<div align="center">
+Made with ❤️ for the fitness community.
+</div>

@@ -26,6 +26,8 @@ import org.nexc.MainDispatcherRule
 import org.nexc.core.db.repository.UserPreferencesRepository
 import org.nexc.core.enums.userPreferences.Language
 import org.nexc.core.enums.userPreferences.ThemeMode
+import org.nexc.core.enums.userPreferences.OneRepMaxFormula
+import org.nexc.core.enums.userPreferences.IntensityScale
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class SettingsScreenViewModelTest {
@@ -45,8 +47,12 @@ class SettingsScreenViewModelTest {
     private lateinit var keepScreenOn: MutableStateFlow<Boolean>
     private lateinit var materialModeOn: MutableStateFlow<Boolean>
     private lateinit var restTimerSoundOn: MutableStateFlow<Boolean>
-    private lateinit var isSupporter: MutableStateFlow<Boolean>
     private lateinit var isWorkoutHeaderSticky: MutableStateFlow<Boolean>
+    private lateinit var oneRepMaxFormula: MutableStateFlow<OneRepMaxFormula>
+    private lateinit var sleepModeEnabled: MutableStateFlow<Boolean>
+    private lateinit var showRpe: MutableStateFlow<Boolean>
+    private lateinit var intensityScale: MutableStateFlow<IntensityScale>
+    private lateinit var restTimerVibrationOn: MutableStateFlow<Boolean>
 
     // Captured objects
     private val key = slot<Preferences.Key<Any>>()
@@ -61,8 +67,12 @@ class SettingsScreenViewModelTest {
         keepScreenOn = MutableStateFlow(true)
         materialModeOn = MutableStateFlow(false)
         restTimerSoundOn = MutableStateFlow(true)
-        isSupporter = MutableStateFlow(false)
         isWorkoutHeaderSticky = MutableStateFlow(true)
+        oneRepMaxFormula = MutableStateFlow(OneRepMaxFormula.BALANCED)
+        sleepModeEnabled = MutableStateFlow(false)
+        showRpe = MutableStateFlow(false)
+        intensityScale = MutableStateFlow(IntensityScale.RPE)
+        restTimerVibrationOn = MutableStateFlow(true)
 
         // Arrange: Tell the mock what to return when these are accessed
         every { userPreferencesRepository.language } returns language
@@ -70,8 +80,12 @@ class SettingsScreenViewModelTest {
         every { userPreferencesRepository.workoutScreenOn } returns keepScreenOn
         every { userPreferencesRepository.materialMode } returns materialModeOn
         every { userPreferencesRepository.restTimerSoundOn } returns restTimerSoundOn
-        every { userPreferencesRepository.isSupporter } returns isSupporter
         every { userPreferencesRepository.isWorkoutHeaderSticky } returns isWorkoutHeaderSticky
+        every { userPreferencesRepository.oneRepMaxFormula } returns oneRepMaxFormula
+        every { userPreferencesRepository.sleepModeEnabled } returns sleepModeEnabled
+        every { userPreferencesRepository.showRpe } returns showRpe
+        every { userPreferencesRepository.intensityScale } returns intensityScale
+        every { userPreferencesRepository.restTimerVibrationOn } returns restTimerVibrationOn
         coEvery {
             userPreferencesRepository.savePreference(
                 capture(key),
@@ -104,8 +118,28 @@ class SettingsScreenViewModelTest {
                     restTimerSoundOn.value = value as Boolean
                 }
 
-                UserPreferencesRepository.isSupporterKey -> {
-                    isSupporter.value = value as Boolean
+                UserPreferencesRepository.oneRepMaxFormulaKey -> {
+                    oneRepMaxFormula.value = checkNotNull(OneRepMaxFormula.entries.find { it.value == value }) {
+                        "Invalid formula: $value"
+                    }
+                }
+
+                UserPreferencesRepository.sleepModeKey -> {
+                    sleepModeEnabled.value = value as Boolean
+                }
+
+                UserPreferencesRepository.showRpeKey -> {
+                    showRpe.value = value as Boolean
+                }
+
+                UserPreferencesRepository.intensityScaleKey -> {
+                    intensityScale.value = checkNotNull(IntensityScale.entries.find { it.value == value }) {
+                        "Invalid scale: $value"
+                    }
+                }
+
+                UserPreferencesRepository.restTimerVibrationKey -> {
+                    restTimerVibrationOn.value = value as Boolean
                 }
 
                 else -> error("Invalid key")
@@ -141,10 +175,7 @@ class SettingsScreenViewModelTest {
         assertThat(viewModel.restTimerSoundOn.value).isTrue()
     }
 
-    @Test
-    fun `initial state - is supporter is is false`() = runTest {
-        assertThat(viewModel.isSupporter.value).isFalse()
-    }
+
 
     @Test
     fun `initial state - preferences is null`() = runTest {
@@ -308,23 +339,6 @@ class SettingsScreenViewModelTest {
 
             // Act: update preference
             viewModel.savePreference(UserPreferencesRepository.restTimerSoundKey, expected)
-
-            // Assert: update is correct
-            assertThat(awaitItem()).isEqualTo(expected)
-        }
-    }
-
-    @Test
-    fun `is supporter updates correctly`() = runTest {
-        // Arrange: set expected value
-        val expected = true
-
-        viewModel.isSupporter.test {
-            // Initial emission
-            assertThat(awaitItem()).isEqualTo(false)
-
-            // Act: update preference
-            viewModel.savePreference(UserPreferencesRepository.isSupporterKey, expected)
 
             // Assert: update is correct
             assertThat(awaitItem()).isEqualTo(expected)

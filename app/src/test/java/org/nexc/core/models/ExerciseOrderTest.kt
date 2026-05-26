@@ -1,21 +1,17 @@
 /*
  * SPDX-License-Identifier: GPL-3.0-or-later
- * Copyright (c) 2025-2026. The LibreFit Contributors
+ * Copyright (c) 2025-2026. The Nexc Contributors
  *
- * LibreFit is subject to additional terms covering author attribution and trademark usage;
+ * Nexc is subject to additional terms covering author attribution and trademark usage;
  * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
  */
 
-package org.librefit.ui.screens.editWorkout
+package org.nexc.core.models
 
 import com.google.common.truth.Truth.assertThat
 import org.junit.Test
-import org.librefit.ui.models.UiExercise
-import org.librefit.ui.models.UiExerciseWithSets
-import org.librefit.ui.models.moveExercise
-import org.librefit.ui.models.withNormalizedExercisePositions
 
-class EditWorkoutScreenViewModelTest {
+class ExerciseOrderTest {
 
     private val exercises = listOf(
         UiExerciseWithSets(exercise = UiExercise(id = 11L, position = 0)),

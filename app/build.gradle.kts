@@ -23,7 +23,7 @@ plugins {
 
 android {
     namespace = "org.nexc"
-    compileSdk = 36
+    compileSdk = 37
 
     buildFeatures {
         buildConfig = true
@@ -41,7 +41,7 @@ android {
     defaultConfig {
         applicationId = "org.nexc.app"
         minSdk = 26
-        targetSdk = 36
+        targetSdk = 37
 
         versionName = "0.1.5"
         versionCode = 10501
@@ -51,7 +51,7 @@ android {
             useSupportLibrary = true
         }
         androidResources {
-            localeFilters += listOf("en", "it", "de", "nl", "es", "cs", "zh-rCN")
+            localeFilters += listOf("en", "it", "de", "nl", "es", "cs", "zh-rCN", "hi", "ca", "gl", "fr", "ar", "uk", "pt-rBR", "pt", "in", "zh")
         }
 
         // Do not use System.currentTimeMillis()

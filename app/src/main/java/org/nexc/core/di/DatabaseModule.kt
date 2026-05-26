@@ -56,4 +56,11 @@ object DatabaseModule {
     fun provideDatasetDao(database: AppDatabase): DatasetDao {
         return database.getDatasetDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideMealDao(database: AppDatabase): org.nexc.core.db.dao.MealDao {
+        return database.getMealDao()
+    }
 }
+

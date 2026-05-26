@@ -28,12 +28,29 @@ import javax.inject.Inject
 import javax.inject.Singleton
 import kotlinx.coroutines.flow.first
 import org.nexc.core.db.repository.DatasetRepository
+import org.nexc.core.db.entity.Product
+import org.nexc.core.db.entity.Recipe
+import org.nexc.core.db.entity.RecipeIngredient
+import org.nexc.core.db.entity.MealPlan
+import org.nexc.core.db.entity.Meal
+import org.nexc.core.db.entity.MealItem
+import org.nexc.core.enums.MealPlanState
+import org.nexc.core.enums.MealItemType
+import org.nexc.core.db.relations.MealPlanWithMealsAndItems
+import org.nexc.core.db.relations.MealWithItems
+import org.nexc.core.db.relations.MealItemWithDetails
+import org.nexc.core.db.relations.RecipeWithIngredients
+import org.nexc.core.db.relations.RecipeIngredientWithProduct
+import org.nexc.core.db.repository.MealRepository
+import org.nexc.core.models.dto.MealPlanExportDTO
+import org.nexc.core.models.dto.toExportDTO
 
 @Singleton
 class BackupManager @Inject constructor(
     @ApplicationContext private val context: Context,
     private val workoutRepository: WorkoutRepository,
-    private val datasetRepository: DatasetRepository
+    private val datasetRepository: DatasetRepository,
+    private val mealRepository: MealRepository
 ) {
     private val databaseName = AppDatabase.NAME
 
@@ -157,6 +174,162 @@ class BackupManager @Inject constructor(
                 val exercises = Json.decodeFromString<List<org.nexc.core.db.entity.ExerciseDC>>(json)
                 exercises.forEach {
                     datasetRepository.upsertExercise(it.copy(isCustomExercise = true))
+                }
+            }
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
+    }
+
+    suspend fun exportMealPlans(uri: Uri) = withContext(Dispatchers.IO) {
+        val templates = mealRepository.getMealPlansWithMealsAndItemsByState(MealPlanState.TEMPLATE).first()
+        val dtos = templates.map { it.toExportDTO() }
+        val json = Json.encodeToString(dtos)
+        context.contentResolver.openOutputStream(uri)?.use { output ->
+            output.write(json.toByteArray())
+        }
+    }
+
+    suspend fun importMealPlans(uri: Uri): Boolean = withContext(Dispatchers.IO) {
+        try {
+            context.contentResolver.openInputStream(uri)?.use { input ->
+                val json = input.bufferedReader().readText()
+                val dtos = Json.decodeFromString<List<MealPlanExportDTO>>(json)
+
+                val productCache = mealRepository.getAllProducts().first().toMutableList()
+                val recipeCache = mealRepository.getAllRecipes().first().toMutableList()
+
+                dtos.forEach { dto ->
+                    val mealPlan = MealPlan(
+                        title = dto.title,
+                        notes = dto.notes,
+                        state = MealPlanState.valueOf(dto.state),
+                        created = dto.created,
+                        completed = dto.completed
+                    )
+
+                    val mealsWithItems = dto.meals.map { mealDto ->
+                        val meal = Meal(
+                            name = mealDto.name,
+                            time = mealDto.time,
+                            notes = mealDto.notes,
+                            position = mealDto.position
+                        )
+
+                        val items = mealDto.items.map { itemDto ->
+                            val itemType = MealItemType.valueOf(itemDto.type)
+                            var targetId = 0L
+
+                            if (itemType == MealItemType.PRODUCT && itemDto.product != null) {
+                                val pDto = itemDto.product
+                                var matchedProduct = productCache.find { it.name.equals(pDto.name, ignoreCase = true) }
+                                if (matchedProduct == null) {
+                                    val newProduct = Product(
+                                        name = pDto.name,
+                                        weight = pDto.weight,
+                                        cost = pDto.cost,
+                                        quantity = pDto.quantity,
+                                        units = pDto.units,
+                                        ediblePercent = pDto.ediblePercent,
+                                        edibleQtyPerUnit = pDto.edibleQtyPerUnit,
+                                        proteins = pDto.proteins,
+                                        carbs = pDto.carbs,
+                                        fats = pDto.fats,
+                                        isSupplement = pDto.isSupplement,
+                                        isPortable = pDto.isPortable
+                                    )
+                                    val insertedId = mealRepository.saveProduct(newProduct)
+                                    val productWithId = newProduct.copy(id = insertedId)
+                                    productCache.add(productWithId)
+                                    matchedProduct = productWithId
+                                }
+                                targetId = matchedProduct.id
+                            } else if (itemType == MealItemType.RECIPE && itemDto.recipe != null) {
+                                val rDto = itemDto.recipe
+                                var matchedRecipe = recipeCache.find { it.recipe.name.equals(rDto.name, ignoreCase = true) }
+                                if (matchedRecipe == null) {
+                                    val ingredientRelations = rDto.ingredients.map { ingDto ->
+                                        var ingProduct = productCache.find { it.name.equals(ingDto.product.name, ignoreCase = true) }
+                                        if (ingProduct == null) {
+                                            val newProduct = Product(
+                                                name = ingDto.product.name,
+                                                weight = ingDto.product.weight,
+                                                cost = ingDto.product.cost,
+                                                quantity = ingDto.product.quantity,
+                                                units = ingDto.product.units,
+                                                ediblePercent = ingDto.product.ediblePercent,
+                                                edibleQtyPerUnit = ingDto.product.edibleQtyPerUnit,
+                                                proteins = ingDto.product.proteins,
+                                                carbs = ingDto.product.carbs,
+                                                fats = ingDto.product.fats,
+                                                isSupplement = ingDto.product.isSupplement,
+                                                isPortable = ingDto.product.isPortable
+                                             )
+                                            val insertedId = mealRepository.saveProduct(newProduct)
+                                            val productWithId = newProduct.copy(id = insertedId)
+                                            productCache.add(productWithId)
+                                            ingProduct = productWithId
+                                        }
+                                        RecipeIngredientWithProduct(
+                                            ingredient = RecipeIngredient(
+                                                productId = ingProduct.id,
+                                                amount = ingDto.amount
+                                            ),
+                                            product = ingProduct
+                                        )
+                                    }
+
+                                    val newRecipe = Recipe(
+                                        name = rDto.name,
+                                        instructions = rDto.instructions,
+                                        isPortable = rDto.isPortable
+                                    )
+
+                                    val recipeWithIngs = RecipeWithIngredients(
+                                        recipe = newRecipe,
+                                        ingredients = ingredientRelations
+                                    )
+
+                                    val insertedId = mealRepository.saveRecipe(recipeWithIngs)
+                                    val recipeWithId = recipeWithIngs.copy(recipe = newRecipe.copy(id = insertedId))
+                                    recipeCache.add(recipeWithId)
+                                    matchedRecipe = recipeWithId
+                                }
+                                targetId = matchedRecipe.recipe.id
+                            }
+
+                            val mealItem = MealItem(
+                                type = itemType,
+                                targetId = targetId,
+                                amount = itemDto.amount,
+                                consumed = itemDto.consumed,
+                                position = itemDto.position
+                            )
+
+                            val itemProduct = productCache.find { it.id == targetId && itemType == MealItemType.PRODUCT }
+                            val itemRecipe = recipeCache.find { it.recipe.id == targetId && itemType == MealItemType.RECIPE }
+
+                            MealItemWithDetails(
+                                mealItem = mealItem,
+                                product = itemProduct,
+                                recipe = itemRecipe
+                            )
+                        }
+
+                        MealWithItems(
+                            meal = meal,
+                            items = items
+                        )
+                    }
+
+                    val mealPlanWithMeals = MealPlanWithMealsAndItems(
+                        mealPlan = mealPlan,
+                        meals = mealsWithItems
+                    )
+
+                    mealRepository.saveMealPlan(mealPlanWithMeals)
                 }
             }
             true

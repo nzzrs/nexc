@@ -377,12 +377,14 @@ fun HomeScreenPreview() {
                                     painter = painterResource(
                                         id = when (page) {
                                             MainScreenPages.HOME -> R.drawable.ic_home
+                                            MainScreenPages.MEALS -> R.drawable.ic_restaurant
                                             MainScreenPages.PROFILE -> R.drawable.ic_person
                                         }
                                     ),
                                     contentDescription = stringResource(
                                         id = when (page) {
                                             MainScreenPages.HOME -> R.string.home
+                                            MainScreenPages.MEALS -> R.string.meals
                                             MainScreenPages.PROFILE -> R.string.profile
                                         }
                                     )
@@ -393,6 +395,7 @@ fun HomeScreenPreview() {
                                     text = stringResource(
                                         id = when (page) {
                                             MainScreenPages.HOME -> R.string.home
+                                            MainScreenPages.MEALS -> R.string.meals
                                             MainScreenPages.PROFILE -> R.string.profile
                                         }
                                     )

@@ -35,6 +35,7 @@ import org.nexc.core.components.GetAppNameInAnnotatedBuilder
 import org.nexc.core.components.NexcScaffold
 import org.nexc.features.home.HomeScreen
 import org.nexc.features.profile.ProfileScreen
+import org.nexc.features.meals.MealsDashboardScreen
 
 
 @OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3ExpressiveApi::class)
@@ -95,12 +96,14 @@ fun SharedTransitionScope.MainScreen(
                                 painter = painterResource(
                                     id = when (page) {
                                         MainScreenPages.HOME -> R.drawable.ic_home
+                                        MainScreenPages.MEALS -> R.drawable.ic_restaurant
                                         MainScreenPages.PROFILE -> R.drawable.ic_person
                                     }
                                 ),
                                 contentDescription = stringResource(
                                     id = when (page) {
                                         MainScreenPages.HOME -> R.string.home
+                                        MainScreenPages.MEALS -> R.string.meals
                                         MainScreenPages.PROFILE -> R.string.profile
                                     }
                                 )
@@ -111,6 +114,7 @@ fun SharedTransitionScope.MainScreen(
                                 text = stringResource(
                                     id = when (page) {
                                         MainScreenPages.HOME -> R.string.home
+                                        MainScreenPages.MEALS -> R.string.meals
                                         MainScreenPages.PROFILE -> R.string.profile
                                     }
                                 )
@@ -128,6 +132,12 @@ fun SharedTransitionScope.MainScreen(
         ) { pageIndex ->
             when (pageIndex) {
                 MainScreenPages.HOME.ordinal -> HomeScreen(navController, animatedVisibilityScope)
+                MainScreenPages.MEALS.ordinal -> MealsDashboardScreen(
+                    onNavigateToProducts = { navController.navigate(Route.ProductsLibraryScreen) },
+                    onNavigateToRecipes = { navController.navigate(Route.RecipesLibraryScreen) },
+                    onNavigateToEditPlan = { id -> navController.navigate(Route.EditMealPlanScreen(id)) },
+                    onNavigateToTrackPlan = { id -> navController.navigate(Route.TrackMealPlanScreen(id)) }
+                )
                 MainScreenPages.PROFILE.ordinal -> ProfileScreen(navController, animatedVisibilityScope)
                 else -> error("Invalid page index in main screen: $pageIndex. Number of pages: ${pagerState.pageCount}")
             }

@@ -100,4 +100,23 @@ sealed interface Route {
     data class WorkoutScreen(
         val workoutId: Long
     ) : Route
+
+    @Serializable
+    data object MealsDashboardScreen : Route
+
+    @Serializable
+    data object ProductsLibraryScreen : Route
+
+    @Serializable
+    data object RecipesLibraryScreen : Route
+
+    @Serializable
+    data class EditMealPlanScreen(
+        val mealPlanId: Long
+    ) : Route
+
+    @Serializable
+    data class TrackMealPlanScreen(
+        val mealPlanId: Long
+    ) : Route
 }

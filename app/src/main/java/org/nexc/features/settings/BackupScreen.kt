@@ -103,6 +103,25 @@ fun BackupScreen(
         }
     )
 
+    val exportMealPlansLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.CreateDocument("application/json"),
+        onResult = { uri -> uri?.let { scope.launch { viewModel.exportMealPlans(it) } } }
+    )
+
+    val importMealPlansLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.OpenDocument(),
+        onResult = { uri ->
+            uri?.let {
+                scope.launch {
+                    val success = viewModel.importMealPlans(it)
+                    if (success) {
+                        snackbarHostState.showSnackbar(context.getString(R.string.import_success))
+                    }
+                }
+            }
+        }
+    )
+
     NexcScaffold(
         title = androidx.compose.ui.text.AnnotatedString(stringResource(R.string.backup_and_restore)),
         navigateBack = navigateBack,
@@ -139,6 +158,15 @@ fun BackupScreen(
                     description = stringResource(R.string.exercises_backup_desc),
                     onExport = { exportExercisesLauncher.launch("nexc_exercises.json") },
                     onImport = { importExercisesLauncher.launch(arrayOf("application/json")) }
+                )
+            }
+
+            item {
+                BackupSection(
+                    title = stringResource(R.string.meal_plans),
+                    description = "Import or export your meal plan templates as portable JSON files",
+                    onExport = { exportMealPlansLauncher.launch("nexc_meal_plans.json") },
+                    onImport = { importMealPlansLauncher.launch(arrayOf("application/json")) }
                 )
             }
         }

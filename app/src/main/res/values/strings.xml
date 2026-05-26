@@ -480,4 +480,34 @@
     <string name="move_down">Move down</string>
     <string name="link_superset">Link superset</string>
     <string name="unlink_superset">Unlink superset</string>
+
+    <!-- Meals / Nutrition -->
+    <string name="meals">Meals</string>
+    <string name="products">Products</string>
+    <string name="recipes">Recipes</string>
+    <string name="meal_plans">Meal Plans</string>
+    <string name="track_meals">Track Meals</string>
+    <string name="create_meal_plan">Create Meal Plan</string>
+    <string name="add_meal">Add Meal</string>
+    <string name="meal_name">Meal Name</string>
+    <string name="proteins_g">Proteins (g)</string>
+    <string name="carbs_g">Carbs (g)</string>
+    <string name="fats_g">Fats (g)</string>
+    <string name="cost">Cost</string>
+    <string name="edible_percentage">Edible %</string>
+    <string name="supplement">Supplement</string>
+    <string name="is_supplement">Is Supplement?</string>
+    <string name="is_portable">Is Portable?</string>
+    <string name="portable">Portable</string>
+    <string name="not_portable">Not Portable</string>
+    <string name="process">Process/Instructions</string>
+    <string name="composition">Composition</string>
+    <string name="add_product">Add Product</string>
+    <string name="add_recipe">Add Recipe</string>
+    <string name="consumed">Consumed</string>
+    <string name="import_meal_plans">Import Meal Plans</string>
+    <string name="export_meal_plans">Export Meal Plans</string>
+    <string name="no_meal_plans">No meal plans found. Import or create one!</string>
+    <string name="no_products">No products in your library yet.</string>
+    <string name="no_recipes">No recipes in your library yet.</string>
 </resources>

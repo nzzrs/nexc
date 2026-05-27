@@ -67,5 +67,5 @@ jobs:
         if: success()
         uses: actions/upload-artifact@v4
         with:
-          name: Nexc-debug.apk
-          path: app/build/outputs/apk/debug/Nexc-debug.apk
+          name: LibreFit-debug.apk
+          path: app/build/outputs/apk/debug/LibreFit-debug.apk

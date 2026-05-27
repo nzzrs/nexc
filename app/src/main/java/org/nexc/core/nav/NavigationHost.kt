@@ -192,8 +192,6 @@ fun NavigationHost() {
             }
             composable<Route.MealsDashboardScreen> {
                 MealsDashboardScreen(
-                    onNavigateToProducts = { navController.navigate(Route.ProductsLibraryScreen) },
-                    onNavigateToRecipes = { navController.navigate(Route.RecipesLibraryScreen) },
                     onNavigateToEditPlan = { id -> navController.navigate(Route.EditMealPlanScreen(id)) },
                     onNavigateToTrackPlan = { id -> navController.navigate(Route.TrackMealPlanScreen(id)) }
                 )

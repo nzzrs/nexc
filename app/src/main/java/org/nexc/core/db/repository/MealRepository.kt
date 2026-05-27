@@ -90,7 +90,7 @@ class MealRepository @Inject constructor(
         val arroz = Product(id = 10005L, name = "Cooked Rice", weight = 1000.0, cost = 1.50, quantity = 3, units = "g", ediblePercent = 1.0, edibleQtyPerUnit = 0.0, proteins = 2.7, carbs = 28.0, fats = 0.3, isSupplement = false)
         val platano = Product(id = 10006L, name = "Banana", weight = 150.0, cost = 0.30, quantity = 6, units = "g", ediblePercent = 0.65, edibleQtyPerUnit = 97.5, proteins = 1.1, carbs = 22.8, fats = 0.3, isSupplement = false)
         val huevo = Product(id = 10007L, name = "Whole Eggs", weight = 60.0, cost = 0.15, quantity = 30, units = "unit", ediblePercent = 0.88, edibleQtyPerUnit = 52.8, proteins = 13.0, carbs = 1.1, fats = 11.0, isSupplement = false)
-        val espinaca = Product(id = 10008L, name = "Fresh Spinach", weight = 250.0, cost = 1.20, quantity = 1, units = "g", ediblePercent = 0.95, edibleQtyPerUnit = 0.0, proteins = 2.9, carbs = 3.6, fats = 0.4, isSupplement = false)
+        val espinaca = Product(id = 10008L, name = "Fresh Spinach", weight = 250.0, cost = 1.20, quantity = 1, units = "g", ediblePercent = 0.95, edibleQtyPerUnit = 0.0, proteins = 2.9, carbs = 3.6, fats = 0.4, isSupplement = false, isPortable = false)
         val salmon = Product(id = 10009L, name = "Grilled Salmon", weight = 200.0, cost = 6.00, quantity = 2, units = "g", ediblePercent = 1.0, edibleQtyPerUnit = 0.0, proteins = 25.0, carbs = 0.0, fats = 13.0, isSupplement = false, isPortable = false)
 
         mealDao.insertProduct(leche)

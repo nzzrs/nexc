@@ -133,8 +133,6 @@ fun SharedTransitionScope.MainScreen(
             when (pageIndex) {
                 MainScreenPages.HOME.ordinal -> HomeScreen(navController, animatedVisibilityScope)
                 MainScreenPages.MEALS.ordinal -> MealsDashboardScreen(
-                    onNavigateToProducts = { navController.navigate(Route.ProductsLibraryScreen) },
-                    onNavigateToRecipes = { navController.navigate(Route.RecipesLibraryScreen) },
                     onNavigateToEditPlan = { id -> navController.navigate(Route.EditMealPlanScreen(id)) },
                     onNavigateToTrackPlan = { id -> navController.navigate(Route.TrackMealPlanScreen(id)) }
                 )

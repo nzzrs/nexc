@@ -155,7 +155,7 @@ fun NexcScaffold(
                                                 )
                                             }
                                         }
-                                        if (description != null) {
+                                        if (description != null && icon == null) {
                                             Button(
                                                 modifier = interactionSources.getOrNull(index)
                                                     ?.let { Modifier.animateWidth(it) }

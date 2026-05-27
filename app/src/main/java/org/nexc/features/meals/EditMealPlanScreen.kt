@@ -83,7 +83,7 @@ fun EditMealPlanScreen(
             }
 
             item {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(24.dp))
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceBetween,
@@ -94,12 +94,15 @@ fun EditMealPlanScreen(
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
-                    NexcButton(
-                        text = stringResource(R.string.add_meal),
-                        icon = painterResource(R.drawable.ic_add),
-                        elevated = false,
-                        onClick = { showAddMealDialog = true }
-                    )
+                    Spacer(modifier = Modifier.width(16.dp))
+                    OutlinedButton(
+                        onClick = { showAddMealDialog = true },
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 4.dp)
+                    ) {
+                        Icon(painter = painterResource(R.drawable.ic_add), contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text(stringResource(R.string.add_meal), style = MaterialTheme.typography.labelMedium)
+                    }
                 }
             }
 
@@ -108,7 +111,8 @@ fun EditMealPlanScreen(
                     mealWithItems = mealWithItems,
                     onDeleteMeal = { viewModel.deleteMeal(mealWithItems.meal.id) },
                     onAddItemClick = { showAddItemForMealId = mealWithItems.meal.id },
-                    onDeleteItem = { itemId -> viewModel.deleteMealItem(mealWithItems.meal.id, itemId) }
+                    onDeleteItem = { itemId -> viewModel.deleteMealItem(mealWithItems.meal.id, itemId) },
+                    onReplaceItem = { oldItemId -> showAddItemForMealId = mealWithItems.meal.id; viewModel.deleteMealItem(mealWithItems.meal.id, oldItemId) }
                 )
             }
         }
@@ -142,7 +146,8 @@ fun MealEditCard(
     mealWithItems: MealWithItems,
     onDeleteMeal: () -> Unit,
     onAddItemClick: () -> Unit,
-    onDeleteItem: (Long) -> Unit
+    onDeleteItem: (Long) -> Unit,
+    onReplaceItem: (Long) -> Unit = {}
 ) {
     val meal = mealWithItems.meal
     val timeFormatter = remember { DateTimeFormatter.ofPattern("HH:mm") }
@@ -197,6 +202,8 @@ fun MealEditCard(
 
             // Meal Items List
             mealWithItems.items.forEach { detail ->
+                var showItemMenu by remember { mutableStateOf(false) }
+
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -212,16 +219,50 @@ fun MealEditCard(
 
                     Text(
                         text = "$name: ${detail.mealItem.amount}g/units",
-                        style = MaterialTheme.typography.bodyMedium
+                        style = MaterialTheme.typography.bodyMedium,
+                        modifier = Modifier.weight(1f)
                     )
 
-                    IconButton(onClick = { onDeleteItem(detail.mealItem.id) }) {
-                        Icon(
-                            painter = painterResource(R.drawable.ic_delete),
-                            contentDescription = "Delete item",
-                            tint = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.size(20.dp)
-                        )
+                    Box {
+                        IconButton(onClick = { showItemMenu = true }) {
+                            Icon(
+                                painter = painterResource(R.drawable.ic_more_vert),
+                                contentDescription = "Options",
+                                modifier = Modifier.size(20.dp)
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showItemMenu,
+                            onDismissRequest = { showItemMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Replace") },
+                                onClick = {
+                                    showItemMenu = false
+                                    onReplaceItem(detail.mealItem.id)
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_reorder),
+                                        contentDescription = null
+                                    )
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Delete") },
+                                onClick = {
+                                    showItemMenu = false
+                                    onDeleteItem(detail.mealItem.id)
+                                },
+                                leadingIcon = {
+                                    Icon(
+                                        painter = painterResource(R.drawable.ic_delete),
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.error
+                                    )
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -331,8 +372,12 @@ fun AddMealItemDialog(
     var selectedProductId by remember { mutableStateOf<Long?>(null) }
     var selectedRecipeId by remember { mutableStateOf<Long?>(null) }
     var amountString by remember { mutableStateOf("") }
+    var searchQuery by remember { mutableStateOf("") }
 
     var dropdownExpanded by remember { mutableStateOf(false) }
+
+    val filteredProducts = if (searchQuery.isBlank()) products else products.filter { it.name.contains(searchQuery, ignoreCase = true) }
+    val filteredRecipes = if (searchQuery.isBlank()) recipes else recipes.filter { it.recipe.name.contains(searchQuery, ignoreCase = true) }
 
     val nameToShow = if (type == MealItemType.PRODUCT) {
         products.find { it.id == selectedProductId }?.name ?: "Select Product"
@@ -362,7 +407,25 @@ fun AddMealItemDialog(
                     )
                 }
 
-                // Dropdown selector
+                // Search + Dropdown selector
+                OutlinedTextField(
+                    value = searchQuery,
+                    onValueChange = {
+                        searchQuery = it
+                        dropdownExpanded = true
+                    },
+                    label = { Text("Search") },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    trailingIcon = {
+                        if (searchQuery.isNotEmpty()) {
+                            IconButton(onClick = { searchQuery = "" }) {
+                                Icon(painter = painterResource(R.drawable.ic_close), contentDescription = "Clear")
+                            }
+                        }
+                    }
+                )
+
                 Box(modifier = Modifier.fillMaxWidth()) {
                     OutlinedButton(
                         onClick = { dropdownExpanded = true },
@@ -376,23 +439,39 @@ fun AddMealItemDialog(
                         onDismissRequest = { dropdownExpanded = false }
                     ) {
                         if (type == MealItemType.PRODUCT) {
-                            products.forEach { prod ->
+                            filteredProducts.forEach { prod ->
                                 DropdownMenuItem(
                                     text = { Text(prod.name) },
                                     onClick = {
                                         selectedProductId = prod.id
+                                        searchQuery = prod.name
                                         dropdownExpanded = false
                                     }
                                 )
                             }
+                            if (filteredProducts.isEmpty()) {
+                                DropdownMenuItem(
+                                    text = { Text("No results", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                                    onClick = {},
+                                    enabled = false
+                                )
+                            }
                         } else {
-                            recipes.forEach { rec ->
+                            filteredRecipes.forEach { rec ->
                                 DropdownMenuItem(
                                     text = { Text(rec.recipe.name) },
                                     onClick = {
                                         selectedRecipeId = rec.recipe.id
+                                        searchQuery = rec.recipe.name
                                         dropdownExpanded = false
                                     }
+                                )
+                            }
+                            if (filteredRecipes.isEmpty()) {
+                                DropdownMenuItem(
+                                    text = { Text("No results", color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                                    onClick = {},
+                                    enabled = false
                                 )
                             }
                         }

@@ -236,6 +236,50 @@ private fun SharedTransitionScope.ProfileScreenContent(
             }
         }
 
+        item {
+            val interactionSources = remember { List(2) { MutableInteractionSource() } }
+            ButtonGroup(
+                overflowIndicator = {}
+            ) {
+                customItem(
+                    buttonGroupContent = {
+                        NexcButton(
+                            text = stringResource(R.string.products),
+                            icon = painterResource(R.drawable.ic_library),
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .animateWidth(interactionSources[0]),
+                            elevated = false,
+                            interactionSource = interactionSources[0]
+                        ) {
+                            navController.navigate(Route.ProductsLibraryScreen) {
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                    menuContent = {}
+                )
+                customItem(
+                    buttonGroupContent = {
+                        NexcButton(
+                            text = stringResource(R.string.recipes),
+                            icon = painterResource(R.drawable.ic_restaurant),
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .animateWidth(interactionSources[1]),
+                            elevated = false,
+                            interactionSource = interactionSources[1]
+                        ) {
+                            navController.navigate(Route.RecipesLibraryScreen) {
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                    menuContent = {}
+                )
+            }
+        }
+
         item { HeadlineText(stringResource(R.string.overview)) }
 
         item {

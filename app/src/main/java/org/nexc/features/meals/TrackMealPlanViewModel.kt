@@ -15,6 +15,9 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.nexc.core.db.entity.MealItem
+import org.nexc.core.db.entity.Meal
+import org.nexc.core.enums.MealItemType
+import java.time.LocalTime
 import org.nexc.core.db.relations.MealPlanWithMealsAndItems
 import org.nexc.core.db.repository.MealRepository
 import javax.inject.Inject
@@ -30,6 +33,18 @@ class TrackMealPlanViewModel @Inject constructor(
     private val _mealPlanState = MutableStateFlow<MealPlanWithMealsAndItems?>(null)
     val mealPlanState: StateFlow<MealPlanWithMealsAndItems?> = _mealPlanState.asStateFlow()
 
+    val products = mealRepository.getAllProducts().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    val recipes = mealRepository.getAllRecipes().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
     init {
         loadMealPlan()
     }
@@ -41,7 +56,7 @@ class TrackMealPlanViewModel @Inject constructor(
                     while (true) {
                         val plan = mealRepository.getMealPlanWithMealsAndItems(mealPlanId)
                         emit(plan)
-                        kotlinx.coroutines.delay(1000) // Simple polling for updates or let Room handle if Flow was returned
+                        kotlinx.coroutines.delay(1000) // Simple polling for updates
                     }
                 }
                 flow.collect { plan ->
@@ -51,13 +66,106 @@ class TrackMealPlanViewModel @Inject constructor(
         }
     }
 
+    private fun reloadMealPlan() {
+        viewModelScope.launch {
+            val plan = mealRepository.getMealPlanWithMealsAndItems(mealPlanId)
+            _mealPlanState.value = plan
+        }
+    }
+
     fun toggleMealItemConsumed(mealItem: MealItem) {
         viewModelScope.launch {
             val updatedItem = mealItem.copy(consumed = !mealItem.consumed)
             mealRepository.updateMealItem(updatedItem)
-            // Reload manually to reflect state immediately
-            val plan = mealRepository.getMealPlanWithMealsAndItems(mealPlanId)
-            _mealPlanState.value = plan
+            reloadMealPlan()
+        }
+    }
+
+    fun updateMealTime(mealId: Long, newTime: LocalTime) {
+        viewModelScope.launch {
+            _mealPlanState.value?.meals?.find { it.meal.id == mealId }?.meal?.let { meal ->
+                mealRepository.updateMeal(meal.copy(time = newTime))
+                reloadMealPlan()
+            }
+        }
+    }
+
+    fun updateMealItemAmount(itemId: Long, newAmount: Double) {
+        viewModelScope.launch {
+            var foundItem: MealItem? = null
+            _mealPlanState.value?.meals?.forEach { m ->
+                m.items.forEach { detail ->
+                    if (detail.mealItem.id == itemId) {
+                        foundItem = detail.mealItem
+                    }
+                }
+            }
+            foundItem?.let { item ->
+                mealRepository.updateMealItem(item.copy(amount = newAmount))
+                reloadMealPlan()
+            }
+        }
+    }
+
+    fun deleteMealItem(itemId: Long) {
+        viewModelScope.launch {
+            var foundItem: MealItem? = null
+            _mealPlanState.value?.meals?.forEach { m ->
+                m.items.forEach { detail ->
+                    if (detail.mealItem.id == itemId) {
+                        foundItem = detail.mealItem
+                    }
+                }
+            }
+            foundItem?.let { item ->
+                mealRepository.deleteMealItem(item)
+                reloadMealPlan()
+            }
+        }
+    }
+
+    fun addMealItem(mealId: Long, type: MealItemType, targetId: Long, amount: Double) {
+        viewModelScope.launch {
+            val meal = _mealPlanState.value?.meals?.find { it.meal.id == mealId }
+            val maxPos = meal?.items?.maxOfOrNull { it.mealItem.position } ?: -1
+            val newItem = MealItem(
+                id = 0L,
+                mealId = mealId,
+                type = type,
+                targetId = targetId,
+                amount = amount,
+                consumed = false,
+                position = maxPos + 1
+            )
+            mealRepository.insertMealItem(newItem)
+            reloadMealPlan()
+        }
+    }
+
+    fun replaceMealItem(oldItemId: Long, newType: MealItemType, newTargetId: Long, newAmount: Double) {
+        viewModelScope.launch {
+            var oldItem: MealItem? = null
+            _mealPlanState.value?.meals?.forEach { m ->
+                m.items.forEach { detail ->
+                    if (detail.mealItem.id == oldItemId) {
+                        oldItem = detail.mealItem
+                    }
+                }
+            }
+            oldItem?.let { item ->
+                mealRepository.deleteMealItem(item)
+                val newItem = MealItem(
+                    id = 0L,
+                    mealId = item.mealId,
+                    type = newType,
+                    targetId = newTargetId,
+                    amount = newAmount,
+                    consumed = false,
+                    position = item.position
+                )
+                mealRepository.insertMealItem(newItem)
+                reloadMealPlan()
+            }
         }
     }
 }

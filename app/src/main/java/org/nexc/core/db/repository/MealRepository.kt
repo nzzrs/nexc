@@ -75,6 +75,14 @@ class MealRepository @Inject constructor(
         mealDao.updateMealItem(mealItem)
     }
 
+    suspend fun deleteMealItem(mealItem: MealItem) {
+        mealDao.deleteMealItem(mealItem)
+    }
+
+    suspend fun insertMealItem(mealItem: MealItem): Long {
+        return mealDao.insertMealItem(mealItem)
+    }
+
     suspend fun updateMeal(meal: Meal) {
         mealDao.updateMeal(meal)
     }

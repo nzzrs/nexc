@@ -54,9 +54,104 @@ class MealsDashboardViewModel @Inject constructor(
                 initialValue = null
             )
 
+    val products = mealRepository.getAllProducts().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
+    val recipes = mealRepository.getAllRecipes().stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000),
+        initialValue = emptyList()
+    )
+
     fun deleteMealPlan(mealPlan: MealPlan) {
         viewModelScope.launch {
             mealRepository.deleteMealPlan(mealPlan)
+        }
+    }
+
+    fun updateMealTime(mealId: Long, newTime: java.time.LocalTime) {
+        viewModelScope.launch {
+            todayPlan.value?.meals?.find { it.meal.id == mealId }?.meal?.let { meal ->
+                mealRepository.updateMeal(meal.copy(time = newTime))
+            }
+        }
+    }
+
+    fun updateMealItemAmount(itemId: Long, newAmount: Double) {
+        viewModelScope.launch {
+            var foundItem: MealItem? = null
+            todayPlan.value?.meals?.forEach { m ->
+                m.items.forEach { detail ->
+                    if (detail.mealItem.id == itemId) {
+                        foundItem = detail.mealItem
+                    }
+                }
+            }
+            foundItem?.let { item ->
+                mealRepository.updateMealItem(item.copy(amount = newAmount))
+            }
+        }
+    }
+
+    fun deleteMealItem(itemId: Long) {
+        viewModelScope.launch {
+            var foundItem: MealItem? = null
+            todayPlan.value?.meals?.forEach { m ->
+                m.items.forEach { detail ->
+                    if (detail.mealItem.id == itemId) {
+                        foundItem = detail.mealItem
+                    }
+                }
+            }
+            foundItem?.let { item ->
+                mealRepository.deleteMealItem(item)
+            }
+        }
+    }
+
+    fun addMealItem(mealId: Long, type: org.nexc.core.enums.MealItemType, targetId: Long, amount: Double) {
+        viewModelScope.launch {
+            val meal = todayPlan.value?.meals?.find { it.meal.id == mealId }
+            val maxPos = meal?.items?.maxOfOrNull { it.mealItem.position } ?: -1
+            val newItem = MealItem(
+                id = 0L,
+                mealId = mealId,
+                type = type,
+                targetId = targetId,
+                amount = amount,
+                consumed = false,
+                position = maxPos + 1
+            )
+            mealRepository.insertMealItem(newItem)
+        }
+    }
+
+    fun replaceMealItem(oldItemId: Long, newType: org.nexc.core.enums.MealItemType, newTargetId: Long, newAmount: Double) {
+        viewModelScope.launch {
+            var oldItem: MealItem? = null
+            todayPlan.value?.meals?.forEach { m ->
+                m.items.forEach { detail ->
+                    if (detail.mealItem.id == oldItemId) {
+                        oldItem = detail.mealItem
+                    }
+                }
+            }
+            oldItem?.let { item ->
+                mealRepository.deleteMealItem(item)
+                val newItem = MealItem(
+                    id = 0L,
+                    mealId = item.mealId,
+                    type = newType,
+                    targetId = newTargetId,
+                    amount = newAmount,
+                    consumed = false,
+                    position = item.position
+                )
+                mealRepository.insertMealItem(newItem)
+            }
         }
     }
 

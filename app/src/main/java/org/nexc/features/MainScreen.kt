@@ -95,7 +95,7 @@ fun SharedTransitionScope.MainScreen(
                             Icon(
                                 painter = painterResource(
                                     id = when (page) {
-                                        MainScreenPages.HOME -> R.drawable.ic_home
+                                        MainScreenPages.HOME -> R.drawable.ic_fitness_center
                                         MainScreenPages.MEALS -> R.drawable.ic_restaurant
                                         MainScreenPages.PROFILE -> R.drawable.ic_person
                                     }

@@ -45,8 +45,18 @@ fun MealsDashboardScreen(
     val viewModel: MealsDashboardViewModel = hiltViewModel()
     val templates by viewModel.templates.collectAsStateWithLifecycle()
     val todayPlan by viewModel.todayPlan.collectAsStateWithLifecycle()
+    val products by viewModel.products.collectAsStateWithLifecycle()
+    val recipes by viewModel.recipes.collectAsStateWithLifecycle()
 
     var selectedTab by remember { mutableIntStateOf(0) }
+
+    // Dialog state variables
+    var editTimeMealId by remember { mutableStateOf<Long?>(null) }
+    var editAmountItemId by remember { mutableStateOf<Long?>(null) }
+    var editAmountInitial by remember { mutableDoubleStateOf(0.0) }
+    var addMealId by remember { mutableStateOf<Long?>(null) }
+    var optionsItemId by remember { mutableStateOf<Long?>(null) }
+    var replaceItemId by remember { mutableStateOf<Long?>(null) }
 
     NexcScaffold(
         fabAction = {
@@ -177,7 +187,14 @@ fun MealsDashboardScreen(
                     items(meals, key = { it.meal.id }) { mealWithItems ->
                         MealTrackCard(
                             mealWithItems = mealWithItems,
-                            onItemToggle = { item -> viewModel.toggleMealItemConsumed(item) }
+                            onItemToggle = { item -> viewModel.toggleMealItemConsumed(item) },
+                            onTimeClick = { mealId -> editTimeMealId = mealId },
+                            onAmountClick = { itemId, initialAmt ->
+                                editAmountItemId = itemId
+                                editAmountInitial = initialAmt
+                            },
+                            onNameClick = { itemId -> optionsItemId = itemId },
+                            onAddClick = { mealId -> addMealId = mealId }
                         )
                     }
                 }
@@ -217,8 +234,90 @@ fun MealsDashboardScreen(
             }
         }
     }
+
+    // Edit Meal Time Dialog
+    editTimeMealId?.let { mealId ->
+        val initialTime = todayPlan?.meals?.find { it.meal.id == mealId }?.meal?.time ?: java.time.LocalTime.now()
+        EditTimeDialog(
+            initialTime = initialTime,
+            onDismiss = { editTimeMealId = null },
+            onConfirm = { newTime ->
+                viewModel.updateMealTime(mealId, newTime)
+                editTimeMealId = null
+            }
+        )
+    }
+
+    // Edit Quantity Dialog
+    editAmountItemId?.let { itemId ->
+        EditAmountDialog(
+            initialAmount = editAmountInitial,
+            onDismiss = { editAmountItemId = null },
+            onConfirm = { newAmount ->
+                viewModel.updateMealItemAmount(itemId, newAmount)
+                editAmountItemId = null
+            }
+        )
+    }
+
+    // Item Action Options Dialog
+    optionsItemId?.let { itemId ->
+        AlertDialog(
+            onDismissRequest = { optionsItemId = null },
+            title = { Text("Meal Item Options") },
+            text = { Text("Select action for this item in today's session.") },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        replaceItemId = itemId
+                        optionsItemId = null
+                    }
+                ) {
+                    Text("Replace")
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        viewModel.deleteMealItem(itemId)
+                        optionsItemId = null
+                    },
+                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
+                ) {
+                    Text("Delete")
+                }
+            }
+        )
+    }
+
+    // Replace Item Dialog
+    replaceItemId?.let { itemId ->
+        AddMealItemDialog(
+            products = products,
+            recipes = recipes,
+            onDismiss = { replaceItemId = null },
+            onConfirm = { type, targetId, amount ->
+                viewModel.replaceMealItem(itemId, type, targetId, amount)
+                replaceItemId = null
+            }
+        )
+    }
+
+    // Add Item Dialog
+    addMealId?.let { mealId ->
+        AddMealItemDialog(
+            products = products,
+            recipes = recipes,
+            onDismiss = { addMealId = null },
+            onConfirm = { type, targetId, amount ->
+                viewModel.addMealItem(mealId, type, targetId, amount)
+                addMealId = null
+            }
+        )
+    }
 }
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun TodayMacrosCard(
     protConsumed: Double,
@@ -239,87 +338,71 @@ fun TodayMacrosCard(
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
-                text = "Today's Progress",
+                text = "Today's Macros",
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSecondaryContainer
             )
-            Spacer(modifier = Modifier.height(12.dp))
-
-            MacroProgressRow(
-                label = "Protein",
-                consumed = protConsumed,
-                target = protTarget,
-                color = MaterialTheme.colorScheme.primary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            MacroProgressRow(
-                label = "Carbs",
-                consumed = carbConsumed,
-                target = carbTarget,
-                color = MaterialTheme.colorScheme.tertiary
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            MacroProgressRow(
-                label = "Fats",
-                consumed = fatConsumed,
-                target = fatTarget,
-                color = MaterialTheme.colorScheme.error
-            )
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(16.dp))
 
             Row(
                 modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.End
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically
             ) {
+                CircularMacroIndicator(
+                    label = "Protein",
+                    consumed = protConsumed,
+                    target = protTarget,
+                    color = MaterialTheme.colorScheme.primary
+                )
+                CircularMacroIndicator(
+                    label = "Carbs",
+                    consumed = carbConsumed,
+                    target = carbTarget,
+                    color = MaterialTheme.colorScheme.tertiary
+                )
+                CircularMacroIndicator(
+                    label = "Fats",
+                    consumed = fatConsumed,
+                    target = fatTarget,
+                    color = MaterialTheme.colorScheme.error
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                val costExceeded = costConsumed > costTarget && costTarget > 0
                 Text(
-                    text = "Cost: $${String.format(Locale.getDefault(), "%.2f", costConsumed)} / $${String.format(Locale.getDefault(), "%.2f", costTarget)}",
-                    style = MaterialTheme.typography.labelMedium,
+                    text = "Cost Progress",
+                    style = MaterialTheme.typography.bodyMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSecondaryContainer
+                )
+                SuggestionChip(
+                    onClick = {},
+                    label = {
+                        Text(
+                            text = "$${String.format(Locale.getDefault(), "%.2f", costConsumed)} / $${String.format(Locale.getDefault(), "%.2f", costTarget)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    },
+                    colors = SuggestionChipDefaults.suggestionChipColors(
+                        containerColor = if (costExceeded) MaterialTheme.colorScheme.errorContainer else MaterialTheme.colorScheme.primaryContainer,
+                        labelColor = if (costExceeded) MaterialTheme.colorScheme.onErrorContainer else MaterialTheme.colorScheme.onPrimaryContainer
+                    )
                 )
             }
         }
     }
 }
 
-@Composable
-private fun MacroProgressRow(
-    label: String,
-    consumed: Double,
-    target: Double,
-    color: androidx.compose.ui.graphics.Color
-) {
-    val progress = if (target > 0) (consumed / target).toFloat().coerceIn(0f, 1f) else 0f
-
-    Column {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween
-        ) {
-            Text(
-                text = label,
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-            Text(
-                text = "${String.format(Locale.getDefault(), "%.1f", consumed)}g / ${String.format(Locale.getDefault(), "%.1f", target)}g",
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSecondaryContainer
-            )
-        }
-        Spacer(modifier = Modifier.height(4.dp))
-        LinearProgressIndicator(
-            progress = { progress },
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(6.dp),
-            color = color,
-            trackColor = color.copy(alpha = 0.2f),
-        )
-    }
-}
 
 @Composable
 fun MealPlanCard(

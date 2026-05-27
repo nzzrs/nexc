@@ -50,24 +50,20 @@ fun MealsDashboardScreen(
 
     NexcScaffold(
         fabAction = {
-            if (selectedTab == 0) {
-                todayPlan?.let {
-                    onNavigateToEditPlan(it.mealPlan.id)
-                }
-            } else {
+            if (selectedTab == 1) {
                 val newTemplateId = kotlin.random.Random.nextLong()
                 onNavigateToEditPlan(newTemplateId)
             }
         },
-        fabText = if (selectedTab == 0) {
-            if (todayPlan != null) "Edit Today's Plan" else null
-        } else {
+        fabText = if (selectedTab == 1) {
             "Create Meal Plan"
-        },
-        fabIcon = if (selectedTab == 0) {
-            if (todayPlan != null) painterResource(R.drawable.ic_edit) else null
         } else {
+            null
+        },
+        fabIcon = if (selectedTab == 1) {
             painterResource(R.drawable.ic_add)
+        } else {
+            null
         }
     ) { innerPadding ->
         NexcLazyColumn(innerPadding = innerPadding) {

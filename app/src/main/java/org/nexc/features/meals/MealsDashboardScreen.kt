@@ -36,6 +36,7 @@ import org.nexc.core.enums.MealItemType
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 
+@OptIn(ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 fun MealsDashboardScreen(
     onNavigateToEditPlan: (Long) -> Unit,
@@ -71,7 +72,7 @@ fun MealsDashboardScreen(
     ) { innerPadding ->
         NexcLazyColumn(innerPadding = innerPadding) {
             item {
-                TabRow(selectedTabIndex = selectedTab) {
+                PrimaryTabRow(selectedTabIndex = selectedTab) {
                     Tab(
                         selected = selectedTab == 0,
                         onClick = { selectedTab = 0 },
@@ -233,10 +234,11 @@ fun TodayMacrosCard(
     costConsumed: Double,
     costTarget: Double
 ) {
-    Card(
+    ElevatedCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 12.dp),
+        shape = MaterialTheme.shapes.extraLarge,
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.secondaryContainer)
     ) {
         Column(modifier = Modifier.padding(16.dp)) {
@@ -367,7 +369,7 @@ fun MealPlanCard(
             .fillMaxWidth()
             .padding(vertical = 6.dp)
             .clickable { onClick() },
-        shape = MaterialTheme.shapes.large
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Column(
             modifier = Modifier.padding(16.dp)

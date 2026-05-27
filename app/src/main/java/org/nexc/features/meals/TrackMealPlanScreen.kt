@@ -163,7 +163,7 @@ fun MealTrackCard(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 6.dp),
-        shape = MaterialTheme.shapes.medium
+        shape = MaterialTheme.shapes.extraLarge
     ) {
         Column(
             modifier = Modifier.padding(16.dp)

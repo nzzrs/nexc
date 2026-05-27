@@ -48,4 +48,12 @@ class BackupViewModel @Inject constructor(
     suspend fun importExercises(uri: Uri): Boolean {
         return backupManager.importExercises(uri)
     }
+
+    suspend fun exportMealPlans(uri: Uri) {
+        backupManager.exportMealPlans(uri)
+    }
+
+    suspend fun importMealPlans(uri: Uri): Boolean {
+        return backupManager.importMealPlans(uri)
+    }
 }

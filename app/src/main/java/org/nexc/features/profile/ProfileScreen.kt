@@ -87,6 +87,10 @@ import org.nexc.core.components.charts.NexcCartesianChart
 import org.nexc.core.components.charts.Point
 import org.nexc.core.models.UiWorkout
 import org.nexc.core.models.UiWorkoutWithExercisesAndSets
+import org.nexc.core.db.relations.MealPlanWithMealsAndItems
+import org.nexc.core.db.entity.MealPlan
+import org.nexc.core.enums.MealItemType
+import java.util.Locale
 import org.nexc.core.theme.NexcTheme
 import org.nexc.core.util.Formatter
 import org.nexc.core.util.Formatter.formatTime
@@ -108,6 +112,7 @@ fun SharedTransitionScope.ProfileScreen(
     val workoutChart by viewModel.workoutChart.collectAsStateWithLifecycle()
 
     val workoutsWithExercises by viewModel.workoutsWithExercisesUi.collectAsStateWithLifecycle()
+    val mealLogs by viewModel.mealLogs.collectAsStateWithLifecycle()
 
     val weekStreak by viewModel.weekStreak.collectAsStateWithLifecycle()
 
@@ -118,6 +123,8 @@ fun SharedTransitionScope.ProfileScreen(
         weekStreak = weekStreak,
         points = points,
         workoutsWithExercises = workoutsWithExercises,
+        mealLogs = mealLogs,
+        onDeleteMealLog = viewModel::deleteMealLog,
         workoutChart = workoutChart,
         updateChartMode = viewModel::updateChartMode
     )
@@ -132,6 +139,8 @@ private fun SharedTransitionScope.ProfileScreenContent(
     points: List<Point>,
     workoutChart: WorkoutChart,
     workoutsWithExercises: List<UiWorkoutWithExercisesAndSets>,
+    mealLogs: List<MealPlanWithMealsAndItems>,
+    onDeleteMealLog: (MealPlan) -> Unit,
     updateChartMode: (WorkoutChart) -> Unit
 ) {
 
@@ -220,6 +229,50 @@ private fun SharedTransitionScope.ProfileScreenContent(
                             interactionSource = interactionSources[1]
                         ) {
                             navController.navigate(Route.CalendarScreen) { launchSingleTop = true }
+                        }
+                    },
+                    menuContent = {}
+                )
+            }
+        }
+
+        item {
+            val interactionSources = remember { List(2) { MutableInteractionSource() } }
+            ButtonGroup(
+                overflowIndicator = {}
+            ) {
+                customItem(
+                    buttonGroupContent = {
+                        NexcButton(
+                            text = stringResource(R.string.products),
+                            icon = painterResource(R.drawable.ic_library),
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .animateWidth(interactionSources[0]),
+                            elevated = false,
+                            interactionSource = interactionSources[0]
+                        ) {
+                            navController.navigate(Route.ProductsLibraryScreen) {
+                                launchSingleTop = true
+                            }
+                        }
+                    },
+                    menuContent = {}
+                )
+                customItem(
+                    buttonGroupContent = {
+                        NexcButton(
+                            text = stringResource(R.string.recipes),
+                            icon = painterResource(R.drawable.ic_restaurant),
+                            modifier = Modifier
+                                .weight(0.5f)
+                                .animateWidth(interactionSources[1]),
+                            elevated = false,
+                            interactionSource = interactionSources[1]
+                        ) {
+                            navController.navigate(Route.RecipesLibraryScreen) {
+                                launchSingleTop = true
+                            }
                         }
                     },
                     menuContent = {}
@@ -357,7 +410,128 @@ private fun SharedTransitionScope.ProfileScreenContent(
                             Icon(
                                 painterResource(R.drawable.ic_info),
                                 stringResource(R.string.about)
-                            )
+                             )
+                        }
+                    }
+                }
+            }
+        }
+
+        item { Spacer(Modifier.height(16.dp)) }
+        item { HeadlineText("Your meals") }
+        if (mealLogs.isEmpty()) {
+            item {
+                Column(
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Text(
+                        text = "No meal log history yet",
+                        style = MaterialTheme.typography.bodyLarge,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        } else {
+            items(
+                items = mealLogs,
+                key = { it.mealPlan.id }
+            ) { planWithMeals ->
+                val plan = planWithMeals.mealPlan
+                val meals = planWithMeals.meals
+                var totalProt = 0.0
+                var totalCarb = 0.0
+                var totalFat = 0.0
+                var totalCost = 0.0
+                var totalItems = 0
+                var consumedCount = 0
+
+                meals.forEach { m ->
+                    m.items.forEach { detail ->
+                        totalItems++
+                        if (detail.mealItem.consumed) consumedCount++
+
+                        val scale = detail.mealItem.amount / 100.0
+                        if (detail.mealItem.type == MealItemType.PRODUCT && detail.product != null) {
+                            totalProt += detail.product.proteins * scale
+                            totalCarb += detail.product.carbs * scale
+                            totalFat += detail.product.fats * scale
+                            val costFactor = if (detail.product.weight > 0) detail.mealItem.amount / detail.product.weight else 0.0
+                            totalCost += detail.product.cost * costFactor
+                        } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
+                            detail.recipe.ingredients.forEach { ing ->
+                                val ingScale = (ing.ingredient.amount / 100.0) * scale
+                                totalProt += ing.product.proteins * ingScale
+                                totalCarb += ing.product.carbs * ingScale
+                                totalFat += ing.product.fats * ingScale
+                                val costFactor = if (ing.product.weight > 0) (ing.ingredient.amount * scale) / ing.product.weight else 0.0
+                                totalCost += ing.product.cost * costFactor
+                            }
+                        }
+                    }
+                }
+
+                val formatter = remember { DateTimeFormatter.ofPattern("MMM dd, yyyy HH:mm") }
+
+                ElevatedCard(
+                    onClick = {
+                        navController.navigate(Route.TrackMealPlanScreen(mealPlanId = plan.id)) {
+                            launchSingleTop = true
+                        }
+                    },
+                    shape = MaterialTheme.shapes.extraLargeIncreased,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 6.dp)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = plan.title,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text(
+                                    text = "Eaten on: ${plan.created.format(formatter)}",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = "Progress: $consumedCount / $totalItems items eaten",
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                                Text(
+                                    text = "Macros: P ${String.format(Locale.getDefault(), "%.1f", totalProt)}g | C ${String.format(Locale.getDefault(), "%.1f", totalCarb)}g | F ${String.format(Locale.getDefault(), "%.1f", totalFat)}g",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                                Text(
+                                    text = "Est. Cost: $${String.format(Locale.getDefault(), "%.2f", totalCost)}",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.secondary
+                                )
+                            }
+                            IconButton(
+                                onClick = { onDeleteMealLog(plan) }
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_delete),
+                                    contentDescription = "Delete",
+                                    tint = MaterialTheme.colorScheme.error
+                                )
+                            }
                         }
                     }
                 }
@@ -582,13 +756,15 @@ private fun ProfileScreenPreview() {
                                 Icon(
                                     painter = painterResource(
                                         id = when (page) {
-                                            MainScreenPages.HOME -> R.drawable.ic_home
+                                            MainScreenPages.HOME -> R.drawable.ic_fitness_center
+                                            MainScreenPages.MEALS -> R.drawable.ic_restaurant
                                             MainScreenPages.PROFILE -> R.drawable.ic_person
                                         }
                                     ),
                                     contentDescription = stringResource(
                                         id = when (page) {
                                             MainScreenPages.HOME -> R.string.home
+                                            MainScreenPages.MEALS -> R.string.meals
                                             MainScreenPages.PROFILE -> R.string.profile
                                         }
                                     )
@@ -599,6 +775,7 @@ private fun ProfileScreenPreview() {
                                     text = stringResource(
                                         id = when (page) {
                                             MainScreenPages.HOME -> R.string.home
+                                            MainScreenPages.MEALS -> R.string.meals
                                             MainScreenPages.PROFILE -> R.string.profile
                                         }
                                     )
@@ -621,6 +798,8 @@ private fun ProfileScreenPreview() {
                             points = listChartData,
                             workoutChart = WorkoutChart.DURATION,
                             workoutsWithExercises = workoutsWithExercises,
+                            mealLogs = emptyList(),
+                            onDeleteMealLog = {},
                             updateChartMode = {},
                             animatedVisibilityScope = this
                         )

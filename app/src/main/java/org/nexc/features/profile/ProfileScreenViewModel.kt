@@ -23,6 +23,10 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import org.nexc.core.db.repository.WorkoutRepository
+import org.nexc.core.db.repository.MealRepository
+import org.nexc.core.db.entity.MealPlan
+import org.nexc.core.db.relations.MealPlanWithMealsAndItems
+import org.nexc.core.enums.MealPlanState
 import org.nexc.core.enums.chart.WorkoutChart
 import org.nexc.core.helpers.DataHelper
 import org.nexc.core.components.charts.Point
@@ -30,12 +34,29 @@ import org.nexc.core.models.mappers.toUi
 import java.time.LocalDateTime
 import java.time.temporal.ChronoUnit
 import javax.inject.Inject
+import kotlinx.coroutines.launch
 
 @HiltViewModel
 class ProfileScreenViewModel @Inject constructor(
     workoutRepository: WorkoutRepository,
+    private val mealRepository: MealRepository,
     dataHelper: DataHelper
 ) : ViewModel() {
+    val mealLogs: StateFlow<List<MealPlanWithMealsAndItems>> =
+        mealRepository.getMealPlansWithMealsAndItemsByState(MealPlanState.LOGGED)
+            .distinctUntilChanged()
+            .stateIn(
+                scope = viewModelScope,
+                started = SharingStarted.WhileSubscribed(5000),
+                initialValue = emptyList()
+            )
+
+    fun deleteMealLog(mealPlan: MealPlan) {
+        viewModelScope.launch {
+            mealRepository.deleteMealPlan(mealPlan)
+        }
+    }
+
     val workoutsWithExercises = workoutRepository.completedWorkoutsWithExercisesAndSets
         .distinctUntilChanged()
         .stateIn(

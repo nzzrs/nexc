@@ -45,6 +45,7 @@ class DatasetRepository @Inject constructor(
     private val datasetDao: DatasetDao,
     @param:ApplicationScope private val applicationScope: CoroutineScope,
     private val userPreferencesRepository: UserPreferencesRepository,
+    private val mealRepository: MealRepository,
     @param:ApplicationContext private val context: Context
 ) {
     val dataset: StateFlow<List<UiExerciseDC>> = datasetDao.getDataset()
@@ -64,6 +65,9 @@ class DatasetRepository @Inject constructor(
 
             // Update dataset only on app update
             if (pastVersion != currentVersion) {
+                // Prepopulate default meal plans
+                mealRepository.prepopulateDefaultMealPlans()
+
                 val jsonFile =
                     context.resources.openRawResource(R.raw.exercises).bufferedReader().use {
                         it.readText()

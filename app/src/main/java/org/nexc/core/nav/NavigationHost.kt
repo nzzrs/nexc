@@ -46,6 +46,11 @@ import org.nexc.features.shared.SharedViewModel
 import org.nexc.features.shared.SuccessScreen
 import org.nexc.features.statistics.StatisticsScreen
 import org.nexc.features.workout.WorkoutScreen
+import org.nexc.features.meals.MealsDashboardScreen
+import org.nexc.features.meals.ProductsLibraryScreen
+import org.nexc.features.meals.RecipesLibraryScreen
+import org.nexc.features.meals.EditMealPlanScreen
+import org.nexc.features.meals.TrackMealPlanScreen
 
 @OptIn(ExperimentalSharedTransitionApi::class)
 @Composable
@@ -184,6 +189,24 @@ fun NavigationHost() {
                     sharedViewModel = sharedViewModel,
                     animatedVisibilityScope = this
                 )
+            }
+            composable<Route.MealsDashboardScreen> {
+                MealsDashboardScreen(
+                    onNavigateToEditPlan = { id -> navController.navigate(Route.EditMealPlanScreen(id)) },
+                    onNavigateToTrackPlan = { id -> navController.navigate(Route.TrackMealPlanScreen(id)) }
+                )
+            }
+            composable<Route.ProductsLibraryScreen> {
+                ProductsLibraryScreen(navigateBack = navController::navigateUp)
+            }
+            composable<Route.RecipesLibraryScreen> {
+                RecipesLibraryScreen(navigateBack = navController::navigateUp)
+            }
+            composable<Route.EditMealPlanScreen> {
+                EditMealPlanScreen(navigateBack = navController::navigateUp)
+            }
+            composable<Route.TrackMealPlanScreen> {
+                TrackMealPlanScreen(navigateBack = navController::navigateUp)
             }
         }
     }

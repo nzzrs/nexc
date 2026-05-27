@@ -76,11 +76,11 @@ class UserPreferencesRepository @Inject constructor(
         )
 
     val materialMode: StateFlow<Boolean> = dataStore.data
-        .map { preferences -> preferences[materialModeKey] == true }
+        .map { preferences -> preferences[materialModeKey] != false }
         .stateIn(
             scope = applicationScope,
             started = SharingStarted.Eagerly,
-            initialValue = false
+            initialValue = true
         )
 
     val workoutScreenOn: StateFlow<Boolean> = dataStore.data

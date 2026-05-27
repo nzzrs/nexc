@@ -6,10 +6,9 @@
  * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
  */
 
-package org.nexc.core.enums.pages
+package org.nexc.core.enums
 
-enum class MainScreenPages {
-    HOME,
-    MEALS,
-    PROFILE
+enum class MealItemType {
+    PRODUCT,
+    RECIPE
 }

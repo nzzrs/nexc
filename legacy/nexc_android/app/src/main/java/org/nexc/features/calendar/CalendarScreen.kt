@@ -1,0 +1,261 @@
+/*
+ * SPDX-License-Identifier: GPL-3.0-or-later
+ * Copyright (c) 2025-2026. The Nexc Contributors
+ *
+ * Nexc is subject to additional terms covering author attribution and trademark usage;
+ * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
+ */
+
+package org.nexc.features.calendar
+
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.AnimatedVisibilityScope
+import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.animation.SharedTransitionLayout
+import androidx.compose.animation.SharedTransitionScope
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerState
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.rememberDatePickerState
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import org.nexc.R
+import org.nexc.core.enums.pages.TutorialContent
+import org.nexc.core.enums.userPreferences.ThemeMode
+import org.nexc.core.nav.Route
+import org.nexc.core.components.HeadlineText
+import org.nexc.core.components.NexcLazyColumn
+import org.nexc.core.components.NexcScaffold
+import org.nexc.core.components.animations.EmptyLottie
+import org.nexc.core.models.UiWorkout
+import org.nexc.core.theme.NexcTheme
+import org.nexc.core.util.Formatter.formatTime
+import java.time.LocalDateTime
+import java.time.ZoneOffset
+import java.time.format.DateTimeFormatter
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@Composable
+fun SharedTransitionScope.CalendarScreen(
+    navController: NavHostController,
+    animatedVisibilityScope: AnimatedVisibilityScope
+) {
+    val viewModel: CalendarScreenViewModel = hiltViewModel()
+
+    val yearRange by viewModel.yearRange.collectAsStateWithLifecycle()
+
+    val workoutsFromDate by viewModel.workoutsFromDate.collectAsStateWithLifecycle()
+
+    val selectableDates by viewModel.selectableDates.collectAsStateWithLifecycle()
+
+    key(yearRange) {
+
+        val datePickerState = rememberDatePickerState(
+            selectableDates = selectableDates,
+            yearRange = yearRange,
+            initialSelectedDateMillis = LocalDateTime.now().atZone(ZoneOffset.UTC).toInstant()
+                .toEpochMilli()
+        )
+
+        LaunchedEffect(datePickerState.selectedDateMillis) {
+            viewModel.updateSelectedDateInMillis(datePickerState.selectedDateMillis)
+        }
+
+        CalendarScreenContent(
+            navController = navController,
+            datePickerState = datePickerState,
+            workoutsFromDate = workoutsFromDate,
+            animatedVisibilityScope = animatedVisibilityScope
+        )
+    }
+}
+
+@OptIn(
+    ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class,
+    ExperimentalMaterial3ExpressiveApi::class
+)
+@Composable
+private fun SharedTransitionScope.CalendarScreenContent(
+    navController: NavHostController,
+    datePickerState: DatePickerState,
+    workoutsFromDate: List<UiWorkout>,
+    animatedVisibilityScope: AnimatedVisibilityScope
+) {
+    NexcScaffold(
+        title = AnnotatedString(stringResource(R.string.calendar)),
+        navigateBack = navController::navigateUp
+    ) { innerPadding ->
+        NexcLazyColumn(innerPadding) {
+            item {
+                DatePicker(
+                    modifier = Modifier.clip(MaterialTheme.shapes.large),
+                    state = datePickerState,
+                    showModeToggle = false,
+                )
+            }
+
+            item { HeadlineText(stringResource(R.string.your_workouts)) }
+
+            if (workoutsFromDate.isEmpty()) {
+                item {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth(),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        EmptyLottie()
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.Center,
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Text(
+                                modifier = Modifier.weight(1f, false),
+                                text = stringResource(R.string.start_completing_workout),
+                                textAlign = TextAlign.Center,
+                            )
+                            IconButton(
+                                onClick = {
+                                    navController.navigate(Route.TutorialScreen(TutorialContent.COMPLETE_WORKOUT)) {
+                                        launchSingleTop = true
+                                    }
+                                }
+                            ) {
+                                Icon(
+                                    painter = painterResource(R.drawable.ic_help),
+                                    contentDescription = stringResource(R.string.help)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+
+            items(workoutsFromDate) { workout ->
+                ElevatedCard(
+                    shape = MaterialTheme.shapes.extraLarge,
+                    onClick = {
+                        navController.navigate(Route.InfoWorkoutScreen(workoutId = workout.id)) {
+                            launchSingleTop = true
+                        }
+                    },
+                    modifier = Modifier
+                        .sharedBounds(
+                            sharedContentState = rememberSharedContentState(workout.id),
+                            animatedVisibilityScope = animatedVisibilityScope
+                        ),
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(20.dp)
+                    ) {
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.SpaceBetween
+                        ) {
+                            Column(modifier = Modifier.weight(1f)) {
+                                Text(
+                                    text = workout.title,
+                                    style = MaterialTheme.typography.titleLarge,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                    fontWeight = FontWeight.SemiBold,
+                                    modifier = Modifier.sharedElement(
+                                        sharedContentState = rememberSharedContentState(
+                                            key = workout.id.toString() + workout.title
+                                        ),
+                                        animatedVisibilityScope = animatedVisibilityScope
+                                    )
+                                )
+                                Spacer(modifier = Modifier.height(10.dp))
+                                Text(
+                                    text = stringResource(R.string.duration) + ": "
+                                            + formatTime(workout.timeElapsed),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+
+                                Text(
+                                    text = stringResource(R.string.label_when) + ": "
+                                            + workout.completed.format(
+                                        DateTimeFormatter.ofPattern("HH:mm")
+                                    ),
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            IconButton(
+                                shapes = IconButtonDefaults.shapes(),
+                                onClick = {
+                                    navController.navigate(Route.InfoWorkoutScreen(workoutId = workout.id)) {
+                                        launchSingleTop = true
+                                    }
+                                },
+                            ) {
+                                Icon(
+                                    painterResource(R.drawable.ic_info),
+                                    stringResource(R.string.about)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+@Preview
+@Composable
+private fun CalendarScreenPreview() {
+    NexcTheme(dynamicColor = false, themeMode = ThemeMode.DARK) {
+        SharedTransitionLayout {
+            AnimatedVisibility(visible = true) {
+                CalendarScreenContent(
+                    navController = rememberNavController(),
+                    datePickerState = rememberDatePickerState(),
+                    workoutsFromDate = listOf(),
+                    animatedVisibilityScope = this,
+                )
+            }
+        }
+    }
+}

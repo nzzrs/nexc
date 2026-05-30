@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  ~ Copyright (c) 2024-2026. The Nexc Contributors
+  ~
+  ~ Nexc is subject to additional terms covering author attribution and trademark usage;
+  ~ see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
+  -->
+
+<resources>
+    <string name="app_name">Nexc</string>
+    <string name="profile">الملف الشخصي</string>
+    <string name="settings">الإعدادات</string>
+    <string name="about">عن</string>
+    <string name="more_options">خيارات إضافية</string>
+    <string name="open">فتح</string>
+    <string name="copy">نسخ</string>
+    <string name="info">معلومات</string>
+    <string name="privacy_policy">سياسة الخصوصية</string>
+    <string name="privacy_policy_desc">لا يستطيع تطبيق Nexc الوصول إلى الإنترنت. وهذا يعني أن بيانات المستخدم لا تغادر الجهاز أبداً.</string>
+    <string name="source_code">الكود المصدري</string>
+    <string name="license">التراخيص</string>
+    <string name="license_desc">Nexc مرخص بموجب رخصة جنو العمومية العامة الإصدار 3.0 (GPL-3).</string>
+    <string name="view_online_version">عرض النسخة online</string>
+    <string name="version">الإصدار</string>
+    <string name="dependencies">التبعيات</string>
+    <string name="lets_build_it_together">لنبنيها معاً</string>
+    <string name="tutorial_desc">تعلم كيفية إنشاء روتينات وتتبع تمارينك الرياضية.</string>
+    <string name="donators">المتبرعون</string>
+    <string name="app_works_without_permission">سيعمل التطبيق حتى بدون هذا الإذن.</string>
+</resources>

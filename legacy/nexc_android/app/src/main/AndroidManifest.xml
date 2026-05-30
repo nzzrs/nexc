@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?><!--
+  ~ SPDX-License-Identifier: GPL-3.0-or-later
+  ~ Copyright (c) 2024-2026. The Nexc Contributors
+  ~
+  ~ Nexc is subject to additional terms covering author attribution and trademark usage;
+  ~ see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
+  -->
+
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_DATA_SYNC" />
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <application
+        android:allowBackup="true"
+        android:dataExtractionRules="@xml/data_extraction_rules"
+        android:enableOnBackInvokedCallback="true"
+        android:fullBackupContent="@xml/backup_rules"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:name=".MainApplication"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.Nexc"
+        android:localeConfig="@xml/locale_config"
+        tools:targetApi="tiramisu">
+        <activity
+            android:name=".core.activities.MainActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Nexc.SplashScreen">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".core.activities.PrivacyActivity"
+            android:permission="android.permission.START_VIEW_PERMISSION_USAGE"
+            android:theme="@style/Theme.Nexc.SplashScreen"
+            android:exported="true">
+            <!-- VIEW_PERMISSION_USAGE shows a selectable information icon on
+                 Nexc permission's page in system settings.
+                 VIEW_PERMISSION_USAGE_FOR_PERIOD shows a selectable information
+                 icon on the Privacy Dashboard screen. -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE" />
+                <action android:name="android.intent.action.VIEW_PERMISSION_USAGE_FOR_PERIOD" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <activity
+            android:name=".core.activities.ErrorActivity"
+            android:exported="true"
+            android:theme="@style/Theme.Nexc.SplashScreen"
+            android:excludeFromRecents="true"
+            android:finishOnTaskLaunch="true"
+            android:process=":error_process">
+        </activity>
+
+        <!-- Saves persistently the language locale in Android 12 and below-->
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data
+                android:name="autoStoreLocales"
+                android:value="true" />
+        </service>
+
+        <service
+            android:name=".core.services.WorkoutService"
+            android:foregroundServiceType="dataSync"
+            android:exported="false">
+        </service>
+
+    </application>
+</manifest>

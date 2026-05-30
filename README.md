@@ -1,67 +1,94 @@
 <div align="center">
 
-<img src="assets/logo.svg" alt="Nexc Logo" style="width: 256px">
+<img src="assets/logo.svg" alt="Nexc Logo" style="width: 200px">
 
 # Nexc
-### The Ultimate Private & Minimalist Workout Tracker
 
-Nexc is a high-performance, privacy-first workout tracker designed for serious training without the noise.  
-Built for efficiency, it keeps your data where it belongs: on your device.
+### Private · Minimalist · Offline Workout Tracker
 
-[**Download Latest APK**](https://github.com/nzzrs/nexc/releases/latest)
+[![Flutter](https://img.shields.io/badge/Flutter-3.x-02569B?logo=flutter)](https://flutter.dev)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](COPYING)
+[![Fork of LibreFit](https://img.shields.io/badge/fork%20of-LibreFit-orange)](https://github.com/LibreFitOrg/LibreFit)
 
 </div>
 
 ---
 
-## ⚡ Why Nexc?
-
-Nexc is built for those who want a powerful training log without cloud-sync delays, intrusive tracking, or subscription models. It combines a massive exercise database with a fluid, modern interface.
-
-### 🛡️ Privacy by Design
-- **Offline-First**: Log workouts in the basement gym or deep in the mountains. No internet required.
-- **Zero Tracking**: No telemetry, no accounts, no ads. Just your progress.
-- **Local Storage**: Your data stays on your device in an encrypted SQLite database.
-
-### 🏋️ Pro Training Features
-- **Massive Library**: 800+ built-in exercises with high-quality instructions and categories.
-- **Intelligent Logging**: RPE (Rate of Perceived Exertion) and RIR (Reps in Reserve) support for auto-regulation.
-- **Dynamic Workouts**: Swap exercises or link them into **Supersets** on the fly during your session.
-- **Visual Analytics**: Track your volume and performance trends with interactive charts.
-- **Material 3 Expressive**: A stunning, fluid interface designed for the latest Android standards.
+> **Nexc is a hard fork of [LibreFit](https://github.com/LibreFitOrg/LibreFit)** by [LibreFitOrg](https://github.com/LibreFitOrg).
+> LibreFit provided the exercise database, data model, and original Android foundation that made this project possible.
+> Without their work, Nexc would not exist. All original code remains under the GNU GPL v3.
 
 ---
 
-## 🛠️ Build & Development
+## What's different from LibreFit
 
-Nexc is built with Kotlin and Jetpack Compose.
+Nexc diverges from LibreFit in the following ways:
+
+- **Rewritten in Flutter** — the Android (Kotlin/Jetpack Compose) codebase is preserved in `legacy/nexc_android/` for reference. The active app is now a Flutter project targeting Android and iOS from a single codebase.
+- **Extended UI** — wavy circular progress indicators, rotating pentagon rest timer, meal plan tracking, and other UI experiments not present in upstream.
+- **No upstream sync** — this is a personal fork; it does not aim to merge changes back to LibreFit. Feature parity is not a goal.
+
+The original Android codebase lives in [`legacy/nexc_android/`](legacy/nexc_android/) and is kept intact as a historical reference and tribute to LibreFit's architecture.
+
+---
+
+## Build (Flutter)
 
 ### Prerequisites
-- Android Studio Ladybug+
-- Android SDK 35+
-- JDK 21
+
+- Flutter 3.x (`flutter --version`)
+- Android SDK 35+ **or** Xcode 15+ for iOS
 
 ### Getting Started
-1. **Clone the repository**:
-   ```bash
-   git clone https://github.com/nzzrs/nexc.git
-   ```
-2. **Open** in Android Studio.
-3. **Build and Run**:
-   ```bash
-   ./gradlew assembleDebug
-   ```
+
+```bash
+git clone https://github.com/nzzrs/nexc.git
+cd nexc
+flutter pub get
+flutter run
+```
+
+### Run tests
+
+```bash
+flutter test
+```
 
 ---
 
-## ⚖️ License & Attribution
+## Project structure
 
-Nexc is a fork of [LibreFit](https://github.com/LibreFitOrg/LibreFit). We are proud to build upon the foundation of the open-source community.
-
-Distributed under the **GNU General Public License v3.0**.  
-See [COPYING](COPYING) for full license text.
+```
+/                        # Flutter project root
+├── lib/                 # Dart source
+│   ├── core/            # DB, providers, theme, shared components
+│   └── features/        # Screens: workout, meals, exercises, profile…
+├── android/             # Flutter Android host
+├── ios/                 # Flutter iOS host
+├── assets/              # Fonts, images, icons
+├── legacy/
+│   └── nexc_android/    # Original Kotlin/Jetpack Compose app (LibreFit fork)
+└── docs/                # Additional documentation
+```
 
 ---
+
+## License & Attribution
+
+Nexc is distributed under the **GNU General Public License v3.0** — the same license as LibreFit.
+
+Full license text: [COPYING](COPYING)
+
+### Credits
+
+| Project | Authors | Role |
+|---------|---------|------|
+| [LibreFit](https://github.com/LibreFitOrg/LibreFit) | [LibreFitOrg](https://github.com/LibreFitOrg) & contributors | Original codebase, exercise DB, data model — the foundation of Nexc |
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for original upstream guidelines.
+
+---
+
 <div align="center">
-Made with ❤️ for the fitness community.
+Built on the shoulders of <a href="https://github.com/LibreFitOrg/LibreFit">LibreFit</a>. Made for the fitness community.
 </div>

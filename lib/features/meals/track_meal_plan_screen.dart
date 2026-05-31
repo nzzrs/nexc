@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/meal_repository.dart';
+import '../../core/db/relations.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/components/nexc_scaffold.dart';
 import 'meals_dashboard_screen.dart';
@@ -62,7 +63,7 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
 
         for (final m in meals) {
           for (final detail in m.items) {
-            final scale = detail.mealItem.amount / 100.0;
+            final scale = detail.macroScale;
             double itemProt = 0.0;
             double itemCarb = 0.0;
             double itemFat = 0.0;
@@ -72,8 +73,11 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
               itemProt = detail.product!.proteins * scale;
               itemCarb = detail.product!.carbs * scale;
               itemFat = detail.product!.fats * scale;
+              final grams = detail.mealItem.amountUnit == AmountUnit.UNITS
+                  ? detail.mealItem.amount * getEdibleWeightPerUnit(detail.product!)
+                  : detail.mealItem.amount;
               final costFactor = detail.product!.weight > 0
-                  ? detail.mealItem.amount / detail.product!.weight
+                  ? grams / detail.product!.weight
                   : 0.0;
               itemCost = detail.product!.cost * costFactor;
             } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
@@ -176,12 +180,13 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
                                     products: products,
                                     recipes: recipes,
                                     onDismiss: () => Navigator.pop(context),
-                                    onConfirm: (type, targetId, amount) {
+                                    onConfirm: (type, targetId, amount, amountUnit) {
                                       ref.read(mealRepositoryProvider).replaceMealItemInMeal(
                                             oldItemId: itemId,
                                             newType: type,
                                             newTargetId: targetId,
                                             newAmount: amount,
+                                            newAmountUnit: amountUnit,
                                           );
                                       Navigator.pop(context);
                                     },
@@ -222,12 +227,13 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
                           products: products,
                           recipes: recipes,
                           onDismiss: () => Navigator.pop(context),
-                          onConfirm: (type, targetId, amount) {
+                          onConfirm: (type, targetId, amount, amountUnit) {
                             ref.read(mealRepositoryProvider).addMealItemToMeal(
                                   mealId: mealId,
                                   type: type,
                                   targetId: targetId,
                                   amount: amount,
+                                  amountUnit: amountUnit,
                                 );
                             Navigator.pop(context);
                           },

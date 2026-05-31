@@ -269,3 +269,6 @@ enum Language {
   final String code;
   const Language(this.code);
 }
+
+/// Whether a meal item amount is expressed in grams or discrete units (e.g. 1 banana).
+enum AmountUnit { GRAMS, UNITS }

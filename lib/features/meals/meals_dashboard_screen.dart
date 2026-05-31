@@ -9,6 +9,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:collection/collection.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
@@ -146,7 +147,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
 
                     for (final m in meals) {
                       for (final detail in m.items) {
-                        final scale = detail.mealItem.amount / 100.0;
+                        final scale = detail.macroScale;
                         double itemProt = 0.0;
                         double itemCarb = 0.0;
                         double itemFat = 0.0;
@@ -156,8 +157,11 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                           itemProt = detail.product!.proteins * scale;
                           itemCarb = detail.product!.carbs * scale;
                           itemFat = detail.product!.fats * scale;
+                          final grams = detail.mealItem.amountUnit == AmountUnit.UNITS
+                              ? detail.mealItem.amount * getEdibleWeightPerUnit(detail.product!)
+                              : detail.mealItem.amount;
                           final costFactor = detail.product!.weight > 0
-                              ? detail.mealItem.amount / detail.product!.weight
+                              ? grams / detail.product!.weight
                               : 0.0;
                           itemCost = detail.product!.cost * costFactor;
                         } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
@@ -371,12 +375,13 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
         products: products,
         recipes: recipes,
         onDismiss: () => setState(() => _replaceItemId = null),
-        onConfirm: (type, targetId, amount) {
+        onConfirm: (type, targetId, amount, amountUnit) {
           ref.read(mealRepositoryProvider).replaceMealItemInMeal(
                 oldItemId: _replaceItemId!,
                 newType: type,
                 newTargetId: targetId,
                 newAmount: amount,
+                newAmountUnit: amountUnit,
               );
           setState(() => _replaceItemId = null);
         },
@@ -388,12 +393,13 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
         products: products,
         recipes: recipes,
         onDismiss: () => setState(() => _addMealId = null),
-        onConfirm: (type, targetId, amount) {
+        onConfirm: (type, targetId, amount, amountUnit) {
           ref.read(mealRepositoryProvider).addMealItemToMeal(
                 mealId: _addMealId!,
                 type: type,
                 targetId: targetId,
                 amount: amount,
+                amountUnit: amountUnit,
               );
           setState(() => _addMealId = null);
         },
@@ -692,22 +698,36 @@ class MealTrackCard extends StatelessWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Row(
-                            children: [
-                              InkWell(
-                                onTap: onNameClick != null ? () => onNameClick!(detail.mealItem.id) : null,
-                                child: Text(
-                                  name,
-                                  style: theme.textTheme.bodyLarge?.copyWith(
-                                        fontWeight: FontWeight.bold,
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  children: [
+                                    InkWell(
+                                      onTap: onNameClick != null ? () => onNameClick!(detail.mealItem.id) : null,
+                                      child: Text(
+                                        name,
+                                        style: theme.textTheme.bodyLarge?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                       ),
+                                    ),
+                                    if (!detail.isItemPortable) ...[
+                                      const SizedBox(width: 6),
+                                      const Text("🏠", style: TextStyle(fontSize: 12)),
+                                    ]
+                                  ],
                                 ),
-                              ),
-                              if (!detail.isItemPortable) ...[
-                                const SizedBox(width: 6),
-                                const Text("🏠", style: TextStyle(fontSize: 12)),
-                              ]
-                            ],
+                                if (detail.mealItem.amountUnit == AmountUnit.UNITS && detail.product != null)
+                                  Text(
+                                    "≈ ${(detail.mealItem.amount * getEdibleWeightPerUnit(detail.product!)).toStringAsFixed(0)}g edible",
+                                    style: theme.textTheme.bodySmall?.copyWith(
+                                      color: theme.colorScheme.onSurfaceVariant,
+                                    ),
+                                  ),
+                              ],
+                            ),
                           ),
                           ChoiceChip(
                             selected: false,
@@ -715,7 +735,9 @@ class MealTrackCard extends StatelessWidget {
                                 ? (_) => onAmountClick!(detail.mealItem.id, detail.mealItem.amount)
                                 : null,
                             label: Text(
-                              "${detail.mealItem.amount.toStringAsFixed(0)}g",
+                              detail.mealItem.amountUnit == AmountUnit.UNITS
+                                  ? "${detail.mealItem.amount.toStringAsFixed(1)} units"
+                                  : "${detail.mealItem.amount.toStringAsFixed(0)}g",
                               style: theme.textTheme.labelMedium?.copyWith(
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -765,13 +787,16 @@ class MealPlanCard extends StatelessWidget {
 
     for (final m in meals) {
       for (final detail in m.items) {
-        final scale = detail.mealItem.amount / 100.0;
+        final scale = detail.macroScale;
         if (detail.mealItem.type == MealItemType.PRODUCT && detail.product != null) {
           totalProt += detail.product!.proteins * scale;
           totalCarb += detail.product!.carbs * scale;
           totalFat += detail.product!.fats * scale;
+          final grams = detail.mealItem.amountUnit == AmountUnit.UNITS
+              ? detail.mealItem.amount * getEdibleWeightPerUnit(detail.product!)
+              : detail.mealItem.amount;
           final costFactor = detail.product!.weight > 0
-              ? detail.mealItem.amount / detail.product!.weight
+              ? grams / detail.product!.weight
               : 0.0;
           totalCost += detail.product!.cost * costFactor;
         } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
@@ -911,58 +936,84 @@ class EditTimeDialog extends StatefulWidget {
 }
 
 class _EditTimeDialogState extends State<EditTimeDialog> {
-  late TextEditingController _hourController;
-  late TextEditingController _minuteController;
+  late TextEditingController _timeController;
+  String? _errorText;
+  late LocalTime _selectedTime;
 
   @override
   void initState() {
     super.initState();
-    _hourController =
-        TextEditingController(text: widget.initialTime.hour.toString().padLeft(2, '0'));
-    _minuteController =
-        TextEditingController(text: widget.initialTime.minute.toString().padLeft(2, '0'));
+    _selectedTime = widget.initialTime;
+    _timeController = TextEditingController(
+      text: '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}',
+    );
   }
 
   @override
   void dispose() {
-    _hourController.dispose();
-    _minuteController.dispose();
+    _timeController.dispose();
     super.dispose();
+  }
+
+  void _validate(String val) {
+    final parts = val.split(':');
+    if (parts.length != 2) {
+      setState(() => _errorText = 'Use HH:MM format');
+      return;
+    }
+    final hour = int.tryParse(parts[0]);
+    final min = int.tryParse(parts[1]);
+    if (hour == null || hour < 0 || hour > 23 || min == null || min < 0 || min > 59) {
+      setState(() => _errorText = 'Invalid hour (0-23) or minute (0-59)');
+      return;
+    }
+    setState(() {
+      _errorText = null;
+      _selectedTime = LocalTime(hour, min);
+    });
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: _selectedTime.hour,
+        minute: _selectedTime.minute,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedTime = LocalTime(picked.hour, picked.minute);
+        _timeController.text =
+            '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
+        _errorText = null;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
       title: const Text("Edit Meal Time"),
-      content: Row(
-        children: [
-          Expanded(
-            child: TextField(
-              controller: _hourController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Hour"),
-            ),
+      content: TextField(
+        controller: _timeController,
+        keyboardType: TextInputType.datetime,
+        decoration: InputDecoration(
+          labelText: "Time (HH:MM)",
+          errorText: _errorText,
+          suffixIcon: IconButton(
+            icon: const Icon(Icons.access_time),
+            onPressed: () => _selectTime(context),
           ),
-          const SizedBox(width: 8),
-          const Text(":", style: TextStyle(fontSize: 24)),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              controller: _minuteController,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(labelText: "Minute"),
-            ),
-          ),
-        ],
+        ),
+        onChanged: _validate,
       ),
       actions: [
         TextButton(onPressed: widget.onDismiss, child: const Text("Cancel")),
         TextButton(
-          onPressed: () {
-            final h = int.tryParse(_hourController.text) ?? widget.initialTime.hour;
-            final m = int.tryParse(_minuteController.text) ?? widget.initialTime.minute;
-            widget.onConfirm(LocalTime(h.clamp(0, 23), m.clamp(0, 59)));
-          },
+          onPressed: _errorText == null
+              ? () => widget.onConfirm(_selectedTime)
+              : null,
           child: const Text("Save"),
         ),
       ],
@@ -1028,7 +1079,7 @@ class AddMealItemDialog extends StatefulWidget {
   final List<Product> products;
   final List<RecipeWithIngredients> recipes;
   final VoidCallback onDismiss;
-  final void Function(MealItemType type, int targetId, double amount) onConfirm;
+  final void Function(MealItemType type, int targetId, double amount, AmountUnit amountUnit) onConfirm;
 
   const AddMealItemDialog({
     super.key,
@@ -1048,6 +1099,7 @@ class _AddMealItemDialogState extends State<AddMealItemDialog> {
   int? _selectedProductId;
   int? _selectedRecipeId;
   final TextEditingController _amountController = TextEditingController();
+  AmountUnit _amountUnit = AmountUnit.GRAMS;
 
   @override
   void dispose() {
@@ -1057,6 +1109,7 @@ class _AddMealItemDialogState extends State<AddMealItemDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final theme = Theme.of(context);
     final filteredProducts = _searchQuery.isEmpty
         ? widget.products
         : widget.products
@@ -1068,6 +1121,7 @@ class _AddMealItemDialogState extends State<AddMealItemDialog> {
         : widget.recipes
             .where((r) => r.recipe.name.toLowerCase().contains(_searchQuery.toLowerCase()))
             .toList();
+
     return AlertDialog(
       title: const Text("Add Item to Meal"),
       content: SingleChildScrollView(
@@ -1120,11 +1174,55 @@ class _AddMealItemDialogState extends State<AddMealItemDialog> {
                 });
               },
             ),
+            if (_type == MealItemType.PRODUCT && _selectedProductId != null) ...[
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  ChoiceChip(
+                    label: const Text("Grams"),
+                    selected: _amountUnit == AmountUnit.GRAMS,
+                    onSelected: (selected) {
+                      if (selected) setState(() => _amountUnit = AmountUnit.GRAMS);
+                    },
+                  ),
+                  const SizedBox(width: 8),
+                  ChoiceChip(
+                    label: const Text("Units"),
+                    selected: _amountUnit == AmountUnit.UNITS,
+                    onSelected: (selected) {
+                      if (selected) setState(() => _amountUnit = AmountUnit.UNITS);
+                    },
+                  ),
+                ],
+              ),
+              if (_amountUnit == AmountUnit.UNITS) ...[
+                const SizedBox(height: 4),
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: _amountController,
+                  builder: (context, value, _) {
+                    final prod = widget.products.firstWhereOrNull((p) => p.id == _selectedProductId);
+                    if (prod != null) {
+                      final val = double.tryParse(value.text) ?? 1.0;
+                      return Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          "≈ ${(val * getEdibleWeightPerUnit(prod)).toStringAsFixed(0)}g edible mass",
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      );
+                    }
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
+            ],
             const SizedBox(height: 8),
             TextField(
               controller: _amountController,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-              decoration: const InputDecoration(labelText: "Amount (grams / units)"),
+              decoration: const InputDecoration(labelText: "Amount"),
             ),
           ],
         ),
@@ -1136,7 +1234,7 @@ class _AddMealItemDialogState extends State<AddMealItemDialog> {
             final targetId = _type == MealItemType.PRODUCT ? _selectedProductId : _selectedRecipeId;
             final amount = double.tryParse(_amountController.text) ?? 0.0;
             if (targetId != null && amount > 0.0) {
-              widget.onConfirm(_type, targetId, amount);
+              widget.onConfirm(_type, targetId, amount, _type == MealItemType.PRODUCT ? _amountUnit : AmountUnit.GRAMS);
             }
           },
           child: const Text("Add"),

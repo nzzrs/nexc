@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/meal_repository.dart';
+import '../../core/db/relations.dart';
 import '../../core/providers/profile_providers.dart';
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -237,13 +238,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     totalItems++;
                     if (detail.mealItem.consumed) consumedCount++;
 
-                    final scale = detail.mealItem.amount / 100.0;
+                    final scale = detail.macroScale;
                     if (detail.mealItem.type == MealItemType.PRODUCT && detail.product != null) {
                       totalProt += detail.product!.proteins * scale;
                       totalCarb += detail.product!.carbs * scale;
                       totalFat += detail.product!.fats * scale;
+                      final grams = detail.mealItem.amountUnit == AmountUnit.UNITS
+                          ? detail.mealItem.amount * getEdibleWeightPerUnit(detail.product!)
+                          : detail.mealItem.amount;
                       final costFactor = detail.product!.weight > 0
-                          ? detail.mealItem.amount / detail.product!.weight
+                          ? grams / detail.product!.weight
                           : 0.0;
                       totalCost += detail.product!.cost * costFactor;
                     } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {

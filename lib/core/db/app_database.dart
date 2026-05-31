@@ -310,6 +310,11 @@ class MealItems extends Table {
   TextColumn get type => text().map(const EnumNameConverter<MealItemType>(MealItemType.values))();
   IntColumn get targetId => integer().named('targetId')();
   RealColumn get amount => real()();
+  /// Unit for amount: GRAMS (default) or UNITS (e.g. 1 banana).
+  TextColumn get amountUnit => text()
+      .named('amountUnit')
+      .map(const EnumNameConverter<AmountUnit>(AmountUnit.values))
+      .withDefault(const Constant('GRAMS'))();
   BoolColumn get consumed => boolean()();
   IntColumn get position => integer()();
 
@@ -336,7 +341,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 11;
+  int get schemaVersion => 12;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -354,6 +359,9 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 11) {
             await m.addColumn(products, products.isPortable);
+          }
+          if (from < 12) {
+            await m.addColumn(mealItems, mealItems.amountUnit);
           }
         },
       );

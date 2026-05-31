@@ -4062,6 +4062,15 @@ class $MealItemsTable extends MealItems
   late final GeneratedColumn<double> amount = GeneratedColumn<double>(
       'amount', aliasedName, false,
       type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _amountUnitMeta =
+      const VerificationMeta('amountUnit');
+  @override
+  late final GeneratedColumnWithTypeConverter<AmountUnit, String> amountUnit =
+      GeneratedColumn<String>('amountUnit', aliasedName, false,
+              type: DriftSqlType.string,
+              requiredDuringInsert: false,
+              defaultValue: const Constant('GRAMS'))
+          .withConverter<AmountUnit>($MealItemsTable.$converteramountUnit);
   static const VerificationMeta _consumedMeta =
       const VerificationMeta('consumed');
   @override
@@ -4079,7 +4088,7 @@ class $MealItemsTable extends MealItems
       type: DriftSqlType.int, requiredDuringInsert: true);
   @override
   List<GeneratedColumn> get $columns =>
-      [id, mealId, type, targetId, amount, consumed, position];
+      [id, mealId, type, targetId, amount, amountUnit, consumed, position];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -4112,6 +4121,7 @@ class $MealItemsTable extends MealItems
     } else if (isInserting) {
       context.missing(_amountMeta);
     }
+    context.handle(_amountUnitMeta, const VerificationResult.success());
     if (data.containsKey('consumed')) {
       context.handle(_consumedMeta,
           consumed.isAcceptableOrUnknown(data['consumed']!, _consumedMeta));
@@ -4143,6 +4153,9 @@ class $MealItemsTable extends MealItems
           .read(DriftSqlType.int, data['${effectivePrefix}targetId'])!,
       amount: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}amount'])!,
+      amountUnit: $MealItemsTable.$converteramountUnit.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}amountUnit'])!),
       consumed: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}consumed'])!,
       position: attachedDatabase.typeMapping
@@ -4157,6 +4170,8 @@ class $MealItemsTable extends MealItems
 
   static TypeConverter<MealItemType, String> $convertertype =
       const EnumNameConverter(MealItemType.values);
+  static TypeConverter<AmountUnit, String> $converteramountUnit =
+      const EnumNameConverter(AmountUnit.values);
 }
 
 class MealItem extends DataClass implements Insertable<MealItem> {
@@ -4165,6 +4180,9 @@ class MealItem extends DataClass implements Insertable<MealItem> {
   final MealItemType type;
   final int targetId;
   final double amount;
+
+  /// Unit for amount: GRAMS (default) or UNITS (e.g. 1 banana).
+  final AmountUnit amountUnit;
   final bool consumed;
   final int position;
   const MealItem(
@@ -4173,6 +4191,7 @@ class MealItem extends DataClass implements Insertable<MealItem> {
       required this.type,
       required this.targetId,
       required this.amount,
+      required this.amountUnit,
       required this.consumed,
       required this.position});
   @override
@@ -4186,6 +4205,10 @@ class MealItem extends DataClass implements Insertable<MealItem> {
     }
     map['targetId'] = Variable<int>(targetId);
     map['amount'] = Variable<double>(amount);
+    {
+      map['amountUnit'] = Variable<String>(
+          $MealItemsTable.$converteramountUnit.toSql(amountUnit));
+    }
     map['consumed'] = Variable<bool>(consumed);
     map['position'] = Variable<int>(position);
     return map;
@@ -4198,6 +4221,7 @@ class MealItem extends DataClass implements Insertable<MealItem> {
       type: Value(type),
       targetId: Value(targetId),
       amount: Value(amount),
+      amountUnit: Value(amountUnit),
       consumed: Value(consumed),
       position: Value(position),
     );
@@ -4212,6 +4236,7 @@ class MealItem extends DataClass implements Insertable<MealItem> {
       type: serializer.fromJson<MealItemType>(json['type']),
       targetId: serializer.fromJson<int>(json['targetId']),
       amount: serializer.fromJson<double>(json['amount']),
+      amountUnit: serializer.fromJson<AmountUnit>(json['amountUnit']),
       consumed: serializer.fromJson<bool>(json['consumed']),
       position: serializer.fromJson<int>(json['position']),
     );
@@ -4225,6 +4250,7 @@ class MealItem extends DataClass implements Insertable<MealItem> {
       'type': serializer.toJson<MealItemType>(type),
       'targetId': serializer.toJson<int>(targetId),
       'amount': serializer.toJson<double>(amount),
+      'amountUnit': serializer.toJson<AmountUnit>(amountUnit),
       'consumed': serializer.toJson<bool>(consumed),
       'position': serializer.toJson<int>(position),
     };
@@ -4236,6 +4262,7 @@ class MealItem extends DataClass implements Insertable<MealItem> {
           MealItemType? type,
           int? targetId,
           double? amount,
+          AmountUnit? amountUnit,
           bool? consumed,
           int? position}) =>
       MealItem(
@@ -4244,6 +4271,7 @@ class MealItem extends DataClass implements Insertable<MealItem> {
         type: type ?? this.type,
         targetId: targetId ?? this.targetId,
         amount: amount ?? this.amount,
+        amountUnit: amountUnit ?? this.amountUnit,
         consumed: consumed ?? this.consumed,
         position: position ?? this.position,
       );
@@ -4255,6 +4283,7 @@ class MealItem extends DataClass implements Insertable<MealItem> {
           ..write('type: $type, ')
           ..write('targetId: $targetId, ')
           ..write('amount: $amount, ')
+          ..write('amountUnit: $amountUnit, ')
           ..write('consumed: $consumed, ')
           ..write('position: $position')
           ..write(')'))
@@ -4262,8 +4291,8 @@ class MealItem extends DataClass implements Insertable<MealItem> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, mealId, type, targetId, amount, consumed, position);
+  int get hashCode => Object.hash(
+      id, mealId, type, targetId, amount, amountUnit, consumed, position);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4273,6 +4302,7 @@ class MealItem extends DataClass implements Insertable<MealItem> {
           other.type == this.type &&
           other.targetId == this.targetId &&
           other.amount == this.amount &&
+          other.amountUnit == this.amountUnit &&
           other.consumed == this.consumed &&
           other.position == this.position);
 }
@@ -4283,6 +4313,7 @@ class MealItemsCompanion extends UpdateCompanion<MealItem> {
   final Value<MealItemType> type;
   final Value<int> targetId;
   final Value<double> amount;
+  final Value<AmountUnit> amountUnit;
   final Value<bool> consumed;
   final Value<int> position;
   const MealItemsCompanion({
@@ -4291,6 +4322,7 @@ class MealItemsCompanion extends UpdateCompanion<MealItem> {
     this.type = const Value.absent(),
     this.targetId = const Value.absent(),
     this.amount = const Value.absent(),
+    this.amountUnit = const Value.absent(),
     this.consumed = const Value.absent(),
     this.position = const Value.absent(),
   });
@@ -4300,6 +4332,7 @@ class MealItemsCompanion extends UpdateCompanion<MealItem> {
     required MealItemType type,
     required int targetId,
     required double amount,
+    this.amountUnit = const Value.absent(),
     required bool consumed,
     required int position,
   })  : mealId = Value(mealId),
@@ -4314,6 +4347,7 @@ class MealItemsCompanion extends UpdateCompanion<MealItem> {
     Expression<String>? type,
     Expression<int>? targetId,
     Expression<double>? amount,
+    Expression<String>? amountUnit,
     Expression<bool>? consumed,
     Expression<int>? position,
   }) {
@@ -4323,6 +4357,7 @@ class MealItemsCompanion extends UpdateCompanion<MealItem> {
       if (type != null) 'type': type,
       if (targetId != null) 'targetId': targetId,
       if (amount != null) 'amount': amount,
+      if (amountUnit != null) 'amountUnit': amountUnit,
       if (consumed != null) 'consumed': consumed,
       if (position != null) 'position': position,
     });
@@ -4334,6 +4369,7 @@ class MealItemsCompanion extends UpdateCompanion<MealItem> {
       Value<MealItemType>? type,
       Value<int>? targetId,
       Value<double>? amount,
+      Value<AmountUnit>? amountUnit,
       Value<bool>? consumed,
       Value<int>? position}) {
     return MealItemsCompanion(
@@ -4342,6 +4378,7 @@ class MealItemsCompanion extends UpdateCompanion<MealItem> {
       type: type ?? this.type,
       targetId: targetId ?? this.targetId,
       amount: amount ?? this.amount,
+      amountUnit: amountUnit ?? this.amountUnit,
       consumed: consumed ?? this.consumed,
       position: position ?? this.position,
     );
@@ -4366,6 +4403,10 @@ class MealItemsCompanion extends UpdateCompanion<MealItem> {
     if (amount.present) {
       map['amount'] = Variable<double>(amount.value);
     }
+    if (amountUnit.present) {
+      map['amountUnit'] = Variable<String>(
+          $MealItemsTable.$converteramountUnit.toSql(amountUnit.value));
+    }
     if (consumed.present) {
       map['consumed'] = Variable<bool>(consumed.value);
     }
@@ -4383,6 +4424,7 @@ class MealItemsCompanion extends UpdateCompanion<MealItem> {
           ..write('type: $type, ')
           ..write('targetId: $targetId, ')
           ..write('amount: $amount, ')
+          ..write('amountUnit: $amountUnit, ')
           ..write('consumed: $consumed, ')
           ..write('position: $position')
           ..write(')'))
@@ -6292,6 +6334,7 @@ typedef $$MealItemsTableInsertCompanionBuilder = MealItemsCompanion Function({
   required MealItemType type,
   required int targetId,
   required double amount,
+  Value<AmountUnit> amountUnit,
   required bool consumed,
   required int position,
 });
@@ -6301,6 +6344,7 @@ typedef $$MealItemsTableUpdateCompanionBuilder = MealItemsCompanion Function({
   Value<MealItemType> type,
   Value<int> targetId,
   Value<double> amount,
+  Value<AmountUnit> amountUnit,
   Value<bool> consumed,
   Value<int> position,
 });
@@ -6330,6 +6374,7 @@ class $$MealItemsTableTableManager extends RootTableManager<
             Value<MealItemType> type = const Value.absent(),
             Value<int> targetId = const Value.absent(),
             Value<double> amount = const Value.absent(),
+            Value<AmountUnit> amountUnit = const Value.absent(),
             Value<bool> consumed = const Value.absent(),
             Value<int> position = const Value.absent(),
           }) =>
@@ -6339,6 +6384,7 @@ class $$MealItemsTableTableManager extends RootTableManager<
             type: type,
             targetId: targetId,
             amount: amount,
+            amountUnit: amountUnit,
             consumed: consumed,
             position: position,
           ),
@@ -6348,6 +6394,7 @@ class $$MealItemsTableTableManager extends RootTableManager<
             required MealItemType type,
             required int targetId,
             required double amount,
+            Value<AmountUnit> amountUnit = const Value.absent(),
             required bool consumed,
             required int position,
           }) =>
@@ -6357,6 +6404,7 @@ class $$MealItemsTableTableManager extends RootTableManager<
             type: type,
             targetId: targetId,
             amount: amount,
+            amountUnit: amountUnit,
             consumed: consumed,
             position: position,
           ),
@@ -6405,6 +6453,13 @@ class $$MealItemsTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
+  ColumnWithTypeConverterFilters<AmountUnit, AmountUnit, String>
+      get amountUnit => $state.composableBuilder(
+          column: $state.table.amountUnit,
+          builder: (column, joinBuilders) => ColumnWithTypeConverterFilters(
+              column,
+              joinBuilders: joinBuilders));
+
   ColumnFilters<bool> get consumed => $state.composableBuilder(
       column: $state.table.consumed,
       builder: (column, joinBuilders) =>
@@ -6441,6 +6496,11 @@ class $$MealItemsTableOrderingComposer
 
   ColumnOrderings<double> get amount => $state.composableBuilder(
       column: $state.table.amount,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get amountUnit => $state.composableBuilder(
+      column: $state.table.amountUnit,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 

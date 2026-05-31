@@ -11,9 +11,11 @@ import 'package:flutter/material.dart';
 import '../core/components/nexc_scaffold.dart';
 import 'home/home_screen.dart';
 import 'meals/meals_dashboard_screen.dart';
+import 'calendar/calendar_screen.dart';
 import 'profile/profile_screen.dart';
+import 'notifications/notification_permission_dialog.dart';
 
-enum MainScreenPage { home, meals, profile }
+enum MainScreenPage { home, meals, calendar, profile }
 
 class MainScreen extends StatefulWidget {
   const MainScreen({super.key});
@@ -25,6 +27,14 @@ class MainScreen extends StatefulWidget {
 class _MainScreenState extends State<MainScreen> {
   final PageController _pageController = PageController(initialPage: 0);
   int _currentPageIndex = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      NotificationPermissionDialog.showIfNeeded(context);
+    });
+  }
 
   void _onPageChanged(int index) {
     setState(() {
@@ -91,6 +101,11 @@ class _MainScreenState extends State<MainScreen> {
             label: 'Meals',
           ),
           NavigationDestination(
+            icon: Icon(Icons.calendar_month_outlined),
+            selectedIcon: Icon(Icons.calendar_month),
+            label: 'Calendar',
+          ),
+          NavigationDestination(
             icon: Icon(Icons.person_outline),
             selectedIcon: Icon(Icons.person),
             label: 'Profile',
@@ -104,6 +119,7 @@ class _MainScreenState extends State<MainScreen> {
           children: const [
             HomeScreen(),
             MealsDashboardScreen(),
+            CalendarScreen(),
             ProfileScreen(),
           ],
         );

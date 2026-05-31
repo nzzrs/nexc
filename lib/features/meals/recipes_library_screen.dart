@@ -243,6 +243,7 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
 
   int? _selectedProductId;
   final TextEditingController _amountController = TextEditingController();
+  String _searchQuery = "";
 
   @override
   void initState() {
@@ -265,6 +266,11 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final filteredProducts = _searchQuery.isEmpty
+        ? widget.products
+        : widget.products
+            .where((p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
+            .toList();
 
     return AlertDialog(
       title: Text(widget.recipeWithIngredients.recipe.id == 0 ? "Add Recipe" : "Edit Recipe"),
@@ -299,10 +305,15 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
             const Divider(),
             const Text("Composition", style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
+            TextField(
+              decoration: const InputDecoration(labelText: "Search Ingredient"),
+              onChanged: (val) => setState(() => _searchQuery = val),
+            ),
+            const SizedBox(height: 8),
             DropdownButtonFormField<int>(
               decoration: const InputDecoration(labelText: "Select Ingredient"),
               value: _selectedProductId,
-              items: widget.products
+              items: filteredProducts
                   .map((p) => DropdownMenuItem<int>(value: p.id, child: Text(p.name)))
                   .toList(),
               onChanged: (val) => setState(() => _selectedProductId = val),

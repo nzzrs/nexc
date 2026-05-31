@@ -111,6 +111,16 @@ extension RecipeWithIngredientsExt on RecipeWithIngredients {
       recipe.isPortable && ingredients.every((ing) => ing.product.isPortable);
 }
 
+double getEdibleWeightPerUnit(Product p) {
+  if (p.edibleQtyPerUnit > 0) return p.edibleQtyPerUnit;
+  final name = p.name.toLowerCase();
+  if (name.contains('banana')) return 118.0;
+  if (name.contains('egg')) return 50.0;
+  if (name.contains('apple')) return 150.0;
+  if (name.contains('orange')) return 130.0;
+  return 100.0; // fallback
+}
+
 extension MealItemWithDetailsExt on MealItemWithDetails {
   bool get isItemPortable {
     switch (mealItem.type) {
@@ -119,6 +129,19 @@ extension MealItemWithDetailsExt on MealItemWithDetails {
       case MealItemType.RECIPE:
         return recipe?.isRecipePortable ?? true;
     }
+  }
+
+  double get macroScale {
+    if (mealItem.type == MealItemType.PRODUCT) {
+      final prod = product;
+      if (prod != null) {
+        if (mealItem.amountUnit == AmountUnit.UNITS) {
+          final unitWeight = getEdibleWeightPerUnit(prod);
+          return (mealItem.amount * unitWeight) / 100.0;
+        }
+      }
+    }
+    return mealItem.amount / 100.0;
   }
 }
 

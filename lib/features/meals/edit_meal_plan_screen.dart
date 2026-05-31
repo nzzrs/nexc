@@ -245,13 +245,14 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                       products: products,
                       recipes: recipes,
                       onDismiss: () => Navigator.pop(context),
-                      onConfirm: (type, targetId, amount) {
+                      onConfirm: (type, targetId, amount, amountUnit) {
                         final newItem = MealItem(
                           id: Random().nextInt(10000000), // Unique ID in memory
                           mealId: mealWithItems.meal.id,
                           type: type,
                           targetId: targetId,
                           amount: amount,
+                          amountUnit: amountUnit,
                           consumed: false,
                           position: 0,
                         );
@@ -278,13 +279,14 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                       products: products,
                       recipes: recipes,
                       onDismiss: () => Navigator.pop(context),
-                      onConfirm: (type, targetId, amount) {
+                      onConfirm: (type, targetId, amount, amountUnit) {
                         final newItem = MealItem(
                           id: Random().nextInt(10000000), // Unique ID in memory
                           mealId: mealWithItems.meal.id,
                           type: type,
                           targetId: targetId,
                           amount: amount,
+                          amountUnit: amountUnit,
                           consumed: false,
                           position: 0,
                         );
@@ -439,17 +441,60 @@ class AddMealDialog extends StatefulWidget {
 
 class _AddMealDialogState extends State<AddMealDialog> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _hourController = TextEditingController();
-  final TextEditingController _minuteController = TextEditingController();
+  final TextEditingController _timeController = TextEditingController();
   final TextEditingController _notesController = TextEditingController();
+  String? _errorText;
+  LocalTime _selectedTime = const LocalTime(12, 0);
+
+  @override
+  void initState() {
+    super.initState();
+    _timeController.text =
+        '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
+  }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _hourController.dispose();
-    _minuteController.dispose();
+    _timeController.dispose();
     _notesController.dispose();
     super.dispose();
+  }
+
+  void _validate(String val) {
+    final parts = val.split(':');
+    if (parts.length != 2) {
+      setState(() => _errorText = 'Use HH:MM format');
+      return;
+    }
+    final hour = int.tryParse(parts[0]);
+    final min = int.tryParse(parts[1]);
+    if (hour == null || hour < 0 || hour > 23 || min == null || min < 0 || min > 59) {
+      setState(() => _errorText = 'Invalid hour (0-23) or minute (0-59)');
+      return;
+    }
+    setState(() {
+      _errorText = null;
+      _selectedTime = LocalTime(hour, min);
+    });
+  }
+
+  Future<void> _selectTime(BuildContext context) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(
+        hour: _selectedTime.hour,
+        minute: _selectedTime.minute,
+      ),
+    );
+    if (picked != null) {
+      setState(() {
+        _selectedTime = LocalTime(picked.hour, picked.minute);
+        _timeController.text =
+            '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
+        _errorText = null;
+      });
+    }
   }
 
   @override
@@ -465,24 +510,18 @@ class _AddMealDialogState extends State<AddMealDialog> {
               decoration: const InputDecoration(labelText: "Meal Name"),
             ),
             const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _hourController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: "Hour (0-23)"),
-                  ),
+            TextField(
+              controller: _timeController,
+              keyboardType: TextInputType.datetime,
+              decoration: InputDecoration(
+                labelText: "Time (HH:MM)",
+                errorText: _errorText,
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.access_time),
+                  onPressed: () => _selectTime(context),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _minuteController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: "Minute (0-59)"),
-                  ),
-                ),
-              ],
+              ),
+              onChanged: _validate,
             ),
             const SizedBox(height: 8),
             TextField(
@@ -495,25 +534,24 @@ class _AddMealDialogState extends State<AddMealDialog> {
       actions: [
         TextButton(onPressed: widget.onDismiss, child: const Text("Cancel")),
         TextButton(
-          onPressed: () {
-            final name = _nameController.text.trim();
-            final h = int.tryParse(_hourController.text) ?? 12;
-            final m = int.tryParse(_minuteController.text) ?? 0;
-            final notes = _notesController.text.trim();
-
-            if (name.isNotEmpty) {
-              widget.onConfirm(
-                Meal(
-                  id: Random().nextInt(10000000), // unique memory ID
-                  mealPlanId: 0,
-                  name: name,
-                  time: LocalTime(h.clamp(0, 23), m.clamp(0, 59)),
-                  notes: notes,
-                  position: 0,
-                ),
-              );
-            }
-          },
+          onPressed: _errorText == null
+              ? () {
+                  final name = _nameController.text.trim();
+                  final notes = _notesController.text.trim();
+                  if (name.isNotEmpty) {
+                    widget.onConfirm(
+                      Meal(
+                        id: Random().nextInt(10000000), // unique memory ID
+                        mealPlanId: 0,
+                        name: name,
+                        time: _selectedTime,
+                        notes: notes,
+                        position: 0,
+                      ),
+                    );
+                  }
+                }
+              : null,
           child: const Text("Add"),
         ),
       ],

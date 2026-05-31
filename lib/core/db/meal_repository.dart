@@ -205,6 +205,7 @@ class MealRepository {
                   type: itemDetail.mealItem.type,
                   targetId: itemDetail.mealItem.targetId,
                   amount: itemDetail.mealItem.amount,
+                  amountUnit: Value(itemDetail.mealItem.amountUnit),
                   consumed: itemDetail.mealItem.consumed,
                   position: itemDetail.mealItem.position,
                 ),
@@ -272,6 +273,7 @@ class MealRepository {
               type: item.mealItem.type,
               targetId: item.mealItem.targetId,
               amount: item.mealItem.amount,
+              amountUnit: item.mealItem.amountUnit,
               consumed: false,
               position: item.mealItem.position,
             ),
@@ -314,6 +316,7 @@ class MealRepository {
     required MealItemType type,
     required int targetId,
     required double amount,
+    required AmountUnit amountUnit,
   }) async {
     final itemsList = await (db.select(db.mealItems)..where((mi) => mi.mealId.equals(mealId))).get();
     final maxPos = itemsList.map((i) => i.position).fold(-1, (prev, element) => element > prev ? element : prev);
@@ -325,6 +328,7 @@ class MealRepository {
         type: type,
         targetId: targetId,
         amount: amount,
+        amountUnit: amountUnit,
         consumed: false,
         position: maxPos + 1,
       ),
@@ -336,6 +340,7 @@ class MealRepository {
     required MealItemType newType,
     required int newTargetId,
     required double newAmount,
+    required AmountUnit newAmountUnit,
   }) async {
     await db.transaction(() async {
       final oldItem = await (db.select(db.mealItems)..where((mi) => mi.id.equals(oldItemId))).getSingle();
@@ -347,6 +352,7 @@ class MealRepository {
           type: newType,
           targetId: newTargetId,
           amount: newAmount,
+          amountUnit: newAmountUnit,
           consumed: false,
           position: oldItem.position,
         ),
@@ -428,25 +434,25 @@ class MealRepository {
 
     final m1 = const Meal(id: 40001, mealPlanId: 30001, name: "Breakfast & Supplementation", time: LocalTime(8, 0), notes: "Take immediately upon waking up with plenty of water.", position: 0);
     final m1Items = [
-      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40001, type: MealItemType.PRODUCT, targetId: 10001, amount: 250.0, consumed: false, position: 0), product: productsList[0]),
-      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40001, type: MealItemType.PRODUCT, targetId: 10002, amount: 50.0, consumed: false, position: 1), product: productsList[1]),
-      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40001, type: MealItemType.PRODUCT, targetId: 10003, amount: 5.0, consumed: false, position: 2), product: productsList[2]),
+      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40001, type: MealItemType.PRODUCT, targetId: 10001, amount: 250.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 0), product: productsList[0]),
+      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40001, type: MealItemType.PRODUCT, targetId: 10002, amount: 50.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 1), product: productsList[1]),
+      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40001, type: MealItemType.PRODUCT, targetId: 10003, amount: 5.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 2), product: productsList[2]),
     ];
 
     final m2 = const Meal(id: 40002, mealPlanId: 30001, name: "Lunch", time: LocalTime(13, 30), notes: "Main meal of the day.", position: 1);
     final m2Items = [
-      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40002, type: MealItemType.PRODUCT, targetId: 10004, amount: 100.0, consumed: false, position: 0), product: productsList[3]),
-      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40002, type: MealItemType.PRODUCT, targetId: 10005, amount: 100.0, consumed: false, position: 1), product: productsList[4]),
+      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40002, type: MealItemType.PRODUCT, targetId: 10004, amount: 100.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 0), product: productsList[3]),
+      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40002, type: MealItemType.PRODUCT, targetId: 10005, amount: 100.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 1), product: productsList[4]),
     ];
 
     final m3 = const Meal(id: 40003, mealPlanId: 30001, name: "Pre-Workout Snack", time: LocalTime(17, 0), notes: "1 hour before training.", position: 2);
     final m3Items = [
-      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40003, type: MealItemType.PRODUCT, targetId: 10006, amount: 100.0, consumed: false, position: 0), product: productsList[5]),
+      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40003, type: MealItemType.PRODUCT, targetId: 10006, amount: 100.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 0), product: productsList[5]),
     ];
 
     final m4 = const Meal(id: 40004, mealPlanId: 30001, name: "Dinner", time: LocalTime(21, 0), notes: "Light meal before sleeping.", position: 3);
     final m4Items = [
-      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40004, type: MealItemType.RECIPE, targetId: 20001, amount: 1.0, consumed: false, position: 0), recipe: RecipeWithIngredients(recipe: scrambledEggs, ingredients: scrambledIngredients)),
+      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40004, type: MealItemType.RECIPE, targetId: 20001, amount: 1.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 0), recipe: RecipeWithIngredients(recipe: scrambledEggs, ingredients: scrambledIngredients)),
     ];
 
     final mealsList = [
@@ -471,14 +477,14 @@ class MealRepository {
 
     final cleanBulkM1 = const Meal(id: 40005, mealPlanId: 30002, name: "Breakfast", time: LocalTime(7, 30), notes: "High carb and protein to start the day.", position: 0);
     final cleanBulkM1Items = [
-      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40005, type: MealItemType.RECIPE, targetId: 20001, amount: 1.5, consumed: false, position: 0), recipe: RecipeWithIngredients(recipe: scrambledEggs, ingredients: scrambledIngredients)),
-      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40005, type: MealItemType.PRODUCT, targetId: 10006, amount: 150.0, consumed: false, position: 1), product: productsList[5]),
+      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40005, type: MealItemType.RECIPE, targetId: 20001, amount: 1.5, amountUnit: AmountUnit.GRAMS, consumed: false, position: 0), recipe: RecipeWithIngredients(recipe: scrambledEggs, ingredients: scrambledIngredients)),
+      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40005, type: MealItemType.PRODUCT, targetId: 10006, amount: 150.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 1), product: productsList[5]),
     ];
 
     final cleanBulkM2 = const Meal(id: 40006, mealPlanId: 30002, name: "Lunch", time: LocalTime(13, 0), notes: "Post-workout nutrient replenishment.", position: 1);
     final cleanBulkM2Items = [
-      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40006, type: MealItemType.PRODUCT, targetId: 10004, amount: 150.0, consumed: false, position: 0), product: productsList[3]),
-      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40006, type: MealItemType.PRODUCT, targetId: 10005, amount: 200.0, consumed: false, position: 1), product: productsList[4]),
+      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40006, type: MealItemType.PRODUCT, targetId: 10004, amount: 150.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 0), product: productsList[3]),
+      MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40006, type: MealItemType.PRODUCT, targetId: 10005, amount: 200.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 1), product: productsList[4]),
     ];
 
     final cleanBulkMealsList = [

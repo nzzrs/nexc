@@ -68,133 +68,138 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
       workoutDays.add(DateTime(d.year, d.month, d.day));
     }
 
-    return _isLoading
-        ? const Center(child: CircularProgressIndicator())
-        : CustomScrollView(
-            slivers: [
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                  child: TableCalendar<WorkoutWithExercisesAndSets>(
-                    firstDay: DateTime.utc(2020, 1, 1),
-                    lastDay: DateTime.utc(2030, 12, 31),
-                    focusedDay: _focusedDay,
-                    calendarFormat: _calendarFormat,
-                    selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
-                    eventLoader: _getWorkoutsForDay,
-                    onDaySelected: (selectedDay, focusedDay) {
-                      setState(() {
-                        _selectedDay = selectedDay;
-                        _focusedDay = focusedDay;
-                      });
-                    },
-                    onFormatChanged: (format) {
-                      setState(() => _calendarFormat = format);
-                    },
-                    onPageChanged: (focusedDay) {
-                      _focusedDay = focusedDay;
-                    },
-                    calendarStyle: CalendarStyle(
-                      todayDecoration: BoxDecoration(
-                        color: theme.colorScheme.secondaryContainer,
-                        shape: BoxShape.circle,
-                      ),
-                      todayTextStyle: TextStyle(
-                        color: theme.colorScheme.onSecondaryContainer,
-                        fontWeight: FontWeight.bold,
-                      ),
-                      selectedDecoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      markerDecoration: BoxDecoration(
-                        color: theme.colorScheme.primary,
-                        shape: BoxShape.circle,
-                      ),
-                      outsideDaysVisible: false,
-                    ),
-                    headerStyle: HeaderStyle(
-                      formatButtonDecoration: BoxDecoration(
-                        border: Border.all(color: theme.colorScheme.outline),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      formatButtonTextStyle: theme.textTheme.labelSmall!,
-                    ),
-                  ),
-                ),
-              ),
-
-              // Divider
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-              SliverToBoxAdapter(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Row(
-                    children: [
-                      Text(
-                        _selectedDay != null
-                            ? _formatDate(_selectedDay!)
-                            : 'Select a day to view workouts',
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (_selectedDay != null) ...[
-                        const Spacer(),
-                        Text(
-                          '${selectedWorkouts.length} workout${selectedWorkouts.length == 1 ? '' : 's'}',
-                          style: theme.textTheme.bodySmall?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-              ),
-              const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-              // Workout list for selected day
-              if (_selectedDay != null && selectedWorkouts.isEmpty)
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Calendar'),
+      ),
+      body: _isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : CustomScrollView(
+              slivers: [
                 SliverToBoxAdapter(
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 32.0),
-                    child: Center(
-                      child: Column(
-                        children: [
-                          Icon(
-                            Icons.fitness_center,
-                            size: 48,
-                            color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                    child: TableCalendar<WorkoutWithExercisesAndSets>(
+                      firstDay: DateTime.utc(2020, 1, 1),
+                      lastDay: DateTime.utc(2030, 12, 31),
+                      focusedDay: _focusedDay,
+                      calendarFormat: _calendarFormat,
+                      selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                      eventLoader: _getWorkoutsForDay,
+                      onDaySelected: (selectedDay, focusedDay) {
+                        setState(() {
+                          _selectedDay = selectedDay;
+                          _focusedDay = focusedDay;
+                        });
+                      },
+                      onFormatChanged: (format) {
+                        setState(() => _calendarFormat = format);
+                      },
+                      onPageChanged: (focusedDay) {
+                        _focusedDay = focusedDay;
+                      },
+                      calendarStyle: CalendarStyle(
+                        todayDecoration: BoxDecoration(
+                          color: theme.colorScheme.secondaryContainer,
+                          shape: BoxShape.circle,
+                        ),
+                        todayTextStyle: TextStyle(
+                          color: theme.colorScheme.onSecondaryContainer,
+                          fontWeight: FontWeight.bold,
+                        ),
+                        selectedDecoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        markerDecoration: BoxDecoration(
+                          color: theme.colorScheme.primary,
+                          shape: BoxShape.circle,
+                        ),
+                        outsideDaysVisible: false,
+                      ),
+                      headerStyle: HeaderStyle(
+                        formatButtonDecoration: BoxDecoration(
+                          border: Border.all(color: theme.colorScheme.outline),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        formatButtonTextStyle: theme.textTheme.labelSmall!,
+                      ),
+                    ),
+                  ),
+                ),
+
+                // Divider
+                const SliverToBoxAdapter(child: SizedBox(height: 8)),
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                    child: Row(
+                      children: [
+                        Text(
+                          _selectedDay != null
+                              ? _formatDate(_selectedDay!)
+                              : 'Select a day to view workouts',
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
                           ),
-                          const SizedBox(height: 12),
+                        ),
+                        if (_selectedDay != null) ...[
+                          const Spacer(),
                           Text(
-                            'Rest day — no workouts logged',
-                            style: theme.textTheme.bodyMedium?.copyWith(
+                            '${selectedWorkouts.length} workout${selectedWorkouts.length == 1 ? '' : 's'}',
+                            style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
                         ],
-                      ),
+                      ],
                     ),
                   ),
-                )
-              else
-                SliverList(
-                  delegate: SliverChildBuilderDelegate(
-                    (context, index) {
-                      final w = (selectedWorkouts.isNotEmpty
-                          ? selectedWorkouts
-                          : todayWorkouts)[index];
-                      return _WorkoutSummaryCard(workout: w);
-                    },
-                    childCount: selectedWorkouts.isNotEmpty
-                        ? selectedWorkouts.length
-                        : todayWorkouts.length,
-                  ),
                 ),
-            ],
-          );
+                const SliverToBoxAdapter(child: SizedBox(height: 8)),
+
+                // Workout list for selected day
+                if (_selectedDay != null && selectedWorkouts.isEmpty)
+                  SliverToBoxAdapter(
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 32.0),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(
+                              Icons.fitness_center,
+                              size: 48,
+                              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+                            ),
+                            const SizedBox(height: 12),
+                            Text(
+                              'Rest day — no workouts logged',
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  SliverList(
+                    delegate: SliverChildBuilderDelegate(
+                      (context, index) {
+                        final w = (selectedWorkouts.isNotEmpty
+                            ? selectedWorkouts
+                            : todayWorkouts)[index];
+                        return _WorkoutSummaryCard(workout: w);
+                      },
+                      childCount: selectedWorkouts.isNotEmpty
+                          ? selectedWorkouts.length
+                          : todayWorkouts.length,
+                    ),
+                  ),
+              ],
+            ),
+    );
   }
 
   String _formatDate(DateTime d) {

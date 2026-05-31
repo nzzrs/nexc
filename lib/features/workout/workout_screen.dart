@@ -101,14 +101,16 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
             completed: now,
           );
           // Clone exercises & sets
+          int tempExId = -1;
+          int tempSetId = -1;
           _exercises = potential.exercisesWithSets.map((eWs) {
             final clonedEx = eWs.exercise.copyWith(
-              id: 0,
+              id: tempExId--,
               workoutId: 0,
             );
             final clonedSets = eWs.sets.map((s) => s.copyWith(
-              id: 0,
-              exerciseId: 0,
+              id: tempSetId--,
+              exerciseId: clonedEx.id,
               completed: false,
             )).toList();
             return ExerciseWithSets(
@@ -287,6 +289,13 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
 
     if (_workout.id != id) {
       _workout = _workout.copyWith(id: id);
+    }
+
+    final updated = await repo.getWorkoutWithExercisesAndSets(id);
+    if (updated != null && mounted) {
+      setState(() {
+        _exercises = List.from(updated.exercisesWithSets);
+      });
     }
   }
 

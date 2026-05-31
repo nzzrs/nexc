@@ -81,7 +81,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 text: "Calendar",
                 icon: Icons.calendar_month,
                 onPressed: () {
-                  _showWipSnackBar(context, "Calendar Screen");
+                  Navigator.pushNamed(context, '/calendar');
                 },
               ),
             ),

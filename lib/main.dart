@@ -25,6 +25,7 @@ import 'features/meals/edit_meal_plan_screen.dart';
 import 'features/meals/track_meal_plan_screen.dart';
 import 'features/meals/products_library_screen.dart';
 import 'features/meals/recipes_library_screen.dart';
+import 'features/calendar/calendar_screen.dart';
 
 import 'features/workout/info_workout_screen.dart';
 
@@ -91,6 +92,7 @@ class MyApp extends ConsumerWidget {
         },
         '/meals/products': (context) => const ProductsLibraryScreen(),
         '/meals/recipes': (context) => const RecipesLibraryScreen(),
+        '/calendar': (context) => const CalendarScreen(),
       },
       debugShowCheckedModeBanner: false,
     );

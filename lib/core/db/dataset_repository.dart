@@ -54,13 +54,15 @@ class DatasetRepository {
     final settings = ref.read(settingsProvider);
     final settingsNotifier = ref.read(settingsProvider.notifier);
     final mealRepo = ref.read(mealRepositoryProvider);
+    final workoutRepo = ref.read(workoutRepositoryProvider);
+
+    // Prepopulate defaults if database is empty
+    await mealRepo.prepopulateDefaultMealPlans();
+    await workoutRepo.prepopulateDefaultWorkoutRoutines();
 
     final pastVersion = settings.pastVersionCode;
 
     if (pastVersion != currentVersionCode) {
-      // 1. Prepopulate meal plans
-      await mealRepo.prepopulateDefaultMealPlans();
-
       // 2. Load and parse exercises.json
       final jsonString = await rootBundle.loadString('assets/exercises.json');
       final List<dynamic> jsonList = json.decode(jsonString);
@@ -86,10 +88,6 @@ class DatasetRepository {
       await db.batch((batch) {
         batch.insertAllOnConflictUpdate(db.dataset, exercises);
       });
-
-      // 3.5 Prepopulate workout routines if empty
-      final workoutRepo = ref.read(workoutRepositoryProvider);
-      await workoutRepo.prepopulateDefaultWorkoutRoutines();
 
       // 4. Update pastVersionCode
       await settingsNotifier.setPastVersionCode(currentVersionCode);

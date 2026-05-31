@@ -77,7 +77,7 @@ class MealRepository {
               ),
             );
       } else {
-        await db.update(db.recipes).replace(recipe);
+        await db.into(db.recipes).insertOnConflictUpdate(recipe);
         recipeId = recipe.id;
       }
 
@@ -173,7 +173,7 @@ class MealRepository {
               ),
             );
       } else {
-        await db.update(db.mealPlans).replace(plan);
+        await db.into(db.mealPlans).insertOnConflictUpdate(plan);
         planId = plan.id;
       }
 
@@ -402,7 +402,7 @@ class MealRepository {
     ];
 
     for (final p in productsList) {
-      await db.into(db.products).insert(p.toCompanion(true));
+      await db.into(db.products).insertOnConflictUpdate(p);
     }
 
     // 2. Insert Recipes

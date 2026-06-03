@@ -529,3 +529,11 @@ QueryExecutor _openConnection() {
     return NativeDatabase(file);
   });
 }
+
+extension ProductExtension on Product {
+  double get carbs => carbsAvailable ?? carbsByDifference ?? 0.0;
+  double get cost => 0.0;
+  String get units => defaultUnits ?? 'g';
+  int get quantity => unitWeight ?? 0;
+  double get ediblePercent => edibleQtyPerUnit != null ? (edibleQtyPerUnit! * 100.0) : 100.0;
+}

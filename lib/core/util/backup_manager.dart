@@ -356,6 +356,7 @@ class BackupManager {
           state: MealPlanState.TEMPLATE,
           created: DateTime.tryParse(item['created'] ?? '') ?? DateTime.now(),
           completed: DateTime.tryParse(item['completed'] ?? '') ?? DateTime.now(),
+          isTemporal: item['isTemporal'] ?? false,
         );
 
         final List<dynamic> mealsJson = item['meals'] ?? [];

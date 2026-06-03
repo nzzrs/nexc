@@ -8,6 +8,7 @@
  */
 
 import 'app_database.dart';
+export 'app_database.dart';
 import 'enums.dart';
 
 class ExerciseWithSets {
@@ -122,7 +123,7 @@ extension RecipeWithIngredientsExt on RecipeWithIngredients {
 }
 
 double getEdibleWeightPerUnit(Product p) {
-  if (p.edibleQtyPerUnit > 0) return p.edibleQtyPerUnit;
+  if (p.edibleQtyPerUnit != null && p.edibleQtyPerUnit! > 0) return p.edibleQtyPerUnit!;
   final name = p.name.toLowerCase();
   if (name.contains('banana')) return 118.0;
   if (name.contains('egg')) return 50.0;

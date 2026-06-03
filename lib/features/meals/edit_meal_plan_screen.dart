@@ -482,8 +482,9 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
           ],
         );
       },
-    );
-  }
+    ),
+  );
+}
 }
 
 class MealEditCard extends StatelessWidget {

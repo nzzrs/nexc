@@ -42,7 +42,7 @@ class WorkoutRepository {
     return query
         .join([
           leftOuterJoin(db.exercises, db.exercises.workoutId.equalsExp(db.workouts.id)),
-          leftOuterJoin(db.dataset, db.dataset.id.equalsExp(db.exercises.idExerciseDC)),
+          leftOuterJoin(db.exerciseData, db.exerciseData.id.equalsExp(db.exercises.exerciseDataId)),
           leftOuterJoin(db.sets, db.sets.exerciseId.equalsExp(db.exercises.id)),
         ])
         .watch()
@@ -53,7 +53,7 @@ class WorkoutRepository {
     final query = db.select(db.workouts)..where((w) => w.id.equals(workoutId));
     final rows = await query.join([
       leftOuterJoin(db.exercises, db.exercises.workoutId.equalsExp(db.workouts.id)),
-      leftOuterJoin(db.dataset, db.dataset.id.equalsExp(db.exercises.idExerciseDC)),
+      leftOuterJoin(db.exerciseData, db.exerciseData.id.equalsExp(db.exercises.exerciseDataId)),
       leftOuterJoin(db.sets, db.sets.exerciseId.equalsExp(db.exercises.id)),
     ]).get();
 
@@ -74,7 +74,7 @@ class WorkoutRepository {
 
     final rows = await query.join([
       leftOuterJoin(db.exercises, db.exercises.workoutId.equalsExp(db.workouts.id)),
-      leftOuterJoin(db.dataset, db.dataset.id.equalsExp(db.exercises.idExerciseDC)),
+      leftOuterJoin(db.exerciseData, db.exerciseData.id.equalsExp(db.exercises.exerciseDataId)),
       leftOuterJoin(db.sets, db.sets.exerciseId.equalsExp(db.exercises.id)),
     ]).get();
 
@@ -176,7 +176,7 @@ class WorkoutRepository {
         } else {
           exerciseId = await db.into(db.exercises).insert(
                 ExercisesCompanion.insert(
-                  idExerciseDC: exercise.idExerciseDC,
+                  exerciseDataId: exercise.exerciseDataId,
                   notes: exercise.notes,
                   setMode: exercise.setMode,
                   restTime: exercise.restTime,
@@ -212,7 +212,7 @@ class WorkoutRepository {
                     completed: set.completed,
                     rpe: Value(set.rpe),
                     rir: Value(set.rir),
-                    intensityScale: Value(set.intensityScale),
+                    intensityScale1: Value(set.intensityScale1),
                     exerciseId: exerciseId,
                   ),
                 );
@@ -231,7 +231,7 @@ class WorkoutRepository {
     for (final row in rows) {
       final workout = row.readTable(db.workouts);
       final exercise = row.readTableOrNull(db.exercises);
-      final exerciseDC = row.readTableOrNull(db.dataset);
+      final exerciseDC = row.readTableOrNull(db.exerciseData);
       final set = row.readTableOrNull(db.sets);
 
       workoutsMap[workout.id] = workout;
@@ -275,7 +275,7 @@ class WorkoutRepository {
 
     for (final workout in completedWorkouts) {
       final exercises = await (db.select(db.exercises)
-            ..where((e) => e.workoutId.equals(workout.id) & e.idExerciseDC.equals(exerciseIdDC)))
+            ..where((e) => e.workoutId.equals(workout.id) & e.exerciseDataId.equals(exerciseIdDC)))
           .get();
       if (exercises.isNotEmpty) {
         return await (db.select(db.sets)
@@ -292,8 +292,8 @@ class WorkoutRepository {
         .get();
     if (routines.isNotEmpty) return;
 
-    final bpDC = await (db.select(db.dataset)..where((d) => d.id.equals('Barbell_Bench_Press_-_Medium_Grip'))).getSingleOrNull();
-    final ipDC = await (db.select(db.dataset)..where((d) => d.id.equals('Barbell_Incline_Bench_Press_-_Medium_Grip'))).getSingleOrNull();
+    final bpDC = await (db.select(db.exerciseData)..where((d) => d.id.equals('Barbell_Bench_Press_-_Medium_Grip'))).getSingleOrNull();
+    final ipDC = await (db.select(db.exerciseData)..where((d) => d.id.equals('Barbell_Incline_Bench_Press_-_Medium_Grip'))).getSingleOrNull();
 
     if (bpDC != null && ipDC != null) {
       final now = DateTime.now();
@@ -311,7 +311,7 @@ class WorkoutRepository {
 
       final ex1Id = await db.into(db.exercises).insert(
             ExercisesCompanion.insert(
-              idExerciseDC: bpDC.id,
+              exerciseDataId: bpDC.id,
               notes: "Focus on form and controlled descent.",
               setMode: SetMode.LOAD,
               restTime: 90,
@@ -334,7 +334,7 @@ class WorkoutRepository {
 
       final ex2Id = await db.into(db.exercises).insert(
             ExercisesCompanion.insert(
-              idExerciseDC: ipDC.id,
+              exerciseDataId: ipDC.id,
               notes: "Control the stretch at the bottom.",
               setMode: SetMode.LOAD,
               restTime: 90,
@@ -356,8 +356,8 @@ class WorkoutRepository {
       }
     }
 
-    final dlDC = await (db.select(db.dataset)..where((d) => d.id.equals('Barbell_Deadlift'))).getSingleOrNull();
-    final bcDC = await (db.select(db.dataset)..where((d) => d.id.equals('Barbell_Curl'))).getSingleOrNull();
+    final dlDC = await (db.select(db.exerciseData)..where((d) => d.id.equals('Barbell_Deadlift'))).getSingleOrNull();
+    final bcDC = await (db.select(db.exerciseData)..where((d) => d.id.equals('Barbell_Curl'))).getSingleOrNull();
 
     if (dlDC != null && bcDC != null) {
       final now = DateTime.now();
@@ -375,7 +375,7 @@ class WorkoutRepository {
 
       final ex1Id = await db.into(db.exercises).insert(
             ExercisesCompanion.insert(
-              idExerciseDC: dlDC.id,
+              exerciseDataId: dlDC.id,
               notes: "Keep your back straight and drive with the hips.",
               setMode: SetMode.LOAD,
               restTime: 120,
@@ -398,7 +398,7 @@ class WorkoutRepository {
 
       final ex2Id = await db.into(db.exercises).insert(
             ExercisesCompanion.insert(
-              idExerciseDC: bcDC.id,
+              exerciseDataId: bcDC.id,
               notes: "Do not swing the torso.",
               setMode: SetMode.LOAD,
               restTime: 60,

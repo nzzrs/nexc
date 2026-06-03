@@ -12,7 +12,7 @@ import 'enums.dart';
 
 class ExerciseWithSets {
   final Exercise exercise;
-  final ExerciseDC exerciseDC;
+  final ExerciseDataDC exerciseDC;
   final List<WorkoutSet> sets;
 
   ExerciseWithSets({
@@ -23,7 +23,7 @@ class ExerciseWithSets {
 
   ExerciseWithSets copyWith({
     Exercise? exercise,
-    ExerciseDC? exerciseDC,
+    ExerciseDataDC? exerciseDC,
     List<WorkoutSet>? sets,
   }) {
     return ExerciseWithSets(

@@ -136,13 +136,13 @@ class Workouts extends Table {
 @DataClassName('Exercise')
 @TableIndex(name: 'index_exercises_workoutId', columns: {#workoutId})
 @TableIndex(name: 'index_exercises_workoutId_position', columns: {#workoutId, #position})
-@TableIndex(name: 'index_exercises_idExerciseDC', columns: {#idExerciseDC})
+@TableIndex(name: 'index_exercises_exerciseDataId', columns: {#exerciseDataId})
 class Exercises extends Table {
   @override
   String get tableName => 'exercises';
 
   IntColumn get id => integer().autoIncrement()();
-  TextColumn get idExerciseDC => text().named('idExerciseDC')();
+  TextColumn get exerciseDataId => text().named('exerciseDataId')();
   TextColumn get notes => text()();
   TextColumn get setMode => text().named('setMode').map(const EnumNameConverter<SetMode>(SetMode.values))();
   IntColumn get restTime => integer().named('restTime')();
@@ -153,7 +153,7 @@ class Exercises extends Table {
   @override
   List<String> get customConstraints => [
     'FOREIGN KEY(workoutId) REFERENCES workouts(id) ON UPDATE NO ACTION ON DELETE CASCADE',
-    'FOREIGN KEY(idExerciseDC) REFERENCES dataset(id) ON UPDATE NO ACTION ON DELETE CASCADE',
+    'FOREIGN KEY(exerciseDataId) REFERENCES exercise_data(id) ON UPDATE NO ACTION ON DELETE CASCADE',
   ];
 }
 
@@ -170,7 +170,7 @@ class Sets extends Table {
   BoolColumn get completed => boolean()();
   RealColumn get rpe => real().nullable()();
   IntColumn get rir => integer().nullable()();
-  IntColumn get intensityScale => integer().named('intensityScale').nullable()();
+  IntColumn get intensityScale1 => integer().named('intensityScale1').nullable()();
   IntColumn get exerciseId => integer().named('exerciseId')();
 
   @override
@@ -179,23 +179,90 @@ class Sets extends Table {
   ];
 }
 
-@DataClassName('Measurement')
-class Measurements extends Table {
+@DataClassName('BodyMeasurement')
+class BodyMeasurements extends Table {
   @override
-  String get tableName => 'measurements';
+  String get tableName => 'body_measurements';
 
   IntColumn get id => integer().autoIncrement()();
   RealColumn get bodyWeight => real().named('bodyWeight')();
-  IntColumn get bodyFatPercentage => integer().named('bodyFatPercentage')();
-  IntColumn get muscleMassPercentage => integer().named('muscleMassPercentage')();
   TextColumn get date => text().map(const IsoDateTimeConverter())();
-  TextColumn get notes => text()();
 }
 
-@DataClassName('ExerciseDC')
-class Dataset extends Table {
+@DataClassName('AdvancedBodyMeasurement')
+class AdvancedBodyMeasurements extends Table {
   @override
-  String get tableName => 'dataset';
+  String get tableName => 'advanced_body_measurements';
+
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get bodyFatPercentage => integer().named('bodyFatPercentage').nullable()();
+  IntColumn get muscleMassPercentage => integer().named('muscleMassPercentage').nullable()();
+  RealColumn get neckCircumference => real().named('neckCircumference').nullable()();
+  RealColumn get chestCircumference => real().named('chestCircumference').nullable()();
+  RealColumn get waistCircumference => real().named('waistCircumference').nullable()();
+  RealColumn get hipCircumference => real().named('hipCircumference').nullable()();
+  RealColumn get bicepLeft => real().named('bicepLeft').nullable()();
+  RealColumn get bicepRight => real().named('bicepRight').nullable()();
+  RealColumn get thighLeft => real().named('thighLeft').nullable()();
+  RealColumn get thighRight => real().named('thighRight').nullable()();
+  RealColumn get calfLeft => real().named('calfLeft').nullable()();
+  RealColumn get calfRight => real().named('calfRight').nullable()();
+  TextColumn get date => text().map(const IsoDateTimeConverter())();
+}
+
+@DataClassName('ActivityMeasurement')
+class ActivityMeasurements extends Table {
+  @override
+  String get tableName => 'activity_measurements';
+
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get wakingRHR => integer().named('wakingRHR').nullable()();
+  IntColumn get wakingHRV => integer().named('wakingHRV').nullable()();
+  IntColumn get dailySteps => integer().named('dailySteps').nullable()();
+  RealColumn get activeEnergyBurned => real().named('activeEnergyBurned').nullable()();
+  RealColumn get vo2Max => real().named('vo2Max').nullable()();
+  TextColumn get date => text().map(const IsoDateTimeConverter())();
+}
+
+@DataClassName('SleepMeasurement')
+class SleepMeasurements extends Table {
+  @override
+  String get tableName => 'sleep_measurements';
+
+  IntColumn get id => integer().autoIncrement()();
+  RealColumn get sleepDuration => real().named('sleepDuration').nullable()();
+  RealColumn get deepSleepDuration => real().named('deepSleepDuration').nullable()();
+  RealColumn get lightSleepDuration => real().named('lightSleepDuration').nullable()();
+  RealColumn get remSleepDuration => real().named('remSleepDuration').nullable()();
+  IntColumn get sleepingRHR => integer().named('sleepingRHR').nullable()();
+  IntColumn get sleepingHRV => integer().named('sleepingHRV').nullable()();
+  TextColumn get date => text().map(const IsoDateTimeConverter())();
+}
+
+@DataClassName('AdvancedSleepMeasurement')
+class AdvancedSleepMeasurements extends Table {
+  @override
+  String get tableName => 'advanced_sleep_measurements';
+
+  IntColumn get id => integer().autoIncrement()();
+  RealColumn get timeInBed => real().named('timeInBed').nullable()();
+  RealColumn get totalAwakeTime => real().named('totalAwakeTime').nullable()();
+  IntColumn get numberOfAwakenings => integer().named('numberOfAwakenings').nullable()();
+  RealColumn get longestAwakePeriod => real().named('longestAwakePeriod').nullable()();
+  RealColumn get sleepLatency => real().named('sleepLatency').nullable()();
+  RealColumn get deepSleepLatency => real().named('deepSleepLatency').nullable()();
+  RealColumn get remSleepLatency => real().named('remSleepLatency').nullable()();
+  RealColumn get deepSleepFragmentation => real().named('deepSleepFragmentation').nullable()();
+  RealColumn get lightSleepFragmentation => real().named('lightSleepFragmentation').nullable()();
+  RealColumn get remSleepFragmentation => real().named('remSleepFragmentation').nullable()();
+  TextColumn get date => text().map(const IsoDateTimeConverter())();
+  TextColumn get notes => text().nullable()();
+}
+
+@DataClassName('ExerciseDataDC')
+class ExerciseData extends Table {
+  @override
+  String get tableName => 'exercise_data';
 
   TextColumn get id => text()();
   TextColumn get name => text()();
@@ -222,13 +289,15 @@ class Products extends Table {
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
   RealColumn get weight => real()();
-  RealColumn get cost => real()();
-  IntColumn get quantity => integer()();
-  TextColumn get units => text()();
-  RealColumn get ediblePercent => real().named('ediblePercent')();
-  RealColumn get edibleQtyPerUnit => real().named('edibleQtyPerUnit')();
+  IntColumn get mlToGFactor => integer().named('mlToGFactor').nullable()();
+  IntColumn get unitWeight => integer().named('unitWeight').nullable()();
+  TextColumn get defaultUnits => text().named('defaultUnits').nullable()();
+  RealColumn get edibleQtyPerUnit => real().named('edibleQtyPerUnit').nullable()();
+  RealColumn get kcal => real().nullable()();
   RealColumn get proteins => real()();
-  RealColumn get carbs => real()();
+  RealColumn get carbsByDifference => real().named('carbsByDifference').nullable()();
+  RealColumn get carbsAvailable => real().named('carbsAvailable').nullable()();
+  RealColumn get dietaryFiber => real().named('dietaryFiber').nullable()();
   RealColumn get fats => real()();
   BoolColumn get isSupplement => boolean().named('isSupplement')();
   BoolColumn get isPortable => boolean().named('isPortable').withDefault(const Constant(true))();
@@ -256,6 +325,7 @@ class RecipeIngredients extends Table {
   IntColumn get recipeId => integer().named('recipeId')();
   IntColumn get productId => integer().named('productId')();
   RealColumn get amount => real()();
+  TextColumn get amountUnits => text().named('amountUnits').nullable()();
 
   @override
   List<String> get customConstraints => [
@@ -279,6 +349,7 @@ class MealPlans extends Table {
   RealColumn get targetProtein => real().nullable()();
   RealColumn get targetCarbs => real().nullable()();
   RealColumn get targetFats => real().nullable()();
+  BoolColumn get isTemporal => boolean().named('isTemporal').withDefault(const Constant(false))();
 }
 
 @DataClassName('Meal')
@@ -331,8 +402,12 @@ class MealItems extends Table {
   Workouts,
   Exercises,
   Sets,
-  Measurements,
-  Dataset,
+  BodyMeasurements,
+  AdvancedBodyMeasurements,
+  ActivityMeasurements,
+  SleepMeasurements,
+  AdvancedSleepMeasurements,
+  ExerciseData,
   Products,
   Recipes,
   RecipeIngredients,
@@ -344,7 +419,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 13;
+  int get schemaVersion => 14;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -370,6 +445,68 @@ class AppDatabase extends _$AppDatabase {
             await m.addColumn(mealPlans, mealPlans.targetProtein);
             await m.addColumn(mealPlans, mealPlans.targetCarbs);
             await m.addColumn(mealPlans, mealPlans.targetFats);
+          }
+          if (from < 14) {
+            // Version 14 Migration:
+            // 1. Rename dataset to exercise_data
+            await m.issueCustomQuery('ALTER TABLE dataset RENAME TO exercise_data;');
+            
+            // 2. Add columns to exercises: exerciseDataId, drop idExerciseDC.
+            await m.issueCustomQuery('ALTER TABLE exercises RENAME COLUMN idExerciseDC TO exerciseDataId;');
+            
+            // 3. Sets: intensityScale renamed to intensityScale1.
+            await m.issueCustomQuery('ALTER TABLE sets RENAME COLUMN intensityScale TO intensityScale1;');
+            
+            // 4. Products migration (recreate table, map columns)
+            await m.issueCustomQuery('''
+              CREATE TABLE products_new (
+                id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+                name TEXT NOT NULL,
+                weight REAL NOT NULL,
+                mlToGFactor INTEGER,
+                unitWeight INTEGER,
+                defaultUnits TEXT,
+                edibleQtyPerUnit REAL,
+                kcal REAL,
+                proteins REAL NOT NULL,
+                carbsByDifference REAL,
+                carbsAvailable REAL,
+                dietaryFiber REAL,
+                fats REAL NOT NULL,
+                isSupplement BOOLEAN NOT NULL,
+                isPortable BOOLEAN NOT NULL DEFAULT 1
+              );
+            ''');
+            await m.issueCustomQuery('''
+              INSERT INTO products_new (id, name, weight, defaultUnits, edibleQtyPerUnit, proteins, carbsAvailable, fats, isSupplement, isPortable)
+              SELECT id, name, weight, units, edibleQtyPerUnit, proteins, carbs, fats, isSupplement, isPortable FROM products;
+            ''');
+            await m.issueCustomQuery('DROP TABLE products;');
+            await m.issueCustomQuery('ALTER TABLE products_new RENAME TO products;');
+            
+            // 5. RecipeIngredients: add amountUnits
+            await m.issueCustomQuery('ALTER TABLE recipe_ingredients ADD COLUMN amountUnits TEXT;');
+            
+            // 6. MealPlans: add isTemporal
+            await m.issueCustomQuery('ALTER TABLE meal_plans ADD COLUMN isTemporal BOOLEAN NOT NULL DEFAULT 0;');
+            
+            // 7. Split measurements table into body_measurements and advanced_body_measurements
+            await m.createTable(bodyMeasurements);
+            await m.createTable(advancedBodyMeasurements);
+            await m.createTable(activityMeasurements);
+            await m.createTable(sleepMeasurements);
+            await m.createTable(advancedSleepMeasurements);
+            
+            // Copy existing measurements
+            await m.issueCustomQuery('''
+              INSERT INTO body_measurements (id, bodyWeight, date)
+              SELECT id, bodyWeight, date FROM measurements;
+            ''');
+            await m.issueCustomQuery('''
+              INSERT INTO advanced_body_measurements (bodyFatPercentage, muscleMassPercentage, date)
+              SELECT bodyFatPercentage, muscleMassPercentage, date FROM measurements;
+            ''');
+            await m.issueCustomQuery('DROP TABLE measurements;');
           }
         },
       );

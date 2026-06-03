@@ -17,26 +17,26 @@ class MeasurementRepository {
 
   MeasurementRepository(this.db);
 
-  Stream<List<Measurement>> getAllMeasurements() {
-    return (db.select(db.measurements)
+  Stream<List<BodyMeasurement>> getAllMeasurements() {
+    return (db.select(db.bodyMeasurements)
           ..orderBy([(m) => OrderingTerm(expression: m.date, mode: OrderingMode.desc)]))
         .watch();
   }
 
-  Future<void> upsertMeasurement(Measurement measurement) {
-    return db.into(db.measurements).insertOnConflictUpdate(measurement);
+  Future<void> upsertMeasurement(BodyMeasurement measurement) {
+    return db.into(db.bodyMeasurements).insertOnConflictUpdate(measurement);
   }
 
-  Future<void> deleteMeasurement(Measurement measurement) {
-    return db.delete(db.measurements).delete(measurement);
+  Future<void> deleteMeasurement(BodyMeasurement measurement) {
+    return db.delete(db.bodyMeasurements).delete(measurement);
   }
 
   Future<void> deleteById(int id) {
-    return (db.delete(db.measurements)..where((m) => m.id.equals(id))).go();
+    return (db.delete(db.bodyMeasurements)..where((m) => m.id.equals(id))).go();
   }
 
-  Future<Measurement?> getLastMeasurementByCutoff(DateTime cutoff) {
-    final query = db.select(db.measurements)
+  Future<BodyMeasurement?> getLastMeasurementByCutoff(DateTime cutoff) {
+    final query = db.select(db.bodyMeasurements)
       ..where((m) => CustomExpression<bool>(
             "date <= '${const IsoDateTimeConverter().toSql(cutoff)}'",
           ))
@@ -46,39 +46,55 @@ class MeasurementRepository {
   }
 
   Future<void> prepopulateDefaultMeasurements() async {
-    final list = await db.select(db.measurements).get();
+    final list = await db.select(db.bodyMeasurements).get();
     if (list.isNotEmpty) return;
 
     final now = DateTime.now();
-    final data = [
-      Measurement(
+    final bodyData = [
+      BodyMeasurement(
         id: 1,
         bodyWeight: 78.5,
-        bodyFatPercentage: 16,
-        muscleMassPercentage: 42,
         date: now.subtract(const Duration(days: 14)),
-        notes: "Initial check",
       ),
-      Measurement(
+      BodyMeasurement(
         id: 2,
         bodyWeight: 79.0,
-        bodyFatPercentage: 15,
-        muscleMassPercentage: 43,
         date: now.subtract(const Duration(days: 7)),
-        notes: "Consistent training",
       ),
-      Measurement(
+      BodyMeasurement(
         id: 3,
         bodyWeight: 79.5,
-        bodyFatPercentage: 15,
-        muscleMassPercentage: 44,
         date: now,
-        notes: "End of month check",
       ),
     ];
 
-    for (final m in data) {
-      await db.into(db.measurements).insertOnConflictUpdate(m);
+    for (final m in bodyData) {
+      await db.into(db.bodyMeasurements).insertOnConflictUpdate(m);
+    }
+
+    final advancedData = [
+      AdvancedBodyMeasurement(
+        id: 1,
+        bodyFatPercentage: 16,
+        muscleMassPercentage: 42,
+        date: now.subtract(const Duration(days: 14)),
+      ),
+      AdvancedBodyMeasurement(
+        id: 2,
+        bodyFatPercentage: 15,
+        muscleMassPercentage: 43,
+        date: now.subtract(const Duration(days: 7)),
+      ),
+      AdvancedBodyMeasurement(
+        id: 3,
+        bodyFatPercentage: 15,
+        muscleMassPercentage: 44,
+        date: now,
+      ),
+    ];
+
+    for (final m in advancedData) {
+      await db.into(db.advancedBodyMeasurements).insertOnConflictUpdate(m);
     }
   }
 }

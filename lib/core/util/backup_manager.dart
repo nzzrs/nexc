@@ -97,7 +97,7 @@ class BackupManager {
               'reps': s.reps,
               'elapsedTime': s.elapsedTime,
               'rpe': s.rpe?.toString() ?? '',
-              'intensityScale': s.intensityScale ?? 0,
+              'intensityScale1': s.intensityScale1 ?? 0,
               'completed': s.completed,
             }).toList(),
           }).toList(),
@@ -142,7 +142,7 @@ class BackupManager {
           final exerciseId = exJson['exerciseId'] ?? '';
           var exerciseDC = await datasetRepo.getExerciseFromId(exerciseId);
           if (exerciseDC == null) {
-            exerciseDC = ExerciseDC(
+            exerciseDC = ExerciseDataDC(
               id: exerciseId,
               name: exJson['name'] ?? '',
               level: Level.BEGINNER,
@@ -173,14 +173,14 @@ class BackupManager {
             elapsedTime: s['elapsedTime'] ?? 0,
             completed: s['completed'] ?? true,
             rpe: double.tryParse(s['rpe']?.toString() ?? ''),
-            intensityScale: s['intensityScale'],
+            intensityScale1: s['intensityScale1'] ?? s['intensityScale'],
             exerciseId: 0,
           )).toList();
 
           exercisesWithSets.add(ExerciseWithSets(
             exercise: Exercise(
               id: 0,
-              idExerciseDC: exerciseId,
+              exerciseDataId: exerciseId,
               notes: exJson['notes'] ?? '',
               setMode: SetMode.values.firstWhere(
                 (m) => m.name == exJson['setMode'],
@@ -210,7 +210,7 @@ class BackupManager {
   }
 
   Future<void> exportExercises() async {
-    final customExercises = await (db.select(db.dataset)..where((d) => d.isCustomExercise.equals(true))).get();
+    final customExercises = await (db.select(db.exerciseData)..where((d) => d.isCustomExercise.equals(true))).get();
     final List<Map<String, dynamic>> exportList = customExercises.map((e) => {
       'id': e.id,
       'name': e.name,
@@ -243,7 +243,7 @@ class BackupManager {
       final List<dynamic> data = jsonDecode(content);
 
       for (final item in data) {
-        final exercise = ExerciseDC(
+        final exercise = ExerciseDataDC(
           id: item['id'] ?? '',
           name: item['name'] ?? '',
           force: Force.values.firstWhereOrNull((f) => f.name == item['force']),
@@ -294,13 +294,10 @@ class BackupManager {
           'product': item.product == null ? null : {
             'name': item.product!.name,
             'weight': item.product!.weight,
-            'cost': item.product!.cost,
-            'quantity': item.product!.quantity,
-            'units': item.product!.units,
-            'ediblePercent': item.product!.ediblePercent,
+            'defaultUnits': item.product!.defaultUnits,
             'edibleQtyPerUnit': item.product!.edibleQtyPerUnit,
             'proteins': item.product!.proteins,
-            'carbs': item.product!.carbs,
+            'carbsAvailable': item.product!.carbsAvailable,
             'fats': item.product!.fats,
             'isSupplement': item.product!.isSupplement,
             'isPortable': item.product!.isPortable,
@@ -314,13 +311,10 @@ class BackupManager {
               'product': {
                 'name': ing.product.name,
                 'weight': ing.product.weight,
-                'cost': ing.product.cost,
-                'quantity': ing.product.quantity,
-                'units': ing.product.units,
-                'ediblePercent': ing.product.ediblePercent,
+                'defaultUnits': ing.product.defaultUnits,
                 'edibleQtyPerUnit': ing.product.edibleQtyPerUnit,
                 'proteins': ing.product.proteins,
-                'carbs': ing.product.carbs,
+                'carbsAvailable': ing.product.carbsAvailable,
                 'fats': ing.product.fats,
                 'isSupplement': ing.product.isSupplement,
                 'isPortable': ing.product.isPortable,
@@ -399,13 +393,10 @@ class BackupManager {
                   id: 0,
                   name: pName,
                   weight: (pJson['weight'] as num?)?.toDouble() ?? 0.0,
-                  cost: (pJson['cost'] as num?)?.toDouble() ?? 0.0,
-                  quantity: pJson['quantity'] ?? 1,
-                  units: pJson['units'] ?? 'g',
-                  ediblePercent: (pJson['ediblePercent'] as num?)?.toDouble() ?? 100.0,
+                  defaultUnits: pJson['defaultUnits'] ?? pJson['units'] ?? 'g',
                   edibleQtyPerUnit: (pJson['edibleQtyPerUnit'] as num?)?.toDouble() ?? 0.0,
                   proteins: (pJson['proteins'] as num?)?.toDouble() ?? 0.0,
-                  carbs: (pJson['carbs'] as num?)?.toDouble() ?? 0.0,
+                  carbsAvailable: (pJson['carbsAvailable'] as num?)?.toDouble() ?? (pJson['carbs'] as num?)?.toDouble() ?? 0.0,
                   fats: (pJson['fats'] as num?)?.toDouble() ?? 0.0,
                   isSupplement: pJson['isSupplement'] ?? false,
                   isPortable: pJson['isPortable'] ?? true,
@@ -433,13 +424,10 @@ class BackupManager {
                       id: 0,
                       name: ingProdName,
                       weight: (ingProdJson['weight'] as num?)?.toDouble() ?? 0.0,
-                      cost: (ingProdJson['cost'] as num?)?.toDouble() ?? 0.0,
-                      quantity: ingProdJson['quantity'] ?? 1,
-                      units: ingProdJson['units'] ?? 'g',
-                      ediblePercent: (ingProdJson['ediblePercent'] as num?)?.toDouble() ?? 100.0,
+                      defaultUnits: ingProdJson['defaultUnits'] ?? ingProdJson['units'] ?? 'g',
                       edibleQtyPerUnit: (ingProdJson['edibleQtyPerUnit'] as num?)?.toDouble() ?? 0.0,
                       proteins: (ingProdJson['proteins'] as num?)?.toDouble() ?? 0.0,
-                      carbs: (ingProdJson['carbs'] as num?)?.toDouble() ?? 0.0,
+                      carbsAvailable: (ingProdJson['carbsAvailable'] as num?)?.toDouble() ?? (ingProdJson['carbs'] as num?)?.toDouble() ?? 0.0,
                       fats: (ingProdJson['fats'] as num?)?.toDouble() ?? 0.0,
                       isSupplement: ingProdJson['isSupplement'] ?? false,
                       isPortable: ingProdJson['isPortable'] ?? true,

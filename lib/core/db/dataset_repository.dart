@@ -25,30 +25,30 @@ class DatasetRepository {
 
   DatasetRepository(this.db, this.ref);
 
-  Stream<List<ExerciseDC>> getDataset() {
-    return (db.select(db.dataset)..orderBy([(d) => OrderingTerm(expression: d.name)]))
+  Stream<List<ExerciseDataDC>> getDataset() {
+    return (db.select(db.exerciseData)..orderBy([(d) => OrderingTerm(expression: d.name)]))
         .watch();
   }
 
-  Stream<List<ExerciseDC>> getCustomExercises() {
-    return (db.select(db.dataset)..where((d) => d.isCustomExercise.equals(true)))
+  Stream<List<ExerciseDataDC>> getCustomExercises() {
+    return (db.select(db.exerciseData)..where((d) => d.isCustomExercise.equals(true)))
         .watch();
   }
 
-  Future<void> upsertExercise(ExerciseDC exercise) {
-    return db.into(db.dataset).insertOnConflictUpdate(exercise);
+  Future<void> upsertExercise(ExerciseDataDC exercise) {
+    return db.into(db.exerciseData).insertOnConflictUpdate(exercise);
   }
 
-  Future<void> deleteExercise(ExerciseDC exercise) {
-    return db.delete(db.dataset).delete(exercise);
+  Future<void> deleteExercise(ExerciseDataDC exercise) {
+    return db.delete(db.exerciseData).delete(exercise);
   }
 
-  Future<ExerciseDC?> getExerciseFromId(String id) {
-    return (db.select(db.dataset)..where((d) => d.id.equals(id))).getSingleOrNull();
+  Future<ExerciseDataDC?> getExerciseFromId(String id) {
+    return (db.select(db.exerciseData)..where((d) => d.id.equals(id))).getSingleOrNull();
   }
 
-  Stream<ExerciseDC?> getExerciseFlowFromId(String id) {
-    return (db.select(db.dataset)..where((d) => d.id.equals(id))).watchSingleOrNull();
+  Stream<ExerciseDataDC?> getExerciseFlowFromId(String id) {
+    return (db.select(db.exerciseData)..where((d) => d.id.equals(id))).watchSingleOrNull();
   }
 
   Future<void> updateDatasetOnAppUpdate(int currentVersionCode) async {
@@ -64,7 +64,7 @@ class DatasetRepository {
     await measurementRepo.prepopulateDefaultMeasurements();
 
     final pastVersion = settings.pastVersionCode;
-    final existingExercises = await db.select(db.dataset).get();
+    final existingExercises = await db.select(db.exerciseData).get();
 
     if (existingExercises.length < 500 || pastVersion != currentVersionCode) {
 
@@ -72,8 +72,8 @@ class DatasetRepository {
       final jsonString = await rootBundle.loadString('assets/exercises.json');
       final List<dynamic> jsonList = json.decode(jsonString);
 
-      final List<ExerciseDC> exercises = jsonList.map((map) {
-        return ExerciseDC(
+      final List<ExerciseDataDC> exercises = jsonList.map((map) {
+        return ExerciseDataDC(
           id: map['id'] as String,
           name: map['name'] as String,
           force: map['force'] != null ? ForceExt.fromJson(map['force'] as String) : null,
@@ -91,7 +91,7 @@ class DatasetRepository {
 
       // 3. Batch insert exercises
       await db.batch((batch) {
-        batch.insertAllOnConflictUpdate(db.dataset, exercises);
+        batch.insertAllOnConflictUpdate(db.exerciseData, exercises);
       });
 
       // 4. Update pastVersionCode

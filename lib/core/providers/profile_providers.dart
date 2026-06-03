@@ -135,7 +135,7 @@ final profileWeekStreakProvider = Provider<int>((ref) {
   return weeks;
 });
 
-final allMeasurementsProvider = StreamProvider<List<Measurement>>((ref) {
+final allMeasurementsProvider = StreamProvider<List<BodyMeasurement>>((ref) {
   final repo = ref.watch(measurementRepositoryProvider);
   return repo.getAllMeasurements();
 });

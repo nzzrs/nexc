@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/db/app_database.dart';
-import 'package:drift/drift.dart';
 import '../../core/db/measurement_repository.dart';
 import '../../core/providers/profile_providers.dart';
 import '../../core/components/nexc_scaffold.dart';
@@ -255,8 +254,8 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
               if (bf > 0 || m > 0) {
                 final advLog = AdvancedBodyMeasurement(
                   id: Random().nextInt(1000000),
-                  bodyFatPercentage: Value(bf > 0 ? bf : null),
-                  muscleMassPercentage: Value(m > 0 ? m : null),
+                  bodyFatPercentage: bf > 0 ? bf : null,
+                  muscleMassPercentage: m > 0 ? m : null,
                   date: DateTime.now(),
                 );
                 final db = ref.read(measurementRepositoryProvider).db;

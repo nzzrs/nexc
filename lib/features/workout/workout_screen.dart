@@ -558,14 +558,14 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
     return '$m:$s';
   }
 
-  Future<void> _addExercise(ExerciseDC dc) async {
+  Future<void> _addExercise(ExerciseDataDC dc) async {
     final repo = ref.read(workoutRepositoryProvider);
     final lastSets = await repo.getLastPerformanceSets(dc.id);
     setState(() {
       _previousPerformances[dc.id] = lastSets;
       final newEx = Exercise(
         id: DateTime.now().millisecondsSinceEpoch + _exercises.length,
-        idExerciseDC: dc.id,
+        exerciseDataId: dc.id,
         notes: '',
         setMode: _defaultSetMode(dc),
         restTime: 90,
@@ -592,7 +592,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
     _saveProgressToDb();
   }
 
-  SetMode _defaultSetMode(ExerciseDC dc) {
+  SetMode _defaultSetMode(ExerciseDataDC dc) {
     if (dc.category == Category.STRETCHING || dc.category == Category.CARDIO) {
       return SetMode.DURATION;
     }
@@ -976,12 +976,12 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                           ),
                         );
                         if (!mounted) return;
-                        if (result != null && result is List<ExerciseDC> && result.isNotEmpty) {
+                        if (result != null && result is List<ExerciseDataDC> && result.isNotEmpty) {
                           setState(() {
                             final replaced = _exercises[index].copyWith(
                               exerciseDC: result.first,
                               exercise: _exercises[index].exercise.copyWith(
-                                idExerciseDC: result.first.id,
+                                exerciseDataId: result.first.id,
                               ),
                             );
                             _exercises[index] = replaced;
@@ -1079,7 +1079,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                       ),
                     );
                     if (!mounted) return;
-                    if (result != null && result is List<ExerciseDC>) {
+                    if (result != null && result is List<ExerciseDataDC>) {
                       for (final dc in result) {
                         await _addExercise(dc);
                       }

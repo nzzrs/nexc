@@ -37,6 +37,10 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
   late Workout _workout;
   List<ExerciseWithSets> _exercises = [];
 
+  String _initialTitle = "";
+  String _initialNotes = "";
+  List<ExerciseWithSets> _initialExercises = [];
+
   @override
   void initState() {
     super.initState();
@@ -54,6 +58,10 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
         _exercises = List.from(data.exercisesWithSets);
         _titleController.text = _workout.title;
         _notesController.text = _workout.notes;
+
+        _initialTitle = _workout.title;
+        _initialNotes = _workout.notes;
+        _initialExercises = _exercises.map((e) => e.copyWith()).toList();
       } else {
         _initNewWorkout();
       }
@@ -77,6 +85,79 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
       completed: DateTime.now(),
     );
     _exercises = [];
+    _initialTitle = "";
+    _initialNotes = "";
+    _initialExercises = [];
+  }
+
+  bool _hasChanges() {
+    if (widget.workoutId == 0) {
+      final hasTitle = _titleController.text.trim().isNotEmpty;
+      final hasNotes = _notesController.text.trim().isNotEmpty;
+      final hasExercises = _exercises.isNotEmpty;
+      return hasTitle || hasNotes || hasExercises;
+    }
+    if (_titleController.text != _initialTitle) return true;
+    if (_notesController.text != _initialNotes) return true;
+    if (_exercises.length != _initialExercises.length) return true;
+    for (int i = 0; i < _exercises.length; i++) {
+      final curEx = _exercises[i];
+      final initEx = _initialExercises[i];
+      if (curEx.exercise.exerciseDataId != initEx.exercise.exerciseDataId) return true;
+      if (curEx.exercise.notes != initEx.exercise.notes) return true;
+      if (curEx.exercise.restTime != initEx.exercise.restTime) return true;
+      if (curEx.exercise.setMode != initEx.exercise.setMode) return true;
+      if (curEx.exercise.supersetId != initEx.exercise.supersetId) return true;
+      if (curEx.sets.length != initEx.sets.length) return true;
+      for (int j = 0; j < curEx.sets.length; j++) {
+        final curSet = curEx.sets[j];
+        final initSet = initEx.sets[j];
+        if (curSet.load != initSet.load ||
+            curSet.reps != initSet.reps ||
+            curSet.elapsedTime != initSet.elapsedTime ||
+            curSet.completed != initSet.completed) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  Future<void> _handlePop() async {
+    if (!_hasChanges()) {
+      Navigator.pop(context);
+      return;
+    }
+
+    final confirmed = await showDialog<String>(
+      context: context,
+      barrierDismissible: true,
+      builder: (context) {
+        final theme = Theme.of(context);
+        return AlertDialog(
+          title: const Text('Discard Changes?'),
+          content: const Text('Do you want to discard your changes or save them?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'discard'),
+              child: Text('DISCARD', style: TextStyle(color: theme.colorScheme.error)),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, 'save'),
+              child: const Text('SAVE'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed == 'discard') {
+      if (mounted) {
+        Navigator.pop(context);
+      }
+    } else if (confirmed == 'save') {
+      await _save();
+    }
   }
 
   @override
@@ -118,11 +199,11 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
     }
   }
 
-  void _addExercise(ExerciseDC dc) {
+  void _addExercise(ExerciseDataDC dc) {
     setState(() {
       final newEx = Exercise(
         id: DateTime.now().millisecondsSinceEpoch + _exercises.length, // local temp id
-        idExerciseDC: dc.id,
+        exerciseDataId: dc.id,
         notes: '',
         setMode: _defaultSetMode(dc),
         restTime: 90,
@@ -148,7 +229,7 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
     });
   }
 
-  SetMode _defaultSetMode(ExerciseDC dc) {
+  SetMode _defaultSetMode(ExerciseDataDC dc) {
     if (dc.category == Category.STRETCHING || dc.category == Category.CARDIO) {
       return SetMode.DURATION;
     }
@@ -171,16 +252,26 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
       );
     }
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.workoutId == 0 ? 'Create Routine' : 'Edit Routine'),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: _save,
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handlePop();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(widget.workoutId == 0 ? 'Create Routine' : 'Edit Routine'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _handlePop,
           ),
-        ],
-      ),
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.check),
+              onPressed: _save,
+            ),
+          ],
+        ),
       body: ListView(
         padding: const EdgeInsets.all(16.0),
         children: [
@@ -327,12 +418,12 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
                       builder: (context) => const ExercisesScreen(addExercises: false),
                     ),
                   );
-                  if (result != null && result is List<ExerciseDC> && result.isNotEmpty) {
+                  if (result != null && result is List<ExerciseDataDC> && result.isNotEmpty) {
                     setState(() {
                       final replaced = _exercises[index].copyWith(
                         exerciseDC: result.first,
                         exercise: _exercises[index].exercise.copyWith(
-                          idExerciseDC: result.first.id,
+                          exerciseDataId: result.first.id,
                         ),
                       );
                       _exercises[index] = replaced;
@@ -363,7 +454,7 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
                   builder: (context) => const ExercisesScreen(addExercises: true),
                 ),
               );
-              if (result != null && result is List<ExerciseDC>) {
+              if (result != null && result is List<ExerciseDataDC>) {
                 for (final dc in result) {
                   _addExercise(dc);
                 }
@@ -374,6 +465,7 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }

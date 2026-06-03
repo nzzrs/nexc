@@ -239,23 +239,8 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                 )
               : null)
           : FloatingActionButton.extended(
-              onPressed: () async {
-                final repo = ref.read(mealRepositoryProvider);
-                final newPlan = MealPlan(
-                  id: 0,
-                  parentPlanId: 0,
-                  title: "New Meal Plan",
-                  notes: "",
-                  state: MealPlanState.TEMPLATE,
-                  created: DateTime.now(),
-                  completed: DateTime.now(),
-                );
-                final id = await repo.saveMealPlanWithMealsAndItems(
-                  MealPlanWithMealsAndItems(mealPlan: newPlan, meals: []),
-                );
-                if (mounted) {
-                  Navigator.pushNamed(context, '/meals/edit-plan', arguments: id);
-                }
+              onPressed: () {
+                Navigator.pushNamed(context, '/meals/edit-plan', arguments: 0);
               },
               icon: const Icon(Icons.add),
               label: const Text("Create Meal Plan"),

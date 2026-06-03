@@ -277,6 +277,41 @@ class EditMealPlanScreen extends ConsumerStatefulWidget {
 }
 
 class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
+  MealPlanWithMealsAndItems? _initialPlan;
+
+  bool _hasChanges(MealPlanWithMealsAndItems current) {
+    if (widget.mealPlanId == 0) {
+      final hasTitle = current.mealPlan.title.trim().isNotEmpty && current.mealPlan.title != "New Meal Plan";
+      final hasNotes = current.mealPlan.notes.trim().isNotEmpty;
+      final hasMeals = current.meals.isNotEmpty;
+      return hasTitle || hasNotes || hasMeals;
+    }
+    if (_initialPlan == null) return false;
+    if (current.mealPlan.title != _initialPlan!.mealPlan.title) return true;
+    if (current.mealPlan.notes != _initialPlan!.mealPlan.notes) return true;
+    if (current.meals.length != _initialPlan!.meals.length) return true;
+
+    for (int i = 0; i < current.meals.length; i++) {
+      final curM = current.meals[i];
+      final initM = _initialPlan!.meals[i];
+      if (curM.meal.name != initM.meal.name) return true;
+      if (curM.meal.time.hour != initM.meal.time.hour ||
+          curM.meal.time.minute != initM.meal.time.minute) return true;
+      if (curM.items.length != initM.items.length) return true;
+      for (int j = 0; j < curM.items.length; j++) {
+        final curIt = curM.items[j].mealItem;
+        final initIt = initM.items[j].mealItem;
+        if (curIt.targetId != initIt.targetId ||
+            curIt.amount != initIt.amount ||
+            curIt.amountUnit != initIt.amountUnit ||
+            curIt.type != initIt.type) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -288,7 +323,17 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
+    if (_initialPlan == null) {
+      // Store initial plan on first load
+      _initialPlan = plan;
+    }
+
     Future<void> _handlePop() async {
+      if (!_hasChanges(plan)) {
+        Navigator.pop(context);
+        return;
+      }
+
       final confirmed = await showDialog<String>(
         context: context,
         barrierDismissible: true,
@@ -312,10 +357,6 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
       );
 
       if (confirmed == 'discard') {
-        if (isNew) {
-          final repo = ref.read(mealRepositoryProvider);
-          await repo.deleteMealPlan(plan.mealPlan);
-        }
         if (mounted) {
           Navigator.pop(context);
         }

@@ -51,7 +51,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
               return const Center(child: Text("No measurements recorded yet."));
             }
 
-            final nonNullLogs = logs.whereType<Measurement>().toList();
+            final nonNullLogs = logs.whereType<BodyMeasurement>().toList();
             if (nonNullLogs.isEmpty) {
               return const Center(child: Text("No measurements recorded yet."));
             }
@@ -157,9 +157,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                         style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       subtitle: Text(
-                        "Body Fat: ${log.bodyFatPercentage}% | Muscle: ${log.muscleMassPercentage}%\n"
-                        "Date: $dateStr"
-                        "${log.notes.isNotEmpty ? '\nNotes: ${log.notes}' : ''}",
+                        "Date: $dateStr",
                       ),
                       trailing: IconButton(
                         icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
@@ -241,21 +239,31 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
         ),
         IconButton(
           icon: const Icon(Icons.check),
-          onPressed: () {
+          onPressed: () async {
             final w = double.tryParse(_weightController.text) ?? 0.0;
             if (w > 0.0) {
               final bf = int.tryParse(_bfController.text) ?? 0;
               final m = int.tryParse(_muscleController.text) ?? 0;
-              final newLog = Measurement(
+              final newLog = BodyMeasurement(
                 id: Random().nextInt(1000000),
                 bodyWeight: w,
-                bodyFatPercentage: bf,
-                muscleMassPercentage: m,
                 date: DateTime.now(),
-                notes: _notesController.text.trim(),
               );
-              ref.read(measurementRepositoryProvider).upsertMeasurement(newLog);
-              Navigator.pop(context);
+              await ref.read(measurementRepositoryProvider).upsertMeasurement(newLog);
+              
+              if (bf > 0 || m > 0) {
+                final advLog = AdvancedBodyMeasurement(
+                  id: Random().nextInt(1000000),
+                  bodyFatPercentage: Value(bf > 0 ? bf : null),
+                  muscleMassPercentage: Value(m > 0 ? m : null),
+                  date: DateTime.now(),
+                );
+                final db = ref.read(measurementRepositoryProvider).db;
+                await db.into(db.advancedBodyMeasurements).insertOnConflictUpdate(advLog);
+              }
+              if (mounted) {
+                Navigator.pop(context);
+              }
             }
           },
         ),

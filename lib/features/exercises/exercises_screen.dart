@@ -39,8 +39,8 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
   Category? _selectedCategory;
   bool _onlyCustom = false;
 
-  final Set<ExerciseDC> _selectedExercises = {};
-  late final Stream<List<ExerciseDC>> _datasetStream;
+  final Set<ExerciseDataDC> _selectedExercises = {};
+  late final Stream<List<ExerciseDataDC>> _datasetStream;
 
   @override
   void initState() {
@@ -74,7 +74,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     return 0;
   }
 
-  bool _filterExercise(ExerciseDC ex) {
+  bool _filterExercise(ExerciseDataDC ex) {
     if (_selectedLevel != null && ex.level != _selectedLevel) return false;
     if (_selectedForce != null && ex.force != _selectedForce) return false;
     if (_selectedMechanic != null && ex.mechanic != _selectedMechanic) return false;
@@ -279,7 +279,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
 
           // Exercise List
           Expanded(
-            child: StreamBuilder<List<ExerciseDC>>(
+            child: StreamBuilder<List<ExerciseDataDC>>(
               stream: _datasetStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -297,7 +297,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                 }).toList();
 
                 // Sort: Selected first, then query/default order
-                final sorted = List<ExerciseDC>.from(filtered);
+                final sorted = List<ExerciseDataDC>.from(filtered);
                 sorted.sort((a, b) {
                   final aSelected = _selectedExercises.contains(a);
                   final bSelected = _selectedExercises.contains(b);

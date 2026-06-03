@@ -45,6 +45,7 @@ class EditMealPlanNotifier extends StateNotifier<MealPlanWithMealsAndItems?> {
         state: MealPlanState.TEMPLATE,
         created: DateTime.now(),
         completed: DateTime.now(),
+        isTemporal: false,
       ),
       meals: [],
     );

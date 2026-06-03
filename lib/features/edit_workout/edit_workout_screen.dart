@@ -232,6 +232,7 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
             ...List.generate(_exercises.length, (index) {
               final eWs = _exercises[index];
               return ExerciseCard(
+                index: index,
                 exerciseWithSets: eWs,
                 workout: false,
                 addSet: (exId) {
@@ -251,7 +252,13 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
                     _exercises[index] = eWs.copyWith(sets: setList);
                   });
                 },
-                onDetail: (exId, dcId) {},
+                 onDetail: (exId, dcId) {
+                   Navigator.pushNamed(
+                     context,
+                     '/exercises/info',
+                     arguments: dcId,
+                   );
+                 },
                 onDelete: (exId) {
                   setState(() {
                     _exercises.removeAt(index);

@@ -44,6 +44,43 @@ class MeasurementRepository {
       ..limit(1);
     return query.getSingleOrNull();
   }
+
+  Future<void> prepopulateDefaultMeasurements() async {
+    final list = await db.select(db.measurements).get();
+    if (list.isNotEmpty) return;
+
+    final now = DateTime.now();
+    final data = [
+      Measurement(
+        id: 1,
+        bodyWeight: 78.5,
+        bodyFatPercentage: 16,
+        muscleMassPercentage: 42,
+        date: now.subtract(const Duration(days: 14)),
+        notes: "Initial check",
+      ),
+      Measurement(
+        id: 2,
+        bodyWeight: 79.0,
+        bodyFatPercentage: 15,
+        muscleMassPercentage: 43,
+        date: now.subtract(const Duration(days: 7)),
+        notes: "Consistent training",
+      ),
+      Measurement(
+        id: 3,
+        bodyWeight: 79.5,
+        bodyFatPercentage: 15,
+        muscleMassPercentage: 44,
+        date: now,
+        notes: "End of month check",
+      ),
+    ];
+
+    for (final m in data) {
+      await db.into(db.measurements).insertOnConflictUpdate(m);
+    }
+  }
 }
 
 final measurementRepositoryProvider = Provider<MeasurementRepository>((ref) {

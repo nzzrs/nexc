@@ -3380,9 +3380,37 @@ class $MealPlansTable extends MealPlans
       GeneratedColumn<String>('completed', aliasedName, false,
               type: DriftSqlType.string, requiredDuringInsert: true)
           .withConverter<DateTime>($MealPlansTable.$convertercompleted);
+  static const VerificationMeta _targetProteinMeta =
+      const VerificationMeta('targetProtein');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, parentPlanId, title, notes, state, created, completed];
+  late final GeneratedColumn<double> targetProtein = GeneratedColumn<double>(
+      'target_protein', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _targetCarbsMeta =
+      const VerificationMeta('targetCarbs');
+  @override
+  late final GeneratedColumn<double> targetCarbs = GeneratedColumn<double>(
+      'target_carbs', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _targetFatsMeta =
+      const VerificationMeta('targetFats');
+  @override
+  late final GeneratedColumn<double> targetFats = GeneratedColumn<double>(
+      'target_fats', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        parentPlanId,
+        title,
+        notes,
+        state,
+        created,
+        completed,
+        targetProtein,
+        targetCarbs,
+        targetFats
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -3419,6 +3447,24 @@ class $MealPlansTable extends MealPlans
     context.handle(_stateMeta, const VerificationResult.success());
     context.handle(_createdMeta, const VerificationResult.success());
     context.handle(_completedMeta, const VerificationResult.success());
+    if (data.containsKey('target_protein')) {
+      context.handle(
+          _targetProteinMeta,
+          targetProtein.isAcceptableOrUnknown(
+              data['target_protein']!, _targetProteinMeta));
+    }
+    if (data.containsKey('target_carbs')) {
+      context.handle(
+          _targetCarbsMeta,
+          targetCarbs.isAcceptableOrUnknown(
+              data['target_carbs']!, _targetCarbsMeta));
+    }
+    if (data.containsKey('target_fats')) {
+      context.handle(
+          _targetFatsMeta,
+          targetFats.isAcceptableOrUnknown(
+              data['target_fats']!, _targetFatsMeta));
+    }
     return context;
   }
 
@@ -3445,6 +3491,12 @@ class $MealPlansTable extends MealPlans
       completed: $MealPlansTable.$convertercompleted.fromSql(attachedDatabase
           .typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}completed'])!),
+      targetProtein: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}target_protein']),
+      targetCarbs: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}target_carbs']),
+      targetFats: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}target_fats']),
     );
   }
 
@@ -3469,6 +3521,9 @@ class MealPlan extends DataClass implements Insertable<MealPlan> {
   final MealPlanState state;
   final DateTime created;
   final DateTime completed;
+  final double? targetProtein;
+  final double? targetCarbs;
+  final double? targetFats;
   const MealPlan(
       {required this.id,
       required this.parentPlanId,
@@ -3476,7 +3531,10 @@ class MealPlan extends DataClass implements Insertable<MealPlan> {
       required this.notes,
       required this.state,
       required this.created,
-      required this.completed});
+      required this.completed,
+      this.targetProtein,
+      this.targetCarbs,
+      this.targetFats});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -3496,6 +3554,15 @@ class MealPlan extends DataClass implements Insertable<MealPlan> {
       map['completed'] = Variable<String>(
           $MealPlansTable.$convertercompleted.toSql(completed));
     }
+    if (!nullToAbsent || targetProtein != null) {
+      map['target_protein'] = Variable<double>(targetProtein);
+    }
+    if (!nullToAbsent || targetCarbs != null) {
+      map['target_carbs'] = Variable<double>(targetCarbs);
+    }
+    if (!nullToAbsent || targetFats != null) {
+      map['target_fats'] = Variable<double>(targetFats);
+    }
     return map;
   }
 
@@ -3508,6 +3575,15 @@ class MealPlan extends DataClass implements Insertable<MealPlan> {
       state: Value(state),
       created: Value(created),
       completed: Value(completed),
+      targetProtein: targetProtein == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetProtein),
+      targetCarbs: targetCarbs == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetCarbs),
+      targetFats: targetFats == null && nullToAbsent
+          ? const Value.absent()
+          : Value(targetFats),
     );
   }
 
@@ -3522,6 +3598,9 @@ class MealPlan extends DataClass implements Insertable<MealPlan> {
       state: serializer.fromJson<MealPlanState>(json['state']),
       created: serializer.fromJson<DateTime>(json['created']),
       completed: serializer.fromJson<DateTime>(json['completed']),
+      targetProtein: serializer.fromJson<double?>(json['targetProtein']),
+      targetCarbs: serializer.fromJson<double?>(json['targetCarbs']),
+      targetFats: serializer.fromJson<double?>(json['targetFats']),
     );
   }
   @override
@@ -3535,6 +3614,9 @@ class MealPlan extends DataClass implements Insertable<MealPlan> {
       'state': serializer.toJson<MealPlanState>(state),
       'created': serializer.toJson<DateTime>(created),
       'completed': serializer.toJson<DateTime>(completed),
+      'targetProtein': serializer.toJson<double?>(targetProtein),
+      'targetCarbs': serializer.toJson<double?>(targetCarbs),
+      'targetFats': serializer.toJson<double?>(targetFats),
     };
   }
 
@@ -3545,7 +3627,10 @@ class MealPlan extends DataClass implements Insertable<MealPlan> {
           String? notes,
           MealPlanState? state,
           DateTime? created,
-          DateTime? completed}) =>
+          DateTime? completed,
+          Value<double?> targetProtein = const Value.absent(),
+          Value<double?> targetCarbs = const Value.absent(),
+          Value<double?> targetFats = const Value.absent()}) =>
       MealPlan(
         id: id ?? this.id,
         parentPlanId: parentPlanId ?? this.parentPlanId,
@@ -3554,6 +3639,10 @@ class MealPlan extends DataClass implements Insertable<MealPlan> {
         state: state ?? this.state,
         created: created ?? this.created,
         completed: completed ?? this.completed,
+        targetProtein:
+            targetProtein.present ? targetProtein.value : this.targetProtein,
+        targetCarbs: targetCarbs.present ? targetCarbs.value : this.targetCarbs,
+        targetFats: targetFats.present ? targetFats.value : this.targetFats,
       );
   @override
   String toString() {
@@ -3564,14 +3653,17 @@ class MealPlan extends DataClass implements Insertable<MealPlan> {
           ..write('notes: $notes, ')
           ..write('state: $state, ')
           ..write('created: $created, ')
-          ..write('completed: $completed')
+          ..write('completed: $completed, ')
+          ..write('targetProtein: $targetProtein, ')
+          ..write('targetCarbs: $targetCarbs, ')
+          ..write('targetFats: $targetFats')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, parentPlanId, title, notes, state, created, completed);
+  int get hashCode => Object.hash(id, parentPlanId, title, notes, state,
+      created, completed, targetProtein, targetCarbs, targetFats);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -3582,7 +3674,10 @@ class MealPlan extends DataClass implements Insertable<MealPlan> {
           other.notes == this.notes &&
           other.state == this.state &&
           other.created == this.created &&
-          other.completed == this.completed);
+          other.completed == this.completed &&
+          other.targetProtein == this.targetProtein &&
+          other.targetCarbs == this.targetCarbs &&
+          other.targetFats == this.targetFats);
 }
 
 class MealPlansCompanion extends UpdateCompanion<MealPlan> {
@@ -3593,6 +3688,9 @@ class MealPlansCompanion extends UpdateCompanion<MealPlan> {
   final Value<MealPlanState> state;
   final Value<DateTime> created;
   final Value<DateTime> completed;
+  final Value<double?> targetProtein;
+  final Value<double?> targetCarbs;
+  final Value<double?> targetFats;
   const MealPlansCompanion({
     this.id = const Value.absent(),
     this.parentPlanId = const Value.absent(),
@@ -3601,6 +3699,9 @@ class MealPlansCompanion extends UpdateCompanion<MealPlan> {
     this.state = const Value.absent(),
     this.created = const Value.absent(),
     this.completed = const Value.absent(),
+    this.targetProtein = const Value.absent(),
+    this.targetCarbs = const Value.absent(),
+    this.targetFats = const Value.absent(),
   });
   MealPlansCompanion.insert({
     this.id = const Value.absent(),
@@ -3610,6 +3711,9 @@ class MealPlansCompanion extends UpdateCompanion<MealPlan> {
     required MealPlanState state,
     required DateTime created,
     required DateTime completed,
+    this.targetProtein = const Value.absent(),
+    this.targetCarbs = const Value.absent(),
+    this.targetFats = const Value.absent(),
   })  : parentPlanId = Value(parentPlanId),
         title = Value(title),
         notes = Value(notes),
@@ -3624,6 +3728,9 @@ class MealPlansCompanion extends UpdateCompanion<MealPlan> {
     Expression<String>? state,
     Expression<String>? created,
     Expression<String>? completed,
+    Expression<double>? targetProtein,
+    Expression<double>? targetCarbs,
+    Expression<double>? targetFats,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -3633,6 +3740,9 @@ class MealPlansCompanion extends UpdateCompanion<MealPlan> {
       if (state != null) 'state': state,
       if (created != null) 'created': created,
       if (completed != null) 'completed': completed,
+      if (targetProtein != null) 'target_protein': targetProtein,
+      if (targetCarbs != null) 'target_carbs': targetCarbs,
+      if (targetFats != null) 'target_fats': targetFats,
     });
   }
 
@@ -3643,7 +3753,10 @@ class MealPlansCompanion extends UpdateCompanion<MealPlan> {
       Value<String>? notes,
       Value<MealPlanState>? state,
       Value<DateTime>? created,
-      Value<DateTime>? completed}) {
+      Value<DateTime>? completed,
+      Value<double?>? targetProtein,
+      Value<double?>? targetCarbs,
+      Value<double?>? targetFats}) {
     return MealPlansCompanion(
       id: id ?? this.id,
       parentPlanId: parentPlanId ?? this.parentPlanId,
@@ -3652,6 +3765,9 @@ class MealPlansCompanion extends UpdateCompanion<MealPlan> {
       state: state ?? this.state,
       created: created ?? this.created,
       completed: completed ?? this.completed,
+      targetProtein: targetProtein ?? this.targetProtein,
+      targetCarbs: targetCarbs ?? this.targetCarbs,
+      targetFats: targetFats ?? this.targetFats,
     );
   }
 
@@ -3682,6 +3798,15 @@ class MealPlansCompanion extends UpdateCompanion<MealPlan> {
       map['completed'] = Variable<String>(
           $MealPlansTable.$convertercompleted.toSql(completed.value));
     }
+    if (targetProtein.present) {
+      map['target_protein'] = Variable<double>(targetProtein.value);
+    }
+    if (targetCarbs.present) {
+      map['target_carbs'] = Variable<double>(targetCarbs.value);
+    }
+    if (targetFats.present) {
+      map['target_fats'] = Variable<double>(targetFats.value);
+    }
     return map;
   }
 
@@ -3694,7 +3819,10 @@ class MealPlansCompanion extends UpdateCompanion<MealPlan> {
           ..write('notes: $notes, ')
           ..write('state: $state, ')
           ..write('created: $created, ')
-          ..write('completed: $completed')
+          ..write('completed: $completed, ')
+          ..write('targetProtein: $targetProtein, ')
+          ..write('targetCarbs: $targetCarbs, ')
+          ..write('targetFats: $targetFats')
           ..write(')'))
         .toString();
   }
@@ -6011,6 +6139,9 @@ typedef $$MealPlansTableInsertCompanionBuilder = MealPlansCompanion Function({
   required MealPlanState state,
   required DateTime created,
   required DateTime completed,
+  Value<double?> targetProtein,
+  Value<double?> targetCarbs,
+  Value<double?> targetFats,
 });
 typedef $$MealPlansTableUpdateCompanionBuilder = MealPlansCompanion Function({
   Value<int> id,
@@ -6020,6 +6151,9 @@ typedef $$MealPlansTableUpdateCompanionBuilder = MealPlansCompanion Function({
   Value<MealPlanState> state,
   Value<DateTime> created,
   Value<DateTime> completed,
+  Value<double?> targetProtein,
+  Value<double?> targetCarbs,
+  Value<double?> targetFats,
 });
 
 class $$MealPlansTableTableManager extends RootTableManager<
@@ -6049,6 +6183,9 @@ class $$MealPlansTableTableManager extends RootTableManager<
             Value<MealPlanState> state = const Value.absent(),
             Value<DateTime> created = const Value.absent(),
             Value<DateTime> completed = const Value.absent(),
+            Value<double?> targetProtein = const Value.absent(),
+            Value<double?> targetCarbs = const Value.absent(),
+            Value<double?> targetFats = const Value.absent(),
           }) =>
               MealPlansCompanion(
             id: id,
@@ -6058,6 +6195,9 @@ class $$MealPlansTableTableManager extends RootTableManager<
             state: state,
             created: created,
             completed: completed,
+            targetProtein: targetProtein,
+            targetCarbs: targetCarbs,
+            targetFats: targetFats,
           ),
           getInsertCompanionBuilder: ({
             Value<int> id = const Value.absent(),
@@ -6067,6 +6207,9 @@ class $$MealPlansTableTableManager extends RootTableManager<
             required MealPlanState state,
             required DateTime created,
             required DateTime completed,
+            Value<double?> targetProtein = const Value.absent(),
+            Value<double?> targetCarbs = const Value.absent(),
+            Value<double?> targetFats = const Value.absent(),
           }) =>
               MealPlansCompanion.insert(
             id: id,
@@ -6076,6 +6219,9 @@ class $$MealPlansTableTableManager extends RootTableManager<
             state: state,
             created: created,
             completed: completed,
+            targetProtein: targetProtein,
+            targetCarbs: targetCarbs,
+            targetFats: targetFats,
           ),
         ));
 }
@@ -6135,6 +6281,21 @@ class $$MealPlansTableFilterComposer
           builder: (column, joinBuilders) => ColumnWithTypeConverterFilters(
               column,
               joinBuilders: joinBuilders));
+
+  ColumnFilters<double> get targetProtein => $state.composableBuilder(
+      column: $state.table.targetProtein,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<double> get targetCarbs => $state.composableBuilder(
+      column: $state.table.targetCarbs,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<double> get targetFats => $state.composableBuilder(
+      column: $state.table.targetFats,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
 class $$MealPlansTableOrderingComposer
@@ -6172,6 +6333,21 @@ class $$MealPlansTableOrderingComposer
 
   ColumnOrderings<String> get completed => $state.composableBuilder(
       column: $state.table.completed,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<double> get targetProtein => $state.composableBuilder(
+      column: $state.table.targetProtein,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<double> get targetCarbs => $state.composableBuilder(
+      column: $state.table.targetCarbs,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<double> get targetFats => $state.composableBuilder(
+      column: $state.table.targetFats,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }

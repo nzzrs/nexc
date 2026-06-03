@@ -8,12 +8,16 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/util/backup_manager.dart';
 
-class BackupScreen extends StatelessWidget {
+class BackupScreen extends ConsumerWidget {
   const BackupScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final backupManager = ref.read(backupManagerProvider);
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Backup & Restore'),
@@ -29,15 +33,50 @@ class BackupScreen extends StatelessWidget {
             context,
             title: 'Database',
             description: 'Export or import the full SQLite database containing all workouts, routines, measurements, and foods.',
-            onExport: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Database export not implemented yet')),
-              );
+            onExport: () async {
+              try {
+                await backupManager.exportDatabase();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Database exported successfully')),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Database export failed: $e')),
+                );
+              }
             },
-            onImport: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Database import not implemented yet')),
-              );
+            onImport: () async {
+              try {
+                final success = await backupManager.importDatabase();
+                if (!context.mounted) return;
+                if (success) {
+                  showDialog(
+                    context: context,
+                    barrierDismissible: false,
+                    builder: (context) => AlertDialog(
+                      title: const Text('Import Successful'),
+                      content: const Text('The database was imported. Please restart Nexc to load the new data.'),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context),
+                          child: const Text('OK'),
+                        ),
+                      ],
+                    ),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Database import cancelled')),
+                  );
+                }
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Database import failed: $e')),
+                );
+              }
             },
           ),
           const Divider(height: 32),
@@ -45,15 +84,39 @@ class BackupScreen extends StatelessWidget {
             context,
             title: 'Workout plans',
             description: 'Import or export your workout plan templates as portable JSON files.',
-            onExport: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Workout plans export not implemented yet')),
-              );
+            onExport: () async {
+              try {
+                await backupManager.exportWorkoutPlans();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Workout plans exported')),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Workout plans export failed: $e')),
+                );
+              }
             },
-            onImport: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Workout plans import not implemented yet')),
-              );
+            onImport: () async {
+              try {
+                final success = await backupManager.importWorkoutPlans();
+                if (!context.mounted) return;
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Workout plans imported successfully')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Workout plans import failed or cancelled')),
+                  );
+                }
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Workout plans import failed: $e')),
+                );
+              }
             },
           ),
           const Divider(height: 32),
@@ -61,15 +124,39 @@ class BackupScreen extends StatelessWidget {
             context,
             title: 'Exercises',
             description: 'Import or export your exercises database as portable JSON files.',
-            onExport: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Exercises export not implemented yet')),
-              );
+            onExport: () async {
+              try {
+                await backupManager.exportExercises();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Exercises exported')),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Exercises export failed: $e')),
+                );
+              }
             },
-            onImport: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Exercises import not implemented yet')),
-              );
+            onImport: () async {
+              try {
+                final success = await backupManager.importExercises();
+                if (!context.mounted) return;
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Exercises imported successfully')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Exercises import failed or cancelled')),
+                  );
+                }
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Exercises import failed: $e')),
+                );
+              }
             },
           ),
           const Divider(height: 32),
@@ -77,15 +164,39 @@ class BackupScreen extends StatelessWidget {
             context,
             title: 'Meal plans',
             description: 'Import or export your meal plan templates as portable JSON files.',
-            onExport: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Meal plans export not implemented yet')),
-              );
+            onExport: () async {
+              try {
+                await backupManager.exportMealPlans();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Meal plans exported')),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Meal plans export failed: $e')),
+                );
+              }
             },
-            onImport: () {
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Meal plans import not implemented yet')),
-              );
+            onImport: () async {
+              try {
+                final success = await backupManager.importMealPlans();
+                if (!context.mounted) return;
+                if (success) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Meal plans imported successfully')),
+                  );
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text('Meal plans import failed or cancelled')),
+                  );
+                }
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Meal plans import failed: $e')),
+                );
+              }
             },
           ),
         ],

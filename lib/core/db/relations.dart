@@ -94,6 +94,16 @@ class MealWithItems {
     required this.meal,
     required this.items,
   });
+
+  MealWithItems copyWith({
+    Meal? meal,
+    List<MealItemWithDetails>? items,
+  }) {
+    return MealWithItems(
+      meal: meal ?? this.meal,
+      items: items ?? this.items,
+    );
+  }
 }
 
 class MealPlanWithMealsAndItems {

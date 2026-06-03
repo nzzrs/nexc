@@ -190,7 +190,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         final w = (selectedWorkouts.isNotEmpty
                             ? selectedWorkouts
                             : todayWorkouts)[index];
-                        return _WorkoutSummaryCard(workout: w);
+                        return GestureDetector(
+                          onTap: () {
+                            Navigator.pushNamed(
+                              context,
+                              '/info-workout',
+                              arguments: w.workout.id,
+                            );
+                          },
+                          child: _WorkoutSummaryCard(workout: w),
+                        );
                       },
                       childCount: selectedWorkouts.isNotEmpty
                           ? selectedWorkouts.length

@@ -40,7 +40,7 @@ dependencies:
   flutter_riverpod: ^2.6.1
   lottie: ^3.1.0
   fl_chart: ^1.2.0
-  flutter_markdown: ^0.7.2
+  flutter_markdown_plus: ^1.0.7
   shared_preferences: ^2.2.2
   collection: ^1.18.0
   # New packages — feature sprint
@@ -51,6 +51,12 @@ dependencies:
   package_info_plus: ^8.1.2
   url_launcher: ^6.3.1
   flutter_svg: ^2.0.10+1
+  http: ^1.6.0
+  dynamic_color: ^1.7.0
+  wakelock_plus: ^1.2.8
+  file_picker: any
+  share_plus: any
+  flutter_local_notifications: ^21.0.0
 
 dev_dependencies:
   flutter_test:
@@ -84,6 +90,7 @@ flutter:
     - assets/exercises.json
     - assets/images/
     - assets/sounds/
+    - assets/exercise_images/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

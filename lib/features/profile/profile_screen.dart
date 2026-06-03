@@ -57,7 +57,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 text: "Statistics",
                 icon: Icons.bar_chart,
                 onPressed: () {
-                  _showWipSnackBar(context, "Statistics Screen");
+                  Navigator.pushNamed(context, '/profile/statistics');
                 },
               ),
             ),
@@ -71,7 +71,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 text: "Measurements",
                 icon: Icons.monitor_weight_outlined,
                 onPressed: () {
-                  _showWipSnackBar(context, "Measurements Screen");
+                  Navigator.pushNamed(context, '/profile/measurements');
                 },
               ),
             ),
@@ -137,7 +137,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ref.read(workoutChartModeProvider.notifier).state = mode;
               },
               onEntrySelection: (workoutId) {
-                Navigator.pushNamed(context, '/workout', arguments: workoutId);
+                Navigator.pushNamed(context, '/info-workout', arguments: workoutId);
               },
             );
           },
@@ -183,7 +183,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     subtitle: Text("Finished on: $dateStr\nDuration: $durationStr"),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      Navigator.pushNamed(context, '/workout', arguments: w.workout.id);
+                      Navigator.pushNamed(context, '/info-workout', arguments: w.workout.id);
                     },
                   ),
                 );
@@ -411,20 +411,22 @@ class _StreakCardState extends State<StreakCard> {
                 ),
               ),
               const SizedBox(width: 24),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    "Week Streak: ${widget.weekStreak}",
-                    style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  Text(
-                    _clicks > 15 ? "🔥 Super Active!" : "Keep moving!",
-                    style: theme.textTheme.bodySmall,
-                  ),
-                ],
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      "Week Streak: ${widget.weekStreak}",
+                      style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
+                    ),
+                    Text(
+                      _clicks > 15 ? "🔥 Super Active!" : "Keep moving!",
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ],
+                ),
               ),
             ],
           ),
@@ -449,15 +451,28 @@ class _MenuButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return OutlinedButton.icon(
+    return OutlinedButton(
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 12.0),
+        padding: const EdgeInsets.symmetric(vertical: 12.0, horizontal: 8.0),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         side: BorderSide(color: theme.colorScheme.outlineVariant),
       ),
       onPressed: onPressed,
-      icon: Icon(icon, size: 18),
-      label: Text(text),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, size: 18),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 13),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

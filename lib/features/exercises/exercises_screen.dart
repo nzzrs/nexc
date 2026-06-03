@@ -82,6 +82,8 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     return true;
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -306,46 +308,86 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     final ex = filtered[index];
                     final isSelected = _selectedExercises.contains(ex);
 
-                    return ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: theme.colorScheme.primaryContainer,
-                        child: Icon(Icons.fitness_center, color: theme.colorScheme.onPrimaryContainer),
-                      ),
-                      title: Text(
-                        ex.name,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      subtitle: Text(
-                        '${ex.category.name} • ${ex.equipment?.name ?? "No Equipment"}',
-                        style: theme.textTheme.bodySmall,
-                      ),
-                      trailing: widget.addExercises
-                          ? Checkbox(
-                              value: isSelected,
-                              onChanged: (val) {
-                                setState(() {
-                                  if (val == true) {
-                                    _selectedExercises.add(ex);
-                                  } else {
-                                    _selectedExercises.remove(ex);
-                                  }
-                                });
+                    return Container(
+                      color: isSelected ? theme.colorScheme.primaryContainer.withOpacity(0.12) : null,
+                      child: ListTile(
+                        selected: isSelected,
+                        leading: Container(
+                          width: 48,
+                          height: 48,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: ClipRRect(
+                            borderRadius: BorderRadius.circular(12),
+                            child: ex.images.isNotEmpty
+                                ? Image.asset(
+                                    'assets/exercise_images/${ex.images.first.replaceAll('/', '_')}',
+                                    fit: BoxFit.cover,
+                                    errorBuilder: (context, error, stackTrace) => Icon(
+                                      Icons.fitness_center,
+                                      color: theme.colorScheme.onPrimaryContainer,
+                                    ),
+                                  )
+                                : Icon(
+                                    Icons.fitness_center,
+                                    color: theme.colorScheme.onPrimaryContainer,
+                                  ),
+                          ),
+                        ),
+                        title: Text(
+                          ex.name,
+                          style: TextStyle(
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                        subtitle: Text(
+                          '${ex.category.name} • ${ex.equipment?.name ?? "No Equipment"}',
+                          style: theme.textTheme.bodySmall,
+                        ),
+                        trailing: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.info_outline),
+                              onPressed: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/exercises/info',
+                                  arguments: ex.id,
+                                );
                               },
-                            )
-                          : null,
-                      onTap: () {
-                        if (widget.addExercises) {
-                          setState(() {
-                            if (isSelected) {
-                              _selectedExercises.remove(ex);
-                            } else {
-                              _selectedExercises.add(ex);
-                            }
-                          });
-                        } else {
-                          Navigator.pop(context, [ex]);
-                        }
-                      },
+                            ),
+                            if (widget.addExercises)
+                              Checkbox(
+                                value: isSelected,
+                                onChanged: (val) {
+                                  setState(() {
+                                    if (val == true) {
+                                      _selectedExercises.add(ex);
+                                    } else {
+                                      _selectedExercises.remove(ex);
+                                    }
+                                  });
+                                },
+                              ),
+                          ],
+                        ),
+                        onTap: () {
+                          if (widget.addExercises) {
+                            setState(() {
+                              if (isSelected) {
+                                _selectedExercises.remove(ex);
+                              } else {
+                                _selectedExercises.add(ex);
+                              }
+                            });
+                          } else {
+                            Navigator.pop(context, [ex]);
+                          }
+                        },
+                      ),
                     );
                   },
                 );
@@ -355,9 +397,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
         ],
       ),
     );
-  }
-
-  void _showFilterSelector<T>({
+  }  void _showFilterSelector<T>({
     required String title,
     required List<T> values,
     required T? current,
@@ -410,3 +450,4 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     );
   }
 }
+

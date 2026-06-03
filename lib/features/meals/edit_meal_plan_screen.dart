@@ -124,12 +124,140 @@ class EditMealPlanNotifier extends StateNotifier<MealPlanWithMealsAndItems?> {
     );
   }
 
+  void updateMealItemAmount(int mealId, int itemId, double newAmount) {
+    if (state == null) return;
+    final updatedMeals = state!.meals.map((m) {
+      if (m.meal.id == mealId) {
+        return MealWithItems(
+          meal: m.meal,
+          items: m.items.map((it) {
+            if (it.mealItem.id == itemId) {
+              return MealItemWithDetails(
+                mealItem: it.mealItem.copyWith(amount: newAmount),
+                product: it.product,
+                recipe: it.recipe,
+              );
+            }
+            return it;
+          }).toList(),
+        );
+      }
+      return m;
+    }).toList();
+    state = MealPlanWithMealsAndItems(
+      mealPlan: state!.mealPlan,
+      meals: updatedMeals,
+    );
+  }
+
+  void updateMealItemUnit(int mealId, int itemId, AmountUnit newUnit) {
+    if (state == null) return;
+    final updatedMeals = state!.meals.map((m) {
+      if (m.meal.id == mealId) {
+        return MealWithItems(
+          meal: m.meal,
+          items: m.items.map((it) {
+            if (it.mealItem.id == itemId) {
+              return MealItemWithDetails(
+                mealItem: it.mealItem.copyWith(amountUnit: newUnit),
+                product: it.product,
+                recipe: it.recipe,
+              );
+            }
+            return it;
+          }).toList(),
+        );
+      }
+      return m;
+    }).toList();
+    state = MealPlanWithMealsAndItems(
+      mealPlan: state!.mealPlan,
+      meals: updatedMeals,
+    );
+  }
+
+  void updateMealName(int mealId, String name) {
+    if (state == null) return;
+    state = MealPlanWithMealsAndItems(
+      mealPlan: state!.mealPlan,
+      meals: state!.meals.map((m) {
+        if (m.meal.id == mealId) {
+          return m.copyWith(meal: m.meal.copyWith(name: name));
+        }
+        return m;
+      }).toList(),
+    );
+  }
+
+  void updateMealTime(int mealId, LocalTime newTime) {
+    if (state == null) return;
+    final updatedMeals = state!.meals.map((m) {
+      if (m.meal.id == mealId) {
+        return m.copyWith(meal: m.meal.copyWith(time: newTime));
+      }
+      return m;
+    }).toList();
+    updatedMeals.sort((a, b) {
+      final aTime = a.meal.time;
+      final bTime = b.meal.time;
+      if (aTime == null && bTime == null) return 0;
+      if (aTime == null) return 1;
+      if (bTime == null) return -1;
+      final aMinutes = aTime.hour * 60 + aTime.minute;
+      final bMinutes = bTime.hour * 60 + bTime.minute;
+      return aMinutes.compareTo(bMinutes);
+    });
+    state = MealPlanWithMealsAndItems(
+      mealPlan: state!.mealPlan,
+      meals: updatedMeals,
+    );
+  }
+
   Future<void> save(VoidCallback onSuccess) async {
     if (state == null) return;
     final repo = ref.read(mealRepositoryProvider);
     await repo.saveMealPlanWithMealsAndItems(state!);
     onSuccess();
   }
+}
+
+void showFloatingToast(BuildContext context, String message) {
+  final overlay = Overlay.of(context);
+  final entry = OverlayEntry(
+    builder: (context) => Positioned(
+      bottom: 100,
+      left: 50,
+      right: 50,
+      child: Material(
+        color: Colors.transparent,
+        child: Center(
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+            decoration: BoxDecoration(
+              color: Theme.of(context).colorScheme.inverseSurface,
+              borderRadius: BorderRadius.circular(24),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 4),
+                ),
+              ],
+            ),
+            child: Text(
+              message,
+              style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface),
+              textAlign: TextAlign.center,
+            ),
+          ),
+        ),
+      ),
+    ),
+  );
+  overlay.insert(entry);
+  Future.delayed(const Duration(seconds: 2), () {
+    entry.remove();
+  });
 }
 
 final editMealPlanProvider = StateNotifierProvider.family<EditMealPlanNotifier, MealPlanWithMealsAndItems?, int>((ref, id) {
@@ -166,6 +294,7 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
       actions: [
         () {
           ref.read(editMealPlanProvider(widget.mealPlanId).notifier).save(() {
+            showFloatingToast(context, "Meal plan saved");
             Navigator.pop(context);
           });
         }
@@ -212,16 +341,16 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                 ),
                 OutlinedButton.icon(
                   onPressed: () {
-                    showDialog(
-                      context: context,
-                      builder: (context) => AddMealDialog(
-                        onDismiss: () => Navigator.pop(context),
-                        onConfirm: (meal) {
-                          ref.read(editMealPlanProvider(widget.mealPlanId).notifier).addMeal(meal);
-                          Navigator.pop(context);
-                        },
-                      ),
+                    final now = DateTime.now();
+                    final meal = Meal(
+                      id: Random().nextInt(10000000),
+                      mealPlanId: widget.mealPlanId,
+                      name: "Meal ${plan.meals.length + 1}",
+                      time: LocalTime(now.hour, now.minute),
+                      notes: "",
+                      position: plan.meals.length,
                     );
+                    ref.read(editMealPlanProvider(widget.mealPlanId).notifier).addMeal(meal);
                   },
                   icon: const Icon(Icons.add, size: 16),
                   label: const Text("Add Meal"),
@@ -298,6 +427,7 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                     ),
                   );
                 },
+                widgetRef: ref,
               );
             }),
           ],
@@ -313,6 +443,7 @@ class MealEditCard extends StatelessWidget {
   final VoidCallback onAddItemClick;
   final void Function(int) onDeleteItem;
   final void Function(int) onReplaceItem;
+  final WidgetRef widgetRef;
 
   const MealEditCard({
     super.key,
@@ -321,6 +452,7 @@ class MealEditCard extends StatelessWidget {
     required this.onAddItemClick,
     required this.onDeleteItem,
     required this.onReplaceItem,
+    required this.widgetRef,
   });
 
   @override
@@ -341,21 +473,48 @@ class MealEditCard extends StatelessWidget {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Row(
-                  children: [
-                    Text(
-                      timeStr,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
+                Expanded(
+                  child: Row(
+                    children: [
+                      InkWell(
+                        onTap: () async {
+                          final picked = await showTimePicker(
+                            context: context,
+                            initialTime: TimeOfDay(hour: meal.time.hour, minute: meal.time.minute),
+                          );
+                          if (picked != null) {
+                            widgetRef
+                                .read(editMealPlanProvider(meal.mealPlanId).notifier)
+                                .updateMealTime(meal.id, LocalTime(picked.hour, picked.minute));
+                          }
+                        },
+                        child: Text(
+                          timeStr,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: theme.colorScheme.primary,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: TextFormField(
+                          initialValue: meal.name,
+                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          decoration: const InputDecoration(
+                            isDense: true,
+                            contentPadding: EdgeInsets.symmetric(vertical: 4),
+                            border: InputBorder.none,
                           ),
-                    ),
-                    const SizedBox(width: 8),
-                    Text(
-                      meal.name,
-                      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                  ],
+                          onChanged: (val) {
+                            widgetRef
+                                .read(editMealPlanProvider(meal.mealPlanId).notifier)
+                                .updateMealName(meal.id, val);
+                          },
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
                 IconButton(
                   icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
@@ -379,182 +538,130 @@ class MealEditCard extends StatelessWidget {
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Text(
-                      "$name: ${detail.mealItem.amount.toStringAsFixed(0)}g/units",
-                      style: theme.textTheme.bodyMedium,
-                    ),
-                    PopupMenuButton<String>(
-                      icon: const Icon(Icons.more_vert, size: 20),
-                      onSelected: (val) {
-                        if (val == "replace") {
-                          onReplaceItem(detail.mealItem.id);
-                        } else if (val == "delete") {
-                          onDeleteItem(detail.mealItem.id);
-                        }
-                      },
-                      itemBuilder: (context) => [
-                        const PopupMenuItem(value: "replace", child: Text("Replace")),
-                        PopupMenuItem(
-                          value: "delete",
-                          child: Text(
-                            "Delete",
-                            style: TextStyle(color: theme.colorScheme.error),
+                    Expanded(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                showDialog(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text("Edit Item"),
+                                    content: const Text("Select an action for this item."),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          onReplaceItem(detail.mealItem.id);
+                                        },
+                                        child: const Text("Replace"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () {
+                                          Navigator.pop(context);
+                                          onDeleteItem(detail.mealItem.id);
+                                        },
+                                        child: Text(
+                                          "Delete",
+                                          style: TextStyle(color: theme.colorScheme.error),
+                                        ),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text("Cancel"),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                name,
+                                style: theme.textTheme.bodyLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ),
                           ),
-                        ),
-                      ],
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            children: [
+                              InlineAmountEditor(
+                                mealItem: detail.mealItem,
+                                onConfirm: (newAmount) {
+                                  widgetRef
+                                      .read(editMealPlanProvider(meal.mealPlanId).notifier)
+                                      .updateMealItemAmount(meal.id, detail.mealItem.id, newAmount);
+                                },
+                              ),
+                              const SizedBox(width: 3),
+                              PopupMenuButton<AmountUnit>(
+                                offset: const Offset(0, 30),
+                                onSelected: (newUnit) {
+                                  widgetRef
+                                      .read(editMealPlanProvider(meal.mealPlanId).notifier)
+                                      .updateMealItemUnit(meal.id, detail.mealItem.id, newUnit);
+                                },
+                                itemBuilder: (context) => [
+                                  PopupMenuItem(
+                                    value: AmountUnit.GRAMS,
+                                    child: Text(detail.product?.units.isNotEmpty == true ? detail.product!.units : "g"),
+                                  ),
+                                  PopupMenuItem(
+                                    value: AmountUnit.UNITS,
+                                    child: const Text("units"),
+                                  ),
+                                ],
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: theme.colorScheme.surfaceVariant,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        getUnitLabel(detail.mealItem, detail.product),
+                                        style: theme.textTheme.labelMedium?.copyWith(
+                                              fontWeight: FontWeight.bold,
+                                              color: theme.colorScheme.primary,
+                                            ),
+                                      ),
+                                      const SizedBox(width: 2),
+                                      Icon(
+                                        Icons.arrow_drop_down,
+                                        size: 16,
+                                        color: theme.colorScheme.primary,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               );
             }),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
             OutlinedButton.icon(
               onPressed: onAddItemClick,
-              style: OutlinedButton.styleFrom(
-                minimumSize: const Size.fromHeight(40),
-              ),
-              icon: const Icon(Icons.add),
-              label: const Text("Add Food / Recipe"),
-            )
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class AddMealDialog extends StatefulWidget {
-  final VoidCallback onDismiss;
-  final void Function(Meal) onConfirm;
-
-  const AddMealDialog({
-    super.key,
-    required this.onDismiss,
-    required this.onConfirm,
-  });
-
-  @override
-  State<AddMealDialog> createState() => _AddMealDialogState();
-}
-
-class _AddMealDialogState extends State<AddMealDialog> {
-  final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _timeController = TextEditingController();
-  final TextEditingController _notesController = TextEditingController();
-  String? _errorText;
-  LocalTime _selectedTime = const LocalTime(12, 0);
-
-  @override
-  void initState() {
-    super.initState();
-    _timeController.text =
-        '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
-  }
-
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _timeController.dispose();
-    _notesController.dispose();
-    super.dispose();
-  }
-
-  void _validate(String val) {
-    final parts = val.split(':');
-    if (parts.length != 2) {
-      setState(() => _errorText = 'Use HH:MM format');
-      return;
-    }
-    final hour = int.tryParse(parts[0]);
-    final min = int.tryParse(parts[1]);
-    if (hour == null || hour < 0 || hour > 23 || min == null || min < 0 || min > 59) {
-      setState(() => _errorText = 'Invalid hour (0-23) or minute (0-59)');
-      return;
-    }
-    setState(() {
-      _errorText = null;
-      _selectedTime = LocalTime(hour, min);
-    });
-  }
-
-  Future<void> _selectTime(BuildContext context) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(
-        hour: _selectedTime.hour,
-        minute: _selectedTime.minute,
-      ),
-    );
-    if (picked != null) {
-      setState(() {
-        _selectedTime = LocalTime(picked.hour, picked.minute);
-        _timeController.text =
-            '${_selectedTime.hour.toString().padLeft(2, '0')}:${_selectedTime.minute.toString().padLeft(2, '0')}';
-        _errorText = null;
-      });
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AlertDialog(
-      title: const Text("Add Meal Slot"),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: "Meal Name"),
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _timeController,
-              keyboardType: TextInputType.datetime,
-              decoration: InputDecoration(
-                labelText: "Time (HH:MM)",
-                errorText: _errorText,
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.access_time),
-                  onPressed: () => _selectTime(context),
-                ),
-              ),
-              onChanged: _validate,
-            ),
-            const SizedBox(height: 8),
-            TextField(
-              controller: _notesController,
-              decoration: const InputDecoration(labelText: "How to eat/Notes"),
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text("Add Item"),
             ),
           ],
         ),
       ),
-      actions: [
-        TextButton(onPressed: widget.onDismiss, child: const Text("Cancel")),
-        TextButton(
-          onPressed: _errorText == null
-              ? () {
-                  final name = _nameController.text.trim();
-                  final notes = _notesController.text.trim();
-                  if (name.isNotEmpty) {
-                    widget.onConfirm(
-                      Meal(
-                        id: Random().nextInt(10000000), // unique memory ID
-                        mealPlanId: 0,
-                        name: name,
-                        time: _selectedTime,
-                        notes: notes,
-                        position: 0,
-                      ),
-                    );
-                  }
-                }
-              : null,
-          child: const Text("Add"),
-        ),
-      ],
     );
   }
 }

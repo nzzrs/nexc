@@ -276,6 +276,9 @@ class MealPlans extends Table {
   TextColumn get state => text().map(const EnumNameConverter<MealPlanState>(MealPlanState.values))();
   TextColumn get created => text().map(const IsoDateTimeConverter())();
   TextColumn get completed => text().map(const IsoDateTimeConverter())();
+  RealColumn get targetProtein => real().nullable()();
+  RealColumn get targetCarbs => real().nullable()();
+  RealColumn get targetFats => real().nullable()();
 }
 
 @DataClassName('Meal')
@@ -341,7 +344,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 12;
+  int get schemaVersion => 13;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -362,6 +365,11 @@ class AppDatabase extends _$AppDatabase {
           }
           if (from < 12) {
             await m.addColumn(mealItems, mealItems.amountUnit);
+          }
+          if (from < 13) {
+            await m.addColumn(mealPlans, mealPlans.targetProtein);
+            await m.addColumn(mealPlans, mealPlans.targetCarbs);
+            await m.addColumn(mealPlans, mealPlans.targetFats);
           }
         },
       );

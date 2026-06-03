@@ -67,18 +67,20 @@ class MealRepository {
   Future<int> saveRecipeWithIngredients(RecipeWithIngredients data) {
     return db.transaction(() async {
       final recipe = data.recipe;
+      final hasNonPortable = data.ingredients.any((ing) => !ing.product.isPortable);
+      final resolvedRecipe = recipe.copyWith(isPortable: !hasNonPortable);
       int recipeId;
-      if (recipe.id == 0) {
+      if (resolvedRecipe.id == 0) {
         recipeId = await db.into(db.recipes).insert(
               RecipesCompanion.insert(
-                name: recipe.name,
-                instructions: recipe.instructions,
-                isPortable: recipe.isPortable,
+                name: resolvedRecipe.name,
+                instructions: resolvedRecipe.instructions,
+                isPortable: resolvedRecipe.isPortable,
               ),
             );
       } else {
-        await db.into(db.recipes).insertOnConflictUpdate(recipe);
-        recipeId = recipe.id;
+        await db.into(db.recipes).insertOnConflictUpdate(resolvedRecipe);
+        recipeId = resolvedRecipe.id;
       }
 
       final ingredients = data.ingredients;
@@ -170,6 +172,9 @@ class MealRepository {
                 state: plan.state,
                 created: plan.created,
                 completed: plan.completed,
+                targetProtein: Value(plan.targetProtein),
+                targetCarbs: Value(plan.targetCarbs),
+                targetFats: Value(plan.targetFats),
               ),
             );
       } else {
@@ -262,6 +267,9 @@ class MealRepository {
         state: MealPlanState.LOGGED,
         created: now,
         completed: now,
+        targetProtein: template.mealPlan.targetProtein,
+        targetCarbs: template.mealPlan.targetCarbs,
+        targetFats: template.mealPlan.targetFats,
       );
 
       final newMeals = template.meals.map((m) {
@@ -304,6 +312,24 @@ class MealRepository {
   Future<void> updateMealTime(int mealId, LocalTime newTime) async {
     final oldMeal = await (db.select(db.meals)..where((m) => m.id.equals(mealId))).getSingle();
     await updateMeal(oldMeal.copyWith(time: newTime));
+  }
+
+  Future<int> addMealToPlan({
+    required int mealPlanId,
+    required String name,
+    required LocalTime time,
+  }) async {
+    final mealsList = await (db.select(db.meals)..where((m) => m.mealPlanId.equals(mealPlanId))).get();
+    final maxPos = mealsList.map((m) => m.position).fold(-1, (prev, element) => element > prev ? element : prev);
+    return db.into(db.meals).insert(
+          MealsCompanion.insert(
+            mealPlanId: mealPlanId,
+            name: name,
+            time: time,
+            notes: "",
+            position: maxPos + 1,
+          ),
+        );
   }
 
   Future<void> updateMealItemAmount(int itemId, double newAmount) async {

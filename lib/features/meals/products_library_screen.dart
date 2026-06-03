@@ -38,6 +38,8 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
     );
   }
 
+
+
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(allProductsProvider);
@@ -129,38 +131,60 @@ class ProductCard extends StatelessWidget {
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Expanded(
-                          child: Text(
-                            product.name,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (product.isSupplement) ...[
-                          const SizedBox(width: 8),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.tertiaryContainer,
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              "Supplement",
-                              style: TextStyle(
-                                fontSize: 10,
-                                color: theme.colorScheme.onTertiaryContainer,
+                        Text(
+                          product.name,
+                          style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: product.isPortable
+                                    ? theme.colorScheme.primaryContainer.withOpacity(0.5)
+                                    : theme.colorScheme.errorContainer.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                product.isPortable ? "Portable" : "Home only",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: product.isPortable
+                                      ? theme.colorScheme.onPrimaryContainer
+                                      : theme.colorScheme.onErrorContainer,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
-                          ),
-                        ]
+                            if (product.isSupplement) ...[
+                              const SizedBox(width: 6),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.tertiaryContainer.withOpacity(0.5),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  "Supplement",
+                                  style: TextStyle(
+                                    fontSize: 10,
+                                    color: theme.colorScheme.onTertiaryContainer,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ],
                     ),
                   ),
@@ -418,3 +442,4 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     );
   }
 }
+

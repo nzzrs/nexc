@@ -15,6 +15,7 @@ import 'app_database.dart';
 import 'enums.dart';
 import 'meal_repository.dart';
 import 'workout_repository.dart';
+import 'measurement_repository.dart';
 import '../providers/db_provider.dart';
 import '../providers/settings_provider.dart';
 
@@ -55,14 +56,18 @@ class DatasetRepository {
     final settingsNotifier = ref.read(settingsProvider.notifier);
     final mealRepo = ref.read(mealRepositoryProvider);
     final workoutRepo = ref.read(workoutRepositoryProvider);
+    final measurementRepo = ref.read(measurementRepositoryProvider);
 
     // Prepopulate defaults if database is empty
     await mealRepo.prepopulateDefaultMealPlans();
     await workoutRepo.prepopulateDefaultWorkoutRoutines();
+    await measurementRepo.prepopulateDefaultMeasurements();
 
     final pastVersion = settings.pastVersionCode;
+    final existingExercises = await db.select(db.dataset).get();
 
-    if (pastVersion != currentVersionCode) {
+    if (existingExercises.length < 500 || pastVersion != currentVersionCode) {
+
       // 2. Load and parse exercises.json
       final jsonString = await rootBundle.loadString('assets/exercises.json');
       final List<dynamic> jsonList = json.decode(jsonString);

@@ -9,6 +9,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart' show Value;
 import '../../core/db/app_database.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/meal_repository.dart';
@@ -30,6 +31,117 @@ class TrackMealPlanScreen extends ConsumerStatefulWidget {
 }
 
 class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
+  void _showAddMealItemDialog(BuildContext context, int mealId, List<Product> products, List<RecipeWithIngredients> recipes) {
+    showDialog(
+      context: context,
+      builder: (context) => AddMealItemDialog(
+        products: products,
+        recipes: recipes,
+        onDismiss: () => Navigator.pop(context),
+        onConfirm: (type, targetId, amount, amountUnit) {
+          ref.read(mealRepositoryProvider).addMealItemToMeal(
+                mealId: mealId,
+                type: type,
+                targetId: targetId,
+                amount: amount,
+                amountUnit: amountUnit,
+              );
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  void _showReplaceDialog(BuildContext context, int itemId, List<Product> products, List<RecipeWithIngredients> recipes) {
+    showDialog(
+      context: context,
+      builder: (context) => AddMealItemDialog(
+        products: products,
+        recipes: recipes,
+        onDismiss: () => Navigator.pop(context),
+        onConfirm: (type, targetId, amount, amountUnit) {
+          ref.read(mealRepositoryProvider).replaceMealItemInMeal(
+                oldItemId: itemId,
+                newType: type,
+                newTargetId: targetId,
+                newAmount: amount,
+                newAmountUnit: amountUnit,
+              );
+          Navigator.pop(context);
+        },
+      ),
+    );
+  }
+
+  void _showOptionsDialog(BuildContext context, int itemId, MealPlanWithMealsAndItems plan, List<Product> products, List<RecipeWithIngredients> recipes) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text("Meal Item Options"),
+        content: const Text("Select action for this item in today's session."),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Navigator.pop(context);
+              _showReplaceDialog(context, itemId, products, recipes);
+            },
+            child: const Text("Replace"),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(context);
+              final repo = ref.read(mealRepositoryProvider);
+              MealItem? targetItem;
+              for (final m in plan.meals) {
+                for (final d in m.items) {
+                  if (d.mealItem.id == itemId) {
+                    targetItem = d.mealItem;
+                  }
+                }
+              }
+              if (targetItem != null) {
+                await repo.deleteMealItem(targetItem);
+              }
+            },
+            child: Text("Delete", style: TextStyle(color: Theme.of(context).colorScheme.error)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text("Cancel"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showEditGoalsDialog(BuildContext context, MealPlanWithMealsAndItems plan, double defProt, double defCarb, double defFat) {
+    final currentProt = plan.mealPlan.targetProtein ?? defProt;
+    final currentCarb = plan.mealPlan.targetCarbs ?? defCarb;
+    final currentFat = plan.mealPlan.targetFats ?? defFat;
+
+    showDialog(
+      context: context,
+      builder: (context) => EditTodayGoalsDialog(
+        currentProt: currentProt,
+        currentCarb: currentCarb,
+        currentFat: currentFat,
+        onConfirm: (newProt, newCarb, newFat) async {
+          final repo = ref.read(mealRepositoryProvider);
+          await repo.saveMealPlanWithMealsAndItems(
+            MealPlanWithMealsAndItems(
+              mealPlan: plan.mealPlan.copyWith(
+                targetProtein: Value(newProt),
+                targetCarbs: Value(newCarb),
+                targetFats: Value(newFat),
+              ),
+              meals: plan.meals,
+            ),
+          );
+        },
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -54,12 +166,10 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
         double totalProtTarget = 0.0;
         double totalCarbTarget = 0.0;
         double totalFatTarget = 0.0;
-        double totalCostTarget = 0.0;
 
         double totalProtConsumed = 0.0;
         double totalCarbConsumed = 0.0;
         double totalFatConsumed = 0.0;
-        double totalCostConsumed = 0.0;
 
         for (final m in meals) {
           for (final detail in m.items) {
@@ -67,45 +177,41 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
             double itemProt = 0.0;
             double itemCarb = 0.0;
             double itemFat = 0.0;
-            double itemCost = 0.0;
 
             if (detail.mealItem.type == MealItemType.PRODUCT && detail.product != null) {
               itemProt = detail.product!.proteins * scale;
               itemCarb = detail.product!.carbs * scale;
               itemFat = detail.product!.fats * scale;
-              final grams = detail.mealItem.amountUnit == AmountUnit.UNITS
-                  ? detail.mealItem.amount * getEdibleWeightPerUnit(detail.product!)
-                  : detail.mealItem.amount;
-              final costFactor = detail.product!.weight > 0
-                  ? grams / detail.product!.weight
-                  : 0.0;
-              itemCost = detail.product!.cost * costFactor;
             } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
               for (final ing in detail.recipe!.ingredients) {
                 final ingScale = (ing.ingredient.amount / 100.0) * scale;
                 itemProt += ing.product.proteins * ingScale;
                 itemCarb += ing.product.carbs * ingScale;
                 itemFat += ing.product.fats * ingScale;
-                final costFactor = ing.product.weight > 0
-                    ? (ing.ingredient.amount * scale) / ing.product.weight
-                    : 0.0;
-                itemCost += ing.product.cost * costFactor;
               }
             }
 
             totalProtTarget += itemProt;
             totalCarbTarget += itemCarb;
             totalFatTarget += itemFat;
-            totalCostTarget += itemCost;
 
             if (detail.mealItem.consumed) {
               totalProtConsumed += itemProt;
               totalCarbConsumed += itemCarb;
               totalFatConsumed += itemFat;
-              totalCostConsumed += itemCost;
             }
           }
         }
+
+        final targetProt = plan.mealPlan.targetProtein != null && plan.mealPlan.targetProtein! > 0
+            ? plan.mealPlan.targetProtein!
+            : totalProtTarget;
+        final targetCarb = plan.mealPlan.targetCarbs != null && plan.mealPlan.targetCarbs! > 0
+            ? plan.mealPlan.targetCarbs!
+            : totalCarbTarget;
+        final targetFat = plan.mealPlan.targetFats != null && plan.mealPlan.targetFats! > 0
+            ? plan.mealPlan.targetFats!
+            : totalFatTarget;
 
         return NexcScaffold(
           title: Text(
@@ -119,13 +225,12 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
               children: [
                 TodayMacrosCard(
                   protConsumed: totalProtConsumed,
-                  protTarget: totalProtTarget,
+                  protTarget: targetProt,
                   carbConsumed: totalCarbConsumed,
-                  carbTarget: totalCarbTarget,
+                  carbTarget: targetCarb,
                   fatConsumed: totalFatConsumed,
-                  fatTarget: totalFatTarget,
-                  costConsumed: totalCostConsumed,
-                  costTarget: totalCostTarget,
+                  fatTarget: targetFat,
+                  onEditGoals: () => _showEditGoalsDialog(context, plan, totalProtTarget, totalCarbTarget, totalFatTarget),
                 ),
                 const SizedBox(height: 12),
                 ...meals.map((mealWithItems) {
@@ -137,108 +242,24 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
                             item.copyWith(consumed: !item.consumed),
                           );
                     },
-                    onTimeClick: (mealId) {
+                    onTimeClick: (mealId) async {
                       final meal = plan.meals.firstWhere((m) => m.meal.id == mealId).meal;
-                      showDialog(
+                      final picked = await showTimePicker(
                         context: context,
-                        builder: (context) => EditTimeDialog(
-                          initialTime: meal.time,
-                          onDismiss: () => Navigator.pop(context),
-                          onConfirm: (newTime) {
-                            ref.read(mealRepositoryProvider).updateMealTime(mealId, newTime);
-                            Navigator.pop(context);
-                          },
-                        ),
+                        initialTime: TimeOfDay(hour: meal.time.hour, minute: meal.time.minute),
                       );
-                    },
-                    onAmountClick: (itemId, initialAmt) {
-                      showDialog(
-                        context: context,
-                        builder: (context) => EditAmountDialog(
-                          initialAmount: initialAmt,
-                          onDismiss: () => Navigator.pop(context),
-                          onConfirm: (newAmt) {
-                            ref.read(mealRepositoryProvider).updateMealItemAmount(itemId, newAmt);
-                            Navigator.pop(context);
-                          },
-                        ),
-                      );
+                      if (picked != null) {
+                        ref.read(mealRepositoryProvider).updateMealTime(
+                              mealId,
+                              LocalTime(picked.hour, picked.minute),
+                            );
+                      }
                     },
                     onNameClick: (itemId) {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text("Meal Item Options"),
-                          content: const Text("Select action for this item in today's session."),
-                          actions: [
-                            TextButton(
-                              onPressed: () {
-                                Navigator.pop(context);
-                                showDialog(
-                                  context: context,
-                                  builder: (context) => AddMealItemDialog(
-                                    products: products,
-                                    recipes: recipes,
-                                    onDismiss: () => Navigator.pop(context),
-                                    onConfirm: (type, targetId, amount, amountUnit) {
-                                      ref.read(mealRepositoryProvider).replaceMealItemInMeal(
-                                            oldItemId: itemId,
-                                            newType: type,
-                                            newTargetId: targetId,
-                                            newAmount: amount,
-                                            newAmountUnit: amountUnit,
-                                          );
-                                      Navigator.pop(context);
-                                    },
-                                  ),
-                                );
-                              },
-                              child: const Text("Replace"),
-                            ),
-                            TextButton(
-                              onPressed: () async {
-                                Navigator.pop(context);
-                                final repo = ref.read(mealRepositoryProvider);
-                                MealItem? targetItem;
-                                for (final m in plan.meals) {
-                                  for (final d in m.items) {
-                                    if (d.mealItem.id == itemId) {
-                                      targetItem = d.mealItem;
-                                    }
-                                  }
-                                }
-                                if (targetItem != null) {
-                                  await repo.deleteMealItem(targetItem);
-                                }
-                              },
-                              child: Text(
-                                "Delete",
-                                style: TextStyle(color: Theme.of(context).colorScheme.error),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
+                      _showOptionsDialog(context, itemId, plan, products, recipes);
                     },
                     onAddClick: (mealId) {
-                      showDialog(
-                        context: context,
-                        builder: (context) => AddMealItemDialog(
-                          products: products,
-                          recipes: recipes,
-                          onDismiss: () => Navigator.pop(context),
-                          onConfirm: (type, targetId, amount, amountUnit) {
-                            ref.read(mealRepositoryProvider).addMealItemToMeal(
-                                  mealId: mealId,
-                                  type: type,
-                                  targetId: targetId,
-                                  amount: amount,
-                                  amountUnit: amountUnit,
-                                );
-                            Navigator.pop(context);
-                          },
-                        ),
-                      );
+                      _showAddMealItemDialog(context, mealId, products, recipes);
                     },
                   );
                 }),

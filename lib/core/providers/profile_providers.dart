@@ -8,6 +8,7 @@
  */
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../db/app_database.dart';
 import '../db/enums.dart';
 import '../db/relations.dart';
 import '../db/workout_repository.dart';
@@ -132,4 +133,9 @@ final profileWeekStreakProvider = Provider<int>((ref) {
 
   final weeks = (now.difference(streakStartDate).inDays / 7).floor();
   return weeks;
+});
+
+final allMeasurementsProvider = StreamProvider<List<Measurement>>((ref) {
+  final repo = ref.watch(measurementRepositoryProvider);
+  return repo.getAllMeasurements();
 });

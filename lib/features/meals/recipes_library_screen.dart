@@ -145,9 +145,11 @@ class RecipeCard extends StatelessWidget {
             children: [
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Expanded(
-                    child: Row(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
                           recipe.name,
@@ -155,15 +157,25 @@ class RecipeCard extends StatelessWidget {
                                 fontWeight: FontWeight.bold,
                               ),
                         ),
-                        const SizedBox(width: 8),
-                        Chip(
-                          label: Text(
-                            recipe.isPortable ? "Portable" : "Not portable",
-                            style: const TextStyle(fontSize: 10),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: recipe.isPortable
+                                ? theme.colorScheme.primaryContainer.withOpacity(0.5)
+                                : theme.colorScheme.errorContainer.withOpacity(0.5),
+                            borderRadius: BorderRadius.circular(4),
                           ),
-                          backgroundColor: recipe.isPortable
-                              ? theme.colorScheme.primaryContainer
-                              : theme.colorScheme.errorContainer,
+                          child: Text(
+                            recipe.isPortable ? "Portable" : "Home only",
+                            style: TextStyle(
+                              fontSize: 10,
+                              color: recipe.isPortable
+                                  ? theme.colorScheme.onPrimaryContainer
+                                  : theme.colorScheme.onErrorContainer,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ],
                     ),
@@ -274,11 +286,13 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
 
     return AlertDialog(
       title: Text(widget.recipeWithIngredients.recipe.id == 0 ? "Add Recipe" : "Edit Recipe"),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      content: SizedBox(
+        width: 320,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
             TextField(
               controller: _nameController,
               decoration: const InputDecoration(labelText: "Name"),
@@ -294,37 +308,85 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
             Row(
               children: [
                 Checkbox(
-                  value: _isPortable,
-                  onChanged: (val) {
-                    if (val != null) setState(() => _isPortable = val);
-                  },
+                  value: _ingredients.any((ing) => !ing.product.isPortable) ? false : _isPortable,
+                  onChanged: _ingredients.any((ing) => !ing.product.isPortable)
+                      ? null
+                      : (val) {
+                          if (val != null) setState(() => _isPortable = val);
+                        },
                 ),
-                const Text("Is Portable"),
+                Text(
+                  _ingredients.any((ing) => !ing.product.isPortable)
+                      ? "Is Portable (Contains non-portable ingredients)"
+                      : "Is Portable",
+                  style: TextStyle(
+                    color: _ingredients.any((ing) => !ing.product.isPortable) ? theme.disabledColor : null,
+                  ),
+                ),
               ],
             ),
             const Divider(),
             const Text("Composition", style: TextStyle(fontWeight: FontWeight.bold)),
             const SizedBox(height: 8),
-            TextField(
-              decoration: const InputDecoration(labelText: "Search Ingredient"),
-              onChanged: (val) => setState(() => _searchQuery = val),
-            ),
-            const SizedBox(height: 8),
-            DropdownButtonFormField<int>(
-              decoration: const InputDecoration(labelText: "Select Ingredient"),
-              value: _selectedProductId,
-              items: filteredProducts
-                  .map((p) => DropdownMenuItem<int>(value: p.id, child: Text(p.name)))
-                  .toList(),
-              onChanged: (val) => setState(() => _selectedProductId = val),
-            ),
+            if (_selectedProductId != null) ...[
+              Builder(builder: (context) {
+                final prod = widget.products.firstWhereOrNull((p) => p.id == _selectedProductId);
+                return Card(
+                  margin: const EdgeInsets.symmetric(vertical: 8),
+                  child: ListTile(
+                    leading: const Icon(Icons.check_circle, color: Colors.green),
+                    title: Text(prod?.name ?? ""),
+                    subtitle: Text("${prod?.proteins}g P | ${prod?.carbs}g C | ${prod?.fats}g F"),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () => setState(() => _selectedProductId = null),
+                    ),
+                  ),
+                );
+              }),
+            ] else ...[
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: "Search Ingredient...",
+                  prefixIcon: Icon(Icons.search),
+                  border: OutlineInputBorder(),
+                ),
+                onChanged: (val) => setState(() => _searchQuery = val),
+              ),
+              const SizedBox(height: 8),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxHeight: 180),
+                child: Card(
+                  elevation: 0,
+                  shape: RoundedRectangleBorder(
+                    side: BorderSide(color: theme.colorScheme.outlineVariant),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: filteredProducts.length,
+                    itemBuilder: (context, idx) {
+                      final p = filteredProducts[idx];
+                      return ListTile(
+                        title: Text(p.name),
+                        subtitle: Text("${p.proteins}g P | ${p.carbs}g C | ${p.fats}g F"),
+                        onTap: () => setState(() {
+                          _selectedProductId = p.id;
+                          _searchQuery = "";
+                        }),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ],
             const SizedBox(height: 8),
             Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _amountController,
-                    keyboardType: TextInputType.number,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     decoration: const InputDecoration(labelText: "Amount (g/units)"),
                   ),
                 ),
@@ -375,6 +437,7 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
           ],
         ),
       ),
+    ),
       actions: [
         TextButton(onPressed: widget.onDismiss, child: const Text("Cancel")),
         TextButton(

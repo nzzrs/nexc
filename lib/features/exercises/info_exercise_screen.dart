@@ -26,7 +26,7 @@ class InfoExerciseScreen extends ConsumerStatefulWidget {
 
 class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with SingleTickerProviderStateMixin {
   bool _isLoading = true;
-  ExerciseDC? _exercise;
+  ExerciseDataDC? _exercise;
   int _currentImageIndex = 0;
   Timer? _imageTimer;
   late TabController _tabController;

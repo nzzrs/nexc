@@ -413,13 +413,17 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
         ),
       ),
       actions: [
-        TextButton(onPressed: widget.onDismiss, child: const Text("Cancel")),
-        TextButton(
+        IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: widget.onDismiss,
+        ),
+        IconButton(
+          icon: const Icon(Icons.check),
           onPressed: () {
             final name = _nameController.text.trim();
             if (name.isNotEmpty) {
               final newProduct = Product(
-                id: widget.product.id == 0 ? Random().nextInt(10000000) : widget.product.id,
+                id: widget.product.id == 0 ? Random().nextInt(1000000) : widget.product.id,
                 name: name,
                 weight: double.tryParse(_weightController.text) ?? 0.0,
                 cost: double.tryParse(_costController.text) ?? 0.0,
@@ -436,7 +440,6 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
               widget.onConfirm(newProduct);
             }
           },
-          child: const Text("Save"),
         ),
       ],
     );

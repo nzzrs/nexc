@@ -235,11 +235,12 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
         ),
       ),
       actions: [
-        TextButton(
+        IconButton(
+          icon: const Icon(Icons.close),
           onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
         ),
-        TextButton(
+        IconButton(
+          icon: const Icon(Icons.check),
           onPressed: () {
             final w = double.tryParse(_weightController.text) ?? 0.0;
             if (w > 0.0) {
@@ -257,7 +258,6 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
               Navigator.pop(context);
             }
           },
-          child: const Text("Save"),
         ),
       ],
     );

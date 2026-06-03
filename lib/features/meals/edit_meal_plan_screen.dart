@@ -283,25 +283,74 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
     final plan = ref.watch(editMealPlanProvider(widget.mealPlanId));
     final products = ref.watch(allProductsProvider).value ?? [];
     final recipes = ref.watch(allRecipesProvider).value ?? [];
-
+    final isNew = widget.mealPlanId == 0;
     if (plan == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    return NexcScaffold(
-      title: const Text("Create Meal Plan"),
-      navigateBack: () => Navigator.pop(context),
-      actions: [
-        () {
-          ref.read(editMealPlanProvider(widget.mealPlanId).notifier).save(() {
-            showFloatingToast(context, "Meal plan saved");
-            Navigator.pop(context);
-          });
+    Future<void> _handlePop() async {
+      final confirmed = await showDialog<String>(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          final theme = Theme.of(context);
+          return AlertDialog(
+            title: const Text('Discard Changes?'),
+            content: const Text('Do you want to discard your changes or save them?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'discard'),
+                child: Text('DISCARD', style: TextStyle(color: theme.colorScheme.error)),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'save'),
+                child: const Text('SAVE'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmed == 'discard') {
+        if (isNew) {
+          final repo = ref.read(mealRepositoryProvider);
+          await repo.deleteMealPlan(plan.mealPlan);
         }
-      ],
-      actionsDescription: const ["Save"],
-      actionsEnabled: [plan.mealPlan.title.trim().isNotEmpty],
-      content: (context, padding) {
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      } else if (confirmed == 'save') {
+        if (plan.mealPlan.title.trim().isEmpty) {
+          showFloatingToast(context, "Title cannot be empty");
+          return;
+        }
+        ref.read(editMealPlanProvider(widget.mealPlanId).notifier).save(() {
+          showFloatingToast(context, "Meal plan saved");
+          Navigator.pop(context);
+        });
+      }
+    }
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handlePop();
+      },
+      child: NexcScaffold(
+        title: Text(isNew ? "Create Meal Plan" : "Edit Meal Plan"),
+        navigateBack: _handlePop,
+        actions: [
+          () {
+            ref.read(editMealPlanProvider(widget.mealPlanId).notifier).save(() {
+              showFloatingToast(context, "Meal plan saved");
+              Navigator.pop(context);
+            });
+          }
+        ],
+        actionsIcons: const [Icon(Icons.check)],
+        actionsEnabled: [plan.mealPlan.title.trim().isNotEmpty],
+        content: (context, padding) {
         return ListView(
           padding: const EdgeInsets.all(16.0),
           children: [

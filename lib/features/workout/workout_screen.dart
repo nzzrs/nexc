@@ -25,6 +25,7 @@ import '../../core/components/exercise_card.dart';
 import '../../core/providers/settings_provider.dart';
 import '../exercises/exercises_screen.dart';
 import '../../core/components/wavy_progress_indicators.dart';
+import '../meals/edit_meal_plan_screen.dart';
 
 class WorkoutScreen extends ConsumerStatefulWidget {
   final int workoutId; // 0 if empty, routineId if starting routine, runningWorkoutId if resuming
@@ -648,20 +649,78 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
       ),
     );
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Workout'),
-        actions: [
-          if (_exercises.isNotEmpty)
-            TextButton(
-              onPressed: _finishWorkout,
-              child: const Text(
-                'DONE',
-                style: TextStyle(fontWeight: FontWeight.bold),
+    Future<void> _handlePop() async {
+      final confirmed = await showDialog<String>(
+        context: context,
+        barrierDismissible: true,
+        builder: (context) {
+          final theme = Theme.of(context);
+          return AlertDialog(
+            title: const Text('Discard Workout?'),
+            content: const Text('Do you want to discard this workout or save it as a draft?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'discard'),
+                child: Text('DISCARD', style: TextStyle(color: theme.colorScheme.error)),
               ),
-            ),
-        ],
-      ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, 'save'),
+                child: const Text('SAVE'),
+              ),
+            ],
+          );
+        },
+      );
+
+      if (confirmed == 'discard') {
+        final repo = ref.read(workoutRepositoryProvider);
+        await repo.deleteWorkout(_workout);
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      } else if (confirmed == 'save') {
+        // Save as draft or complete it
+        _stopwatchTimer?.cancel();
+        _restTimer?.cancel();
+        _setStopwatchTimer?.cancel();
+        _cancelRestNotification();
+        final repo = ref.read(workoutRepositoryProvider);
+        await repo.addWorkoutWithExercisesAndSets(
+          WorkoutWithExercisesAndSets(
+            workout: _workout.copyWith(timeElapsed: _elapsedSeconds),
+            exercisesWithSets: _exercises,
+          ),
+        );
+        if (mounted) {
+          Navigator.pop(context);
+        }
+      }
+    }
+
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        await _handlePop();
+      },
+      child: Scaffold(
+        appBar: AppBar(
+          title: const Text('Workout'),
+          leading: IconButton(
+            icon: const Icon(Icons.arrow_back),
+            onPressed: _handlePop,
+          ),
+          actions: [
+            if (_exercises.isNotEmpty)
+              TextButton(
+                onPressed: _finishWorkout,
+                child: const Text(
+                  'DONE',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+              ),
+          ],
+        ),
       body: Stack(
         children: [
           _exercises.isEmpty
@@ -1004,9 +1063,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                         _restSecondsRemaining = 0;
                         _initialRestTime = 0;
                       });
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Timer canceled')),
-                      );
+                      showFloatingToast(context, 'Timer canceled');
                     },
                   ),
                 ],
@@ -1036,8 +1093,9 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
 }
 
 extension CoerceInt on int {

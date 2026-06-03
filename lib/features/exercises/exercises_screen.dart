@@ -296,27 +296,33 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   return _fuzzyScore(ex.name, _query) > 60;
                 }).toList();
 
-                // Sort by fuzzy score descending
-                if (_query.isNotEmpty) {
-                  filtered.sort((a, b) {
+                // Sort: Selected first, then query/default order
+                final sorted = List<ExerciseDC>.from(filtered);
+                sorted.sort((a, b) {
+                  final aSelected = _selectedExercises.contains(a);
+                  final bSelected = _selectedExercises.contains(b);
+                  if (aSelected && !bSelected) return -1;
+                  if (!aSelected && bSelected) return 1;
+                  if (_query.isNotEmpty) {
                     final scoreA = _fuzzyScore(a.name, _query);
                     final scoreB = _fuzzyScore(b.name, _query);
                     return scoreB.compareTo(scoreA);
-                  });
-                }
+                  }
+                  return 0;
+                });
 
-                if (filtered.isEmpty) {
+                if (sorted.isEmpty) {
                   return const Center(child: Text('No exercises found.'));
                 }
 
                 return ListView.builder(
-                  itemCount: filtered.length,
+                  itemCount: sorted.length,
                   itemBuilder: (context, index) {
-                    final ex = filtered[index];
-                    final isSelected = _selectedExercises.contains(ex);
+                    final ex = sorted[index];
+                    final isSelected = _selectedExercises.any((e) => e.id == ex.id);
 
                     return Container(
-                      color: isSelected ? theme.colorScheme.primaryContainer.withOpacity(0.12) : null,
+                      color: isSelected ? theme.colorScheme.primaryContainer.withOpacity(0.24) : null,
                       child: ListTile(
                         selected: isSelected,
                         leading: Container(
@@ -374,7 +380,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                                     if (val == true) {
                                       _selectedExercises.add(ex);
                                     } else {
-                                      _selectedExercises.remove(ex);
+                                      _selectedExercises.removeWhere((e) => e.id == ex.id);
                                     }
                                   });
                                 },
@@ -385,7 +391,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                           if (widget.addExercises) {
                             setState(() {
                               if (isSelected) {
-                                _selectedExercises.remove(ex);
+                                _selectedExercises.removeWhere((e) => e.id == ex.id);
                               } else {
                                 _selectedExercises.add(ex);
                               }

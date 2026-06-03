@@ -439,14 +439,18 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
       ),
     ),
       actions: [
-        TextButton(onPressed: widget.onDismiss, child: const Text("Cancel")),
-        TextButton(
+        IconButton(
+          icon: const Icon(Icons.close),
+          onPressed: widget.onDismiss,
+        ),
+        IconButton(
+          icon: const Icon(Icons.check),
           onPressed: () {
             final name = _nameController.text.trim();
             if (name.isNotEmpty) {
               final newRecipe = Recipe(
                 id: widget.recipeWithIngredients.recipe.id == 0
-                    ? Random().nextInt(10000000)
+                    ? Random().nextInt(1000000)
                     : widget.recipeWithIngredients.recipe.id,
                 name: name,
                 instructions: _instructionsController.text.trim(),
@@ -457,7 +461,6 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
               );
             }
           },
-          child: const Text("Save"),
         ),
       ],
     );

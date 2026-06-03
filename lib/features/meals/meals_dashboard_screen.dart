@@ -436,13 +436,32 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                             onClick: () {
                               Navigator.pushNamed(
                                 context,
-                                '/meals/edit-plan',
+                                '/meals/track-plan',
                                 arguments: plan.mealPlan.id,
                               );
                             },
-                            onDelete: () {
-                              ref.read(mealRepositoryProvider).deleteMealPlan(plan.mealPlan);
-                            },
+                            onDelete: () async {
+                               final confirm = await showDialog<bool>(
+                                 context: context,
+                                 builder: (context) => AlertDialog(
+                                   title: const Text("Delete Meal Plan"),
+                                   content: Text("Are you sure you want to delete '${plan.mealPlan.title}'?"),
+                                   actions: [
+                                     TextButton(
+                                       onPressed: () => Navigator.pop(context, false),
+                                       child: const Text("Cancel"),
+                                     ),
+                                     TextButton(
+                                       onPressed: () => Navigator.pop(context, true),
+                                       child: Text("Delete", style: TextStyle(color: theme.colorScheme.error)),
+                                     ),
+                                   ],
+                                 ),
+                               );
+                               if (confirm == true) {
+                                 ref.read(mealRepositoryProvider).deleteMealPlan(plan.mealPlan);
+                               }
+                             },
                             onSelect: () {
                               ref.read(mealRepositoryProvider).selectMealPlanForToday(plan);
                             },
@@ -664,7 +683,7 @@ class MealTrackCard extends ConsumerWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.start,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           InkWell(
                             onTap: onTimeClick != null ? () => onTimeClick!(meal.id) : null,
@@ -678,11 +697,13 @@ class MealTrackCard extends ConsumerWidget {
                           ),
                           const SizedBox(width: 8),
                           Expanded(
-                            child: Text(
-                              meal.name,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
+                            child: _InlineMealNameEditor(
+                              meal: meal,
+                              onConfirm: (newName) {
+                                ref.read(mealRepositoryProvider).updateMeal(
+                                      meal.copyWith(name: newName),
+                                    );
+                              },
                             ),
                           ),
                         ],
@@ -709,6 +730,32 @@ class MealTrackCard extends ConsumerWidget {
                       ),
                     ],
                   ),
+                ),
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, size: 20),
+                  color: theme.colorScheme.error,
+                  onPressed: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Delete Meal"),
+                        content: Text("Are you sure you want to delete '${meal.name}'?"),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text("Cancel"),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: Text("Delete", style: TextStyle(color: theme.colorScheme.error)),
+                          ),
+                        ],
+                      ),
+                    );
+                    if (confirm == true) {
+                      await ref.read(mealRepositoryProvider).db.delete(ref.read(mealRepositoryProvider).db.meals).delete(meal);
+                    }
+                  },
                 ),
               ],
             ),
@@ -861,6 +908,79 @@ class MealTrackCard extends ConsumerWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _InlineMealNameEditor extends StatefulWidget {
+  final Meal meal;
+  final void Function(String) onConfirm;
+
+  const _InlineMealNameEditor({
+    required this.meal,
+    required this.onConfirm,
+  });
+
+  @override
+  State<_InlineMealNameEditor> createState() => _InlineMealNameEditorState();
+}
+
+class _InlineMealNameEditorState extends State<_InlineMealNameEditor> {
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.meal.name);
+    _focusNode = FocusNode();
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    if (!_focusNode.hasFocus) {
+      _save();
+    }
+  }
+
+  void _save() {
+    final val = _controller.text.trim();
+    if (val.isNotEmpty && val != widget.meal.name) {
+      widget.onConfirm(val);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _InlineMealNameEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.meal.name != widget.meal.name && !_focusNode.hasFocus) {
+      _controller.text = widget.meal.name;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return TextFormField(
+      controller: _controller,
+      focusNode: _focusNode,
+      style: theme.textTheme.titleMedium?.copyWith(
+        fontWeight: FontWeight.bold,
+      ),
+      decoration: const InputDecoration(
+        isDense: true,
+        contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        border: InputBorder.none,
+      ),
+      onFieldSubmitted: (_) => _save(),
     );
   }
 }
@@ -1134,29 +1254,36 @@ class MealPlanCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 8),
               ],
-              Wrap(
-                spacing: 6,
-                runSpacing: 6,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  _buildMacroChip(context, "P", totalProt, theme.colorScheme.primaryContainer),
-                  _buildMacroChip(context, "C", totalCarb, theme.colorScheme.tertiaryContainer),
-                  _buildMacroChip(context, "F", totalFat, theme.colorScheme.errorContainer),
+                  Expanded(
+                    child: Wrap(
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: [
+                        _buildMacroChip(context, "P", totalProt, theme.colorScheme.primaryContainer),
+                        _buildMacroChip(context, "C", totalCarb, theme.colorScheme.tertiaryContainer),
+                        _buildMacroChip(context, "F", totalFat, theme.colorScheme.errorContainer),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (isSelected)
+                    InputChip(
+                      label: const Text("Active today"),
+                      selected: true,
+                      onSelected: (_) {},
+                      avatar: const Icon(Icons.check, size: 16),
+                    )
+                  else
+                    OutlinedButton.icon(
+                      onPressed: onSelect,
+                      icon: const Icon(Icons.play_arrow, size: 16),
+                      label: const Text("Select"),
+                    ),
                 ],
               ),
-              const SizedBox(height: 12),
-              if (isSelected)
-                InputChip(
-                  label: const Text("Active today"),
-                  selected: true,
-                  onSelected: (_) {},
-                  avatar: const Icon(Icons.check, size: 16),
-                )
-              else
-                OutlinedButton.icon(
-                  onPressed: onSelect,
-                  icon: const Icon(Icons.play_arrow, size: 16),
-                  label: const Text("Select"),
-                ),
             ],
           ),
         ),

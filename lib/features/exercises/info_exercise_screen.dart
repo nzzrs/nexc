@@ -137,7 +137,7 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(''),
+        title: const Text('Exercise Details'),
         backgroundColor: colors.surfaceContainerLow,
         elevation: 0,
       ),

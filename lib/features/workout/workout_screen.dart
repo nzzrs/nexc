@@ -695,8 +695,71 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                       }
                       final item = _exercises.removeAt(oldIndex);
                       _exercises.insert(newIndex, item);
+                      for (int i = 0; i < _exercises.length; i++) {
+                        _exercises[i] = _exercises[i].copyWith(
+                          exercise: _exercises[i].exercise.copyWith(position: i),
+                        );
+                      }
                     });
                     _saveProgressToDb();
+                  },
+                  proxyDecorator: (Widget child, int index, Animation<double> animation) {
+                    final theme = Theme.of(context);
+                    final settings = ref.read(settingsProvider);
+                    final eWs = _exercises[index];
+                    final List<Color> supersetColors = [
+                      Colors.blue,
+                      Colors.purple,
+                      Colors.orange,
+                      Colors.teal,
+                      Colors.pink,
+                      Colors.amber,
+                    ];
+                    final uniqueSupersets = _exercises
+                        .map((e) => e.exercise.supersetId)
+                        .where((id) => id != null)
+                        .toSet()
+                        .toList();
+                    final sId = eWs.exercise.supersetId;
+                    String? supersetLabel;
+                    Color? supersetColor;
+                    if (sId != null) {
+                      final sIndex = uniqueSupersets.indexOf(sId);
+                      if (sIndex != -1) {
+                        final letter = String.fromCharCode(65 + sIndex);
+                        supersetLabel = letter;
+                        supersetColor = supersetColors[sIndex % supersetColors.length];
+                      }
+                    }
+                    return Material(
+                      color: Colors.transparent,
+                      elevation: 8,
+                      child: ExerciseCard(
+                        key: ValueKey('ex_drag_${eWs.exercise.id}'),
+                        index: index,
+                        exerciseWithSets: eWs,
+                        workout: true,
+                        isReordering: true,
+                        previousPerformances: _previousPerformances[eWs.exerciseDC.id],
+                        idSetWithRunningStopwatch: _idSetWithRunningStopwatch,
+                        showRpe: settings.showRpe,
+                        intensityScale: settings.intensityScale,
+                        supersetLabel: supersetLabel,
+                        supersetColor: supersetColor,
+                        addSet: (id) {},
+                        onDetail: (id, dcId) {},
+                        onDelete: (id) {},
+                        deleteSet: (id) {},
+                        updateExerciseNotes: (text, id) {},
+                        updateExerciseRestTime: (val, id) {},
+                        updateExerciseSetMode: (mode, id) {},
+                        updateSetTime: (t, id) {},
+                        updateSetReps: (r, id) {},
+                        updateSetLoad: (l, id) {},
+                        updateSetCompleted: (c, id) {},
+                        showInfo: (info) {},
+                      ),
+                    );
                   },
                   itemBuilder: (context, index) {
                     final eWs = _exercises[index];

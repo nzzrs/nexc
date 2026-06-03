@@ -40,6 +40,13 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
   bool _onlyCustom = false;
 
   final Set<ExerciseDC> _selectedExercises = {};
+  late final Stream<List<ExerciseDC>> _datasetStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _datasetStream = ref.read(datasetRepositoryProvider).getDataset();
+  }
 
   @override
   void dispose() {
@@ -87,7 +94,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final datasetStream = ref.watch(datasetRepositoryProvider).getDataset();
+
 
     return Scaffold(
       appBar: AppBar(
@@ -273,7 +280,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
           // Exercise List
           Expanded(
             child: StreamBuilder<List<ExerciseDC>>(
-              stream: datasetStream,
+              stream: _datasetStream,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());

@@ -267,6 +267,7 @@ class MealRepository {
         state: MealPlanState.LOGGED,
         created: now,
         completed: now,
+        isTemporal: false,
         targetProtein: template.mealPlan.targetProtein,
         targetCarbs: template.mealPlan.targetCarbs,
         targetFats: template.mealPlan.targetFats,
@@ -396,6 +397,7 @@ class MealRepository {
       state: MealPlanState.LOGGED,
       created: now,
       completed: now,
+      isTemporal: false,
     );
     return saveMealPlanWithMealsAndItems(
       MealPlanWithMealsAndItems(mealPlan: newPlan, meals: []),
@@ -416,15 +418,15 @@ class MealRepository {
 
     // 1. Insert Products
     final productsList = [
-      const Product(id: 10001, name: "Whole Milk", weight: 1000.0, cost: 1.20, quantity: 2, units: "ml", ediblePercent: 1.0, edibleQtyPerUnit: 0.0, proteins: 3.3, carbs: 4.7, fats: 3.6, isSupplement: false, isPortable: true),
-      const Product(id: 10002, name: "Oatmeal Cookies", weight: 200.0, cost: 1.50, quantity: 5, units: "g", ediblePercent: 1.0, edibleQtyPerUnit: 0.0, proteins: 6.5, carbs: 65.0, fats: 15.0, isSupplement: false, isPortable: true),
-      const Product(id: 10003, name: "Creatine Monohydrate", weight: 300.0, cost: 18.00, quantity: 1, units: "g", ediblePercent: 1.0, edibleQtyPerUnit: 0.0, proteins: 0.0, carbs: 0.0, fats: 0.0, isSupplement: true, isPortable: true),
-      const Product(id: 10004, name: "Chicken Breast", weight: 1000.0, cost: 7.50, quantity: 1, units: "g", ediblePercent: 1.0, edibleQtyPerUnit: 0.0, proteins: 31.0, carbs: 0.0, fats: 3.6, isSupplement: false, isPortable: true),
-      const Product(id: 10005, name: "Cooked Rice", weight: 1000.0, cost: 1.50, quantity: 3, units: "g", ediblePercent: 1.0, edibleQtyPerUnit: 0.0, proteins: 2.7, carbs: 28.0, fats: 0.3, isSupplement: false, isPortable: true),
-      const Product(id: 10006, name: "Banana", weight: 150.0, cost: 0.30, quantity: 6, units: "g", ediblePercent: 0.65, edibleQtyPerUnit: 97.5, proteins: 1.1, carbs: 22.8, fats: 0.3, isSupplement: false, isPortable: true),
-      const Product(id: 10007, name: "Whole Eggs", weight: 60.0, cost: 0.15, quantity: 30, units: "unit", ediblePercent: 0.88, edibleQtyPerUnit: 52.8, proteins: 13.0, carbs: 1.1, fats: 11.0, isSupplement: false, isPortable: true),
-      const Product(id: 10008, name: "Fresh Spinach", weight: 250.0, cost: 1.20, quantity: 1, units: "g", ediblePercent: 0.95, edibleQtyPerUnit: 0.0, proteins: 2.9, carbs: 3.6, fats: 0.4, isSupplement: false, isPortable: false),
-      const Product(id: 10009, name: "Grilled Salmon", weight: 200.0, cost: 6.00, quantity: 2, units: "g", ediblePercent: 1.0, edibleQtyPerUnit: 0.0, proteins: 25.0, carbs: 0.0, fats: 13.0, isSupplement: false, isPortable: false),
+      const Product(id: 10001, name: "Whole Milk", weight: 1000.0, defaultUnits: "ml", unitWeight: 2, edibleQtyPerUnit: 0.0, proteins: 3.3, carbsAvailable: 4.7, fats: 3.6, isSupplement: false, isPortable: true),
+      const Product(id: 10002, name: "Oatmeal Cookies", weight: 200.0, defaultUnits: "g", unitWeight: 5, edibleQtyPerUnit: 0.0, proteins: 6.5, carbsAvailable: 65.0, fats: 15.0, isSupplement: false, isPortable: true),
+      const Product(id: 10003, name: "Creatine Monohydrate", weight: 300.0, defaultUnits: "g", unitWeight: 1, edibleQtyPerUnit: 0.0, proteins: 0.0, carbsAvailable: 0.0, fats: 0.0, isSupplement: true, isPortable: true),
+      const Product(id: 10004, name: "Chicken Breast", weight: 1000.0, defaultUnits: "g", unitWeight: 1, edibleQtyPerUnit: 0.0, proteins: 31.0, carbsAvailable: 0.0, fats: 3.6, isSupplement: false, isPortable: true),
+      const Product(id: 10005, name: "Cooked Rice", weight: 1000.0, defaultUnits: "g", unitWeight: 3, edibleQtyPerUnit: 0.0, proteins: 2.7, carbsAvailable: 28.0, fats: 0.3, isSupplement: false, isPortable: true),
+      const Product(id: 10006, name: "Banana", weight: 150.0, defaultUnits: "g", unitWeight: 6, edibleQtyPerUnit: 97.5, proteins: 1.1, carbsAvailable: 22.8, fats: 0.3, isSupplement: false, isPortable: true),
+      const Product(id: 10007, name: "Whole Eggs", weight: 60.0, defaultUnits: "unit", unitWeight: 30, edibleQtyPerUnit: 52.8, proteins: 13.0, carbsAvailable: 1.1, fats: 11.0, isSupplement: false, isPortable: true),
+      const Product(id: 10008, name: "Fresh Spinach", weight: 250.0, defaultUnits: "g", unitWeight: 1, edibleQtyPerUnit: 0.0, proteins: 2.9, carbsAvailable: 3.6, fats: 0.4, isSupplement: false, isPortable: false),
+      const Product(id: 10009, name: "Grilled Salmon", weight: 200.0, defaultUnits: "g", unitWeight: 2, edibleQtyPerUnit: 0.0, proteins: 25.0, carbsAvailable: 0.0, fats: 13.0, isSupplement: false, isPortable: false),
     ];
 
     for (final p in productsList) {
@@ -456,6 +458,7 @@ class MealRepository {
       state: MealPlanState.TEMPLATE,
       created: now,
       completed: now,
+      isTemporal: false,
     );
 
     final m1 = const Meal(id: 40001, mealPlanId: 30001, name: "Breakfast & Supplementation", time: LocalTime(8, 0), notes: "Take immediately upon waking up with plenty of water.", position: 0);
@@ -499,6 +502,7 @@ class MealRepository {
       state: MealPlanState.TEMPLATE,
       created: now,
       completed: now,
+      isTemporal: false,
     );
 
     final cleanBulkM1 = const Meal(id: 40005, mealPlanId: 30002, name: "Breakfast", time: LocalTime(7, 30), notes: "High carb and protein to start the day.", position: 0);

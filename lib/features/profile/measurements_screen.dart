@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:fl_chart/fl_chart.dart';
 import '../../core/db/app_database.dart';
+import 'package:drift/drift.dart';
 import '../../core/db/measurement_repository.dart';
 import '../../core/providers/profile_providers.dart';
 import '../../core/components/nexc_scaffold.dart';

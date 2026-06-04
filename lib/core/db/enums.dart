@@ -11,7 +11,7 @@ enum WorkoutState { RUNNING, COMPLETED, ROUTINE, ARCHIVED, LIBRARY }
 
 enum SetMode { LOAD, BODYWEIGHT, BODYWEIGHT_WITH_LOAD, DURATION, DURATION_WITH_LOAD }
 
-enum MealPlanState { TEMPLATE, LOGGED, ARCHIVED }
+enum MealPlanState { TEMPLATE, LOGGED, ARCHIVED, ACTIVE }
 
 enum MealItemType { PRODUCT, RECIPE }
 
@@ -233,24 +233,11 @@ extension CategoryExt on Category {
   }
 }
 
-enum OneRepMaxFormula {
-  balanced(0),
-  epley(1),
-  brzycki(2),
-  mcglothin(3),
-  lombardi(4),
-  mayhew(5),
-  oConner(6),
-  wathen(7);
-
-  final int value;
-  const OneRepMaxFormula(this.value);
-}
-
 enum IntensityScale {
-  rpe(0),
-  rir(1),
-  both(2);
+  none(0),
+  rpe(1),
+  rir(2),
+  both(3);
 
   final int value;
   const IntensityScale(this.value);
@@ -271,4 +258,4 @@ enum Language {
 }
 
 /// Whether a meal item amount is expressed in grams or discrete units (e.g. 1 banana).
-enum AmountUnit { GRAMS, UNITS }
+enum AmountUnit { GRAMS, UNITS, ML }

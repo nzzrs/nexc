@@ -44,30 +44,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: [
             Expanded(
               child: _MenuButton(
-                text: "Exercises",
-                icon: Icons.search,
-                onPressed: () {
-                  Navigator.pushNamed(context, '/exercises', arguments: false);
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _MenuButton(
-                text: "Statistics",
-                icon: Icons.bar_chart,
-                onPressed: () {
-                  Navigator.pushNamed(context, '/profile/statistics');
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _MenuButton(
                 text: "Measurements",
                 icon: Icons.monitor_weight_outlined,
                 onPressed: () {
@@ -78,10 +54,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: _MenuButton(
-                text: "Calendar",
-                icon: Icons.calendar_month,
+                text: "Personal Info",
+                icon: Icons.person_outline,
                 onPressed: () {
-                  Navigator.pushNamed(context, '/calendar');
+                  Navigator.pushNamed(context, '/profile/personal-info');
                 },
               ),
             ),
@@ -90,6 +66,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         const SizedBox(height: 8),
         Row(
           children: [
+            Expanded(
+              child: _MenuButton(
+                text: "Exercises",
+                icon: Icons.fitness_center,
+                onPressed: () {
+                  Navigator.pushNamed(context, '/exercises', arguments: false);
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
             Expanded(
               child: _MenuButton(
                 text: "Products",
@@ -106,6 +92,30 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 icon: Icons.restaurant,
                 onPressed: () {
                   Navigator.pushNamed(context, '/meals/recipes');
+                },
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: _MenuButton(
+                text: "Calendar",
+                icon: Icons.calendar_month,
+                onPressed: () {
+                  Navigator.pushNamed(context, '/calendar');
+                },
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: _MenuButton(
+                text: "Statistics",
+                icon: Icons.bar_chart,
+                onPressed: () {
+                  Navigator.pushNamed(context, '/profile/statistics');
                 },
               ),
             ),
@@ -229,7 +239,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 double totalProt = 0.0;
                 double totalCarb = 0.0;
                 double totalFat = 0.0;
-                double totalCost = 0.0;
                 int totalItems = 0;
                 int consumedCount = 0;
 
@@ -243,23 +252,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       totalProt += detail.product!.proteins * scale;
                       totalCarb += detail.product!.carbs * scale;
                       totalFat += detail.product!.fats * scale;
-                      final grams = detail.mealItem.amountUnit == AmountUnit.UNITS
-                          ? detail.mealItem.amount * getEdibleWeightPerUnit(detail.product!)
-                          : detail.mealItem.amount;
-                      final costFactor = detail.product!.weight > 0
-                          ? grams / detail.product!.weight
-                          : 0.0;
-                      totalCost += detail.product!.cost * costFactor;
                     } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
                       for (final ing in detail.recipe!.ingredients) {
                         final ingScale = (ing.ingredient.amount / 100.0) * scale;
                         totalProt += ing.product.proteins * ingScale;
                         totalCarb += ing.product.carbs * ingScale;
                         totalFat += ing.product.fats * ingScale;
-                        final costFactor = ing.product.weight > 0
-                            ? (ing.ingredient.amount * scale) / ing.product.weight
-                            : 0.0;
-                        totalCost += ing.product.cost * costFactor;
                       }
                     }
                   }
@@ -300,21 +298,33 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                   "Macros: P ${totalProt.toStringAsFixed(1)}g | C ${totalCarb.toStringAsFixed(1)}g | F ${totalFat.toStringAsFixed(1)}g",
                                   style: const TextStyle(fontWeight: FontWeight.bold),
                                 ),
-                                Text(
-                                  "Est. Cost: \$${totalCost.toStringAsFixed(2)}",
-                                  style: TextStyle(
-                                    color: theme.colorScheme.secondary,
-                                    fontSize: 12,
-                                  ),
-                                ),
                               ],
                             ),
                           ),
                         ),
                         IconButton(
                           icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
-                          onPressed: () {
-                            ref.read(mealRepositoryProvider).deleteMealPlan(plan);
+                          onPressed: () async {
+                            final confirm = await showDialog<bool>(
+                              context: context,
+                              builder: (context) => AlertDialog(
+                                title: const Text("Delete Meal Log"),
+                                content: const Text("Are you sure you want to delete this meal log?"),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, false),
+                                    child: const Text("Cancel"),
+                                  ),
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context, true),
+                                    child: Text("Delete", style: TextStyle(color: theme.colorScheme.error)),
+                                  ),
+                                ],
+                              ),
+                            );
+                            if (confirm == true) {
+                              ref.read(mealRepositoryProvider).deleteMealPlan(plan);
+                            }
                           },
                         ),
                       ],
@@ -326,15 +336,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           },
         ),
       ],
-    );
-  }
-
-  void _showWipSnackBar(BuildContext context, String screenName) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text("$screenName - Work in Progress"),
-        duration: const Duration(seconds: 2),
-      ),
     );
   }
 }
@@ -404,11 +405,22 @@ class _StreakCardState extends State<StreakCard> {
               Icon(
                 Icons.local_fire_department,
                 size: 48,
-                color: Color.lerp(
-                  Colors.orange.withOpacity(0.5),
-                  Colors.red,
-                  intensity,
-                ),
+                color: widget.weekStreak == 0
+                    ? theme.colorScheme.onSurfaceVariant.withOpacity(0.3)
+                    : Color.lerp(
+                        Colors.orange,
+                        Colors.red,
+                        intensity.clamp(0.0, 1.0),
+                      ),
+                shadows: widget.weekStreak == 0
+                    ? null
+                    : [
+                        BoxShadow(
+                          color: Colors.orange.withOpacity(0.4),
+                          blurRadius: 12,
+                          spreadRadius: 2,
+                        ),
+                      ],
               ),
               const SizedBox(width: 24),
               Expanded(

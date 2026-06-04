@@ -60,7 +60,6 @@ class DatasetRepository {
 
     // Prepopulate defaults if database is empty
     await mealRepo.prepopulateDefaultMealPlans();
-    await workoutRepo.prepopulateDefaultWorkoutRoutines();
     await measurementRepo.prepopulateDefaultMeasurements();
 
     final pastVersion = settings.pastVersionCode;
@@ -97,6 +96,7 @@ class DatasetRepository {
       // 4. Update pastVersionCode
       await settingsNotifier.setPastVersionCode(currentVersionCode);
     }
+    await workoutRepo.prepopulateDefaultWorkoutRoutines();
   }
 }
 

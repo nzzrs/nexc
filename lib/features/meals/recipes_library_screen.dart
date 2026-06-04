@@ -7,11 +7,9 @@
  * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
  */
 
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:collection/collection.dart';
-import '../../core/db/app_database.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/providers/meals_providers.dart';
@@ -45,6 +43,7 @@ class _RecipesLibraryScreenState extends ConsumerState<RecipesLibraryScreen> {
   Widget build(BuildContext context) {
     final recipesAsync = ref.watch(allRecipesProvider);
     final products = ref.watch(allProductsProvider).value ?? [];
+    final theme = Theme.of(context);
 
     return NexcScaffold(
       title: const Text("Recipes"),
@@ -88,8 +87,27 @@ class _RecipesLibraryScreenState extends ConsumerState<RecipesLibraryScreen> {
                     onClick: () {
                       _showAddEditRecipe(context, recipe, products);
                     },
-                    onDelete: () {
-                      ref.read(mealRepositoryProvider).deleteRecipe(recipe.recipe);
+                    onDelete: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text("Delete Recipe"),
+                          content: Text("Are you sure you want to delete '${recipe.recipe.name}'?"),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text("Cancel"),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: Text("Delete", style: TextStyle(color: theme.colorScheme.error)),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        ref.read(mealRepositoryProvider).deleteRecipe(recipe.recipe);
+                      }
                     },
                   ),
                 );
@@ -124,15 +142,11 @@ class RecipeCard extends StatelessWidget {
     double totalProt = 0.0;
     double totalCarb = 0.0;
     double totalFat = 0.0;
-    double totalCost = 0.0;
-
     for (final item in ingredients) {
       final scale = item.ingredient.amount / 100.0;
       totalProt += item.product.proteins * scale;
       totalCarb += item.product.carbs * scale;
       totalFat += item.product.fats * scale;
-      final costFactor = item.product.weight > 0 ? item.ingredient.amount / item.product.weight : 0.0;
-      totalCost += item.product.cost * costFactor;
     }
 
     return Card(
@@ -189,7 +203,7 @@ class RecipeCard extends StatelessWidget {
               if (ingredients.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(
-                  ingredients.map((i) => "${i.product.name} (${i.ingredient.amount.toStringAsFixed(0)}g)").join(", "),
+                  ingredients.map((i) => "${i.product.name} (${i.ingredient.amount.toStringAsFixed(0)}${i.ingredient.amountUnits ?? 'g'})").join(", "),
                   style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSurfaceVariant,
                       ),
@@ -211,13 +225,6 @@ class RecipeCard extends StatelessWidget {
                   Text(
                     "Macros: P ${totalProt.toStringAsFixed(1)}g | C ${totalCarb.toStringAsFixed(1)}g | F ${totalFat.toStringAsFixed(1)}g",
                     style: theme.textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    "Cost: \$${totalCost.toStringAsFixed(2)}",
-                    style: theme.textTheme.bodySmall?.copyWith(
-                          color: theme.colorScheme.secondary,
-                          fontWeight: FontWeight.bold,
-                        ),
                   ),
                 ],
               ),
@@ -255,11 +262,13 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
 
   int? _selectedProductId;
   final TextEditingController _amountController = TextEditingController();
+  String _selectedIngredientUnit = "g";
   String _searchQuery = "";
 
   @override
   void initState() {
     super.initState();
+    _selectedIngredientUnit = "g";
     _nameController = TextEditingController(text: widget.recipeWithIngredients.recipe.name);
     _instructionsController =
         TextEditingController(text: widget.recipeWithIngredients.recipe.instructions);
@@ -315,12 +324,14 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
                           if (val != null) setState(() => _isPortable = val);
                         },
                 ),
-                Text(
-                  _ingredients.any((ing) => !ing.product.isPortable)
-                      ? "Is Portable (Contains non-portable ingredients)"
-                      : "Is Portable",
-                  style: TextStyle(
-                    color: _ingredients.any((ing) => !ing.product.isPortable) ? theme.disabledColor : null,
+                Expanded(
+                  child: Text(
+                    _ingredients.any((ing) => !ing.product.isPortable)
+                        ? "Is Portable (Contains non-portable ingredients)"
+                        : "Is Portable",
+                    style: TextStyle(
+                      color: _ingredients.any((ing) => !ing.product.isPortable) ? theme.disabledColor : null,
+                    ),
                   ),
                 ),
               ],
@@ -381,14 +392,30 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
               ),
             ],
             const SizedBox(height: 8),
-            Row(
+             Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _amountController,
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: const InputDecoration(labelText: "Amount (g/units)"),
+                    decoration: const InputDecoration(labelText: "Amount"),
                   ),
+                ),
+                const SizedBox(width: 8),
+                DropdownButton<String>(
+                  value: _selectedIngredientUnit,
+                  items: const [
+                    DropdownMenuItem(value: "g", child: Text("g")),
+                    DropdownMenuItem(value: "ml", child: Text("ml")),
+                    DropdownMenuItem(value: "units", child: Text("units")),
+                  ],
+                  onChanged: (val) {
+                    if (val != null) {
+                      setState(() {
+                        _selectedIngredientUnit = val;
+                      });
+                    }
+                  },
                 ),
                 const SizedBox(width: 8),
                 ElevatedButton(
@@ -404,6 +431,7 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
                               recipeId: widget.recipeWithIngredients.recipe.id,
                               productId: prod.id,
                               amount: amt,
+                              amountUnits: _selectedIngredientUnit,
                             ),
                             product: prod,
                           ),
@@ -422,7 +450,7 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
               return Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("${ing.product.name}: ${ing.ingredient.amount.toStringAsFixed(0)}g"),
+                  Text("${ing.product.name}: ${ing.ingredient.amount.toStringAsFixed(0)}${ing.ingredient.amountUnits ?? 'g'}"),
                   IconButton(
                     icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
                     onPressed: () {
@@ -449,9 +477,7 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
             final name = _nameController.text.trim();
             if (name.isNotEmpty) {
               final newRecipe = Recipe(
-                id: widget.recipeWithIngredients.recipe.id == 0
-                    ? Random().nextInt(1000000)
-                    : widget.recipeWithIngredients.recipe.id,
+                id: widget.recipeWithIngredients.recipe.id,
                 name: name,
                 instructions: _instructionsController.text.trim(),
                 isPortable: _isPortable,

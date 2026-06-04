@@ -85,6 +85,18 @@ class MealItemWithDetails {
     this.product,
     this.recipe,
   });
+
+  MealItemWithDetails copyWith({
+    MealItem? mealItem,
+    Product? product,
+    RecipeWithIngredients? recipe,
+  }) {
+    return MealItemWithDetails(
+      mealItem: mealItem ?? this.mealItem,
+      product: product ?? this.product,
+      recipe: recipe ?? this.recipe,
+    );
+  }
 }
 
 class MealWithItems {

@@ -11,6 +11,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:collection/collection.dart';
+import 'package:drift/drift.dart' show Value;
 import '../../core/db/app_database.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
@@ -55,6 +56,18 @@ class EditMealPlanNotifier extends StateNotifier<MealPlanWithMealsAndItems?> {
     if (state == null) return;
     state = MealPlanWithMealsAndItems(
       mealPlan: state!.mealPlan.copyWith(title: title, notes: notes),
+      meals: state!.meals,
+    );
+  }
+
+  void updateMealPlanMacros(double? prot, double? carbs, double? fats) {
+    if (state == null) return;
+    state = MealPlanWithMealsAndItems(
+      mealPlan: state!.mealPlan.copyWith(
+        targetProtein: Value(prot),
+        targetCarbs: Value(carbs),
+        targetFats: Value(fats),
+      ),
       meals: state!.meals,
     );
   }
@@ -261,7 +274,7 @@ void showFloatingToast(BuildContext context, String message) {
   });
 }
 
-final editMealPlanProvider = StateNotifierProvider.family<EditMealPlanNotifier, MealPlanWithMealsAndItems?, int>((ref, id) {
+final editMealPlanProvider = StateNotifierProvider.autoDispose.family<EditMealPlanNotifier, MealPlanWithMealsAndItems?, int>((ref, id) {
   return EditMealPlanNotifier(ref, id);
 });
 
@@ -322,6 +335,27 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
     final isNew = widget.mealPlanId == 0;
     if (plan == null) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
+    }
+
+    double currentProt = 0.0;
+    double currentCarb = 0.0;
+    double currentFat = 0.0;
+    for (final m in plan.meals) {
+      for (final detail in m.items) {
+        final scale = detail.macroScale;
+        if (detail.mealItem.type == MealItemType.PRODUCT && detail.product != null) {
+          currentProt += detail.product!.proteins * scale;
+          currentCarb += detail.product!.carbs * scale;
+          currentFat += detail.product!.fats * scale;
+        } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
+          for (final ing in detail.recipe!.ingredients) {
+            final ingScale = (ing.ingredient.amount / 100.0) * scale;
+            currentProt += ing.product.proteins * ingScale;
+            currentCarb += ing.product.carbs * ingScale;
+            currentFat += ing.product.fats * ingScale;
+          }
+        }
+      }
     }
 
     if (_initialPlan == null) {
@@ -422,6 +456,75 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
               ),
               maxLines: 2,
             ),
+            const SizedBox(height: 16),
+            Text(
+              "Target Macros",
+              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 8),
+            Row(
+              children: [
+                Expanded(
+                  child: TextFormField(
+                    initialValue: plan.mealPlan.targetProtein?.toStringAsFixed(0) ?? "",
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: "Protein (g)",
+                      helperText: "Sum: ${currentProt.toStringAsFixed(0)}g",
+                      border: const OutlineInputBorder(),
+                    ),
+                    onChanged: (val) {
+                      final parsed = double.tryParse(val);
+                      ref.read(editMealPlanProvider(widget.mealPlanId).notifier).updateMealPlanMacros(
+                        parsed,
+                        plan.mealPlan.targetCarbs,
+                        plan.mealPlan.targetFats,
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    initialValue: plan.mealPlan.targetCarbs?.toStringAsFixed(0) ?? "",
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: "Carbs (g)",
+                      helperText: "Sum: ${currentCarb.toStringAsFixed(0)}g",
+                      border: const OutlineInputBorder(),
+                    ),
+                    onChanged: (val) {
+                      final parsed = double.tryParse(val);
+                      ref.read(editMealPlanProvider(widget.mealPlanId).notifier).updateMealPlanMacros(
+                        plan.mealPlan.targetProtein,
+                        parsed,
+                        plan.mealPlan.targetFats,
+                      );
+                    },
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: TextFormField(
+                    initialValue: plan.mealPlan.targetFats?.toStringAsFixed(0) ?? "",
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    decoration: InputDecoration(
+                      labelText: "Fats (g)",
+                      helperText: "Sum: ${currentFat.toStringAsFixed(0)}g",
+                      border: const OutlineInputBorder(),
+                    ),
+                    onChanged: (val) {
+                      final parsed = double.tryParse(val);
+                      ref.read(editMealPlanProvider(widget.mealPlanId).notifier).updateMealPlanMacros(
+                        plan.mealPlan.targetProtein,
+                        plan.mealPlan.targetCarbs,
+                        parsed,
+                      );
+                    },
+                  ),
+                ),
+              ],
+            ),
             const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -453,10 +556,29 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
               return MealEditCard(
                 key: ValueKey(mealWithItems.meal.id),
                 mealWithItems: mealWithItems,
-                onDeleteMeal: () {
-                  ref
-                      .read(editMealPlanProvider(widget.mealPlanId).notifier)
-                      .deleteMeal(mealWithItems.meal.id);
+                onDeleteMeal: () async {
+                  final confirm = await showDialog<bool>(
+                    context: context,
+                    builder: (context) => AlertDialog(
+                      title: const Text("Delete Meal"),
+                      content: Text("Are you sure you want to delete '${mealWithItems.meal.name}'?"),
+                      actions: [
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, false),
+                          child: const Text("Cancel"),
+                        ),
+                        TextButton(
+                          onPressed: () => Navigator.pop(context, true),
+                          child: Text("Delete", style: TextStyle(color: theme.colorScheme.error)),
+                        ),
+                      ],
+                    ),
+                  );
+                  if (confirm == true) {
+                    ref
+                        .read(editMealPlanProvider(widget.mealPlanId).notifier)
+                        .deleteMeal(mealWithItems.meal.id);
+                  }
                 },
                 onAddItemClick: () {
                   showDialog(

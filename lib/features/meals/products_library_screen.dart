@@ -7,7 +7,6 @@
  * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
  */
 
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
@@ -53,10 +52,8 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
           const Product(
             id: 0,
             name: "",
-            weight: 0.0,
             defaultUnits: "g",
-            unitWeight: 0,
-            edibleQtyPerUnit: 0.0,
+            edibleQtyPerUnit: 1.0,
             proteins: 0.0,
             carbsAvailable: 0.0,
             fats: 0.0,
@@ -89,8 +86,27 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
                     onClick: () {
                       _showAddEditProduct(context, product);
                     },
-                    onDelete: () {
-                      ref.read(mealRepositoryProvider).deleteProduct(product);
+                    onDelete: () async {
+                      final confirm = await showDialog<bool>(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text("Delete Product"),
+                          content: Text("Are you sure you want to delete '${product.name}'?"),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, false),
+                              child: const Text("Cancel"),
+                            ),
+                            TextButton(
+                              onPressed: () => Navigator.pop(context, true),
+                              child: Text("Delete", style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                            ),
+                          ],
+                        ),
+                      );
+                      if (confirm == true) {
+                        ref.read(mealRepositoryProvider).deleteProduct(product);
+                      }
                     },
                   ),
                 );
@@ -207,11 +223,7 @@ class ProductCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text("Weight: ${product.weight}${product.units}"),
-                      Text(
-                        "Cost: \$${product.cost.toStringAsFixed(2)}",
-                        style: TextStyle(color: theme.colorScheme.secondary),
-                      ),
+                      Text("Default: ${product.units}"),
                     ],
                   ),
                 ],
@@ -242,48 +254,48 @@ class AddEditProductDialog extends StatefulWidget {
 
 class _AddEditProductDialogState extends State<AddEditProductDialog> {
   late TextEditingController _nameController;
-  late TextEditingController _weightController;
-  late TextEditingController _costController;
-  late TextEditingController _quantityController;
-  late TextEditingController _unitsController;
+  late String _selectedDefaultUnit;
   late TextEditingController _ediblePercentController;
-  late TextEditingController _edibleQtyController;
   late TextEditingController _proteinsController;
   late TextEditingController _carbsController;
   late TextEditingController _fatsController;
+  late TextEditingController _kcalController;
+  late TextEditingController _dietaryFiberController;
+  late TextEditingController _carbsByDifferenceController;
+  late TextEditingController _mlToGFactorController;
   late bool _isSupplement;
+  late bool _isPortable;
 
   @override
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.product.name);
-    _weightController = TextEditingController(
-        text: widget.product.weight == 0.0 ? "" : widget.product.weight.toString());
-    _costController =
-        TextEditingController(text: widget.product.cost == 0.0 ? "" : widget.product.cost.toString());
-    _quantityController = TextEditingController(
-        text: widget.product.quantity == 0 ? "" : widget.product.quantity.toString());
-    _unitsController = TextEditingController(text: widget.product.units);
-    _ediblePercentController = TextEditingController(text: widget.product.ediblePercent.toString());
-    _edibleQtyController = TextEditingController(text: widget.product.edibleQtyPerUnit.toString());
-    _proteinsController = TextEditingController(text: widget.product.proteins.toString());
-    _carbsController = TextEditingController(text: widget.product.carbs.toString());
-    _fatsController = TextEditingController(text: widget.product.fats.toString());
+    _selectedDefaultUnit = widget.product.defaultUnits ?? "g";
+    _ediblePercentController = TextEditingController(
+        text: widget.product.edibleQtyPerUnit != null ? (widget.product.edibleQtyPerUnit! * 100.0).toStringAsFixed(0) : "100");
+    _proteinsController = TextEditingController(text: widget.product.proteins == 0.0 ? "" : widget.product.proteins.toString());
+    _carbsController = TextEditingController(text: widget.product.carbsAvailable == null ? "" : widget.product.carbsAvailable.toString());
+    _fatsController = TextEditingController(text: widget.product.fats == 0.0 ? "" : widget.product.fats.toString());
+    
+    _kcalController = TextEditingController(text: widget.product.kcal?.toString() ?? "");
+    _dietaryFiberController = TextEditingController(text: widget.product.dietaryFiber?.toString() ?? "");
+    _carbsByDifferenceController = TextEditingController(text: widget.product.carbsByDifference?.toString() ?? "");
+    _mlToGFactorController = TextEditingController(text: widget.product.mlToGFactor?.toString() ?? "");
     _isSupplement = widget.product.isSupplement;
+    _isPortable = widget.product.isPortable;
   }
 
   @override
   void dispose() {
     _nameController.dispose();
-    _weightController.dispose();
-    _costController.dispose();
-    _quantityController.dispose();
-    _unitsController.dispose();
     _ediblePercentController.dispose();
-    _edibleQtyController.dispose();
     _proteinsController.dispose();
     _carbsController.dispose();
     _fatsController.dispose();
+    _kcalController.dispose();
+    _dietaryFiberController.dispose();
+    _carbsByDifferenceController.dispose();
+    _mlToGFactorController.dispose();
     super.dispose();
   }
 
@@ -291,123 +303,194 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   Widget build(BuildContext context) {
     return AlertDialog(
       title: Text(widget.product.id == 0 ? "Add Product" : "Edit Product"),
-      content: SingleChildScrollView(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _nameController,
-              decoration: const InputDecoration(labelText: "Name"),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _weightController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: "Weight"),
-                  ),
+      content: SizedBox(
+        width: 400,
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: _nameController,
+                decoration: const InputDecoration(
+                  labelText: "Name",
+                  border: OutlineInputBorder(),
                 ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _unitsController,
-                    decoration: const InputDecoration(labelText: "Units"),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _costController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: "Cost (\$)"),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _quantityController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: "Stock Qty"),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _ediblePercentController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: "Edible %"),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _edibleQtyController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: "Edible Qty"),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                "Macros per 100g",
-                style: TextStyle(fontWeight: FontWeight.bold),
               ),
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _proteinsController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: "Prot"),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: DropdownButtonFormField<String>(
+                      value: _selectedDefaultUnit,
+                      decoration: const InputDecoration(
+                        labelText: "Default Units",
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'ml', child: Text('ml')),
+                        DropdownMenuItem(value: 'g', child: Text('g')),
+                        DropdownMenuItem(value: 'unit', child: Text('unit')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() {
+                            _selectedDefaultUnit = val;
+                          });
+                        }
+                      },
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _carbsController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: "Carb"),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _mlToGFactorController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: "ml to g factor",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _fatsController,
-                    keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(labelText: "Fat"),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _ediblePercentController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: "Edible %",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
                   ),
+                  const SizedBox(width: 8),
+                  const Expanded(child: SizedBox()),
+                ],
+              ),
+              const SizedBox(height: 16),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  "Macros & Energy (per 100g)",
+                  style: TextStyle(fontWeight: FontWeight.bold),
                 ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Checkbox(
-                  value: _isSupplement,
-                  onChanged: (val) {
-                    if (val != null) {
-                      setState(() => _isSupplement = val);
-                    }
-                  },
-                ),
-                const Text("Is Supplement"),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _kcalController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: "Calories (kcal)",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _proteinsController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: "Proteins (g)",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _carbsController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: "Carbs Available (g)",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _carbsByDifferenceController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: "Carbs By Diff (g)",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _fatsController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: "Fats (g)",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _dietaryFiberController,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: "Dietary Fiber (g)",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: CheckboxListTile(
+                      title: const Text("Is Supplement", style: TextStyle(fontSize: 12)),
+                      value: _isSupplement,
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _isSupplement = val);
+                        }
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: CheckboxListTile(
+                      title: const Text("Is Portable", style: TextStyle(fontSize: 12)),
+                      value: _isPortable,
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _isPortable = val);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       actions: [
@@ -420,18 +503,21 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
           onPressed: () {
             final name = _nameController.text.trim();
             if (name.isNotEmpty) {
+              final ediblePct = double.tryParse(_ediblePercentController.text) ?? 100.0;
               final newProduct = Product(
-                id: widget.product.id == 0 ? Random().nextInt(1000000) : widget.product.id,
+                id: widget.product.id,
                 name: name,
-                weight: double.tryParse(_weightController.text) ?? 0.0,
-                defaultUnits: _unitsController.text.trim(),
-                unitWeight: int.tryParse(_quantityController.text) ?? 0,
-                edibleQtyPerUnit: double.tryParse(_edibleQtyController.text) ?? 0.0,
+                defaultUnits: _selectedDefaultUnit,
+                edibleQtyPerUnit: ediblePct / 100.0,
+                kcal: double.tryParse(_kcalController.text),
                 proteins: double.tryParse(_proteinsController.text) ?? 0.0,
-                carbsAvailable: double.tryParse(_carbsController.text) ?? 0.0,
+                carbsAvailable: double.tryParse(_carbsController.text),
+                carbsByDifference: double.tryParse(_carbsByDifferenceController.text),
+                dietaryFiber: double.tryParse(_dietaryFiberController.text),
                 fats: double.tryParse(_fatsController.text) ?? 0.0,
+                mlToGFactor: int.tryParse(_mlToGFactorController.text),
                 isSupplement: _isSupplement,
-                isPortable: true,
+                isPortable: _isPortable,
               );
               widget.onConfirm(newProduct);
             }

@@ -102,7 +102,10 @@ class _WorkoutSummaryScreenState extends State<WorkoutSummaryScreen> with Single
     buffer.writeln('Exercises:');
 
     for (final ex in widget.workoutData.exercisesWithSets) {
-      buffer.writeln('- ${ex.exerciseDC.name}:');
+      final restMin = ex.exercise.restTime ~/ 60;
+      final restSec = ex.exercise.restTime % 60;
+      final restStr = restMin > 0 ? '${restMin}m ${restSec}s' : '${restSec}s';
+      buffer.writeln('- ${ex.exerciseDC.name} (Rest: $restStr):');
       for (int i = 0; i < ex.sets.length; i++) {
         final s = ex.sets[i];
         final status = s.completed ? 'Done' : 'Incomplete';

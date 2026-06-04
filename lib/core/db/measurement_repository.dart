@@ -97,6 +97,62 @@ class MeasurementRepository {
       await db.into(db.advancedBodyMeasurements).insertOnConflictUpdate(m);
     }
   }
+
+  Stream<List<AdvancedBodyMeasurement>> getAllAdvancedBodyMeasurements() {
+    return (db.select(db.advancedBodyMeasurements)
+          ..orderBy([(m) => OrderingTerm(expression: m.date, mode: OrderingMode.desc)]))
+        .watch();
+  }
+
+  Future<void> upsertAdvancedBodyMeasurement(AdvancedBodyMeasurement measurement) {
+    return db.into(db.advancedBodyMeasurements).insertOnConflictUpdate(measurement);
+  }
+
+  Future<void> deleteAdvancedBodyMeasurement(AdvancedBodyMeasurement measurement) {
+    return db.delete(db.advancedBodyMeasurements).delete(measurement);
+  }
+
+  Stream<List<SleepMeasurement>> getAllSleepMeasurements() {
+    return (db.select(db.sleepMeasurements)
+          ..orderBy([(m) => OrderingTerm(expression: m.date, mode: OrderingMode.desc)]))
+        .watch();
+  }
+
+  Future<void> upsertSleepMeasurement(SleepMeasurement measurement) {
+    return db.into(db.sleepMeasurements).insertOnConflictUpdate(measurement);
+  }
+
+  Future<void> deleteSleepMeasurement(SleepMeasurement measurement) {
+    return db.delete(db.sleepMeasurements).delete(measurement);
+  }
+
+  Stream<List<AdvancedSleepMeasurement>> getAllAdvancedSleepMeasurements() {
+    return (db.select(db.advancedSleepMeasurements)
+          ..orderBy([(m) => OrderingTerm(expression: m.date, mode: OrderingMode.desc)]))
+        .watch();
+  }
+
+  Future<void> upsertAdvancedSleepMeasurement(AdvancedSleepMeasurement measurement) {
+    return db.into(db.advancedSleepMeasurements).insertOnConflictUpdate(measurement);
+  }
+
+  Future<void> deleteAdvancedSleepMeasurement(AdvancedSleepMeasurement measurement) {
+    return db.delete(db.advancedSleepMeasurements).delete(measurement);
+  }
+
+  Stream<List<ActivityMeasurement>> getAllActivityMeasurements() {
+    return (db.select(db.activityMeasurements)
+          ..orderBy([(m) => OrderingTerm(expression: m.date, mode: OrderingMode.desc)]))
+        .watch();
+  }
+
+  Future<void> upsertActivityMeasurement(ActivityMeasurement measurement) {
+    return db.into(db.activityMeasurements).insertOnConflictUpdate(measurement);
+  }
+
+  Future<void> deleteActivityMeasurement(ActivityMeasurement measurement) {
+    return db.delete(db.activityMeasurements).delete(measurement);
+  }
 }
 
 final measurementRepositoryProvider = Provider<MeasurementRepository>((ref) {

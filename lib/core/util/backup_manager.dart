@@ -24,6 +24,14 @@ import '../db/meal_repository.dart';
 import '../db/dataset_repository.dart';
 import '../providers/db_provider.dart';
 
+class ImportResult {
+  final bool success;
+  final String? error;
+  const ImportResult({required this.success, this.error});
+  const ImportResult.ok() : success = true, error = null;
+  ImportResult.fail(String msg) : success = false, error = msg;
+}
+
 class BackupManager {
   final AppDatabase db;
   final WorkoutRepository workoutRepo;
@@ -97,7 +105,7 @@ class BackupManager {
               'reps': s.reps,
               'elapsedTime': s.elapsedTime,
               'rpe': s.rpe?.toString() ?? '',
-              'intensityScale1': s.intensityScale1 ?? 0,
+              'rir': s.rir,
               'completed': s.completed,
             }).toList(),
           }).toList(),
@@ -112,16 +120,17 @@ class BackupManager {
     await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Workout Plans');
   }
 
-  Future<bool> importWorkoutPlans() async {
+  Future<ImportResult> importWorkoutPlans() async {
     try {
       final result = await FilePicker.platform.pickFiles();
-      if (result == null || result.files.single.path == null) return false;
+      if (result == null || result.files.single.path == null) return const ImportResult(success: false, error: 'No file selected');
 
       final file = File(result.files.single.path!);
       final content = await file.readAsString();
       final List<dynamic> data = jsonDecode(content);
 
-      for (final item in data) {
+      for (int i = 0; i < data.length; i++) {
+        final item = data[i];
         final workout = Workout(
           id: 0,
           routineId: 0,
@@ -131,6 +140,7 @@ class BackupManager {
           timeElapsed: item['timeElapsed'] ?? 0,
           created: DateTime.tryParse(item['created'] ?? '') ?? DateTime.now(),
           completed: DateTime.tryParse(item['completed'] ?? '') ?? DateTime.now(),
+          isTemporal: item['isTemporal'] ?? false,
         );
 
         final List<dynamic> exercisesJson = item['exercises'] ?? [];
@@ -138,22 +148,19 @@ class BackupManager {
 
         final supersetMapping = <String, int>{};
 
-        for (final exJson in exercisesJson) {
+        for (int j = 0; j < exercisesJson.length; j++) {
+          final exJson = exercisesJson[j];
           final exerciseId = exJson['exerciseId'] ?? '';
-          var exerciseDC = await datasetRepo.getExerciseFromId(exerciseId);
+          if (exerciseId.toString().isEmpty) {
+            return ImportResult.fail('Workout #${i + 1} exercise #${j + 1}: missing exerciseId');
+          }
+          final exerciseDC = await datasetRepo.getExerciseFromId(exerciseId);
           if (exerciseDC == null) {
-            exerciseDC = ExerciseDataDC(
-              id: exerciseId,
-              name: exJson['name'] ?? '',
-              level: Level.BEGINNER,
-              primaryMuscles: [],
-              secondaryMuscles: [],
-              instructions: [],
-              category: Category.STRENGTH,
-              images: [],
-              isCustomExercise: true,
+            final exName = exJson['name'] ?? exerciseId;
+            return ImportResult.fail(
+              'Workout "${workout.title}", exercise #${j + 1}: '
+              'exercise "$exName" ($exerciseId) not found in database. Import exercises first.',
             );
-            await datasetRepo.upsertExercise(exerciseDC);
           }
 
           int? supersetId;
@@ -166,14 +173,14 @@ class BackupManager {
           }
 
           final List<dynamic> setsJson = exJson['sets'] ?? [];
-          final sets = setsJson.map((s) => WorkoutSet(
+          final List<WorkoutSet> sets = setsJson.map((s) => WorkoutSet(
             id: 0,
             load: (s['load'] as num?)?.toDouble() ?? 0.0,
             reps: s['reps'] ?? 0,
             elapsedTime: s['elapsedTime'] ?? 0,
             completed: s['completed'] ?? true,
             rpe: double.tryParse(s['rpe']?.toString() ?? ''),
-            intensityScale1: s['intensityScale1'] ?? s['intensityScale'],
+            rir: s['rir'] as int?,
             exerciseId: 0,
           )).toList();
 
@@ -203,9 +210,9 @@ class BackupManager {
           ),
         );
       }
-      return true;
-    } catch (_) {
-      return false;
+      return const ImportResult.ok();
+    } catch (e) {
+      return ImportResult.fail(e.toString());
     }
   }
 
@@ -233,18 +240,23 @@ class BackupManager {
     await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Custom Exercises');
   }
 
-  Future<bool> importExercises() async {
+  Future<ImportResult> importExercises() async {
     try {
       final result = await FilePicker.platform.pickFiles();
-      if (result == null || result.files.single.path == null) return false;
+      if (result == null || result.files.single.path == null) return const ImportResult(success: false, error: 'No file selected');
 
       final file = File(result.files.single.path!);
       final content = await file.readAsString();
       final List<dynamic> data = jsonDecode(content);
 
-      for (final item in data) {
+      for (int i = 0; i < data.length; i++) {
+        final item = data[i];
+        final id = item['id'];
+        if (id == null || id.toString().isEmpty) {
+          return ImportResult.fail('Exercise #${i + 1}: missing id field');
+        }
         final exercise = ExerciseDataDC(
-          id: item['id'] ?? '',
+          id: id,
           name: item['name'] ?? '',
           force: Force.values.firstWhereOrNull((f) => f.name == item['force']),
           level: Level.values.firstWhere((l) => l.name == item['level'], orElse: () => Level.BEGINNER),
@@ -263,9 +275,9 @@ class BackupManager {
         );
         await datasetRepo.upsertExercise(exercise);
       }
-      return true;
-    } catch (_) {
-      return false;
+      return const ImportResult.ok();
+    } catch (e) {
+      return ImportResult.fail(e.toString());
     }
   }
 
@@ -332,10 +344,10 @@ class BackupManager {
     await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Meal Plans');
   }
 
-  Future<bool> importMealPlans() async {
+  Future<ImportResult> importMealPlans() async {
     try {
       final result = await FilePicker.platform.pickFiles();
-      if (result == null || result.files.single.path == null) return false;
+      if (result == null || result.files.single.path == null) return const ImportResult(success: false, error: 'No file selected');
 
       final file = File(result.files.single.path!);
       final content = await file.readAsString();
@@ -347,11 +359,13 @@ class BackupManager {
       final recipesList = await mealRepo.getAllRecipes().first;
       final mutableRecipeCache = recipesList.toList();
 
-      for (final item in data) {
+      for (int pi = 0; pi < data.length; pi++) {
+        final item = data[pi];
+        final planTitle = item['title'] ?? 'Plan #${pi + 1}';
         final mealPlan = MealPlan(
           id: 0,
           parentPlanId: 0,
-          title: item['title'] ?? '',
+          title: planTitle,
           notes: item['notes'] ?? '',
           state: MealPlanState.TEMPLATE,
           created: DateTime.tryParse(item['created'] ?? '') ?? DateTime.now(),
@@ -362,7 +376,8 @@ class BackupManager {
         final List<dynamic> mealsJson = item['meals'] ?? [];
         final List<MealWithItems> mealsWithItems = [];
 
-        for (final mJson in mealsJson) {
+        for (int mi = 0; mi < mealsJson.length; mi++) {
+          final mJson = mealsJson[mi];
           final meal = Meal(
             id: 0,
             mealPlanId: 0,
@@ -375,7 +390,8 @@ class BackupManager {
           final List<dynamic> itemsJson = mJson['items'] ?? [];
           final List<MealItemWithDetails> items = [];
 
-          for (final itJson in itemsJson) {
+          for (int ii = 0; ii < itemsJson.length; ii++) {
+            final itJson = itemsJson[ii];
             final type = MealItemType.values.firstWhere(
               (t) => t.name == itJson['type'],
               orElse: () => MealItemType.PRODUCT,
@@ -385,87 +401,53 @@ class BackupManager {
             Product? itemProduct;
             RecipeWithIngredients? itemRecipe;
 
-            if (type == MealItemType.PRODUCT && itJson['product'] != null) {
-              final pJson = itJson['product'];
-              final pName = pJson['name'] ?? '';
-              var matched = mutableProductCache.firstWhereOrNull((p) => p.name.toLowerCase() == pName.toString().toLowerCase());
+            if (type == MealItemType.PRODUCT) {
+              String? pName;
+              int? pId;
+              if (itJson['product'] != null) {
+                pName = itJson['product']['name'];
+              } else if (itJson['targetId'] != null) {
+                pId = itJson['targetId'] as int;
+              }
+
+              Product? matched;
+              if (pName != null && pName.isNotEmpty) {
+                matched = mutableProductCache.firstWhereOrNull((p) => p.name.toLowerCase() == pName?.toLowerCase());
+              } else if (pId != null) {
+                matched = mutableProductCache.firstWhereOrNull((p) => p.id == pId);
+              }
+
               if (matched == null) {
-                final newProduct = Product(
-                  id: 0,
-                  name: pName,
-                  weight: (pJson['weight'] as num?)?.toDouble() ?? 0.0,
-                  defaultUnits: pJson['defaultUnits'] ?? pJson['units'] ?? 'g',
-                  edibleQtyPerUnit: (pJson['edibleQtyPerUnit'] as num?)?.toDouble() ?? 0.0,
-                  proteins: (pJson['proteins'] as num?)?.toDouble() ?? 0.0,
-                  carbsAvailable: (pJson['carbsAvailable'] as num?)?.toDouble() ?? (pJson['carbs'] as num?)?.toDouble() ?? 0.0,
-                  fats: (pJson['fats'] as num?)?.toDouble() ?? 0.0,
-                  isSupplement: pJson['isSupplement'] ?? false,
-                  isPortable: pJson['isPortable'] ?? true,
+                final display = pName ?? 'ID $pId';
+                return ImportResult.fail(
+                  'Plan "$planTitle", meal #${mi + 1}, item #${ii + 1}: '
+                  'product "$display" not found in database. Please import products first.',
                 );
-                final id = await mealRepo.saveProduct(newProduct);
-                matched = newProduct.copyWith(id: id);
-                mutableProductCache.add(matched);
               }
               targetId = matched.id;
               itemProduct = matched;
-            } else if (type == MealItemType.RECIPE && itJson['recipe'] != null) {
-              final rJson = itJson['recipe'];
-              final rName = rJson['name'] ?? '';
-              var matched = mutableRecipeCache.firstWhereOrNull((r) => r.recipe.name.toLowerCase() == rName.toString().toLowerCase());
+            } else if (type == MealItemType.RECIPE) {
+              String? rName;
+              int? rId;
+              if (itJson['recipe'] != null) {
+                rName = itJson['recipe']['name'];
+              } else if (itJson['targetId'] != null) {
+                rId = itJson['targetId'] as int;
+              }
+
+              RecipeWithIngredients? matched;
+              if (rName != null && rName.isNotEmpty) {
+                matched = mutableRecipeCache.firstWhereOrNull((r) => r.recipe.name.toLowerCase() == rName?.toLowerCase());
+              } else if (rId != null) {
+                matched = mutableRecipeCache.firstWhereOrNull((r) => r.recipe.id == rId);
+              }
+
               if (matched == null) {
-                final List<dynamic> ingsJson = rJson['ingredients'] ?? [];
-                final List<RecipeIngredientWithProduct> ingredientRelations = [];
-
-                for (final ingJson in ingsJson) {
-                  final ingProdJson = ingJson['product'];
-                  final ingProdName = ingProdJson['name'] ?? '';
-                  var ingProduct = mutableProductCache.firstWhereOrNull((p) => p.name.toLowerCase() == ingProdName.toString().toLowerCase());
-                  if (ingProduct == null) {
-                    final newProduct = Product(
-                      id: 0,
-                      name: ingProdName,
-                      weight: (ingProdJson['weight'] as num?)?.toDouble() ?? 0.0,
-                      defaultUnits: ingProdJson['defaultUnits'] ?? ingProdJson['units'] ?? 'g',
-                      edibleQtyPerUnit: (ingProdJson['edibleQtyPerUnit'] as num?)?.toDouble() ?? 0.0,
-                      proteins: (ingProdJson['proteins'] as num?)?.toDouble() ?? 0.0,
-                      carbsAvailable: (ingProdJson['carbsAvailable'] as num?)?.toDouble() ?? (ingProdJson['carbs'] as num?)?.toDouble() ?? 0.0,
-                      fats: (ingProdJson['fats'] as num?)?.toDouble() ?? 0.0,
-                      isSupplement: ingProdJson['isSupplement'] ?? false,
-                      isPortable: ingProdJson['isPortable'] ?? true,
-                    );
-                    final id = await mealRepo.saveProduct(newProduct);
-                    ingProduct = newProduct.copyWith(id: id);
-                    mutableProductCache.add(ingProduct);
-                  }
-                  ingredientRelations.add(RecipeIngredientWithProduct(
-                    ingredient: RecipeIngredient(
-                      id: 0,
-                      recipeId: 0,
-                      productId: ingProduct.id,
-                      amount: (ingJson['amount'] as num?)?.toDouble() ?? 0.0,
-                    ),
-                    product: ingProduct,
-                  ));
-                }
-
-                final newRecipe = Recipe(
-                  id: 0,
-                  name: rName,
-                  instructions: rJson['instructions'] ?? '',
-                  isPortable: rJson['isPortable'] ?? true,
+                final display = rName ?? 'ID $rId';
+                return ImportResult.fail(
+                  'Plan "$planTitle", meal #${mi + 1}, item #${ii + 1}: '
+                  'recipe "$display" not found in database. Please import recipes first.',
                 );
-
-                final recipeData = RecipeWithIngredients(
-                  recipe: newRecipe,
-                  ingredients: ingredientRelations,
-                );
-
-                final id = await mealRepo.saveRecipeWithIngredients(recipeData);
-                matched = RecipeWithIngredients(
-                  recipe: newRecipe.copyWith(id: id),
-                  ingredients: ingredientRelations,
-                );
-                mutableRecipeCache.add(matched);
               }
               targetId = matched.recipe.id;
               itemRecipe = matched;
@@ -503,9 +485,187 @@ class BackupManager {
           ),
         );
       }
-      return true;
-    } catch (_) {
-      return false;
+      return const ImportResult.ok();
+    } catch (e) {
+      return ImportResult.fail(e.toString());
+    }
+  }
+
+  Future<void> exportAvailableExercisesDocumentation() async {
+    final list = await db.select(db.exerciseData).get();
+    final buffer = StringBuffer();
+    buffer.writeln('# Nexc Available Exercises');
+    buffer.writeln('\nUse these exact IDs (`exerciseId` field) when importing workout plans/routines.\n');
+    buffer.writeln('| ID | Name | Category | Primary Muscles |');
+    buffer.writeln('| :--- | :--- | :--- | :--- |');
+    for (final ex in list) {
+      final muscles = ex.primaryMuscles.map((m) => m.name).join(', ');
+      buffer.writeln('| `${ex.id}` | ${ex.name} | ${ex.category.name} | $muscles |');
+    }
+    
+    final tempDir = await getTemporaryDirectory();
+    final file = File(p.join(tempDir.path, 'nexc_available_exercises.md'));
+    await file.writeAsString(buffer.toString());
+    await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Available Exercises List');
+  }
+
+  Future<void> exportProducts() async {
+    final list = await db.select(db.products).get();
+    final exportList = list.map((p) => <String, dynamic>{
+      'name': p.name,
+      'mlToGFactor': p.mlToGFactor,
+      'defaultUnits': p.defaultUnits,
+      'ediblePercent': p.ediblePercent,
+      'kcal': p.kcal,
+      'proteins': p.proteins,
+      'carbsAvailable': p.carbsAvailable,
+      'carbsByDifference': p.carbsByDifference,
+      'dietaryFiber': p.dietaryFiber,
+      'fats': p.fats,
+      'isSupplement': p.isSupplement,
+      'isPortable': p.isPortable,
+    }).toList();
+    
+    final jsonString = jsonEncode(exportList);
+    final tempDir = await getTemporaryDirectory();
+    final file = File(p.join(tempDir.path, 'nexc_products.json'));
+    await file.writeAsString(jsonString);
+    await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Products Backup');
+  }
+
+  Future<ImportResult> importProducts() async {
+    try {
+      final result = await FilePicker.platform.pickFiles();
+      if (result == null || result.files.single.path == null) return const ImportResult(success: false, error: 'No file selected');
+      final file = File(result.files.single.path!);
+      final content = await file.readAsString();
+      final List<dynamic> data = jsonDecode(content);
+      for (int i = 0; i < data.length; i++) {
+        final item = data[i];
+        final name = item['name'];
+        if (name == null || name.toString().isEmpty) {
+          return ImportResult.fail('Product #${i + 1}: missing name field');
+        }
+
+        final ediblePct = (item['ediblePercent'] as num?)?.toDouble() ?? 
+                         ((item['edibleQtyPerUnit'] as num?)?.toDouble() != null ? (item['edibleQtyPerUnit'] * 100.0) : 100.0);
+
+        final product = Product(
+          id: 0,
+          name: name,
+          mlToGFactor: item['mlToGFactor'] as int?,
+          defaultUnits: item['defaultUnits'] ?? item['units'],
+          edibleQtyPerUnit: ediblePct / 100.0,
+          kcal: (item['kcal'] as num?)?.toDouble(),
+          proteins: (item['proteins'] as num?)?.toDouble() ?? 0.0,
+          carbsAvailable: (item['carbsAvailable'] as num?)?.toDouble(),
+          carbsByDifference: (item['carbsByDifference'] as num?)?.toDouble(),
+          dietaryFiber: (item['dietaryFiber'] as num?)?.toDouble(),
+          fats: (item['fats'] as num?)?.toDouble() ?? 0.0,
+          isSupplement: item['isSupplement'] ?? false,
+          isPortable: item['isPortable'] ?? true,
+        );
+        await mealRepo.saveProduct(product);
+      }
+      return const ImportResult.ok();
+    } catch (e) {
+      return ImportResult.fail(e.toString());
+    }
+  }
+
+  Future<void> exportRecipes() async {
+    final list = await db.select(db.recipes).get();
+    final exportList = <Map<String, dynamic>>[];
+    for (final recipe in list) {
+      final ingredients = await (db.select(db.recipeIngredients)
+            ..where((i) => i.recipeId.equals(recipe.id)))
+          .get();
+      
+      final ingredientsExport = <Map<String, dynamic>>[];
+      for (final ing in ingredients) {
+        final product = await (db.select(db.products)
+              ..where((p) => p.id.equals(ing.productId)))
+            .getSingleOrNull();
+        if (product != null) {
+          ingredientsExport.add({
+            'amount': ing.amount,
+            'amountUnits': ing.amountUnits,
+            'productName': product.name,
+          });
+        }
+      }
+      exportList.add({
+        'name': recipe.name,
+        'instructions': recipe.instructions,
+        'isPortable': recipe.isPortable,
+        'ingredients': ingredientsExport,
+      });
+    }
+    
+    final jsonString = jsonEncode(exportList);
+    final tempDir = await getTemporaryDirectory();
+    final file = File(p.join(tempDir.path, 'nexc_recipes.json'));
+    await file.writeAsString(jsonString);
+    await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Recipes Backup');
+  }
+
+  Future<ImportResult> importRecipes() async {
+    try {
+      final result = await FilePicker.platform.pickFiles();
+      if (result == null || result.files.single.path == null) return const ImportResult(success: false, error: 'No file selected');
+      final file = File(result.files.single.path!);
+      final content = await file.readAsString();
+      final List<dynamic> data = jsonDecode(content);
+      
+      final productCache = await db.select(db.products).get();
+      final mutableProductCache = productCache.toList();
+
+      for (int i = 0; i < data.length; i++) {
+        final item = data[i];
+        final name = item['name'] ?? '';
+        if (name.isEmpty) {
+          return ImportResult.fail('Recipe #${i + 1}: missing name field');
+        }
+        final instructions = item['instructions'] ?? '';
+        final isPortable = item['isPortable'] ?? true;
+        
+        final List<dynamic> ingsJson = item['ingredients'] ?? [];
+        final List<RecipeIngredientWithProduct> ingredientRelations = [];
+        
+        for (int j = 0; j < ingsJson.length; j++) {
+          final ingJson = ingsJson[j];
+          final productName = ingJson['productName'] ?? '';
+          if (productName.isEmpty) {
+            return ImportResult.fail('Recipe "$name", ingredient #${j + 1}: missing productName');
+          }
+          var product = mutableProductCache.firstWhereOrNull((p) => p.name.toLowerCase() == productName.toString().toLowerCase());
+          if (product == null) {
+            return ImportResult.fail(
+              'Recipe "$name", ingredient #${j + 1}: '
+              'product "$productName" not found in database. Import products first.',
+            );
+          }
+          ingredientRelations.add(RecipeIngredientWithProduct(
+            ingredient: RecipeIngredient(
+              id: 0,
+              recipeId: 0,
+              productId: product.id,
+              amount: (ingJson['amount'] as num?)?.toDouble() ?? 0.0,
+              amountUnits: ingJson['amountUnits'],
+            ),
+            product: product,
+          ));
+        }
+
+        final recipeData = RecipeWithIngredients(
+          recipe: Recipe(id: 0, name: name, instructions: instructions, isPortable: isPortable),
+          ingredients: ingredientRelations,
+        );
+        await mealRepo.saveRecipeWithIngredients(recipeData);
+      }
+      return const ImportResult.ok();
+    } catch (e) {
+      return ImportResult.fail(e.toString());
     }
   }
 }

@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/logo.svg" alt="Nexc Logo" style="width: 200px">
+<img src="assets/images/logo.png" alt="Nexc Logo" style="width: 200px">
 
 # Nexc
 
@@ -20,15 +20,17 @@
 
 ---
 
-## What's different from LibreFit
+## Features
 
-Nexc diverges from LibreFit in the following ways:
+- **Workout Tracking**: Log routines, supersets, exercises, customizable set types (warmup, working, drop set, failure), RPE/RIR values, reorder routines, and custom sorting.
+- **Rest Timer with Live Notifications**: Pentagonal timer, lock screen, dynamic floating notifications with real-time remaining progress bars.
+- **Sleep & Health Tracking**: Advanced sleep log (longest awake time, duration input in hours/minutes, sleep phases) and body measurements (weight, body fat %, muscle mass %, height).
+- **Meal Logs & Macro Goals**: Add products, log meals, track macros (calories, proteins, carbs, fats), import/export meal plans with strict data validation, and override macros dynamically.
+- **Clean Modern Interface**: Material 3 styling, theme-aware layouts, sticky workout status bars, interactive widgets.
+- **Backup & Restore**: Easily export and import database or individual routines, recipes, and plans.
+- **Offline & Private**: 100% offline, local database, no tracking, complete privacy.
 
-- **Rewritten in Flutter** — the Android (Kotlin/Jetpack Compose) codebase is preserved in `legacy/nexc_android/` for reference. The active app is now a Flutter project targeting Android and iOS from a single codebase.
-- **Extended UI** — wavy circular progress indicators, rotating pentagon rest timer, meal plan tracking, and other UI experiments not present in upstream.
-- **No upstream sync** — this is a personal fork; it does not aim to merge changes back to LibreFit. Feature parity is not a goal.
-
-The original Android codebase lives in [`legacy/nexc_android/`](legacy/nexc_android/) and is kept intact as a historical reference and tribute to LibreFit's architecture.
+The active app is now a Flutter project targeting Android and iOS from a single codebase. The original Android codebase lives in [`legacy/nexc_android/`](legacy/nexc_android/) and is kept intact as a historical reference and tribute to LibreFit's architecture.
 
 ---
 

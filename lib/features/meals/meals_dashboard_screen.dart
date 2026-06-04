@@ -16,6 +16,7 @@ import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/providers/meals_providers.dart';
+import '../../core/providers/settings_provider.dart';
 
 String formatDouble(double val) {
   if (val == val.toInt().toDouble()) {
@@ -27,6 +28,9 @@ String formatDouble(double val) {
 String getUnitLabel(MealItem item, Product? product) {
   if (item.amountUnit == AmountUnit.UNITS) {
     return "units";
+  }
+  if (item.amountUnit == AmountUnit.ML) {
+    return "ml";
   }
   if (product != null && product.units.isNotEmpty) {
     return product.units;
@@ -187,11 +191,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
     );
   }
 
-  void _showEditGoalsDialog(BuildContext context, MealPlanWithMealsAndItems plan, double defProt, double defCarb, double defFat) {
-    final currentProt = plan.mealPlan.targetProtein ?? defProt;
-    final currentCarb = plan.mealPlan.targetCarbs ?? defCarb;
-    final currentFat = plan.mealPlan.targetFats ?? defFat;
-
+  void _showEditGoalsDialog(BuildContext context, double currentProt, double currentCarb, double currentFat) {
     showDialog(
       context: context,
       builder: (context) => EditTodayGoalsDialog(
@@ -199,20 +199,51 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
         currentCarb: currentCarb,
         currentFat: currentFat,
         onConfirm: (newProt, newCarb, newFat) async {
-          final repo = ref.read(mealRepositoryProvider);
-          await repo.saveMealPlanWithMealsAndItems(
-            MealPlanWithMealsAndItems(
-              mealPlan: plan.mealPlan.copyWith(
-                targetProtein: Value(newProt),
-                targetCarbs: Value(newCarb),
-                targetFats: Value(newFat),
-              ),
-              meals: plan.meals,
-            ),
-          );
+          await ref.read(settingsProvider.notifier).setTargetMacros(newProt, newCarb, newFat);
         },
       ),
     );
+  }
+
+  void _handleAddSnack(BuildContext context, MealPlanWithMealsAndItems plan, List<Product> products, List<RecipeWithIngredients> recipes) async {
+    final now = DateTime.now();
+    final repo = ref.read(mealRepositoryProvider);
+
+    // Find existing meal named exactly "Snack" in the plan
+    final snackMeals = plan.meals.where((m) => m.meal.name == "Snack").toList();
+    Meal? targetSnackMeal;
+
+    if (snackMeals.isNotEmpty) {
+      // Sort to get the latest by time or position
+      snackMeals.sort((a, b) => a.meal.position.compareTo(b.meal.position));
+      final latestSnack = snackMeals.last.meal;
+      
+      // Compare times
+      final snackTime = latestSnack.time;
+      
+      // Calculate minutes difference
+      final diffMinutes = (now.hour * 60 + now.minute) - (snackTime.hour * 60 + snackTime.minute);
+      if (diffMinutes.abs() <= 30) {
+        targetSnackMeal = latestSnack;
+      }
+    }
+
+    int mealId;
+    if (targetSnackMeal != null) {
+      mealId = targetSnackMeal.id;
+    } else {
+      // Create new Snack meal
+      final nowLocal = LocalTime(now.hour, now.minute);
+      mealId = await repo.addMealToPlan(
+        mealPlanId: plan.mealPlan.id,
+        name: "Snack",
+        time: nowLocal,
+      );
+    }
+
+    if (mounted) {
+      _showAddMealItemDialog(context, mealId, products, recipes);
+    }
   }
 
   @override
@@ -222,29 +253,65 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
     final todayPlanAsync = ref.watch(todayMealPlanProvider);
     final productsAsync = ref.watch(allProductsProvider);
     final recipesAsync = ref.watch(allRecipesProvider);
+    final settings = ref.watch(settingsProvider);
 
     final todayPlan = todayPlanAsync.value;
+    if (todayPlanAsync.hasValue && todayPlan == null) {
+      Future.microtask(() {
+        ref.read(mealRepositoryProvider).startEmptyTracking();
+      });
+    }
     final products = productsAsync.value ?? [];
     final recipes = recipesAsync.value ?? [];
 
     final selectedTab = _tabController.index;
 
     return Scaffold(
-      floatingActionButton: selectedTab == 0
-          ? (todayPlan != null
-              ? FloatingActionButton.extended(
-                  onPressed: () => _showAddMealDialog(context, todayPlan.mealPlan.id),
-                  icon: const Icon(Icons.add),
-                  label: const Text("Add Meal"),
-                )
-              : null)
-          : FloatingActionButton.extended(
+      floatingActionButton: selectedTab == 1
+          ? FloatingActionButton.extended(
+              heroTag: 'create_meal_plan_fab',
               onPressed: () {
                 Navigator.pushNamed(context, '/meals/edit-plan', arguments: 0);
               },
               icon: const Icon(Icons.add),
               label: const Text("Create Meal Plan"),
-            ),
+            )
+          : (selectedTab == 0 && todayPlan != null)
+              ? Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    FloatingActionButton.extended(
+                      heroTag: 'add_meal_fab',
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      foregroundColor: theme.colorScheme.onPrimaryContainer,
+                      onPressed: () async {
+                        final now = DateTime.now();
+                        final repo = ref.read(mealRepositoryProvider);
+                        final meals = todayPlan.meals;
+                        await repo.addMealToPlan(
+                          mealPlanId: todayPlan.mealPlan.id,
+                          name: "Meal ${meals.length + 1}",
+                          time: LocalTime(now.hour, now.minute),
+                        );
+                      },
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text("Add Meal", style: TextStyle(fontSize: 13)),
+                      extendedPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                    ),
+                    const SizedBox(height: 12),
+                    FloatingActionButton.extended(
+                      heroTag: 'add_snack_fab',
+                      backgroundColor: theme.colorScheme.primaryContainer,
+                      foregroundColor: theme.colorScheme.onPrimaryContainer,
+                      onPressed: () => _handleAddSnack(context, todayPlan, products, recipes),
+                      icon: const Icon(Icons.apple, size: 28),
+                      label: const Text("Add Snack", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      extendedPadding: const EdgeInsets.symmetric(horizontal: 28, vertical: 20),
+                    ),
+                  ],
+                )
+              : null,
       body: Column(
         children: [
           TabBar(
@@ -282,6 +349,14 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                               icon: const Icon(Icons.arrow_forward),
                               label: const Text("Go to Meal Plans"),
                             ),
+                            const SizedBox(height: 12),
+                            OutlinedButton.icon(
+                              onPressed: () async {
+                                await ref.read(mealRepositoryProvider).startEmptyTracking();
+                              },
+                              icon: const Icon(Icons.edit_note),
+                              label: const Text("Start Logging"),
+                            ),
                           ],
                         ),
                       );
@@ -290,10 +365,6 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                     final meals = plan.meals;
 
                     // Totals calculations
-                    double totalProtTarget = 0.0;
-                    double totalCarbTarget = 0.0;
-                    double totalFatTarget = 0.0;
-
                     double totalProtConsumed = 0.0;
                     double totalCarbConsumed = 0.0;
                     double totalFatConsumed = 0.0;
@@ -318,10 +389,6 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                           }
                         }
 
-                        totalProtTarget += itemProt;
-                        totalCarbTarget += itemCarb;
-                        totalFatTarget += itemFat;
-
                         if (detail.mealItem.consumed) {
                           totalProtConsumed += itemProt;
                           totalCarbConsumed += itemCarb;
@@ -330,15 +397,9 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                       }
                     }
 
-                    final targetProt = plan.mealPlan.targetProtein != null && plan.mealPlan.targetProtein! > 0
-                        ? plan.mealPlan.targetProtein!
-                        : totalProtTarget;
-                    final targetCarb = plan.mealPlan.targetCarbs != null && plan.mealPlan.targetCarbs! > 0
-                        ? plan.mealPlan.targetCarbs!
-                        : totalCarbTarget;
-                    final targetFat = plan.mealPlan.targetFats != null && plan.mealPlan.targetFats! > 0
-                        ? plan.mealPlan.targetFats!
-                        : totalFatTarget;
+                    final targetProt = settings.targetProtein;
+                    final targetCarb = settings.targetCarbs;
+                    final targetFat = settings.targetFats;
 
                     return ListView(
                       padding: const EdgeInsets.all(16.0),
@@ -350,7 +411,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                           carbTarget: targetCarb,
                           fatConsumed: totalFatConsumed,
                           fatTarget: targetFat,
-                          onEditGoals: () => _showEditGoalsDialog(context, plan, totalProtTarget, totalCarbTarget, totalFatTarget),
+                          onEditGoals: () => _showEditGoalsDialog(context, targetProt, targetCarb, targetFat),
                         ),
                         const SizedBox(height: 12),
                         ...meals.map((mealWithItems) {
@@ -383,6 +444,79 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                             },
                           );
                         }),
+                        const SizedBox(height: 16),
+                        Center(
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.start,
+                            children: [
+                              IconButton.outlined(
+                                style: IconButton.styleFrom(
+                                  foregroundColor: theme.colorScheme.error,
+                                  side: BorderSide(color: theme.colorScheme.error),
+                                  padding: const EdgeInsets.all(12),
+                                ),
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text("Discard Today's Meals"),
+                                      content: const Text("Are you sure you want to discard today's meals log? This cannot be undone."),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, false),
+                                          child: const Text("Cancel"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, true),
+                                          child: Text("Discard", style: TextStyle(color: theme.colorScheme.error)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
+                                    await ref.read(mealRepositoryProvider).deleteMealPlan(plan.mealPlan);
+                                    await ref.read(settingsProvider.notifier).restorePrePlanTargetMacros();
+                                  }
+                                },
+                                icon: const Icon(Icons.delete_outline),
+                              ),
+                              const SizedBox(width: 16),
+                              IconButton.filled(
+                                style: IconButton.styleFrom(
+                                  padding: const EdgeInsets.all(12),
+                                ),
+                                onPressed: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text("Save Today's Meals"),
+                                      content: const Text("This will save all items marked as eaten to your logs and remove any uneaten items. Proceed?"),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, false),
+                                          child: const Text("Cancel"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, true),
+                                          child: const Text("Save"),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
+                                    await ref.read(mealRepositoryProvider).saveTodayMeals(plan);
+                                    if (context.mounted) {
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(content: Text("Today's meals logged successfully!")),
+                                      );
+                                    }
+                                  }
+                                },
+                                icon: const Icon(Icons.check),
+                              ),
+                            ],
+                          ),
+                        ),
                         const SizedBox(height: 40),
                       ],
                     );
@@ -406,7 +540,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                     }
 
                     return ListView.builder(
-                      padding: const EdgeInsets.all(16.0),
+                      padding: const EdgeInsets.only(left: 16.0, right: 16.0, top: 16.0, bottom: 80.0),
                       itemCount: planList.length,
                       itemBuilder: (context, index) {
                         final plan = planList[index];
@@ -447,8 +581,40 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                                  ref.read(mealRepositoryProvider).deleteMealPlan(plan.mealPlan);
                                }
                              },
-                            onSelect: () {
-                              ref.read(mealRepositoryProvider).selectMealPlanForToday(plan);
+                            onSelect: () async {
+                              bool proceed = true;
+                              if (todayPlan != null && todayPlan.meals.any((m) => m.items.isNotEmpty)) {
+                                final confirm = await showDialog<bool>(
+                                  context: context,
+                                  builder: (context) => AlertDialog(
+                                    title: const Text("Change Meal Plan?"),
+                                    content: const Text(
+                                      "Changing today's plan will discard all food currently logged for today. Proceed?"
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, false),
+                                        child: const Text("Cancel"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context, true),
+                                        child: Text(
+                                          "Proceed",
+                                          style: TextStyle(color: theme.colorScheme.error),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                                proceed = (confirm == true);
+                              }
+                              if (proceed) {
+                               await ref.read(mealRepositoryProvider).selectMealPlanForToday(plan);
+                               final targetP = plan.mealPlan.targetProtein ?? 0.0;
+                               final targetC = plan.mealPlan.targetCarbs ?? 0.0;
+                               final targetF = plan.mealPlan.targetFats ?? 0.0;
+                               await ref.read(settingsProvider.notifier).overwriteTargetMacrosWithPlan(targetP, targetC, targetF);
+                              }
                             },
                           ),
                         );
@@ -493,7 +659,7 @@ class TodayMacrosCard extends StatelessWidget {
       color: theme.colorScheme.secondaryContainer,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
       child: Padding(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -545,7 +711,7 @@ class TodayMacrosCard extends StatelessWidget {
   }
 }
 
-class CircularMacroIndicator extends StatelessWidget {
+class CircularMacroIndicator extends StatefulWidget {
   final String label;
   final double consumed;
   final double target;
@@ -560,65 +726,133 @@ class CircularMacroIndicator extends StatelessWidget {
   });
 
   @override
+  State<CircularMacroIndicator> createState() => _CircularMacroIndicatorState();
+}
+
+class _CircularMacroIndicatorState extends State<CircularMacroIndicator>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _progressAnim;
+  late Animation<double> _countAnim;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 900),
+    );
+    _setupAnimations();
+    _controller.forward();
+  }
+
+  void _setupAnimations() {
+    final progress = widget.target > 0
+        ? (widget.consumed / widget.target).clamp(0.0, 1.0)
+        : 0.0;
+    _progressAnim = Tween<double>(begin: 0.0, end: progress).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+    _countAnim = Tween<double>(begin: 0.0, end: widget.consumed).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+    );
+  }
+
+  @override
+  void didUpdateWidget(covariant CircularMacroIndicator oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.consumed != widget.consumed || oldWidget.target != widget.target) {
+      final oldProgress = _progressAnim.value;
+      final oldCount = _countAnim.value;
+      final newProgress = widget.target > 0
+          ? (widget.consumed / widget.target).clamp(0.0, 1.0)
+          : 0.0;
+      _progressAnim = Tween<double>(begin: oldProgress, end: newProgress).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+      );
+      _countAnim = Tween<double>(begin: oldCount, end: widget.consumed).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
+      );
+      _controller.forward(from: 0.0);
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final progress = target > 0 ? (consumed / target).clamp(0.0, 1.0) : 0.0;
-    Color indicatorColor = color;
-    if (target > 0) {
-      if (consumed > target * 1.05) {
+    Color indicatorColor = widget.color;
+    if (widget.target > 0) {
+      if (widget.consumed > widget.target * 1.05) {
         indicatorColor = Colors.red;
-      } else if (consumed >= target * 0.95) {
+      } else if (widget.consumed >= widget.target * 0.95) {
         indicatorColor = Colors.green;
       }
     }
     final theme = Theme.of(context);
 
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        Stack(
-          alignment: Alignment.center,
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        return Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
-              width: 76,
-              height: 76,
-              child: CircularProgressIndicator(
-                value: progress,
-                backgroundColor: indicatorColor.withOpacity(0.15),
-                color: indicatorColor,
-                strokeWidth: 6,
-              ),
-            ),
-            Column(
-              mainAxisSize: MainAxisSize.min,
+            Stack(
+              alignment: Alignment.center,
               children: [
-                Text(
-                  "${consumed.toStringAsFixed(0)}g",
-                  style: theme.textTheme.titleMedium?.copyWith(
+                SizedBox(
+                  width: 76,
+                  height: 76,
+                  child: CircularProgressIndicator(
+                    value: _progressAnim.value,
+                    backgroundColor: indicatorColor.withOpacity(0.15),
+                    color: indicatorColor,
+                    strokeWidth: 6,
+                  ),
+                ),
+                Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      _countAnim.value.toStringAsFixed(0),
+                      style: theme.textTheme.titleMedium?.copyWith(
                         fontWeight: FontWeight.bold,
-                        color: indicatorColor == color
+                        color: indicatorColor == widget.color
                             ? theme.colorScheme.onSecondaryContainer
                             : indicatorColor,
                       ),
-                ),
-                Text(
-                  "/${target.toStringAsFixed(0)}g",
-                  style: theme.textTheme.labelSmall?.copyWith(
+                    ),
+                    Container(
+                      height: 1,
+                      width: 24,
+                      color: theme.colorScheme.onSecondaryContainer.withOpacity(0.3),
+                      margin: const EdgeInsets.symmetric(vertical: 2),
+                    ),
+                    Text(
+                      widget.target.toStringAsFixed(0),
+                      style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onSecondaryContainer.withOpacity(0.7),
                       ),
+                    ),
+                  ],
                 ),
               ],
             ),
+            const SizedBox(height: 8),
+            Text(
+              widget.label,
+              style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: theme.colorScheme.onSecondaryContainer,
+                  ),
+            ),
           ],
-        ),
-        const SizedBox(height: 8),
-        Text(
-          label,
-          style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSecondaryContainer,
-              ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -744,15 +978,15 @@ class MealTrackCard extends ConsumerWidget {
                 ),
               ],
             ),
-            if (meal.notes.isNotEmpty) ...[
-              const SizedBox(height: 4),
-              Text(
-                meal.notes,
-                style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
-                    ),
-              ),
-            ],
+            const SizedBox(height: 4),
+            _InlineMealNotesEditor(
+              meal: meal,
+              onConfirm: (newNotes) {
+                ref.read(mealRepositoryProvider).updateMeal(
+                      meal.copyWith(notes: newNotes),
+                    );
+              },
+            ),
             const SizedBox(height: 8),
             const Divider(),
             const SizedBox(height: 8),
@@ -840,6 +1074,10 @@ class MealTrackCard extends ConsumerWidget {
                                   PopupMenuItem(
                                     value: AmountUnit.GRAMS,
                                     child: Text(detail.product?.units.isNotEmpty == true ? detail.product!.units : "g"),
+                                  ),
+                                  PopupMenuItem(
+                                    value: AmountUnit.ML,
+                                    child: const Text("ml"),
                                   ),
                                   PopupMenuItem(
                                     value: AmountUnit.UNITS,
@@ -1200,12 +1438,26 @@ class MealPlanCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
-                    child: Text(
-                      plan.title,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            plan.title,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                      overflow: TextOverflow.ellipsis,
+                        ),
+                        if (plan.isTemporal) ...[
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.access_time,
+                            size: 18,
+                            color: theme.colorScheme.secondary,
+                          ),
+                        ],
+                      ],
                     ),
                   ),
                   if (isSelected) ...[
@@ -1452,6 +1704,14 @@ class _AddMealItemDialogState extends State<AddMealItemDialog> {
                     ),
                     const SizedBox(width: 8),
                     ChoiceChip(
+                      label: const Text("ml"),
+                      selected: _amountUnit == AmountUnit.ML,
+                      onSelected: (selected) {
+                        if (selected) setState(() => _amountUnit = AmountUnit.ML);
+                      },
+                    ),
+                    const SizedBox(width: 8),
+                    ChoiceChip(
                       label: const Text("Units"),
                       selected: _amountUnit == AmountUnit.UNITS,
                       onSelected: (selected) {
@@ -1511,6 +1771,81 @@ class _AddMealItemDialogState extends State<AddMealItemDialog> {
           child: const Text("Add"),
         ),
       ],
+    );
+  }
+}
+
+class _InlineMealNotesEditor extends StatefulWidget {
+  final Meal meal;
+  final void Function(String) onConfirm;
+
+  const _InlineMealNotesEditor({
+    required this.meal,
+    required this.onConfirm,
+  });
+
+  @override
+  State<_InlineMealNotesEditor> createState() => _InlineMealNotesEditorState();
+}
+
+class _InlineMealNotesEditorState extends State<_InlineMealNotesEditor> {
+  late TextEditingController _controller;
+  late FocusNode _focusNode;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.meal.notes);
+    _focusNode = FocusNode();
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  void _onFocusChange() {
+    if (!_focusNode.hasFocus) {
+      _save();
+    }
+  }
+
+  void _save() {
+    final val = _controller.text.trim();
+    if (val != widget.meal.notes) {
+      widget.onConfirm(val);
+    }
+  }
+
+  @override
+  void didUpdateWidget(covariant _InlineMealNotesEditor oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.meal.notes != widget.meal.notes && !_focusNode.hasFocus) {
+      _controller.text = widget.meal.notes;
+    }
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return TextFormField(
+      controller: _controller,
+      focusNode: _focusNode,
+      style: theme.textTheme.bodySmall?.copyWith(
+        color: theme.colorScheme.onSurfaceVariant,
+      ),
+      maxLines: null,
+      decoration: const InputDecoration(
+        isDense: true,
+        contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        border: InputBorder.none,
+        hintText: "Add note...",
+      ),
+      onFieldSubmitted: (_) => _save(),
     );
   }
 }

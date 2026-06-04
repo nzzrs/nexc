@@ -32,6 +32,11 @@ import 'features/profile/statistics_screen.dart';
 import 'features/profile/measurements_screen.dart';
 
 import 'features/workout/info_workout_screen.dart';
+import 'features/profile/personal_info_screen.dart';
+import 'features/settings/measurements_settings_screen.dart';
+
+import 'core/db/workout_repository.dart';
+import 'core/db/meal_repository.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -45,6 +50,10 @@ void main() async {
 
   // Initialize/prepopulate database on app launch
   await container.read(datasetRepositoryProvider).updateDatasetOnAppUpdate(1);
+
+  // Run cleanups for temporal plans (routines and meal plans)
+  await container.read(workoutRepositoryProvider).cleanupTemporalWorkoutPlans();
+  await container.read(mealRepositoryProvider).cleanupTemporalMealPlans();
 
   runApp(
     UncontrolledProviderScope(
@@ -116,6 +125,8 @@ class MyApp extends ConsumerWidget {
             '/calendar': (context) => const CalendarScreen(),
             '/profile/statistics': (context) => const StatisticsScreen(),
             '/profile/measurements': (context) => const MeasurementsScreen(),
+            '/profile/personal-info': (context) => const PersonalInfoScreen(),
+            '/settings/measurements': (context) => const MeasurementsSettingsScreen(),
           },
           debugShowCheckedModeBanner: false,
         );

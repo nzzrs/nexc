@@ -106,36 +106,57 @@ final profileWeekStreakProvider = Provider<int>((ref) {
   final workouts = ref.watch(completedWorkoutsProvider).value ?? [];
   if (workouts.isEmpty) return 0;
 
-  final now = DateTime.now();
-  final mostRecentWorkoutDate = workouts.first.workout.completed;
+  DateTime weekStart(DateTime date) {
+    final cleanDate = DateTime(date.year, date.month, date.day);
+    // weekday is 1 for Monday, 7 for Sunday.
+    return cleanDate.subtract(Duration(days: date.weekday - 1));
+  }
 
-  if (now.difference(mostRecentWorkoutDate).inDays > 7) {
+  final now = DateTime.now();
+  final currentWeekStart = weekStart(now);
+  final previousWeekStart = currentWeekStart.subtract(const Duration(days: 7));
+
+  final workoutWeeks = workouts.map((w) => weekStart(w.workout.completed)).toSet();
+
+  DateTime checkWeek;
+  if (workoutWeeks.contains(currentWeekStart)) {
+    checkWeek = currentWeekStart;
+  } else if (workoutWeeks.contains(previousWeekStart)) {
+    checkWeek = previousWeekStart;
+  } else {
     return 0;
   }
 
-  int breakIndex = -1;
-  for (int i = 0; i < workouts.length - 1; i++) {
-    final newerWorkout = workouts[i];
-    final olderWorkout = workouts[i + 1];
-    final daysBetween = newerWorkout.workout.completed.difference(olderWorkout.workout.completed).inDays;
-    if (daysBetween > 7) {
-      breakIndex = i;
-      break;
-    }
+  int streak = 0;
+  while (workoutWeeks.contains(checkWeek)) {
+    streak++;
+    checkWeek = checkWeek.subtract(const Duration(days: 7));
   }
 
-  final DateTime streakStartDate;
-  if (breakIndex == -1) {
-    streakStartDate = workouts.last.workout.completed;
-  } else {
-    streakStartDate = workouts[breakIndex].workout.completed;
-  }
-
-  final weeks = (now.difference(streakStartDate).inDays / 7).floor();
-  return weeks;
+  return streak;
 });
 
 final allMeasurementsProvider = StreamProvider<List<BodyMeasurement>>((ref) {
   final repo = ref.watch(measurementRepositoryProvider);
   return repo.getAllMeasurements();
+});
+
+final allAdvancedBodyMeasurementsProvider = StreamProvider<List<AdvancedBodyMeasurement>>((ref) {
+  final repo = ref.watch(measurementRepositoryProvider);
+  return repo.getAllAdvancedBodyMeasurements();
+});
+
+final allSleepMeasurementsProvider = StreamProvider<List<SleepMeasurement>>((ref) {
+  final repo = ref.watch(measurementRepositoryProvider);
+  return repo.getAllSleepMeasurements();
+});
+
+final allAdvancedSleepMeasurementsProvider = StreamProvider<List<AdvancedSleepMeasurement>>((ref) {
+  final repo = ref.watch(measurementRepositoryProvider);
+  return repo.getAllAdvancedSleepMeasurements();
+});
+
+final allActivityMeasurementsProvider = StreamProvider<List<ActivityMeasurement>>((ref) {
+  final repo = ref.watch(measurementRepositoryProvider);
+  return repo.getAllActivityMeasurements();
 });

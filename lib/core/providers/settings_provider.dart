@@ -26,12 +26,20 @@ class SettingsState {
   final int pastVersionCode;
   final bool isWorkoutHeaderSticky;
   final bool showKeepAndroidOpen;
-  final OneRepMaxFormula oneRepMaxFormula;
-  final bool sleepModeEnabled;
-  final bool showRpe;
   final IntensityScale intensityScale;
   final bool restTimerVibrationOn;
   final Language language;
+  
+  // New Global Targets
+  final double targetProtein;
+  final double targetCarbs;
+  final double targetFats;
+
+  // Measurement toggles
+  final bool enableSleep;
+  final bool enableAdvancedSleep;
+  final bool enableActivity;
+  final bool enableAdvancedBody;
 
   const SettingsState({
     required this.themeMode,
@@ -43,12 +51,16 @@ class SettingsState {
     required this.pastVersionCode,
     required this.isWorkoutHeaderSticky,
     required this.showKeepAndroidOpen,
-    required this.oneRepMaxFormula,
-    required this.sleepModeEnabled,
-    required this.showRpe,
     required this.intensityScale,
     required this.restTimerVibrationOn,
     required this.language,
+    required this.targetProtein,
+    required this.targetCarbs,
+    required this.targetFats,
+    required this.enableSleep,
+    required this.enableAdvancedSleep,
+    required this.enableActivity,
+    required this.enableAdvancedBody,
   });
 
   SettingsState copyWith({
@@ -61,12 +73,16 @@ class SettingsState {
     int? pastVersionCode,
     bool? isWorkoutHeaderSticky,
     bool? showKeepAndroidOpen,
-    OneRepMaxFormula? oneRepMaxFormula,
-    bool? sleepModeEnabled,
-    bool? showRpe,
     IntensityScale? intensityScale,
     bool? restTimerVibrationOn,
     Language? language,
+    double? targetProtein,
+    double? targetCarbs,
+    double? targetFats,
+    bool? enableSleep,
+    bool? enableAdvancedSleep,
+    bool? enableActivity,
+    bool? enableAdvancedBody,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -78,12 +94,16 @@ class SettingsState {
       pastVersionCode: pastVersionCode ?? this.pastVersionCode,
       isWorkoutHeaderSticky: isWorkoutHeaderSticky ?? this.isWorkoutHeaderSticky,
       showKeepAndroidOpen: showKeepAndroidOpen ?? this.showKeepAndroidOpen,
-      oneRepMaxFormula: oneRepMaxFormula ?? this.oneRepMaxFormula,
-      sleepModeEnabled: sleepModeEnabled ?? this.sleepModeEnabled,
-      showRpe: showRpe ?? this.showRpe,
       intensityScale: intensityScale ?? this.intensityScale,
       restTimerVibrationOn: restTimerVibrationOn ?? this.restTimerVibrationOn,
       language: language ?? this.language,
+      targetProtein: targetProtein ?? this.targetProtein,
+      targetCarbs: targetCarbs ?? this.targetCarbs,
+      targetFats: targetFats ?? this.targetFats,
+      enableSleep: enableSleep ?? this.enableSleep,
+      enableAdvancedSleep: enableAdvancedSleep ?? this.enableAdvancedSleep,
+      enableActivity: enableActivity ?? this.enableActivity,
+      enableAdvancedBody: enableAdvancedBody ?? this.enableAdvancedBody,
     );
   }
 }
@@ -106,12 +126,6 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final isWorkoutHeaderSticky = prefs.getBool('is_workout_header_sticky') ?? true;
     final showKeepAndroidOpen = prefs.getBool('showKeepAndroidOpenKey') ?? true;
 
-    final formulaVal = prefs.getInt('one_rep_max_formula') ?? 0;
-    final oneRepMaxFormula = OneRepMaxFormula.values[formulaVal.clamp(0, OneRepMaxFormula.values.length - 1)];
-
-    final sleepModeEnabled = prefs.getBool('sleep_mode') ?? false;
-    final showRpe = prefs.getBool('show_rpe') ?? false;
-
     final intensityScaleVal = prefs.getInt('intensity_scale') ?? 0;
     final intensityScale = IntensityScale.values[intensityScaleVal.clamp(0, IntensityScale.values.length - 1)];
 
@@ -119,6 +133,15 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
     final langCode = prefs.getString('language') ?? '';
     final language = Language.values.firstWhere((l) => l.code == langCode, orElse: () => Language.system);
+
+    final targetProtein = prefs.getDouble('target_protein') ?? 150.0;
+    final targetCarbs = prefs.getDouble('target_carbs') ?? 200.0;
+    final targetFats = prefs.getDouble('target_fats') ?? 70.0;
+
+    final enableSleep = prefs.getBool('enable_sleep') ?? false;
+    final enableAdvancedSleep = prefs.getBool('enable_advanced_sleep') ?? false;
+    final enableActivity = prefs.getBool('enable_activity') ?? false;
+    final enableAdvancedBody = prefs.getBool('enable_advanced_body') ?? false;
 
     return SettingsState(
       themeMode: themeMode,
@@ -130,12 +153,16 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       pastVersionCode: pastVersionCode,
       isWorkoutHeaderSticky: isWorkoutHeaderSticky,
       showKeepAndroidOpen: showKeepAndroidOpen,
-      oneRepMaxFormula: oneRepMaxFormula,
-      sleepModeEnabled: sleepModeEnabled,
-      showRpe: showRpe,
       intensityScale: intensityScale,
       restTimerVibrationOn: restTimerVibrationOn,
       language: language,
+      targetProtein: targetProtein,
+      targetCarbs: targetCarbs,
+      targetFats: targetFats,
+      enableSleep: enableSleep,
+      enableAdvancedSleep: enableAdvancedSleep,
+      enableActivity: enableActivity,
+      enableAdvancedBody: enableAdvancedBody,
     );
   }
 
@@ -184,21 +211,6 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     state = state.copyWith(showKeepAndroidOpen: val);
   }
 
-  Future<void> setOneRepMaxFormula(OneRepMaxFormula formula) async {
-    await _prefs.setInt('one_rep_max_formula', formula.index);
-    state = state.copyWith(oneRepMaxFormula: formula);
-  }
-
-  Future<void> setSleepModeEnabled(bool val) async {
-    await _prefs.setBool('sleep_mode', val);
-    state = state.copyWith(sleepModeEnabled: val);
-  }
-
-  Future<void> setShowRpe(bool val) async {
-    await _prefs.setBool('show_rpe', val);
-    state = state.copyWith(showRpe: val);
-  }
-
   Future<void> setIntensityScale(IntensityScale scale) async {
     await _prefs.setInt('intensity_scale', scale.index);
     state = state.copyWith(intensityScale: scale);
@@ -212,6 +224,55 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setLanguage(Language lang) async {
     await _prefs.setString('language', lang.code);
     state = state.copyWith(language: lang);
+  }
+
+  Future<void> setTargetMacros(double p, double c, double f) async {
+    await _prefs.setDouble('target_protein', p);
+    await _prefs.setDouble('target_carbs', c);
+    await _prefs.setDouble('target_fats', f);
+    state = state.copyWith(targetProtein: p, targetCarbs: c, targetFats: f);
+  }
+
+  Future<void> overwriteTargetMacrosWithPlan(double p, double c, double f) async {
+    final hasSaved = _prefs.getBool('has_saved_pre_meal_plan_macros') ?? false;
+    if (!hasSaved) {
+      await _prefs.setDouble('pre_meal_plan_target_protein', state.targetProtein);
+      await _prefs.setDouble('pre_meal_plan_target_carbs', state.targetCarbs);
+      await _prefs.setDouble('pre_meal_plan_target_fats', state.targetFats);
+      await _prefs.setBool('has_saved_pre_meal_plan_macros', true);
+    }
+    await setTargetMacros(p, c, f);
+  }
+
+  Future<void> restorePrePlanTargetMacros() async {
+    final hasSaved = _prefs.getBool('has_saved_pre_meal_plan_macros') ?? false;
+    if (hasSaved) {
+      final p = _prefs.getDouble('pre_meal_plan_target_protein') ?? 150.0;
+      final c = _prefs.getDouble('pre_meal_plan_target_carbs') ?? 200.0;
+      final f = _prefs.getDouble('pre_meal_plan_target_fats') ?? 70.0;
+      await setTargetMacros(p, c, f);
+      await _prefs.setBool('has_saved_pre_meal_plan_macros', false);
+    }
+  }
+
+  Future<void> setEnableSleep(bool val) async {
+    await _prefs.setBool('enable_sleep', val);
+    state = state.copyWith(enableSleep: val);
+  }
+
+  Future<void> setEnableAdvancedSleep(bool val) async {
+    await _prefs.setBool('enable_advanced_sleep', val);
+    state = state.copyWith(enableAdvancedSleep: val);
+  }
+
+  Future<void> setEnableActivity(bool val) async {
+    await _prefs.setBool('enable_activity', val);
+    state = state.copyWith(enableActivity: val);
+  }
+
+  Future<void> setEnableAdvancedBody(bool val) async {
+    await _prefs.setBool('enable_advanced_body', val);
+    state = state.copyWith(enableAdvancedBody: val);
   }
 }
 

@@ -82,7 +82,22 @@ class WorkoutRepository {
   }
 
   Future<int> addWorkout(Workout workout) {
-    return db.into(db.workouts).insert(workout.toCompanion(true));
+    if (workout.id == 0) {
+      return db.into(db.workouts).insert(
+            WorkoutsCompanion.insert(
+              routineId: workout.routineId,
+              notes: workout.notes,
+              title: workout.title,
+              state: workout.state,
+              timeElapsed: workout.timeElapsed,
+              created: workout.created,
+              completed: workout.completed,
+              isTemporal: Value(workout.isTemporal),
+            ),
+          );
+    } else {
+      return db.into(db.workouts).insert(workout.toCompanion(true));
+    }
   }
 
   Future<void> updateWorkout(Workout workout) {
@@ -93,8 +108,34 @@ class WorkoutRepository {
     return db.delete(db.workouts).delete(workout);
   }
 
+  Future<void> cleanupTemporalWorkoutPlans() async {
+    final cutoff = DateTime.now().subtract(const Duration(hours: 12));
+    final list = await (db.select(db.workouts)
+          ..where((w) => w.state.equalsValue(WorkoutState.ROUTINE) & w.isTemporal.equals(true)))
+        .get();
+    for (final w in list) {
+      if (w.created.isBefore(cutoff)) {
+        await db.delete(db.workouts).delete(w);
+      }
+    }
+  }
+
   Future<int> addExercise(Exercise exercise) {
-    return db.into(db.exercises).insert(exercise.toCompanion(true));
+    if (exercise.id == 0) {
+      return db.into(db.exercises).insert(
+            ExercisesCompanion.insert(
+              workoutId: exercise.workoutId,
+              exerciseDataId: exercise.exerciseDataId,
+              notes: exercise.notes,
+              setMode: exercise.setMode,
+              restTime: exercise.restTime,
+              supersetId: Value(exercise.supersetId),
+              position: Value(exercise.position),
+            ),
+          );
+    } else {
+      return db.into(db.exercises).insert(exercise.toCompanion(true));
+    }
   }
 
   Future<void> updateExercise(Exercise exercise) {
@@ -106,7 +147,21 @@ class WorkoutRepository {
   }
 
   Future<int> addSet(WorkoutSet set) {
-    return db.into(db.sets).insert(set.toCompanion(true));
+    if (set.id == 0) {
+      return db.into(db.sets).insert(
+            SetsCompanion.insert(
+              exerciseId: set.exerciseId,
+              load: set.load,
+              reps: set.reps,
+              elapsedTime: set.elapsedTime,
+              completed: set.completed,
+              rpe: Value(set.rpe),
+              rir: Value(set.rir),
+            ),
+          );
+    } else {
+      return db.into(db.sets).insert(set.toCompanion(true));
+    }
   }
 
   Future<void> updateSet(WorkoutSet set) {
@@ -212,7 +267,6 @@ class WorkoutRepository {
                     completed: set.completed,
                     rpe: Value(set.rpe),
                     rir: Value(set.rir),
-                    intensityScale1: Value(set.intensityScale1),
                     exerciseId: exerciseId,
                   ),
                 );

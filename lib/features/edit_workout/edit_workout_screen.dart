@@ -34,6 +34,7 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
   late TextEditingController _titleController;
   late TextEditingController _notesController;
   bool _isLoading = true;
+  bool _isReordering = false;
   late Workout _workout;
   List<ExerciseWithSets> _exercises = [];
 
@@ -83,6 +84,7 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
       timeElapsed: 0,
       created: DateTime.now(),
       completed: DateTime.now(),
+      isTemporal: false,
     );
     _exercises = [];
     _initialTitle = "";
@@ -266,6 +268,16 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
             onPressed: _handlePop,
           ),
           actions: [
+            if (_exercises.isNotEmpty)
+              IconButton(
+                icon: Icon(_isReordering ? Icons.check : Icons.swap_vert),
+                tooltip: _isReordering ? "Done Reordering" : "Reorder Exercises",
+                onPressed: () {
+                  setState(() {
+                    _isReordering = !_isReordering;
+                  });
+                },
+              ),
             IconButton(
               icon: const Icon(Icons.check),
               onPressed: _save,
@@ -319,130 +331,151 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
                 textAlign: TextAlign.center,
               ),
             )
-          else ...[
-            ...List.generate(_exercises.length, (index) {
-              final eWs = _exercises[index];
-              return ExerciseCard(
-                index: index,
-                exerciseWithSets: eWs,
-                workout: false,
-                addSet: (exId) {
-                  setState(() {
-                    final setList = List<WorkoutSet>.from(eWs.sets);
-                    final lastSet = setList.lastOrNull;
-                    setList.add(
-                      WorkoutSet(
-                        id: DateTime.now().millisecondsSinceEpoch,
-                        load: lastSet?.load ?? 0.0,
-                        reps: lastSet?.reps ?? 0,
-                        elapsedTime: lastSet?.elapsedTime ?? 0,
-                        completed: false,
-                        exerciseId: exId,
-                      ),
+          else
+            ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              itemCount: _exercises.length,
+              onReorder: (oldIndex, newIndex) {
+                setState(() {
+                  if (oldIndex < newIndex) {
+                    newIndex -= 1;
+                  }
+                  final item = _exercises.removeAt(oldIndex);
+                  _exercises.insert(newIndex, item);
+                  for (int i = 0; i < _exercises.length; i++) {
+                    _exercises[i] = _exercises[i].copyWith(
+                      exercise: _exercises[i].exercise.copyWith(position: i),
                     );
-                    _exercises[index] = eWs.copyWith(sets: setList);
-                  });
-                },
-                 onDetail: (exId, dcId) {
-                   Navigator.pushNamed(
-                     context,
-                     '/exercises/info',
-                     arguments: dcId,
-                   );
-                 },
-                onDelete: (exId) {
-                  setState(() {
-                    _exercises.removeAt(index);
-                  });
-                },
-                deleteSet: (setId) {
-                  setState(() {
-                    final setList = eWs.sets.where((s) => s.id != setId).toList();
-                    _exercises[index] = eWs.copyWith(sets: setList);
-                  });
-                },
-                updateExerciseNotes: (text, exId) {
-                  _exercises[index] = eWs.copyWith(
-                    exercise: eWs.exercise.copyWith(notes: text),
-                  );
-                },
-                updateExerciseRestTime: (restTime, exId) {
-                  _exercises[index] = eWs.copyWith(
-                    exercise: eWs.exercise.copyWith(restTime: restTime),
-                  );
-                },
-                updateExerciseSetMode: (setMode, exId) {
-                  _exercises[index] = eWs.copyWith(
-                    exercise: eWs.exercise.copyWith(setMode: setMode),
-                  );
-                },
-                updateSetTime: (time, setId) {
-                  _exercises[index] = eWs.copyWith(
-                    sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(elapsedTime: time) : s).toList(),
-                  );
-                },
-                updateSetReps: (reps, setId) {
-                  _exercises[index] = eWs.copyWith(
-                    sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(reps: reps) : s).toList(),
-                  );
-                },
-                updateSetLoad: (load, setId) {
-                  _exercises[index] = eWs.copyWith(
-                    sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(load: load) : s).toList(),
-                  );
-                },
-                updateSetCompleted: (completed, setId) {},
-                showInfo: (info) {},
-                isFirst: index == 0,
-                isLast: index == _exercises.length - 1,
-                onMoveUp: (exId) {
-                  if (index > 0) {
-                    setState(() {
-                      final item = _exercises.removeAt(index);
-                      _exercises.insert(index - 1, item);
-                    });
                   }
-                },
-                onMoveDown: (exId) {
-                  if (index < _exercises.length - 1) {
+                });
+              },
+              itemBuilder: (context, index) {
+                final eWs = _exercises[index];
+                return ExerciseCard(
+                  key: ValueKey('routine_ex_${eWs.exercise.id}'),
+                  index: index,
+                  exerciseWithSets: eWs,
+                  workout: false,
+                  isReordering: _isReordering,
+                  addSet: (exId) {
                     setState(() {
-                      final item = _exercises.removeAt(index);
-                      _exercises.insert(index + 1, item);
-                    });
-                  }
-                },
-                onReplace: (exId) async {
-                  final result = await Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ExercisesScreen(addExercises: false),
-                    ),
-                  );
-                  if (result != null && result is List<ExerciseDataDC> && result.isNotEmpty) {
-                    setState(() {
-                      final replaced = _exercises[index].copyWith(
-                        exerciseDC: result.first,
-                        exercise: _exercises[index].exercise.copyWith(
-                          exerciseDataId: result.first.id,
+                      final setList = List<WorkoutSet>.from(eWs.sets);
+                      final lastSet = setList.lastOrNull;
+                      setList.add(
+                        WorkoutSet(
+                          id: DateTime.now().millisecondsSinceEpoch,
+                          load: lastSet?.load ?? 0.0,
+                          reps: lastSet?.reps ?? 0,
+                          elapsedTime: lastSet?.elapsedTime ?? 0,
+                          completed: false,
+                          exerciseId: exId,
                         ),
                       );
-                      _exercises[index] = replaced;
+                      _exercises[index] = eWs.copyWith(sets: setList);
                     });
-                  }
-                },
-                onSupersetToggle: (exId) {
-                  setState(() {
-                    final curr = eWs.exercise.supersetId;
+                  },
+                  onDetail: (exId, dcId) {
+                    Navigator.pushNamed(
+                      context,
+                      '/exercises/info',
+                      arguments: dcId,
+                    );
+                  },
+                  onDelete: (exId) {
+                    setState(() {
+                      _exercises.removeAt(index);
+                    });
+                  },
+                  deleteSet: (setId) {
+                    setState(() {
+                      final setList = eWs.sets.where((s) => s.id != setId).toList();
+                      _exercises[index] = eWs.copyWith(sets: setList);
+                    });
+                  },
+                  updateExerciseNotes: (text, exId) {
                     _exercises[index] = eWs.copyWith(
-                      exercise: eWs.exercise.copyWith(
-                        supersetId: Value(curr == null ? 1 : null),
+                      exercise: eWs.exercise.copyWith(notes: text),
+                    );
+                  },
+                  updateExerciseRestTime: (restTime, exId) {
+                    _exercises[index] = eWs.copyWith(
+                      exercise: eWs.exercise.copyWith(restTime: restTime),
+                    );
+                  },
+                  updateExerciseSetMode: (setMode, exId) {
+                    _exercises[index] = eWs.copyWith(
+                      exercise: eWs.exercise.copyWith(setMode: setMode),
+                    );
+                  },
+                  updateSetTime: (time, setId) {
+                    _exercises[index] = eWs.copyWith(
+                      sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(elapsedTime: time) : s).toList(),
+                    );
+                  },
+                  updateSetReps: (reps, setId) {
+                    _exercises[index] = eWs.copyWith(
+                      sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(reps: reps) : s).toList(),
+                    );
+                  },
+                  updateSetLoad: (load, setId) {
+                    _exercises[index] = eWs.copyWith(
+                      sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(load: load) : s).toList(),
+                    );
+                  },
+                  updateSetCompleted: (completed, setId) {},
+                  showInfo: (info) {},
+                  isFirst: index == 0,
+                  isLast: index == _exercises.length - 1,
+                  onMoveUp: (exId) {
+                    if (index > 0) {
+                      setState(() {
+                        final item = _exercises.removeAt(index);
+                        _exercises.insert(index - 1, item);
+                      });
+                    }
+                  },
+                  onMoveDown: (exId) {
+                    if (index < _exercises.length - 1) {
+                      setState(() {
+                        final item = _exercises.removeAt(index);
+                        _exercises.insert(index + 1, item);
+                      });
+                    }
+                  },
+                  onReplace: (exId) async {
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const ExercisesScreen(addExercises: false),
                       ),
                     );
-                  });
-                },
-              );
-            }),
-          ],
+                    if (result != null && result is List<ExerciseDataDC> && result.isNotEmpty) {
+                      setState(() {
+                        final replaced = _exercises[index].copyWith(
+                          exerciseDC: result.first,
+                          exercise: _exercises[index].exercise.copyWith(
+                            exerciseDataId: result.first.id,
+                          ),
+                        );
+                        _exercises[index] = replaced;
+                      });
+                    }
+                  },
+                  onSupersetToggle: (exId) {
+                    setState(() {
+                      final curr = eWs.exercise.supersetId;
+                      _exercises[index] = eWs.copyWith(
+                        exercise: eWs.exercise.copyWith(
+                          supersetId: Value(curr == null ? 1 : null),
+                        ),
+                      );
+                    });
+                  },
+                );
+              },
+            ),
           const SizedBox(height: 12),
 
           // Add Exercise Button

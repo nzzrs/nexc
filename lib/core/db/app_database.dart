@@ -131,6 +131,7 @@ class Workouts extends Table {
   IntColumn get timeElapsed => integer().named('timeElapsed')();
   TextColumn get created => text().map(const IsoDateTimeConverter())();
   TextColumn get completed => text().map(const IsoDateTimeConverter())();
+  BoolColumn get isTemporal => boolean().named('isTemporal').withDefault(const Constant(false))();
 }
 
 @DataClassName('Exercise')
@@ -170,7 +171,6 @@ class Sets extends Table {
   BoolColumn get completed => boolean()();
   RealColumn get rpe => real().nullable()();
   IntColumn get rir => integer().nullable()();
-  IntColumn get intensityScale1 => integer().named('intensityScale1').nullable()();
   IntColumn get exerciseId => integer().named('exerciseId')();
 
   @override
@@ -288,9 +288,7 @@ class Products extends Table {
 
   IntColumn get id => integer().autoIncrement()();
   TextColumn get name => text()();
-  RealColumn get weight => real()();
   IntColumn get mlToGFactor => integer().named('mlToGFactor').nullable()();
-  IntColumn get unitWeight => integer().named('unitWeight').nullable()();
   TextColumn get defaultUnits => text().named('defaultUnits').nullable()();
   RealColumn get edibleQtyPerUnit => real().named('edibleQtyPerUnit').nullable()();
   RealColumn get kcal => real().nullable()();
@@ -398,6 +396,16 @@ class MealItems extends Table {
   ];
 }
 
+@DataClassName('UserData')
+class Users extends Table {
+  @override
+  String get tableName => 'users';
+
+  IntColumn get id => integer().autoIncrement()();
+  RealColumn get height => real().nullable()();
+  TextColumn get birthDate => text().map(const IsoDateTimeConverter()).nullable()();
+}
+
 @DriftDatabase(tables: [
   Workouts,
   Exercises,
@@ -414,12 +422,13 @@ class MealItems extends Table {
   MealPlans,
   Meals,
   MealItems,
+  Users,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 14;
+  int get schemaVersion => 15;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -454,8 +463,8 @@ class AppDatabase extends _$AppDatabase {
             // 2. Add columns to exercises: exerciseDataId, drop idExerciseDC.
             await m.issueCustomQuery('ALTER TABLE exercises RENAME COLUMN idExerciseDC TO exerciseDataId;');
             
-            // 3. Sets: intensityScale renamed to intensityScale1.
-            await m.issueCustomQuery('ALTER TABLE sets RENAME COLUMN intensityScale TO intensityScale1;');
+            // 3. Sets: drop intensityScale column.
+            await m.issueCustomQuery('ALTER TABLE sets DROP COLUMN intensityScale;');
             
             // 4. Products migration (recreate table, map columns)
             await m.issueCustomQuery('''
@@ -508,6 +517,10 @@ class AppDatabase extends _$AppDatabase {
             ''');
             await m.issueCustomQuery('DROP TABLE measurements;');
           }
+          if (from < 15) {
+            await m.createTable(users);
+            await m.addColumn(workouts, workouts.isTemporal);
+          }
         },
       );
 }
@@ -532,8 +545,9 @@ QueryExecutor _openConnection() {
 
 extension ProductExtension on Product {
   double get carbs => carbsAvailable ?? carbsByDifference ?? 0.0;
-  double get cost => 0.0;
   String get units => defaultUnits ?? 'g';
-  int get quantity => unitWeight ?? 0;
+  int get quantity => 0;
   double get ediblePercent => edibleQtyPerUnit != null ? (edibleQtyPerUnit! * 100.0) : 100.0;
+  double get weight => 0.0;
+  int? get unitWeight => null;
 }

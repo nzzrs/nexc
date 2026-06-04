@@ -133,6 +133,26 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
         runningWorkoutAsync.when(
           data: (runningWorkout) {
             final hasRunning = runningWorkout != null;
+            if (!hasRunning) {
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8.0),
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
+                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  onPressed: () {
+                    Navigator.pushNamed(
+                      context,
+                      '/workout',
+                      arguments: 0,
+                    );
+                  },
+                  icon: const Icon(Icons.play_arrow, size: 24),
+                  label: const Text('Start empty workout'),
+                ),
+              );
+            }
             return AnimatedBuilder(
               animation: _pulseController,
               builder: (context, child) {
@@ -140,7 +160,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(20),
                     border: Border.all(
-                      color: hasRunning ? (_borderColorAnimation.value ?? Colors.transparent) : Colors.transparent,
+                      color: _borderColorAnimation.value ?? Colors.transparent,
                       width: 2.5,
                     ),
                   ),
@@ -154,34 +174,34 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
                           FilledButton.icon(
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              textStyle: const TextStyle(fontSize: 16),
+                            ),
                             onPressed: () {
                               Navigator.pushNamed(
                                 context,
                                 '/workout',
-                                arguments: hasRunning ? runningWorkout.workout.id : 0,
+                                arguments: runningWorkout.workout.id,
                               );
                             },
                             icon: const Icon(Icons.play_arrow),
-                            label: Text(
-                              hasRunning ? 'Resume workout' : 'Start empty workout',
-                            ),
+                            label: const Text('Resume workout'),
                           ),
-                          if (hasRunning) ...[
-                            const SizedBox(height: 12),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  'Elapsed time: ${_formatTime(runningWorkout.workout.timeElapsed)}',
-                                  style: theme.textTheme.bodyMedium,
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete_outline),
-                                  onPressed: () => _showDiscardDialog(runningWorkout.workout),
-                                ),
-                              ],
-                            ),
-                          ],
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Elapsed time: ${_formatTime(runningWorkout.workout.timeElapsed)}',
+                                style: theme.textTheme.bodyMedium,
+                              ),
+                              IconButton(
+                                icon: const Icon(Icons.delete_outline),
+                                onPressed: () => _showDiscardDialog(runningWorkout.workout),
+                              ),
+                            ],
+                          ),
                         ],
                       ),
                     ),
@@ -190,13 +210,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
               },
             );
           },
-          loading: () => const Card(
+          loading: () => const Center(
             child: Padding(
               padding: EdgeInsets.all(16.0),
-              child: Center(child: CircularProgressIndicator()),
+              child: CircularProgressIndicator(),
             ),
           ),
-          error: (err, stack) => Card(
+          error: (err, stack) => Center(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Text('Error loading active workout: $err'),
@@ -205,7 +225,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
         ),
         const SizedBox(height: 24),
 
-        // 2. Your Routines Header
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
@@ -214,12 +233,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.help_outline),
-              onPressed: () {
-                Navigator.pushNamed(context, '/tutorial');
-              },
             ),
           ],
         ),
@@ -239,62 +252,70 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
             }
 
             return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
               children: routines.map((item) {
                 final routine = item.workout;
                 return Padding(
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: Card(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  routine.title,
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
+                    clipBehavior: Clip.antiAlias,
+                    child: InkWell(
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/info-workout',
+                          arguments: routine.id,
+                        );
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    routine.title,
+                                    style: theme.textTheme.titleLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                    overflow: TextOverflow.ellipsis,
                                   ),
-                                  overflow: TextOverflow.ellipsis,
                                 ),
+                                if (routine.isTemporal) ...[
+                                  const SizedBox(width: 8),
+                                  Icon(
+                                    Icons.access_time,
+                                    size: 18,
+                                    color: theme.colorScheme.secondary,
+                                  ),
+                                ],
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            FilledButton.icon(
+                              style: FilledButton.styleFrom(
+                                backgroundColor: theme.colorScheme.secondaryContainer,
+                                foregroundColor: theme.colorScheme.onSecondaryContainer,
                               ),
-                              IconButton(
-                                icon: const Icon(Icons.info_outline),
-                                onPressed: () {
+                              onPressed: () {
+                                final running = runningWorkoutAsync.value;
+                                if (running != null) {
+                                  _showDiscardAndStartRoutineDialog(running.workout, routine.id);
+                                } else {
                                   Navigator.pushNamed(
                                     context,
-                                    '/info-workout',
+                                    '/workout',
                                     arguments: routine.id,
                                   );
-                                },
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 12),
-                          FilledButton.icon(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: theme.colorScheme.secondaryContainer,
-                              foregroundColor: theme.colorScheme.onSecondaryContainer,
+                                }
+                              },
+                              icon: const Icon(Icons.play_arrow),
+                              label: const Text('Start routine'),
                             ),
-                            onPressed: () {
-                              final running = runningWorkoutAsync.value;
-                              if (running != null) {
-                                _showDiscardAndStartRoutineDialog(running.workout, routine.id);
-                              } else {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/workout',
-                                  arguments: routine.id,
-                                );
-                              }
-                            },
-                            icon: const Icon(Icons.play_arrow),
-                            label: const Text('Start routine'),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
                   ),

@@ -127,6 +127,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
     final sets = widget.exerciseWithSets.sets;
 
     return Card(
+      color: theme.colorScheme.surfaceContainerLow,
       margin: const EdgeInsets.only(left: 0, right: 0, bottom: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
@@ -420,97 +421,107 @@ class _ExerciseCardState extends State<ExerciseCard> {
                       const SizedBox(height: 12),
 
                       // Sets Table (Header + Rows)
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surfaceVariant.withOpacity(0.5),
-                            ),
-                            child: Row(
-                              children: [
-                                if (!widget.workout)
-                                  const SizedBox(
-                                    width: 30,
-                                    child: Text('Set', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ),
-                                if (widget.previousPerformances != null)
-                                  const SizedBox(
-                                    width: 70,
-                                    child: Text('Previous', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ),
-                                if (ex.setMode == SetMode.DURATION)
-                                  const Expanded(
-                                    child: Text('Time', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-                                  )
-                                else if (ex.setMode == SetMode.DURATION_WITH_LOAD) ...[
-                                  const Expanded(
-                                    child: Text('Weight', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  const Expanded(
-                                    child: Text('Time', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ),
-                                ] else ...[
-                                  if (ex.setMode == SetMode.LOAD || ex.setMode == SetMode.BODYWEIGHT_WITH_LOAD)
-                                    const Expanded(
-                                      child: Text('Weight', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-                                    ),
-                                  const SizedBox(width: 8),
-                                  const Expanded(
-                                    child: Text('Reps', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
-                                  ),
-                                ],
-                                if (widget.showRpe) ...[
-                                  const SizedBox(width: 8),
-                                  if (widget.intensityScale == IntensityScale.both) ...[
-                                    const Expanded(child: Text('RPE', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
-                                    const SizedBox(width: 8),
-                                    const Expanded(child: Text('RIR', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
-                                  ] else
-                                    Expanded(
-                                      child: Text(
-                                        widget.intensityScale == IntensityScale.rir ? 'RIR' : 'RPE',
-                                        textAlign: TextAlign.center,
-                                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        child: Card(
+                          color: theme.colorScheme.surfaceContainerHighest,
+                          elevation: 0,
+                          clipBehavior: Clip.antiAlias,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          margin: EdgeInsets.zero,
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                decoration: BoxDecoration(
+                                  color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                                ),
+                                child: Row(
+                                  children: [
+                                    if (!widget.workout)
+                                      const SizedBox(
+                                        width: 30,
+                                        child: Text('Set', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
                                       ),
-                                    ),
-                                ],
-                                if (widget.workout) ...[
-                                  const SizedBox(width: 8),
-                                  const SizedBox(width: 45, child: Text('Done', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
-                                ],
-                              ],
-                            ),
-                          ),
-                          const SizedBox(height: 4),
-                          ...List.generate(sets.length, (idx) {
-                            final set = sets[idx];
-                            final isThisRunning = widget.idSetWithRunningStopwatch == set.id;
+                                    if (widget.previousPerformances != null)
+                                      const SizedBox(
+                                        width: 70,
+                                        child: Text('Previous', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ),
+                                    if (ex.setMode == SetMode.DURATION)
+                                      const Expanded(
+                                        child: Text('Time', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                      )
+                                    else if (ex.setMode == SetMode.DURATION_WITH_LOAD) ...[
+                                      const Expanded(
+                                        child: Text('Weight', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      const Expanded(
+                                        child: Text('Time', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ),
+                                    ] else ...[
+                                      if (ex.setMode == SetMode.LOAD || ex.setMode == SetMode.BODYWEIGHT_WITH_LOAD)
+                                        const Expanded(
+                                          child: Text('Weight', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                        ),
+                                      const SizedBox(width: 8),
+                                      const Expanded(
+                                        child: Text('Reps', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                      ),
+                                    ],
+                                    if (widget.showRpe) ...[
+                                      const SizedBox(width: 8),
+                                      if (widget.intensityScale == IntensityScale.both) ...[
+                                        const Expanded(child: Text('RPE', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                                        const SizedBox(width: 8),
+                                        const Expanded(child: Text('RIR', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                                      ] else
+                                        Expanded(
+                                          child: Text(
+                                            widget.intensityScale == IntensityScale.rir ? 'RIR' : 'RPE',
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                    ],
+                                    if (widget.workout) ...[
+                                      const SizedBox(width: 8),
+                                      const SizedBox(width: 45, child: Text('Done', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                                    ],
+                                  ],
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              ...List.generate(sets.length, (idx) {
+                                final set = sets[idx];
+                                final isThisRunning = widget.idSetWithRunningStopwatch == set.id;
 
-                            return _SetRow(
-                              key: ValueKey(set.id),
-                              set: set,
-                              index: idx,
-                              setMode: ex.setMode,
-                              workout: widget.workout,
-                              previousPerformances: widget.previousPerformances,
-                              showRpe: widget.showRpe,
-                              intensityScale: widget.intensityScale,
-                              isThisRunning: isThisRunning,
-                              updateSetTime: widget.updateSetTime,
-                              updateSetLoad: widget.updateSetLoad,
-                              updateSetReps: widget.updateSetReps,
-                              updateSetRpe: widget.updateSetRpe,
-                              updateSetRir: widget.updateSetRir,
-                              updateSetCompleted: widget.updateSetCompleted,
-                              deleteSet: widget.deleteSet,
-                              updateIdSetWithRunningStopwatch: widget.updateIdSetWithRunningStopwatch,
-                              applyPreviousSetPerformance: widget.applyPreviousSetPerformance,
-                            );
-                          }),
-                        ],
+                                return _SetRow(
+                                  key: ValueKey(set.id),
+                                  set: set,
+                                  index: idx,
+                                  setMode: ex.setMode,
+                                  workout: widget.workout,
+                                  previousPerformances: widget.previousPerformances,
+                                  showRpe: widget.showRpe,
+                                  intensityScale: widget.intensityScale,
+                                  isThisRunning: isThisRunning,
+                                  updateSetTime: widget.updateSetTime,
+                                  updateSetLoad: widget.updateSetLoad,
+                                  updateSetReps: widget.updateSetReps,
+                                  updateSetRpe: widget.updateSetRpe,
+                                  updateSetRir: widget.updateSetRir,
+                                  updateSetCompleted: widget.updateSetCompleted,
+                                  deleteSet: widget.deleteSet,
+                                  updateIdSetWithRunningStopwatch: widget.updateIdSetWithRunningStopwatch,
+                                  applyPreviousSetPerformance: widget.applyPreviousSetPerformance,
+                                );
+                              }),
+                            ],
+                          ),
+                        ),
                       ),
                       const SizedBox(height: 12),
 
@@ -652,9 +663,9 @@ class _SetRowState extends State<_SetRow> {
     final set = widget.set;
     return Dismissible(
       key: ValueKey(set.id),
-      direction: DismissDirection.horizontal,
+      direction: DismissDirection.endToStart,
       dismissThresholds: const {
-        DismissDirection.horizontal: 0.75,
+        DismissDirection.endToStart: 0.75,
       },
       background: Container(
         alignment: Alignment.centerLeft,

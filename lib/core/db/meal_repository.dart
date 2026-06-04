@@ -31,7 +31,22 @@ class MealRepository {
 
   Future<int> saveProduct(Product product) async {
     if (product.id == 0) {
-      return db.into(db.products).insert(product.toCompanion(true));
+      return db.into(db.products).insert(
+            ProductsCompanion.insert(
+              name: product.name,
+              mlToGFactor: Value(product.mlToGFactor),
+              defaultUnits: Value(product.defaultUnits),
+              edibleQtyPerUnit: Value(product.edibleQtyPerUnit),
+              kcal: Value(product.kcal),
+              proteins: product.proteins,
+              carbsByDifference: Value(product.carbsByDifference),
+              carbsAvailable: Value(product.carbsAvailable),
+              dietaryFiber: Value(product.dietaryFiber),
+              fats: product.fats,
+              isSupplement: product.isSupplement,
+              isPortable: Value(product.isPortable),
+            ),
+          );
     } else {
       await db.update(db.products).replace(product);
       return product.id;
@@ -113,6 +128,31 @@ class MealRepository {
         .watch();
   }
 
+  Future<MealPlanWithMealsAndItems> _populateRecipesForPlan(MealPlanWithMealsAndItems plan) async {
+    final populatedMeals = <MealWithItems>[];
+    for (final meal in plan.meals) {
+      final populatedItems = <MealItemWithDetails>[];
+      for (final item in meal.items) {
+        if (item.mealItem.type == MealItemType.RECIPE) {
+          final recipe = await getRecipe(item.mealItem.targetId);
+          populatedItems.add(item.copyWith(recipe: recipe));
+        } else {
+          populatedItems.add(item);
+        }
+      }
+      populatedMeals.add(MealWithItems(meal: meal.meal, items: populatedItems));
+    }
+    return MealPlanWithMealsAndItems(mealPlan: plan.mealPlan, meals: populatedMeals);
+  }
+
+  Future<List<MealPlanWithMealsAndItems>> _populateRecipesForPlans(List<MealPlanWithMealsAndItems> plans) async {
+    final res = <MealPlanWithMealsAndItems>[];
+    for (final p in plans) {
+      res.add(await _populateRecipesForPlan(p));
+    }
+    return res;
+  }
+
   Stream<List<MealPlanWithMealsAndItems>> getMealPlansWithMealsAndItemsByState(MealPlanState state) {
     final query = db.select(db.mealPlans)
       ..where((mp) => mp.state.equalsValue(state))
@@ -125,7 +165,8 @@ class MealRepository {
           leftOuterJoin(db.products, db.products.id.equalsExp(db.mealItems.targetId)),
         ])
         .watch()
-        .map((rows) => _groupRowsToMealPlans(rows));
+        .map((rows) => _groupRowsToMealPlans(rows))
+        .asyncMap((plans) => _populateRecipesForPlans(plans));
   }
 
   Future<MealPlanWithMealsAndItems?> getMealPlanWithMealsAndItems(int id) async {
@@ -137,7 +178,8 @@ class MealRepository {
     ]).get();
 
     final list = _groupRowsToMealPlans(rows);
-    return list.isNotEmpty ? list.first : null;
+    if (list.isEmpty) return null;
+    return _populateRecipesForPlan(list.first);
   }
 
   Stream<MealPlanWithMealsAndItems?> watchMealPlanWithMealsAndItems(int id) {
@@ -152,6 +194,10 @@ class MealRepository {
         .map((rows) {
           final list = _groupRowsToMealPlans(rows);
           return list.isNotEmpty ? list.first : null;
+        })
+        .asyncMap((plan) async {
+          if (plan == null) return null;
+          return _populateRecipesForPlan(plan);
         });
   }
 
@@ -235,7 +281,31 @@ class MealRepository {
   }
 
   Future<int> insertMealItem(MealItem mealItem) {
-    return db.into(db.mealItems).insert(mealItem.toCompanion(true));
+    if (mealItem.id == 0) {
+      return db.into(db.mealItems).insert(
+            MealItemsCompanion.insert(
+              mealId: mealItem.mealId,
+              type: mealItem.type,
+              targetId: mealItem.targetId,
+              amount: mealItem.amount,
+              amountUnit: Value(mealItem.amountUnit),
+              consumed: mealItem.consumed,
+              position: mealItem.position,
+            ),
+          );
+    }
+    return db.into(db.mealItems).insert(
+          MealItemsCompanion(
+            id: Value(mealItem.id),
+            mealId: Value(mealItem.mealId),
+            type: Value(mealItem.type),
+            targetId: Value(mealItem.targetId),
+            amount: Value(mealItem.amount),
+            amountUnit: Value(mealItem.amountUnit),
+            consumed: Value(mealItem.consumed),
+            position: Value(mealItem.position),
+          ),
+        );
   }
 
   Future<void> updateMeal(Meal meal) {
@@ -246,7 +316,7 @@ class MealRepository {
     return db.transaction(() async {
       final now = DateTime.now();
       final logsList = await (db.select(db.mealPlans)
-            ..where((mp) => mp.state.equalsValue(MealPlanState.LOGGED)))
+            ..where((mp) => mp.state.equalsValue(MealPlanState.ACTIVE)))
           .get();
       final existingTodayPlan = logsList.firstWhereOrNull(
         (mp) =>
@@ -264,7 +334,7 @@ class MealRepository {
         parentPlanId: template.mealPlan.id,
         title: template.mealPlan.title,
         notes: template.mealPlan.notes,
-        state: MealPlanState.LOGGED,
+        state: MealPlanState.ACTIVE,
         created: now,
         completed: now,
         isTemporal: false,
@@ -344,10 +414,19 @@ class MealRepository {
     required int targetId,
     required double amount,
     required AmountUnit amountUnit,
+    bool? consumed,
   }) async {
     final itemsList = await (db.select(db.mealItems)..where((mi) => mi.mealId.equals(mealId))).get();
     final maxPos = itemsList.map((i) => i.position).fold(-1, (prev, element) => element > prev ? element : prev);
     
+    bool finalConsumed = consumed ?? false;
+    if (consumed == null) {
+      final meal = await (db.select(db.meals)..where((m) => m.id.equals(mealId))).getSingleOrNull();
+      if (meal != null && meal.name.toLowerCase() == "snack") {
+        finalConsumed = true;
+      }
+    }
+
     await insertMealItem(
       MealItem(
         id: 0,
@@ -356,10 +435,68 @@ class MealRepository {
         targetId: targetId,
         amount: amount,
         amountUnit: amountUnit,
-        consumed: false,
+        consumed: finalConsumed,
         position: maxPos + 1,
       ),
     );
+  }
+
+  Future<void> saveTodayMeals(MealPlanWithMealsAndItems plan) {
+    return db.transaction(() async {
+      for (final mealWithItems in plan.meals) {
+        final consumedItems = mealWithItems.items.where((it) => it.mealItem.consumed).toList();
+        if (consumedItems.isNotEmpty) {
+          // Create individual logged plan for this meal
+          final now = DateTime.now();
+          final mealTime = mealWithItems.meal.time;
+          final eatenOn = DateTime(now.year, now.month, now.day, mealTime.hour, mealTime.minute, mealTime.second);
+          
+          final planId = await db.into(db.mealPlans).insert(
+                MealPlansCompanion.insert(
+                  parentPlanId: 0,
+                  title: mealWithItems.meal.name,
+                  notes: mealWithItems.meal.notes,
+                  state: MealPlanState.LOGGED,
+                  created: eatenOn,
+                  completed: eatenOn,
+                  targetProtein: const Value(0.0),
+                  targetCarbs: const Value(0.0),
+                  targetFats: const Value(0.0),
+                  isTemporal: const Value(true),
+                ),
+              );
+
+          // Copy the meal under the new plan
+          final newMealId = await db.into(db.meals).insert(
+                MealsCompanion.insert(
+                  mealPlanId: planId,
+                  name: mealWithItems.meal.name,
+                  time: mealWithItems.meal.time,
+                  notes: mealWithItems.meal.notes,
+                  position: 0,
+                ),
+              );
+
+          // Copy consumed items
+          for (final itemDetail in consumedItems) {
+            await db.into(db.mealItems).insert(
+                  MealItemsCompanion.insert(
+                    mealId: newMealId,
+                    type: itemDetail.mealItem.type,
+                    targetId: itemDetail.mealItem.targetId,
+                    amount: itemDetail.mealItem.amount,
+                    amountUnit: Value(itemDetail.mealItem.amountUnit),
+                    consumed: true,
+                    position: itemDetail.mealItem.position,
+                  ),
+                );
+          }
+        }
+      }
+
+      // Delete the active today plan
+      await deleteMealPlan(plan.mealPlan);
+    });
   }
 
   Future<void> replaceMealItemInMeal({
@@ -394,14 +531,26 @@ class MealRepository {
       parentPlanId: 0,
       title: "Today's Meal Log",
       notes: "",
-      state: MealPlanState.LOGGED,
+      state: MealPlanState.ACTIVE,
       created: now,
       completed: now,
-      isTemporal: false,
+      isTemporal: true,
     );
     return saveMealPlanWithMealsAndItems(
       MealPlanWithMealsAndItems(mealPlan: newPlan, meals: []),
     );
+  }
+
+  Future<void> cleanupTemporalMealPlans() async {
+    final cutoff = DateTime.now().subtract(const Duration(hours: 12));
+    final list = await (db.select(db.mealPlans)
+          ..where((mp) => mp.state.equalsValue(MealPlanState.TEMPLATE) & mp.isTemporal.equals(true)))
+        .get();
+    for (final mp in list) {
+      if (mp.created.isBefore(cutoff)) {
+        await db.delete(db.mealPlans).delete(mp);
+      }
+    }
   }
 
 
@@ -418,15 +567,15 @@ class MealRepository {
 
     // 1. Insert Products
     final productsList = [
-      const Product(id: 10001, name: "Whole Milk", weight: 1000.0, defaultUnits: "ml", unitWeight: 2, edibleQtyPerUnit: 0.0, proteins: 3.3, carbsAvailable: 4.7, fats: 3.6, isSupplement: false, isPortable: true),
-      const Product(id: 10002, name: "Oatmeal Cookies", weight: 200.0, defaultUnits: "g", unitWeight: 5, edibleQtyPerUnit: 0.0, proteins: 6.5, carbsAvailable: 65.0, fats: 15.0, isSupplement: false, isPortable: true),
-      const Product(id: 10003, name: "Creatine Monohydrate", weight: 300.0, defaultUnits: "g", unitWeight: 1, edibleQtyPerUnit: 0.0, proteins: 0.0, carbsAvailable: 0.0, fats: 0.0, isSupplement: true, isPortable: true),
-      const Product(id: 10004, name: "Chicken Breast", weight: 1000.0, defaultUnits: "g", unitWeight: 1, edibleQtyPerUnit: 0.0, proteins: 31.0, carbsAvailable: 0.0, fats: 3.6, isSupplement: false, isPortable: true),
-      const Product(id: 10005, name: "Cooked Rice", weight: 1000.0, defaultUnits: "g", unitWeight: 3, edibleQtyPerUnit: 0.0, proteins: 2.7, carbsAvailable: 28.0, fats: 0.3, isSupplement: false, isPortable: true),
-      const Product(id: 10006, name: "Banana", weight: 150.0, defaultUnits: "g", unitWeight: 6, edibleQtyPerUnit: 97.5, proteins: 1.1, carbsAvailable: 22.8, fats: 0.3, isSupplement: false, isPortable: true),
-      const Product(id: 10007, name: "Whole Eggs", weight: 60.0, defaultUnits: "unit", unitWeight: 30, edibleQtyPerUnit: 52.8, proteins: 13.0, carbsAvailable: 1.1, fats: 11.0, isSupplement: false, isPortable: true),
-      const Product(id: 10008, name: "Fresh Spinach", weight: 250.0, defaultUnits: "g", unitWeight: 1, edibleQtyPerUnit: 0.0, proteins: 2.9, carbsAvailable: 3.6, fats: 0.4, isSupplement: false, isPortable: false),
-      const Product(id: 10009, name: "Grilled Salmon", weight: 200.0, defaultUnits: "g", unitWeight: 2, edibleQtyPerUnit: 0.0, proteins: 25.0, carbsAvailable: 0.0, fats: 13.0, isSupplement: false, isPortable: false),
+      const Product(id: 10001, name: "Whole Milk", defaultUnits: "ml", edibleQtyPerUnit: 1.0, proteins: 3.3, carbsAvailable: 4.7, fats: 3.6, isSupplement: false, isPortable: true),
+      const Product(id: 10002, name: "Oatmeal Cookies", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 6.5, carbsAvailable: 65.0, fats: 15.0, isSupplement: false, isPortable: true),
+      const Product(id: 10003, name: "Creatine Monohydrate", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 0.0, carbsAvailable: 0.0, fats: 0.0, isSupplement: true, isPortable: true),
+      const Product(id: 10004, name: "Chicken Breast", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 31.0, carbsAvailable: 0.0, fats: 3.6, isSupplement: false, isPortable: true),
+      const Product(id: 10005, name: "Cooked Rice", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 2.7, carbsAvailable: 28.0, fats: 0.3, isSupplement: false, isPortable: true),
+      const Product(id: 10006, name: "Banana", defaultUnits: "g", edibleQtyPerUnit: 0.65, proteins: 1.1, carbsAvailable: 22.8, fats: 0.3, isSupplement: false, isPortable: true),
+      const Product(id: 10007, name: "Whole Eggs", defaultUnits: "unit", edibleQtyPerUnit: 0.88, proteins: 13.0, carbsAvailable: 1.1, fats: 11.0, isSupplement: false, isPortable: true),
+      const Product(id: 10008, name: "Fresh Spinach", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 2.9, carbsAvailable: 3.6, fats: 0.4, isSupplement: false, isPortable: false),
+      const Product(id: 10009, name: "Grilled Salmon", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 25.0, carbsAvailable: 0.0, fats: 13.0, isSupplement: false, isPortable: false),
     ];
 
     for (final p in productsList) {

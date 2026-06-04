@@ -17,6 +17,19 @@ import '../../core/providers/profile_providers.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/components/nexc_scaffold.dart';
 
+String formatDoubleHours(double hours) {
+  final totalMinutes = (hours * 60).round();
+  final hrs = totalMinutes ~/ 60;
+  final mins = totalMinutes % 60;
+  if (hrs > 0) {
+    if (mins > 0) {
+      return "${hrs}h ${mins}m";
+    }
+    return "${hrs}h";
+  }
+  return "${mins}m";
+}
+
 class MeasurementsScreen extends ConsumerStatefulWidget {
   const MeasurementsScreen({super.key});
 
@@ -306,7 +319,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                 : "${(log as AdvancedSleepMeasurement).date.month}/${log.date.day}/${log.date.year}";
 
             if (log is SleepMeasurement) {
-              final dur = log.sleepDuration != null ? "${log.sleepDuration} hrs" : "";
+              final dur = log.sleepDuration != null ? formatDoubleHours(log.sleepDuration!) : "";
               final rhr = log.sleepingRHR != null ? "${log.sleepingRHR} bpm RHR" : "";
               final hrv = log.sleepingHRV != null ? "${log.sleepingHRV} ms HRV" : "";
               final details = [dur, rhr, hrv].where((s) => s.isNotEmpty).join(", ");
@@ -348,10 +361,11 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
             } else {
               // AdvancedSleepMeasurement
               final adv = log as AdvancedSleepMeasurement;
-              final tib = adv.timeInBed != null ? "${adv.timeInBed} hrs Bed" : "";
-              final awake = adv.totalAwakeTime != null ? "${adv.totalAwakeTime} hrs Awake" : "";
+              final tib = adv.timeInBed != null ? "${formatDoubleHours(adv.timeInBed!)} Bed" : "";
+              final awake = adv.totalAwakeTime != null ? "${formatDoubleHours(adv.totalAwakeTime!)} Awake" : "";
+              final longest = adv.longestAwakePeriod != null ? "${formatDoubleHours(adv.longestAwakePeriod!)} Longest Awake" : "";
               final awakenings = adv.numberOfAwakenings != null ? "${adv.numberOfAwakenings} awakenings" : "";
-              final details = [tib, awake, awakenings].where((s) => s.isNotEmpty).join(", ");
+              final details = [tib, awake, longest, awakenings].where((s) => s.isNotEmpty).join(", ");
               return Card(
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
@@ -816,12 +830,17 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
   final _muscleController = TextEditingController();
   final _waistController = TextEditingController();
 
-  final _sleepDurController = TextEditingController();
+  final _sleepDurHrController = TextEditingController();
+  final _sleepDurMinController = TextEditingController();
   final _sleepRhrController = TextEditingController();
   final _sleepHrvController = TextEditingController();
 
-  final _tibController = TextEditingController();
-  final _awakeController = TextEditingController();
+  final _tibHrController = TextEditingController();
+  final _tibMinController = TextEditingController();
+  final _awakeHrController = TextEditingController();
+  final _awakeMinController = TextEditingController();
+  final _longestAwakeHrController = TextEditingController();
+  final _longestAwakeMinController = TextEditingController();
   final _awakeningsController = TextEditingController();
 
   final _stepsController = TextEditingController();
@@ -836,11 +855,16 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
     _bfController.dispose();
     _muscleController.dispose();
     _waistController.dispose();
-    _sleepDurController.dispose();
+    _sleepDurHrController.dispose();
+    _sleepDurMinController.dispose();
     _sleepRhrController.dispose();
     _sleepHrvController.dispose();
-    _tibController.dispose();
-    _awakeController.dispose();
+    _tibHrController.dispose();
+    _tibMinController.dispose();
+    _awakeHrController.dispose();
+    _awakeMinController.dispose();
+    _longestAwakeHrController.dispose();
+    _longestAwakeMinController.dispose();
     _awakeningsController.dispose();
     _stepsController.dispose();
     _activeEnergyController.dispose();
@@ -848,6 +872,64 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
     _wakingRhrController.dispose();
     _wakingHrvController.dispose();
     super.dispose();
+  }
+
+  double? _parseDuration(TextEditingController hr, TextEditingController min) {
+    final hStr = hr.text.trim();
+    final mStr = min.text.trim();
+    if (hStr.isEmpty && mStr.isEmpty) return null;
+    final h = double.tryParse(hStr) ?? 0.0;
+    final m = double.tryParse(mStr) ?? 0.0;
+    return h + (m / 60.0);
+  }
+
+  Widget _buildDurationField(
+      TextEditingController hrController,
+      TextEditingController minController,
+      String label,
+      IconData icon) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(icon, size: 20),
+            const SizedBox(width: 8),
+            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: hrController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Hrs",
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: minController,
+                keyboardType: TextInputType.number,
+                decoration: InputDecoration(
+                  labelText: "Min",
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _buildField(TextEditingController controller, String label, IconData icon, {bool isDecimal = true}) {
@@ -866,7 +948,6 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    final theme = Theme.of(context);
 
     final hasAdvancedBody = settings.enableAdvancedBody;
     final hasSleep = settings.enableSleep;
@@ -911,15 +992,15 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
                 const SizedBox(height: 8),
                 const Text("Sleep Metrics", style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
+                _buildDurationField(_sleepDurHrController, _sleepDurMinController, "Sleep Duration", Icons.hotel),
+                const SizedBox(height: 12),
                 Row(
                   children: [
-                    Expanded(child: _buildField(_sleepDurController, "Sleep (hrs)", Icons.hotel)),
-                    const SizedBox(width: 12),
                     Expanded(child: _buildField(_sleepRhrController, "Sleeping RHR", Icons.favorite)),
+                    const SizedBox(width: 12),
+                    Expanded(child: _buildField(_sleepHrvController, "Sleeping HRV (ms)", Icons.monitor_heart)),
                   ],
                 ),
-                const SizedBox(height: 12),
-                _buildField(_sleepHrvController, "Sleeping HRV (ms)", Icons.monitor_heart),
                 const SizedBox(height: 16),
               ],
 
@@ -928,13 +1009,11 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
                 const SizedBox(height: 8),
                 const Text("Advanced Sleep Metrics", style: TextStyle(fontWeight: FontWeight.bold)),
                 const SizedBox(height: 12),
-                Row(
-                  children: [
-                    Expanded(child: _buildField(_tibController, "Time in Bed (hrs)", Icons.bed)),
-                    const SizedBox(width: 12),
-                    Expanded(child: _buildField(_awakeController, "Awake (hrs)", Icons.wb_sunny)),
-                  ],
-                ),
+                _buildDurationField(_tibHrController, _tibMinController, "Time in Bed", Icons.bed),
+                const SizedBox(height: 12),
+                _buildDurationField(_awakeHrController, _awakeMinController, "Total Awake Time", Icons.wb_sunny),
+                const SizedBox(height: 12),
+                _buildDurationField(_longestAwakeHrController, _longestAwakeMinController, "Longest Awake Period", Icons.alarm),
                 const SizedBox(height: 12),
                 _buildField(_awakeningsController, "Number of Awakenings", Icons.alarm_on, isDecimal: false),
                 const SizedBox(height: 16),
@@ -1009,7 +1088,7 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
 
             // Save Sleep
             if (settings.enableSleep) {
-              final sleepDur = double.tryParse(_sleepDurController.text);
+              final sleepDur = _parseDuration(_sleepDurHrController, _sleepDurMinController);
               final sleepRhr = int.tryParse(_sleepRhrController.text);
               final sleepHrv = int.tryParse(_sleepHrvController.text);
               if (sleepDur != null || sleepRhr != null || sleepHrv != null) {
@@ -1026,14 +1105,16 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
 
             // Save Advanced Sleep
             if (settings.enableAdvancedSleep) {
-              final tib = double.tryParse(_tibController.text);
-              final awake = double.tryParse(_awakeController.text);
+              final tib = _parseDuration(_tibHrController, _tibMinController);
+              final awake = _parseDuration(_awakeHrController, _awakeMinController);
+              final longest = _parseDuration(_longestAwakeHrController, _longestAwakeMinController);
               final awakenings = int.tryParse(_awakeningsController.text);
-              if (tib != null || awake != null || awakenings != null) {
+              if (tib != null || awake != null || longest != null || awakenings != null) {
                 final advSleepLog = AdvancedSleepMeasurement(
                   id: Random().nextInt(1000000),
                   timeInBed: tib,
                   totalAwakeTime: awake,
+                  longestAwakePeriod: longest,
                   numberOfAwakenings: awakenings,
                   date: now,
                 );

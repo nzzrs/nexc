@@ -89,29 +89,10 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
-  String _getFormulaLabel(OneRepMaxFormula formula) {
-    switch (formula) {
-      case OneRepMaxFormula.balanced:
-        return 'Balanced';
-      case OneRepMaxFormula.epley:
-        return 'Epley';
-      case OneRepMaxFormula.brzycki:
-        return 'Brzycki';
-      case OneRepMaxFormula.mcglothin:
-        return 'McGlothin';
-      case OneRepMaxFormula.lombardi:
-        return 'Lombardi';
-      case OneRepMaxFormula.mayhew:
-        return 'Mayhew';
-      case OneRepMaxFormula.oConner:
-        return 'O\'Conner';
-      case OneRepMaxFormula.wathen:
-        return 'Wathen';
-    }
-  }
-
   String _getIntensityScaleLabel(IntensityScale scale) {
     switch (scale) {
+      case IntensityScale.none:
+        return 'None (disabled)';
       case IntensityScale.rpe:
         return 'RPE';
       case IntensityScale.rir:
@@ -203,57 +184,59 @@ class SettingsScreen extends ConsumerWidget {
             onClick: () => notifier.setRestTimerVibrationOn(!settings.restTimerVibrationOn),
           ),
           _SettingItem(
-            settingName: 'Sticky status bar',
+            settingName: 'Sticky workout status bar',
             settingDesc: settings.isWorkoutHeaderSticky ? 'Status bar is sticky' : 'Status bar is not sticky',
             icon: Icons.push_pin_outlined,
             isChecked: settings.isWorkoutHeaderSticky,
             onClick: () => notifier.setIsWorkoutHeaderSticky(!settings.isWorkoutHeaderSticky),
           ),
           _SettingItem(
-            settingName: '1RM Formula',
-            settingDesc: _getFormulaLabel(settings.oneRepMaxFormula),
-            icon: Icons.calculate_outlined,
+            settingName: 'Intensity scale',
+            settingDesc: _getIntensityScaleLabel(settings.intensityScale),
+            icon: Icons.line_weight,
             onClick: () {
-              _showSingleChoiceDialog<OneRepMaxFormula>(
+              _showSingleChoiceDialog<IntensityScale>(
                 context: context,
-                title: 'Select 1RM Formula',
-                options: OneRepMaxFormula.values,
-                selectedValue: settings.oneRepMaxFormula,
-                labelBuilder: _getFormulaLabel,
-                onSelected: notifier.setOneRepMaxFormula,
+                title: 'Select intensity scale',
+                options: IntensityScale.values,
+                selectedValue: settings.intensityScale,
+                labelBuilder: _getIntensityScaleLabel,
+                onSelected: notifier.setIntensityScale,
+              );
+            },
+            onInfoClick: () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Intensity Scales (RPE & RIR)'),
+                  content: const Text(
+                    '• RPE (Rate of Perceived Exertion): A 1-10 scale measuring how hard a set felt. 10 is maximum effort (no more reps possible), 9 means you could do 1 more rep, 8 means 2 more, etc.\n\n'
+                    '• RIR (Reps in Reserve): The number of reps you could have performed before hitting failure. 0 RIR is equivalent to 10 RPE.\n\n'
+                    'Use them to monitor and adjust intensity dynamically without always going to absolute muscle failure.',
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Close'),
+                    ),
+                  ],
+                ),
               );
             },
           ),
+
+          const SizedBox(height: 16),
+
+          // Navigation buttons
+          _buildSectionHeader(context, 'Data & Configuration'),
           _SettingItem(
-            settingName: 'Sleep mode',
-            settingDesc: settings.sleepModeEnabled ? 'Sleep mode enabled' : 'Sleep mode disabled',
-            icon: Icons.bedtime_outlined,
-            isChecked: settings.sleepModeEnabled,
-            onClick: () => notifier.setSleepModeEnabled(!settings.sleepModeEnabled),
+            settingName: 'Measurements Settings',
+            settingDesc: 'Configure which measurements to track',
+            icon: Icons.monitor_weight_outlined,
+            onClick: () {
+              Navigator.pushNamed(context, '/settings/measurements');
+            },
           ),
-          _SettingItem(
-            settingName: 'RPE/RIR intensity',
-            settingDesc: settings.showRpe ? 'Show scale selection' : 'Hide scale selection',
-            icon: Icons.timer_outlined,
-            isChecked: settings.showRpe,
-            onClick: () => notifier.setShowRpe(!settings.showRpe),
-          ),
-          if (settings.showRpe)
-            _SettingItem(
-              settingName: 'Intensity scale',
-              settingDesc: _getIntensityScaleLabel(settings.intensityScale),
-              icon: Icons.line_weight,
-              onClick: () {
-                _showSingleChoiceDialog<IntensityScale>(
-                  context: context,
-                  title: 'Select intensity scale',
-                  options: IntensityScale.values,
-                  selectedValue: settings.intensityScale,
-                  labelBuilder: _getIntensityScaleLabel,
-                  onSelected: notifier.setIntensityScale,
-                );
-              },
-            ),
           _SettingItem(
             settingName: 'Backup & Restore',
             settingDesc: 'Backup and restore your data',
@@ -287,6 +270,7 @@ class _SettingItem extends StatelessWidget {
   final IconData icon;
   final VoidCallback onClick;
   final bool? isChecked;
+  final VoidCallback? onInfoClick;
 
   const _SettingItem({
     required this.settingName,
@@ -294,6 +278,7 @@ class _SettingItem extends StatelessWidget {
     required this.icon,
     required this.onClick,
     this.isChecked,
+    this.onInfoClick,
   });
 
   @override
@@ -340,6 +325,11 @@ class _SettingItem extends StatelessWidget {
                     ],
                   ),
                 ),
+                if (onInfoClick != null)
+                  IconButton(
+                    icon: Icon(Icons.info_outline, color: theme.colorScheme.primary),
+                    onPressed: onInfoClick,
+                  ),
                 if (isChecked != null)
                   Switch(
                     value: isChecked!,

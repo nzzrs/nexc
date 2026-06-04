@@ -68,7 +68,7 @@ class _AboutScreenState extends State<AboutScreen> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(24),
               child: Image.asset(
-                'assets/images/nexc_logo.png',
+                'assets/images/logo.png',
                 width: 120,
                 height: 120,
                 errorBuilder: (context, error, stack) => Container(
@@ -169,18 +169,6 @@ class _AboutScreenState extends State<AboutScreen> {
             description: 'The open-source project Nexc is based on — by IamDg and contributors',
             icon: Icons.favorite_outline,
             onClick: () => _launchUrl('https://github.com/LibreFitOrg/LibreFit'),
-          ),
-          _AboutItem(
-            text: 'wger exercise database',
-            description: 'Exercise data licensed under Creative Commons BY-SA 4.0',
-            icon: Icons.sports_gymnastics,
-            onClick: () => _launchUrl('https://wger.de'),
-          ),
-          _AboutItem(
-            text: 'Open Food Facts',
-            description: 'Nutritional data licensed under ODbL',
-            icon: Icons.set_meal_outlined,
-            onClick: () => _launchUrl('https://openfoodfacts.org'),
           ),
 
           const SizedBox(height: 16),

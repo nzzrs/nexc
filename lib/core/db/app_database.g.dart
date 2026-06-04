@@ -59,9 +59,28 @@ class $WorkoutsTable extends Workouts with TableInfo<$WorkoutsTable, Workout> {
       GeneratedColumn<String>('completed', aliasedName, false,
               type: DriftSqlType.string, requiredDuringInsert: true)
           .withConverter<DateTime>($WorkoutsTable.$convertercompleted);
+  static const VerificationMeta _isTemporalMeta =
+      const VerificationMeta('isTemporal');
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, routineId, notes, title, state, timeElapsed, created, completed];
+  late final GeneratedColumn<bool> isTemporal = GeneratedColumn<bool>(
+      'isTemporal', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("isTemporal" IN (0, 1))'),
+      defaultValue: const Constant(false));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        routineId,
+        notes,
+        title,
+        state,
+        timeElapsed,
+        created,
+        completed,
+        isTemporal
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -104,6 +123,12 @@ class $WorkoutsTable extends Workouts with TableInfo<$WorkoutsTable, Workout> {
     }
     context.handle(_createdMeta, const VerificationResult.success());
     context.handle(_completedMeta, const VerificationResult.success());
+    if (data.containsKey('isTemporal')) {
+      context.handle(
+          _isTemporalMeta,
+          isTemporal.isAcceptableOrUnknown(
+              data['isTemporal']!, _isTemporalMeta));
+    }
     return context;
   }
 
@@ -131,6 +156,8 @@ class $WorkoutsTable extends Workouts with TableInfo<$WorkoutsTable, Workout> {
       completed: $WorkoutsTable.$convertercompleted.fromSql(attachedDatabase
           .typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}completed'])!),
+      isTemporal: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}isTemporal'])!,
     );
   }
 
@@ -156,6 +183,7 @@ class Workout extends DataClass implements Insertable<Workout> {
   final int timeElapsed;
   final DateTime created;
   final DateTime completed;
+  final bool isTemporal;
   const Workout(
       {required this.id,
       required this.routineId,
@@ -164,7 +192,8 @@ class Workout extends DataClass implements Insertable<Workout> {
       required this.state,
       required this.timeElapsed,
       required this.created,
-      required this.completed});
+      required this.completed,
+      required this.isTemporal});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -185,6 +214,7 @@ class Workout extends DataClass implements Insertable<Workout> {
       map['completed'] =
           Variable<String>($WorkoutsTable.$convertercompleted.toSql(completed));
     }
+    map['isTemporal'] = Variable<bool>(isTemporal);
     return map;
   }
 
@@ -198,6 +228,7 @@ class Workout extends DataClass implements Insertable<Workout> {
       timeElapsed: Value(timeElapsed),
       created: Value(created),
       completed: Value(completed),
+      isTemporal: Value(isTemporal),
     );
   }
 
@@ -213,6 +244,7 @@ class Workout extends DataClass implements Insertable<Workout> {
       timeElapsed: serializer.fromJson<int>(json['timeElapsed']),
       created: serializer.fromJson<DateTime>(json['created']),
       completed: serializer.fromJson<DateTime>(json['completed']),
+      isTemporal: serializer.fromJson<bool>(json['isTemporal']),
     );
   }
   @override
@@ -227,6 +259,7 @@ class Workout extends DataClass implements Insertable<Workout> {
       'timeElapsed': serializer.toJson<int>(timeElapsed),
       'created': serializer.toJson<DateTime>(created),
       'completed': serializer.toJson<DateTime>(completed),
+      'isTemporal': serializer.toJson<bool>(isTemporal),
     };
   }
 
@@ -238,7 +271,8 @@ class Workout extends DataClass implements Insertable<Workout> {
           WorkoutState? state,
           int? timeElapsed,
           DateTime? created,
-          DateTime? completed}) =>
+          DateTime? completed,
+          bool? isTemporal}) =>
       Workout(
         id: id ?? this.id,
         routineId: routineId ?? this.routineId,
@@ -248,6 +282,7 @@ class Workout extends DataClass implements Insertable<Workout> {
         timeElapsed: timeElapsed ?? this.timeElapsed,
         created: created ?? this.created,
         completed: completed ?? this.completed,
+        isTemporal: isTemporal ?? this.isTemporal,
       );
   @override
   String toString() {
@@ -259,14 +294,15 @@ class Workout extends DataClass implements Insertable<Workout> {
           ..write('state: $state, ')
           ..write('timeElapsed: $timeElapsed, ')
           ..write('created: $created, ')
-          ..write('completed: $completed')
+          ..write('completed: $completed, ')
+          ..write('isTemporal: $isTemporal')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(
-      id, routineId, notes, title, state, timeElapsed, created, completed);
+  int get hashCode => Object.hash(id, routineId, notes, title, state,
+      timeElapsed, created, completed, isTemporal);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -278,7 +314,8 @@ class Workout extends DataClass implements Insertable<Workout> {
           other.state == this.state &&
           other.timeElapsed == this.timeElapsed &&
           other.created == this.created &&
-          other.completed == this.completed);
+          other.completed == this.completed &&
+          other.isTemporal == this.isTemporal);
 }
 
 class WorkoutsCompanion extends UpdateCompanion<Workout> {
@@ -290,6 +327,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
   final Value<int> timeElapsed;
   final Value<DateTime> created;
   final Value<DateTime> completed;
+  final Value<bool> isTemporal;
   const WorkoutsCompanion({
     this.id = const Value.absent(),
     this.routineId = const Value.absent(),
@@ -299,6 +337,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
     this.timeElapsed = const Value.absent(),
     this.created = const Value.absent(),
     this.completed = const Value.absent(),
+    this.isTemporal = const Value.absent(),
   });
   WorkoutsCompanion.insert({
     this.id = const Value.absent(),
@@ -309,6 +348,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
     required int timeElapsed,
     required DateTime created,
     required DateTime completed,
+    this.isTemporal = const Value.absent(),
   })  : routineId = Value(routineId),
         notes = Value(notes),
         title = Value(title),
@@ -325,6 +365,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
     Expression<int>? timeElapsed,
     Expression<String>? created,
     Expression<String>? completed,
+    Expression<bool>? isTemporal,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -335,6 +376,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
       if (timeElapsed != null) 'timeElapsed': timeElapsed,
       if (created != null) 'created': created,
       if (completed != null) 'completed': completed,
+      if (isTemporal != null) 'isTemporal': isTemporal,
     });
   }
 
@@ -346,7 +388,8 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
       Value<WorkoutState>? state,
       Value<int>? timeElapsed,
       Value<DateTime>? created,
-      Value<DateTime>? completed}) {
+      Value<DateTime>? completed,
+      Value<bool>? isTemporal}) {
     return WorkoutsCompanion(
       id: id ?? this.id,
       routineId: routineId ?? this.routineId,
@@ -356,6 +399,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
       timeElapsed: timeElapsed ?? this.timeElapsed,
       created: created ?? this.created,
       completed: completed ?? this.completed,
+      isTemporal: isTemporal ?? this.isTemporal,
     );
   }
 
@@ -389,6 +433,9 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
       map['completed'] = Variable<String>(
           $WorkoutsTable.$convertercompleted.toSql(completed.value));
     }
+    if (isTemporal.present) {
+      map['isTemporal'] = Variable<bool>(isTemporal.value);
+    }
     return map;
   }
 
@@ -402,7 +449,8 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
           ..write('state: $state, ')
           ..write('timeElapsed: $timeElapsed, ')
           ..write('created: $created, ')
-          ..write('completed: $completed')
+          ..write('completed: $completed, ')
+          ..write('isTemporal: $isTemporal')
           ..write(')'))
         .toString();
   }
@@ -1491,12 +1539,6 @@ class $SetsTable extends Sets with TableInfo<$SetsTable, WorkoutSet> {
   late final GeneratedColumn<int> rir = GeneratedColumn<int>(
       'rir', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
-  static const VerificationMeta _intensityScale1Meta =
-      const VerificationMeta('intensityScale1');
-  @override
-  late final GeneratedColumn<int> intensityScale1 = GeneratedColumn<int>(
-      'intensityScale1', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _exerciseIdMeta =
       const VerificationMeta('exerciseId');
   @override
@@ -1504,17 +1546,8 @@ class $SetsTable extends Sets with TableInfo<$SetsTable, WorkoutSet> {
       'exerciseId', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
   @override
-  List<GeneratedColumn> get $columns => [
-        id,
-        load,
-        reps,
-        elapsedTime,
-        completed,
-        rpe,
-        rir,
-        intensityScale1,
-        exerciseId
-      ];
+  List<GeneratedColumn> get $columns =>
+      [id, load, reps, elapsedTime, completed, rpe, rir, exerciseId];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1562,12 +1595,6 @@ class $SetsTable extends Sets with TableInfo<$SetsTable, WorkoutSet> {
       context.handle(
           _rirMeta, rir.isAcceptableOrUnknown(data['rir']!, _rirMeta));
     }
-    if (data.containsKey('intensityScale1')) {
-      context.handle(
-          _intensityScale1Meta,
-          intensityScale1.isAcceptableOrUnknown(
-              data['intensityScale1']!, _intensityScale1Meta));
-    }
     if (data.containsKey('exerciseId')) {
       context.handle(
           _exerciseIdMeta,
@@ -1599,8 +1626,6 @@ class $SetsTable extends Sets with TableInfo<$SetsTable, WorkoutSet> {
           .read(DriftSqlType.double, data['${effectivePrefix}rpe']),
       rir: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}rir']),
-      intensityScale1: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}intensityScale1']),
       exerciseId: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}exerciseId'])!,
     );
@@ -1620,7 +1645,6 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
   final bool completed;
   final double? rpe;
   final int? rir;
-  final int? intensityScale1;
   final int exerciseId;
   const WorkoutSet(
       {required this.id,
@@ -1630,7 +1654,6 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
       required this.completed,
       this.rpe,
       this.rir,
-      this.intensityScale1,
       required this.exerciseId});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -1646,9 +1669,6 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     if (!nullToAbsent || rir != null) {
       map['rir'] = Variable<int>(rir);
     }
-    if (!nullToAbsent || intensityScale1 != null) {
-      map['intensityScale1'] = Variable<int>(intensityScale1);
-    }
     map['exerciseId'] = Variable<int>(exerciseId);
     return map;
   }
@@ -1662,9 +1682,6 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
       completed: Value(completed),
       rpe: rpe == null && nullToAbsent ? const Value.absent() : Value(rpe),
       rir: rir == null && nullToAbsent ? const Value.absent() : Value(rir),
-      intensityScale1: intensityScale1 == null && nullToAbsent
-          ? const Value.absent()
-          : Value(intensityScale1),
       exerciseId: Value(exerciseId),
     );
   }
@@ -1680,7 +1697,6 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
       completed: serializer.fromJson<bool>(json['completed']),
       rpe: serializer.fromJson<double?>(json['rpe']),
       rir: serializer.fromJson<int?>(json['rir']),
-      intensityScale1: serializer.fromJson<int?>(json['intensityScale1']),
       exerciseId: serializer.fromJson<int>(json['exerciseId']),
     );
   }
@@ -1695,7 +1711,6 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
       'completed': serializer.toJson<bool>(completed),
       'rpe': serializer.toJson<double?>(rpe),
       'rir': serializer.toJson<int?>(rir),
-      'intensityScale1': serializer.toJson<int?>(intensityScale1),
       'exerciseId': serializer.toJson<int>(exerciseId),
     };
   }
@@ -1708,7 +1723,6 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
           bool? completed,
           Value<double?> rpe = const Value.absent(),
           Value<int?> rir = const Value.absent(),
-          Value<int?> intensityScale1 = const Value.absent(),
           int? exerciseId}) =>
       WorkoutSet(
         id: id ?? this.id,
@@ -1718,9 +1732,6 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
         completed: completed ?? this.completed,
         rpe: rpe.present ? rpe.value : this.rpe,
         rir: rir.present ? rir.value : this.rir,
-        intensityScale1: intensityScale1.present
-            ? intensityScale1.value
-            : this.intensityScale1,
         exerciseId: exerciseId ?? this.exerciseId,
       );
   @override
@@ -1733,15 +1744,14 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
           ..write('completed: $completed, ')
           ..write('rpe: $rpe, ')
           ..write('rir: $rir, ')
-          ..write('intensityScale1: $intensityScale1, ')
           ..write('exerciseId: $exerciseId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, load, reps, elapsedTime, completed, rpe,
-      rir, intensityScale1, exerciseId);
+  int get hashCode =>
+      Object.hash(id, load, reps, elapsedTime, completed, rpe, rir, exerciseId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1753,7 +1763,6 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
           other.completed == this.completed &&
           other.rpe == this.rpe &&
           other.rir == this.rir &&
-          other.intensityScale1 == this.intensityScale1 &&
           other.exerciseId == this.exerciseId);
 }
 
@@ -1765,7 +1774,6 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
   final Value<bool> completed;
   final Value<double?> rpe;
   final Value<int?> rir;
-  final Value<int?> intensityScale1;
   final Value<int> exerciseId;
   const SetsCompanion({
     this.id = const Value.absent(),
@@ -1775,7 +1783,6 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
     this.completed = const Value.absent(),
     this.rpe = const Value.absent(),
     this.rir = const Value.absent(),
-    this.intensityScale1 = const Value.absent(),
     this.exerciseId = const Value.absent(),
   });
   SetsCompanion.insert({
@@ -1786,7 +1793,6 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
     required bool completed,
     this.rpe = const Value.absent(),
     this.rir = const Value.absent(),
-    this.intensityScale1 = const Value.absent(),
     required int exerciseId,
   })  : load = Value(load),
         reps = Value(reps),
@@ -1801,7 +1807,6 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
     Expression<bool>? completed,
     Expression<double>? rpe,
     Expression<int>? rir,
-    Expression<int>? intensityScale1,
     Expression<int>? exerciseId,
   }) {
     return RawValuesInsertable({
@@ -1812,7 +1817,6 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
       if (completed != null) 'completed': completed,
       if (rpe != null) 'rpe': rpe,
       if (rir != null) 'rir': rir,
-      if (intensityScale1 != null) 'intensityScale1': intensityScale1,
       if (exerciseId != null) 'exerciseId': exerciseId,
     });
   }
@@ -1825,7 +1829,6 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
       Value<bool>? completed,
       Value<double?>? rpe,
       Value<int?>? rir,
-      Value<int?>? intensityScale1,
       Value<int>? exerciseId}) {
     return SetsCompanion(
       id: id ?? this.id,
@@ -1835,7 +1838,6 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
       completed: completed ?? this.completed,
       rpe: rpe ?? this.rpe,
       rir: rir ?? this.rir,
-      intensityScale1: intensityScale1 ?? this.intensityScale1,
       exerciseId: exerciseId ?? this.exerciseId,
     );
   }
@@ -1864,9 +1866,6 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
     if (rir.present) {
       map['rir'] = Variable<int>(rir.value);
     }
-    if (intensityScale1.present) {
-      map['intensityScale1'] = Variable<int>(intensityScale1.value);
-    }
     if (exerciseId.present) {
       map['exerciseId'] = Variable<int>(exerciseId.value);
     }
@@ -1883,7 +1882,6 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
           ..write('completed: $completed, ')
           ..write('rpe: $rpe, ')
           ..write('rir: $rir, ')
-          ..write('intensityScale1: $intensityScale1, ')
           ..write('exerciseId: $exerciseId')
           ..write(')'))
         .toString();
@@ -4305,22 +4303,11 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   late final GeneratedColumn<String> name = GeneratedColumn<String>(
       'name', aliasedName, false,
       type: DriftSqlType.string, requiredDuringInsert: true);
-  static const VerificationMeta _weightMeta = const VerificationMeta('weight');
-  @override
-  late final GeneratedColumn<double> weight = GeneratedColumn<double>(
-      'weight', aliasedName, false,
-      type: DriftSqlType.double, requiredDuringInsert: true);
   static const VerificationMeta _mlToGFactorMeta =
       const VerificationMeta('mlToGFactor');
   @override
   late final GeneratedColumn<int> mlToGFactor = GeneratedColumn<int>(
       'mlToGFactor', aliasedName, true,
-      type: DriftSqlType.int, requiredDuringInsert: false);
-  static const VerificationMeta _unitWeightMeta =
-      const VerificationMeta('unitWeight');
-  @override
-  late final GeneratedColumn<int> unitWeight = GeneratedColumn<int>(
-      'unitWeight', aliasedName, true,
       type: DriftSqlType.int, requiredDuringInsert: false);
   static const VerificationMeta _defaultUnitsMeta =
       const VerificationMeta('defaultUnits');
@@ -4391,9 +4378,7 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
   List<GeneratedColumn> get $columns => [
         id,
         name,
-        weight,
         mlToGFactor,
-        unitWeight,
         defaultUnits,
         edibleQtyPerUnit,
         kcal,
@@ -4424,23 +4409,11 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
     } else if (isInserting) {
       context.missing(_nameMeta);
     }
-    if (data.containsKey('weight')) {
-      context.handle(_weightMeta,
-          weight.isAcceptableOrUnknown(data['weight']!, _weightMeta));
-    } else if (isInserting) {
-      context.missing(_weightMeta);
-    }
     if (data.containsKey('mlToGFactor')) {
       context.handle(
           _mlToGFactorMeta,
           mlToGFactor.isAcceptableOrUnknown(
               data['mlToGFactor']!, _mlToGFactorMeta));
-    }
-    if (data.containsKey('unitWeight')) {
-      context.handle(
-          _unitWeightMeta,
-          unitWeight.isAcceptableOrUnknown(
-              data['unitWeight']!, _unitWeightMeta));
     }
     if (data.containsKey('defaultUnits')) {
       context.handle(
@@ -4515,12 +4488,8 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       name: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
-      weight: attachedDatabase.typeMapping
-          .read(DriftSqlType.double, data['${effectivePrefix}weight'])!,
       mlToGFactor: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}mlToGFactor']),
-      unitWeight: attachedDatabase.typeMapping
-          .read(DriftSqlType.int, data['${effectivePrefix}unitWeight']),
       defaultUnits: attachedDatabase.typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}defaultUnits']),
       edibleQtyPerUnit: attachedDatabase.typeMapping.read(
@@ -4553,9 +4522,7 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
 class Product extends DataClass implements Insertable<Product> {
   final int id;
   final String name;
-  final double weight;
   final int? mlToGFactor;
-  final int? unitWeight;
   final String? defaultUnits;
   final double? edibleQtyPerUnit;
   final double? kcal;
@@ -4569,9 +4536,7 @@ class Product extends DataClass implements Insertable<Product> {
   const Product(
       {required this.id,
       required this.name,
-      required this.weight,
       this.mlToGFactor,
-      this.unitWeight,
       this.defaultUnits,
       this.edibleQtyPerUnit,
       this.kcal,
@@ -4587,12 +4552,8 @@ class Product extends DataClass implements Insertable<Product> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['name'] = Variable<String>(name);
-    map['weight'] = Variable<double>(weight);
     if (!nullToAbsent || mlToGFactor != null) {
       map['mlToGFactor'] = Variable<int>(mlToGFactor);
-    }
-    if (!nullToAbsent || unitWeight != null) {
-      map['unitWeight'] = Variable<int>(unitWeight);
     }
     if (!nullToAbsent || defaultUnits != null) {
       map['defaultUnits'] = Variable<String>(defaultUnits);
@@ -4623,13 +4584,9 @@ class Product extends DataClass implements Insertable<Product> {
     return ProductsCompanion(
       id: Value(id),
       name: Value(name),
-      weight: Value(weight),
       mlToGFactor: mlToGFactor == null && nullToAbsent
           ? const Value.absent()
           : Value(mlToGFactor),
-      unitWeight: unitWeight == null && nullToAbsent
-          ? const Value.absent()
-          : Value(unitWeight),
       defaultUnits: defaultUnits == null && nullToAbsent
           ? const Value.absent()
           : Value(defaultUnits),
@@ -4659,9 +4616,7 @@ class Product extends DataClass implements Insertable<Product> {
     return Product(
       id: serializer.fromJson<int>(json['id']),
       name: serializer.fromJson<String>(json['name']),
-      weight: serializer.fromJson<double>(json['weight']),
       mlToGFactor: serializer.fromJson<int?>(json['mlToGFactor']),
-      unitWeight: serializer.fromJson<int?>(json['unitWeight']),
       defaultUnits: serializer.fromJson<String?>(json['defaultUnits']),
       edibleQtyPerUnit: serializer.fromJson<double?>(json['edibleQtyPerUnit']),
       kcal: serializer.fromJson<double?>(json['kcal']),
@@ -4681,9 +4636,7 @@ class Product extends DataClass implements Insertable<Product> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'name': serializer.toJson<String>(name),
-      'weight': serializer.toJson<double>(weight),
       'mlToGFactor': serializer.toJson<int?>(mlToGFactor),
-      'unitWeight': serializer.toJson<int?>(unitWeight),
       'defaultUnits': serializer.toJson<String?>(defaultUnits),
       'edibleQtyPerUnit': serializer.toJson<double?>(edibleQtyPerUnit),
       'kcal': serializer.toJson<double?>(kcal),
@@ -4700,9 +4653,7 @@ class Product extends DataClass implements Insertable<Product> {
   Product copyWith(
           {int? id,
           String? name,
-          double? weight,
           Value<int?> mlToGFactor = const Value.absent(),
-          Value<int?> unitWeight = const Value.absent(),
           Value<String?> defaultUnits = const Value.absent(),
           Value<double?> edibleQtyPerUnit = const Value.absent(),
           Value<double?> kcal = const Value.absent(),
@@ -4716,9 +4667,7 @@ class Product extends DataClass implements Insertable<Product> {
       Product(
         id: id ?? this.id,
         name: name ?? this.name,
-        weight: weight ?? this.weight,
         mlToGFactor: mlToGFactor.present ? mlToGFactor.value : this.mlToGFactor,
-        unitWeight: unitWeight.present ? unitWeight.value : this.unitWeight,
         defaultUnits:
             defaultUnits.present ? defaultUnits.value : this.defaultUnits,
         edibleQtyPerUnit: edibleQtyPerUnit.present
@@ -4742,9 +4691,7 @@ class Product extends DataClass implements Insertable<Product> {
     return (StringBuffer('Product(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('weight: $weight, ')
           ..write('mlToGFactor: $mlToGFactor, ')
-          ..write('unitWeight: $unitWeight, ')
           ..write('defaultUnits: $defaultUnits, ')
           ..write('edibleQtyPerUnit: $edibleQtyPerUnit, ')
           ..write('kcal: $kcal, ')
@@ -4763,9 +4710,7 @@ class Product extends DataClass implements Insertable<Product> {
   int get hashCode => Object.hash(
       id,
       name,
-      weight,
       mlToGFactor,
-      unitWeight,
       defaultUnits,
       edibleQtyPerUnit,
       kcal,
@@ -4782,9 +4727,7 @@ class Product extends DataClass implements Insertable<Product> {
       (other is Product &&
           other.id == this.id &&
           other.name == this.name &&
-          other.weight == this.weight &&
           other.mlToGFactor == this.mlToGFactor &&
-          other.unitWeight == this.unitWeight &&
           other.defaultUnits == this.defaultUnits &&
           other.edibleQtyPerUnit == this.edibleQtyPerUnit &&
           other.kcal == this.kcal &&
@@ -4800,9 +4743,7 @@ class Product extends DataClass implements Insertable<Product> {
 class ProductsCompanion extends UpdateCompanion<Product> {
   final Value<int> id;
   final Value<String> name;
-  final Value<double> weight;
   final Value<int?> mlToGFactor;
-  final Value<int?> unitWeight;
   final Value<String?> defaultUnits;
   final Value<double?> edibleQtyPerUnit;
   final Value<double?> kcal;
@@ -4816,9 +4757,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   const ProductsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
-    this.weight = const Value.absent(),
     this.mlToGFactor = const Value.absent(),
-    this.unitWeight = const Value.absent(),
     this.defaultUnits = const Value.absent(),
     this.edibleQtyPerUnit = const Value.absent(),
     this.kcal = const Value.absent(),
@@ -4833,9 +4772,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   ProductsCompanion.insert({
     this.id = const Value.absent(),
     required String name,
-    required double weight,
     this.mlToGFactor = const Value.absent(),
-    this.unitWeight = const Value.absent(),
     this.defaultUnits = const Value.absent(),
     this.edibleQtyPerUnit = const Value.absent(),
     this.kcal = const Value.absent(),
@@ -4847,16 +4784,13 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     required bool isSupplement,
     this.isPortable = const Value.absent(),
   })  : name = Value(name),
-        weight = Value(weight),
         proteins = Value(proteins),
         fats = Value(fats),
         isSupplement = Value(isSupplement);
   static Insertable<Product> custom({
     Expression<int>? id,
     Expression<String>? name,
-    Expression<double>? weight,
     Expression<int>? mlToGFactor,
-    Expression<int>? unitWeight,
     Expression<String>? defaultUnits,
     Expression<double>? edibleQtyPerUnit,
     Expression<double>? kcal,
@@ -4871,9 +4805,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
-      if (weight != null) 'weight': weight,
       if (mlToGFactor != null) 'mlToGFactor': mlToGFactor,
-      if (unitWeight != null) 'unitWeight': unitWeight,
       if (defaultUnits != null) 'defaultUnits': defaultUnits,
       if (edibleQtyPerUnit != null) 'edibleQtyPerUnit': edibleQtyPerUnit,
       if (kcal != null) 'kcal': kcal,
@@ -4890,9 +4822,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   ProductsCompanion copyWith(
       {Value<int>? id,
       Value<String>? name,
-      Value<double>? weight,
       Value<int?>? mlToGFactor,
-      Value<int?>? unitWeight,
       Value<String?>? defaultUnits,
       Value<double?>? edibleQtyPerUnit,
       Value<double?>? kcal,
@@ -4906,9 +4836,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     return ProductsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
-      weight: weight ?? this.weight,
       mlToGFactor: mlToGFactor ?? this.mlToGFactor,
-      unitWeight: unitWeight ?? this.unitWeight,
       defaultUnits: defaultUnits ?? this.defaultUnits,
       edibleQtyPerUnit: edibleQtyPerUnit ?? this.edibleQtyPerUnit,
       kcal: kcal ?? this.kcal,
@@ -4931,14 +4859,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     if (name.present) {
       map['name'] = Variable<String>(name.value);
     }
-    if (weight.present) {
-      map['weight'] = Variable<double>(weight.value);
-    }
     if (mlToGFactor.present) {
       map['mlToGFactor'] = Variable<int>(mlToGFactor.value);
-    }
-    if (unitWeight.present) {
-      map['unitWeight'] = Variable<int>(unitWeight.value);
     }
     if (defaultUnits.present) {
       map['defaultUnits'] = Variable<String>(defaultUnits.value);
@@ -4978,9 +4900,7 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     return (StringBuffer('ProductsCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('weight: $weight, ')
           ..write('mlToGFactor: $mlToGFactor, ')
-          ..write('unitWeight: $unitWeight, ')
           ..write('defaultUnits: $defaultUnits, ')
           ..write('edibleQtyPerUnit: $edibleQtyPerUnit, ')
           ..write('kcal: $kcal, ')
@@ -6813,6 +6733,223 @@ class MealItemsCompanion extends UpdateCompanion<MealItem> {
   }
 }
 
+class $UsersTable extends Users with TableInfo<$UsersTable, UserData> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $UsersTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _heightMeta = const VerificationMeta('height');
+  @override
+  late final GeneratedColumn<double> height = GeneratedColumn<double>(
+      'height', aliasedName, true,
+      type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _birthDateMeta =
+      const VerificationMeta('birthDate');
+  @override
+  late final GeneratedColumnWithTypeConverter<DateTime?, String> birthDate =
+      GeneratedColumn<String>('birth_date', aliasedName, true,
+              type: DriftSqlType.string, requiredDuringInsert: false)
+          .withConverter<DateTime?>($UsersTable.$converterbirthDaten);
+  @override
+  List<GeneratedColumn> get $columns => [id, height, birthDate];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'users';
+  @override
+  VerificationContext validateIntegrity(Insertable<UserData> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('height')) {
+      context.handle(_heightMeta,
+          height.isAcceptableOrUnknown(data['height']!, _heightMeta));
+    }
+    context.handle(_birthDateMeta, const VerificationResult.success());
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  UserData map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return UserData(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      height: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}height']),
+      birthDate: $UsersTable.$converterbirthDaten.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}birth_date'])),
+    );
+  }
+
+  @override
+  $UsersTable createAlias(String alias) {
+    return $UsersTable(attachedDatabase, alias);
+  }
+
+  static TypeConverter<DateTime, String> $converterbirthDate =
+      const IsoDateTimeConverter();
+  static TypeConverter<DateTime?, String?> $converterbirthDaten =
+      NullAwareTypeConverter.wrap($converterbirthDate);
+}
+
+class UserData extends DataClass implements Insertable<UserData> {
+  final int id;
+  final double? height;
+  final DateTime? birthDate;
+  const UserData({required this.id, this.height, this.birthDate});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    if (!nullToAbsent || height != null) {
+      map['height'] = Variable<double>(height);
+    }
+    if (!nullToAbsent || birthDate != null) {
+      map['birth_date'] =
+          Variable<String>($UsersTable.$converterbirthDaten.toSql(birthDate));
+    }
+    return map;
+  }
+
+  UsersCompanion toCompanion(bool nullToAbsent) {
+    return UsersCompanion(
+      id: Value(id),
+      height:
+          height == null && nullToAbsent ? const Value.absent() : Value(height),
+      birthDate: birthDate == null && nullToAbsent
+          ? const Value.absent()
+          : Value(birthDate),
+    );
+  }
+
+  factory UserData.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return UserData(
+      id: serializer.fromJson<int>(json['id']),
+      height: serializer.fromJson<double?>(json['height']),
+      birthDate: serializer.fromJson<DateTime?>(json['birthDate']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'height': serializer.toJson<double?>(height),
+      'birthDate': serializer.toJson<DateTime?>(birthDate),
+    };
+  }
+
+  UserData copyWith(
+          {int? id,
+          Value<double?> height = const Value.absent(),
+          Value<DateTime?> birthDate = const Value.absent()}) =>
+      UserData(
+        id: id ?? this.id,
+        height: height.present ? height.value : this.height,
+        birthDate: birthDate.present ? birthDate.value : this.birthDate,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('UserData(')
+          ..write('id: $id, ')
+          ..write('height: $height, ')
+          ..write('birthDate: $birthDate')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, height, birthDate);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is UserData &&
+          other.id == this.id &&
+          other.height == this.height &&
+          other.birthDate == this.birthDate);
+}
+
+class UsersCompanion extends UpdateCompanion<UserData> {
+  final Value<int> id;
+  final Value<double?> height;
+  final Value<DateTime?> birthDate;
+  const UsersCompanion({
+    this.id = const Value.absent(),
+    this.height = const Value.absent(),
+    this.birthDate = const Value.absent(),
+  });
+  UsersCompanion.insert({
+    this.id = const Value.absent(),
+    this.height = const Value.absent(),
+    this.birthDate = const Value.absent(),
+  });
+  static Insertable<UserData> custom({
+    Expression<int>? id,
+    Expression<double>? height,
+    Expression<String>? birthDate,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (height != null) 'height': height,
+      if (birthDate != null) 'birth_date': birthDate,
+    });
+  }
+
+  UsersCompanion copyWith(
+      {Value<int>? id, Value<double?>? height, Value<DateTime?>? birthDate}) {
+    return UsersCompanion(
+      id: id ?? this.id,
+      height: height ?? this.height,
+      birthDate: birthDate ?? this.birthDate,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (height.present) {
+      map['height'] = Variable<double>(height.value);
+    }
+    if (birthDate.present) {
+      map['birth_date'] = Variable<String>(
+          $UsersTable.$converterbirthDaten.toSql(birthDate.value));
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('UsersCompanion(')
+          ..write('id: $id, ')
+          ..write('height: $height, ')
+          ..write('birthDate: $birthDate')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   _$AppDatabaseManager get managers => _$AppDatabaseManager(this);
@@ -6837,6 +6974,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $MealPlansTable mealPlans = $MealPlansTable(this);
   late final $MealsTable meals = $MealsTable(this);
   late final $MealItemsTable mealItems = $MealItemsTable(this);
+  late final $UsersTable users = $UsersTable(this);
   late final Index indexExercisesWorkoutId = Index('index_exercises_workoutId',
       'CREATE INDEX index_exercises_workoutId ON exercises (workoutId)');
   late final Index indexExercisesWorkoutIdPosition = Index(
@@ -6883,6 +7021,7 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         mealPlans,
         meals,
         mealItems,
+        users,
         indexExercisesWorkoutId,
         indexExercisesWorkoutIdPosition,
         indexExercisesExerciseDataId,
@@ -6905,6 +7044,7 @@ typedef $$WorkoutsTableInsertCompanionBuilder = WorkoutsCompanion Function({
   required int timeElapsed,
   required DateTime created,
   required DateTime completed,
+  Value<bool> isTemporal,
 });
 typedef $$WorkoutsTableUpdateCompanionBuilder = WorkoutsCompanion Function({
   Value<int> id,
@@ -6915,6 +7055,7 @@ typedef $$WorkoutsTableUpdateCompanionBuilder = WorkoutsCompanion Function({
   Value<int> timeElapsed,
   Value<DateTime> created,
   Value<DateTime> completed,
+  Value<bool> isTemporal,
 });
 
 class $$WorkoutsTableTableManager extends RootTableManager<
@@ -6945,6 +7086,7 @@ class $$WorkoutsTableTableManager extends RootTableManager<
             Value<int> timeElapsed = const Value.absent(),
             Value<DateTime> created = const Value.absent(),
             Value<DateTime> completed = const Value.absent(),
+            Value<bool> isTemporal = const Value.absent(),
           }) =>
               WorkoutsCompanion(
             id: id,
@@ -6955,6 +7097,7 @@ class $$WorkoutsTableTableManager extends RootTableManager<
             timeElapsed: timeElapsed,
             created: created,
             completed: completed,
+            isTemporal: isTemporal,
           ),
           getInsertCompanionBuilder: ({
             Value<int> id = const Value.absent(),
@@ -6965,6 +7108,7 @@ class $$WorkoutsTableTableManager extends RootTableManager<
             required int timeElapsed,
             required DateTime created,
             required DateTime completed,
+            Value<bool> isTemporal = const Value.absent(),
           }) =>
               WorkoutsCompanion.insert(
             id: id,
@@ -6975,6 +7119,7 @@ class $$WorkoutsTableTableManager extends RootTableManager<
             timeElapsed: timeElapsed,
             created: created,
             completed: completed,
+            isTemporal: isTemporal,
           ),
         ));
 }
@@ -7039,6 +7184,11 @@ class $$WorkoutsTableFilterComposer
           builder: (column, joinBuilders) => ColumnWithTypeConverterFilters(
               column,
               joinBuilders: joinBuilders));
+
+  ColumnFilters<bool> get isTemporal => $state.composableBuilder(
+      column: $state.table.isTemporal,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
 class $$WorkoutsTableOrderingComposer
@@ -7081,6 +7231,11 @@ class $$WorkoutsTableOrderingComposer
 
   ColumnOrderings<String> get completed => $state.composableBuilder(
       column: $state.table.completed,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<bool> get isTemporal => $state.composableBuilder(
+      column: $state.table.isTemporal,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
@@ -7551,7 +7706,6 @@ typedef $$SetsTableInsertCompanionBuilder = SetsCompanion Function({
   required bool completed,
   Value<double?> rpe,
   Value<int?> rir,
-  Value<int?> intensityScale1,
   required int exerciseId,
 });
 typedef $$SetsTableUpdateCompanionBuilder = SetsCompanion Function({
@@ -7562,7 +7716,6 @@ typedef $$SetsTableUpdateCompanionBuilder = SetsCompanion Function({
   Value<bool> completed,
   Value<double?> rpe,
   Value<int?> rir,
-  Value<int?> intensityScale1,
   Value<int> exerciseId,
 });
 
@@ -7592,7 +7745,6 @@ class $$SetsTableTableManager extends RootTableManager<
             Value<bool> completed = const Value.absent(),
             Value<double?> rpe = const Value.absent(),
             Value<int?> rir = const Value.absent(),
-            Value<int?> intensityScale1 = const Value.absent(),
             Value<int> exerciseId = const Value.absent(),
           }) =>
               SetsCompanion(
@@ -7603,7 +7755,6 @@ class $$SetsTableTableManager extends RootTableManager<
             completed: completed,
             rpe: rpe,
             rir: rir,
-            intensityScale1: intensityScale1,
             exerciseId: exerciseId,
           ),
           getInsertCompanionBuilder: ({
@@ -7614,7 +7765,6 @@ class $$SetsTableTableManager extends RootTableManager<
             required bool completed,
             Value<double?> rpe = const Value.absent(),
             Value<int?> rir = const Value.absent(),
-            Value<int?> intensityScale1 = const Value.absent(),
             required int exerciseId,
           }) =>
               SetsCompanion.insert(
@@ -7625,7 +7775,6 @@ class $$SetsTableTableManager extends RootTableManager<
             completed: completed,
             rpe: rpe,
             rir: rir,
-            intensityScale1: intensityScale1,
             exerciseId: exerciseId,
           ),
         ));
@@ -7681,11 +7830,6 @@ class $$SetsTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ColumnFilters<int> get intensityScale1 => $state.composableBuilder(
-      column: $state.table.intensityScale1,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
   ColumnFilters<int> get exerciseId => $state.composableBuilder(
       column: $state.table.exerciseId,
       builder: (column, joinBuilders) =>
@@ -7727,11 +7871,6 @@ class $$SetsTableOrderingComposer
 
   ColumnOrderings<int> get rir => $state.composableBuilder(
       column: $state.table.rir,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<int> get intensityScale1 => $state.composableBuilder(
-      column: $state.table.intensityScale1,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
@@ -8771,9 +8910,7 @@ class $$AdvancedSleepMeasurementsTableOrderingComposer
 typedef $$ProductsTableInsertCompanionBuilder = ProductsCompanion Function({
   Value<int> id,
   required String name,
-  required double weight,
   Value<int?> mlToGFactor,
-  Value<int?> unitWeight,
   Value<String?> defaultUnits,
   Value<double?> edibleQtyPerUnit,
   Value<double?> kcal,
@@ -8788,9 +8925,7 @@ typedef $$ProductsTableInsertCompanionBuilder = ProductsCompanion Function({
 typedef $$ProductsTableUpdateCompanionBuilder = ProductsCompanion Function({
   Value<int> id,
   Value<String> name,
-  Value<double> weight,
   Value<int?> mlToGFactor,
-  Value<int?> unitWeight,
   Value<String?> defaultUnits,
   Value<double?> edibleQtyPerUnit,
   Value<double?> kcal,
@@ -8825,9 +8960,7 @@ class $$ProductsTableTableManager extends RootTableManager<
           getUpdateCompanionBuilder: ({
             Value<int> id = const Value.absent(),
             Value<String> name = const Value.absent(),
-            Value<double> weight = const Value.absent(),
             Value<int?> mlToGFactor = const Value.absent(),
-            Value<int?> unitWeight = const Value.absent(),
             Value<String?> defaultUnits = const Value.absent(),
             Value<double?> edibleQtyPerUnit = const Value.absent(),
             Value<double?> kcal = const Value.absent(),
@@ -8842,9 +8975,7 @@ class $$ProductsTableTableManager extends RootTableManager<
               ProductsCompanion(
             id: id,
             name: name,
-            weight: weight,
             mlToGFactor: mlToGFactor,
-            unitWeight: unitWeight,
             defaultUnits: defaultUnits,
             edibleQtyPerUnit: edibleQtyPerUnit,
             kcal: kcal,
@@ -8859,9 +8990,7 @@ class $$ProductsTableTableManager extends RootTableManager<
           getInsertCompanionBuilder: ({
             Value<int> id = const Value.absent(),
             required String name,
-            required double weight,
             Value<int?> mlToGFactor = const Value.absent(),
-            Value<int?> unitWeight = const Value.absent(),
             Value<String?> defaultUnits = const Value.absent(),
             Value<double?> edibleQtyPerUnit = const Value.absent(),
             Value<double?> kcal = const Value.absent(),
@@ -8876,9 +9005,7 @@ class $$ProductsTableTableManager extends RootTableManager<
               ProductsCompanion.insert(
             id: id,
             name: name,
-            weight: weight,
             mlToGFactor: mlToGFactor,
-            unitWeight: unitWeight,
             defaultUnits: defaultUnits,
             edibleQtyPerUnit: edibleQtyPerUnit,
             kcal: kcal,
@@ -8918,18 +9045,8 @@ class $$ProductsTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
-  ColumnFilters<double> get weight => $state.composableBuilder(
-      column: $state.table.weight,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
   ColumnFilters<int> get mlToGFactor => $state.composableBuilder(
       column: $state.table.mlToGFactor,
-      builder: (column, joinBuilders) =>
-          ColumnFilters(column, joinBuilders: joinBuilders));
-
-  ColumnFilters<int> get unitWeight => $state.composableBuilder(
-      column: $state.table.unitWeight,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
@@ -8997,18 +9114,8 @@ class $$ProductsTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
-  ColumnOrderings<double> get weight => $state.composableBuilder(
-      column: $state.table.weight,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
   ColumnOrderings<int> get mlToGFactor => $state.composableBuilder(
       column: $state.table.mlToGFactor,
-      builder: (column, joinBuilders) =>
-          ColumnOrderings(column, joinBuilders: joinBuilders));
-
-  ColumnOrderings<int> get unitWeight => $state.composableBuilder(
-      column: $state.table.unitWeight,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
@@ -9896,6 +10003,110 @@ class $$MealItemsTableOrderingComposer
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
+typedef $$UsersTableInsertCompanionBuilder = UsersCompanion Function({
+  Value<int> id,
+  Value<double?> height,
+  Value<DateTime?> birthDate,
+});
+typedef $$UsersTableUpdateCompanionBuilder = UsersCompanion Function({
+  Value<int> id,
+  Value<double?> height,
+  Value<DateTime?> birthDate,
+});
+
+class $$UsersTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $UsersTable,
+    UserData,
+    $$UsersTableFilterComposer,
+    $$UsersTableOrderingComposer,
+    $$UsersTableProcessedTableManager,
+    $$UsersTableInsertCompanionBuilder,
+    $$UsersTableUpdateCompanionBuilder> {
+  $$UsersTableTableManager(_$AppDatabase db, $UsersTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$UsersTableFilterComposer(ComposerState(db, table)),
+          orderingComposer:
+              $$UsersTableOrderingComposer(ComposerState(db, table)),
+          getChildManagerBuilder: (p) => $$UsersTableProcessedTableManager(p),
+          getUpdateCompanionBuilder: ({
+            Value<int> id = const Value.absent(),
+            Value<double?> height = const Value.absent(),
+            Value<DateTime?> birthDate = const Value.absent(),
+          }) =>
+              UsersCompanion(
+            id: id,
+            height: height,
+            birthDate: birthDate,
+          ),
+          getInsertCompanionBuilder: ({
+            Value<int> id = const Value.absent(),
+            Value<double?> height = const Value.absent(),
+            Value<DateTime?> birthDate = const Value.absent(),
+          }) =>
+              UsersCompanion.insert(
+            id: id,
+            height: height,
+            birthDate: birthDate,
+          ),
+        ));
+}
+
+class $$UsersTableProcessedTableManager extends ProcessedTableManager<
+    _$AppDatabase,
+    $UsersTable,
+    UserData,
+    $$UsersTableFilterComposer,
+    $$UsersTableOrderingComposer,
+    $$UsersTableProcessedTableManager,
+    $$UsersTableInsertCompanionBuilder,
+    $$UsersTableUpdateCompanionBuilder> {
+  $$UsersTableProcessedTableManager(super.$state);
+}
+
+class $$UsersTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $UsersTable> {
+  $$UsersTableFilterComposer(super.$state);
+  ColumnFilters<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<double> get height => $state.composableBuilder(
+      column: $state.table.height,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnWithTypeConverterFilters<DateTime?, DateTime, String> get birthDate =>
+      $state.composableBuilder(
+          column: $state.table.birthDate,
+          builder: (column, joinBuilders) => ColumnWithTypeConverterFilters(
+              column,
+              joinBuilders: joinBuilders));
+}
+
+class $$UsersTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $UsersTable> {
+  $$UsersTableOrderingComposer(super.$state);
+  ColumnOrderings<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<double> get height => $state.composableBuilder(
+      column: $state.table.height,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get birthDate => $state.composableBuilder(
+      column: $state.table.birthDate,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+}
+
 class _$AppDatabaseManager {
   final _$AppDatabase _db;
   _$AppDatabaseManager(this._db);
@@ -9930,4 +10141,6 @@ class _$AppDatabaseManager {
       $$MealsTableTableManager(_db, _db.meals);
   $$MealItemsTableTableManager get mealItems =>
       $$MealItemsTableTableManager(_db, _db.mealItems);
+  $$UsersTableTableManager get users =>
+      $$UsersTableTableManager(_db, _db.users);
 }

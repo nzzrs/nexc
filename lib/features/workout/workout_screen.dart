@@ -16,6 +16,7 @@ import 'package:vibration/vibration.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 import 'package:drift/drift.dart' show Value;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:permission_handler/permission_handler.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/enums.dart';
 import 'workout_summary_screen.dart';
@@ -70,6 +71,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
       if (ref.read(settingsProvider).workoutScreenOn) {
         WakelockPlus.enable();
       }
+      Permission.ignoreBatteryOptimizations.request();
     });
   }
 
@@ -99,8 +101,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
 
   Future<void> _updateRestNotification(int remaining, int initial) async {
     final elapsed = initial - remaining;
-    final String content = 'Resting - $elapsed seconds elapsed ($remaining seconds left)';
-    const androidDetails = AndroidNotificationDetails(
+    final androidDetails = AndroidNotificationDetails(
       'rest_timer_channel',
       'Rest Timer',
       channelDescription: 'Notifications for active rest timer',
@@ -109,12 +110,15 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
       showWhen: false,
       onlyAlertOnce: true,
       ongoing: true,
+      showProgress: true,
+      maxProgress: initial,
+      progress: elapsed,
     );
-    const notificationDetails = NotificationDetails(android: androidDetails);
+    final notificationDetails = NotificationDetails(android: androidDetails);
     await _notificationsPlugin.show(
       id: 999,
-      title: 'Rest Time',
-      body: content,
+      title: 'Resting...',
+      body: '$remaining seconds remaining',
       notificationDetails: notificationDetails,
     );
   }
@@ -155,6 +159,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
         timeElapsed: 0,
         created: DateTime.now(),
         completed: DateTime.now(),
+        isTemporal: false,
       );
       _exercises = [];
       _elapsedSeconds = 0;
@@ -180,6 +185,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
             timeElapsed: 0,
             created: now,
             completed: now,
+            isTemporal: potential.workout.isTemporal,
           );
           // Clone exercises & sets
           int tempExId = -1;
@@ -231,6 +237,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
       timeElapsed: 0,
       created: DateTime.now(),
       completed: DateTime.now(),
+      isTemporal: false,
     );
     _exercises = [];
     _elapsedSeconds = 0;
@@ -610,6 +617,17 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
     final theme = Theme.of(context);
     final settings = ref.watch(settingsProvider);
 
+    ref.listen<bool>(
+      settingsProvider.select((s) => s.workoutScreenOn),
+      (previous, next) {
+        if (next) {
+          WakelockPlus.enable();
+        } else {
+          WakelockPlus.disable();
+        }
+      },
+    );
+
     if (_isLoading) {
       return const Scaffold(
         body: Center(child: CircularProgressIndicator()),
@@ -711,7 +729,16 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
             onPressed: _handlePop,
           ),
           actions: [
-            if (_exercises.isNotEmpty)
+            if (_exercises.isNotEmpty) ...[
+              IconButton(
+                icon: Icon(_isReordering ? Icons.check : Icons.swap_vert),
+                tooltip: _isReordering ? "Done Reordering" : "Reorder Exercises",
+                onPressed: () {
+                  setState(() {
+                    _isReordering = !_isReordering;
+                  });
+                },
+              ),
               TextButton(
                 onPressed: _finishWorkout,
                 child: const Text(
@@ -719,6 +746,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                   style: TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
+            ],
           ],
         ),
       body: Stack(
@@ -735,19 +763,19 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                 )
               : ReorderableListView.builder(
                   buildDefaultDragHandles: false,
-                  padding: const EdgeInsets.fromLTRB(16, 120, 16, 100),
-                  itemCount: _exercises.length,
-                  onReorderStart: (index) {
-                    setState(() {
-                      _isReordering = true;
-                    });
-                  },
-                  onReorderEnd: (index) {
-                    setState(() {
-                      _isReordering = false;
-                    });
-                  },
+                  padding: EdgeInsets.fromLTRB(16, settings.isWorkoutHeaderSticky ? 120 : 16, 16, 100),
+                  itemCount: settings.isWorkoutHeaderSticky ? _exercises.length : _exercises.length + 1,
+                  onReorderStart: (index) {},
+                  onReorderEnd: (index) {},
                   onReorder: (oldIndex, newIndex) {
+                    final isSticky = settings.isWorkoutHeaderSticky;
+                    if (!isSticky) {
+                      if (oldIndex == 0 || newIndex == 0) return;
+                      oldIndex -= 1;
+                      if (newIndex > oldIndex) {
+                        newIndex -= 1;
+                      }
+                    }
                     setState(() {
                       if (oldIndex < newIndex) {
                         newIndex -= 1;
@@ -763,7 +791,6 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                     _saveProgressToDb();
                   },
                   proxyDecorator: (Widget child, int index, Animation<double> animation) {
-                    final theme = Theme.of(context);
                     final settings = ref.read(settingsProvider);
                     final eWs = _exercises[index];
                     final List<Color> supersetColors = [
@@ -801,7 +828,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                         isReordering: true,
                         previousPerformances: _previousPerformances[eWs.exerciseDC.id],
                         idSetWithRunningStopwatch: _idSetWithRunningStopwatch,
-                        showRpe: settings.showRpe,
+                        showRpe: settings.intensityScale != IntensityScale.none,
                         intensityScale: settings.intensityScale,
                         supersetLabel: supersetLabel,
                         supersetColor: supersetColor,
@@ -820,8 +847,17 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                       ),
                     );
                   },
-                  itemBuilder: (context, index) {
-                    final eWs = _exercises[index];
+                   itemBuilder: (context, index) {
+                    final isSticky = settings.isWorkoutHeaderSticky;
+                    if (!isSticky && index == 0) {
+                      return Padding(
+                        key: const ValueKey('header_card_wrapper'),
+                        padding: const EdgeInsets.only(bottom: 16.0),
+                        child: headerCard,
+                      );
+                    }
+                    final exIndex = isSticky ? index : index - 1;
+                    final eWs = _exercises[exIndex];
                     final List<Color> supersetColors = [
                       Colors.blue,
                       Colors.purple,
@@ -849,20 +885,20 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
 
                     return ExerciseCard(
                       key: ValueKey('ex_${eWs.exercise.id}'),
-                      index: index,
+                      index: exIndex,
                       exerciseWithSets: eWs,
                       workout: true,
                       isReordering: _isReordering,
                       previousPerformances: _previousPerformances[eWs.exerciseDC.id],
                       idSetWithRunningStopwatch: _idSetWithRunningStopwatch,
-                      showRpe: settings.showRpe,
+                      showRpe: settings.intensityScale != IntensityScale.none,
                       intensityScale: settings.intensityScale,
                       supersetLabel: supersetLabel,
                       supersetColor: supersetColor,
                       updateSetRpe: (val, setId) {
                         final rpe = double.tryParse(val);
                         setState(() {
-                          _exercises[index] = eWs.copyWith(
+                          _exercises[exIndex] = eWs.copyWith(
                             sets: eWs.sets.map((s) => s.id == setId
                                 ? s.copyWith(rpe: Value(rpe))
                                 : s).toList(),
@@ -872,7 +908,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                       updateSetRir: (val, setId) {
                         final rir = int.tryParse(val);
                         setState(() {
-                          _exercises[index] = eWs.copyWith(
+                          _exercises[exIndex] = eWs.copyWith(
                             sets: eWs.sets.map((s) => s.id == setId
                                 ? s.copyWith(rir: Value(rir))
                                 : s).toList(),
@@ -893,7 +929,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                               exerciseId: exId,
                             ),
                           );
-                          _exercises[index] = eWs.copyWith(sets: setList);
+                          _exercises[exIndex] = eWs.copyWith(sets: setList);
                         });
                         _saveProgressToDb();
                       },
@@ -906,50 +942,50 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                       },
                       onDelete: (exId) {
                         setState(() {
-                          _exercises.removeAt(index);
+                          _exercises.removeAt(exIndex);
                         });
                         _saveProgressToDb();
                       },
                       deleteSet: (setId) {
                         setState(() {
                           final setList = eWs.sets.where((s) => s.id != setId).toList();
-                          _exercises[index] = eWs.copyWith(sets: setList);
+                          _exercises[exIndex] = eWs.copyWith(sets: setList);
                         });
                         _saveProgressToDb();
                       },
                       updateExerciseNotes: (text, exId) {
-                        _exercises[index] = eWs.copyWith(
+                        _exercises[exIndex] = eWs.copyWith(
                           exercise: eWs.exercise.copyWith(notes: text),
                         );
                       },
                       updateExerciseRestTime: (restTime, exId) {
-                        _exercises[index] = eWs.copyWith(
+                        _exercises[exIndex] = eWs.copyWith(
                           exercise: eWs.exercise.copyWith(restTime: restTime),
                         );
                       },
                       updateExerciseSetMode: (setMode, exId) {
-                        _exercises[index] = eWs.copyWith(
+                        _exercises[exIndex] = eWs.copyWith(
                           exercise: eWs.exercise.copyWith(setMode: setMode),
                         );
                       },
                       updateSetTime: (time, setId) {
-                        _exercises[index] = eWs.copyWith(
+                        _exercises[exIndex] = eWs.copyWith(
                           sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(elapsedTime: time) : s).toList(),
                         );
                       },
                       updateSetReps: (reps, setId) {
-                        _exercises[index] = eWs.copyWith(
+                        _exercises[exIndex] = eWs.copyWith(
                           sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(reps: reps) : s).toList(),
                         );
                       },
                       updateSetLoad: (load, setId) {
-                        _exercises[index] = eWs.copyWith(
+                        _exercises[exIndex] = eWs.copyWith(
                           sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(load: load) : s).toList(),
                         );
                       },
                       updateSetCompleted: (completed, setId) {
                         setState(() {
-                          _exercises[index] = eWs.copyWith(
+                          _exercises[exIndex] = eWs.copyWith(
                             sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(completed: completed) : s).toList(),
                           );
                         });
@@ -966,8 +1002,8 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                           _startSetStopwatch(setId);
                         }
                       },
-                      isFirst: index == 0,
-                      isLast: index == _exercises.length - 1,
+                      isFirst: exIndex == 0,
+                      isLast: exIndex == _exercises.length - 1,
                       onReplace: (exId) async {
                         final result = await Navigator.push(
                           context,
@@ -978,13 +1014,13 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                         if (!mounted) return;
                         if (result != null && result is List<ExerciseDataDC> && result.isNotEmpty) {
                           setState(() {
-                            final replaced = _exercises[index].copyWith(
+                            final replaced = _exercises[exIndex].copyWith(
                               exerciseDC: result.first,
-                              exercise: _exercises[index].exercise.copyWith(
+                              exercise: _exercises[exIndex].exercise.copyWith(
                                 exerciseDataId: result.first.id,
                               ),
                             );
-                            _exercises[index] = replaced;
+                            _exercises[exIndex] = replaced;
                           });
                           _saveProgressToDb();
                         }
@@ -994,18 +1030,18 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                           final currentSupersetId = eWs.exercise.supersetId;
                           if (currentSupersetId != null) {
                             // Unlink
-                            _exercises[index] = eWs.copyWith(
+                            _exercises[exIndex] = eWs.copyWith(
                               exercise: eWs.exercise.copyWith(
                                 supersetId: const Value(null),
                               ),
                             );
                           } else {
                             // Link
-                            if (index > 0) {
-                              final prevEx = _exercises[index - 1];
+                            if (exIndex > 0) {
+                              final prevEx = _exercises[exIndex - 1];
                               final prevSupersetId = prevEx.exercise.supersetId;
                               if (prevSupersetId != null) {
-                                _exercises[index] = eWs.copyWith(
+                                _exercises[exIndex] = eWs.copyWith(
                                   exercise: eWs.exercise.copyWith(
                                     supersetId: Value(prevSupersetId),
                                   ),
@@ -1016,12 +1052,12 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                                     .whereType<int>()
                                     .fold<int>(0, (m, val) => val > m ? val : m);
                                 final newId = maxId + 1;
-                                _exercises[index - 1] = prevEx.copyWith(
+                                _exercises[exIndex - 1] = prevEx.copyWith(
                                   exercise: prevEx.exercise.copyWith(
                                     supersetId: Value(newId),
                                   ),
                                 );
-                                _exercises[index] = eWs.copyWith(
+                                _exercises[exIndex] = eWs.copyWith(
                                   exercise: eWs.exercise.copyWith(
                                     supersetId: Value(newId),
                                   ),
@@ -1035,12 +1071,13 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
                     );
                   },
                 ),
-          Positioned(
-            top: 16,
-            left: 0,
-            right: 0,
-            child: headerCard,
-          ),
+          if (settings.isWorkoutHeaderSticky)
+            Positioned(
+              top: 16,
+              left: 0,
+              right: 0,
+              child: headerCard,
+            ),
 
           // Floating Action Bar / Rest timer bar at bottom
           Positioned(

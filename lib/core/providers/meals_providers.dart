@@ -22,7 +22,7 @@ final mealTemplatesProvider = StreamProvider<List<MealPlanWithMealsAndItems>>((r
 final todayMealPlanProvider = StreamProvider<MealPlanWithMealsAndItems?>((ref) {
   final repo = ref.watch(mealRepositoryProvider);
   final now = DateTime.now();
-  return repo.getMealPlansWithMealsAndItemsByState(MealPlanState.LOGGED).map((list) {
+  return repo.getMealPlansWithMealsAndItemsByState(MealPlanState.ACTIVE).map((list) {
     return list.firstWhereOrNull(
       (mp) =>
           mp.mealPlan.created.year == now.year &&

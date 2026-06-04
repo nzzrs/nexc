@@ -119,10 +119,9 @@ class StatisticsScreen extends ConsumerWidget {
               data: (logs) {
                 if (logs.isEmpty) return const SizedBox.shrink();
 
-                double totalProt = 0.0;
+                              double totalProt = 0.0;
                 double totalCarb = 0.0;
                 double totalFat = 0.0;
-                double totalSpent = 0.0;
 
                 for (final planWithMeals in logs) {
                   for (final m in planWithMeals.meals) {
@@ -132,21 +131,12 @@ class StatisticsScreen extends ConsumerWidget {
                         totalProt += detail.product!.proteins * scale;
                         totalCarb += detail.product!.carbs * scale;
                         totalFat += detail.product!.fats * scale;
-                        final grams = detail.mealItem.amountUnit == AmountUnit.UNITS
-                            ? detail.mealItem.amount * getEdibleWeightPerUnit(detail.product!)
-                            : detail.mealItem.amount;
-                        final costFactor = detail.product!.weight > 0 ? grams / detail.product!.weight : 0.0;
-                        totalSpent += detail.product!.cost * costFactor;
                       } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
                         for (final ing in detail.recipe!.ingredients) {
                           final ingScale = (ing.ingredient.amount / 100.0) * scale;
                           totalProt += ing.product.proteins * ingScale;
                           totalCarb += ing.product.carbs * ingScale;
                           totalFat += ing.product.fats * ingScale;
-                          final costFactor = ing.product.weight > 0
-                              ? (ing.ingredient.amount * scale) / ing.product.weight
-                              : 0.0;
-                          totalSpent += ing.product.cost * costFactor;
                         }
                       }
                     }
@@ -176,8 +166,6 @@ class StatisticsScreen extends ConsumerWidget {
                             _buildStatRow("Avg. Carbs", "${avgCarb.toStringAsFixed(1)}g", Icons.grain, theme),
                             const Divider(),
                             _buildStatRow("Avg. Fats", "${avgFat.toStringAsFixed(1)}g", Icons.water_drop_outlined, theme),
-                            const Divider(),
-                            _buildStatRow("Total Nutrition Spend", "\$${totalSpent.toStringAsFixed(2)}", Icons.attach_money, theme),
                           ],
                         ),
                       ),

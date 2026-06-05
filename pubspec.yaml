@@ -57,6 +57,8 @@ dependencies:
   file_picker: any
   share_plus: any
   flutter_local_notifications: ^21.0.0
+  string_similarity: ^2.2.0
+  image_picker: ^1.2.2
 
 dev_dependencies:
   flutter_test:
@@ -88,6 +90,7 @@ flutter:
 
   assets:
     - assets/exercises.json
+    - assets/foods.json
     - assets/images/
     - assets/sounds/
     - assets/exercise_images/

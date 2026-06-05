@@ -63,6 +63,41 @@ class DatasetRepository {
     await measurementRepo.prepopulateDefaultMeasurements();
 
     final pastVersion = settings.pastVersionCode;
+
+    // Load and parse foods.json if database is missing products or on app update
+    final productsCountExpr = db.products.id.count();
+    final productsCountQuery = db.selectOnly(db.products)..addColumns([productsCountExpr]);
+    final productsCountResult = await productsCountQuery.getSingle();
+    final productsCount = productsCountResult.read(productsCountExpr) ?? 0;
+
+    if (productsCount < 500 || pastVersion != currentVersionCode) {
+      final jsonString = await rootBundle.loadString('assets/foods.json');
+      final List<dynamic> jsonList = json.decode(jsonString);
+
+      final List<Product> products = jsonList.map<Product>((map) {
+        return Product(
+          id: map['id'] as int,
+          name: map['name'] as String,
+          mlToGFactor: map['mlToGFactor'] as int?,
+          defaultUnits: map['defaultUnits'] as String?,
+          edibleQtyPerUnit: (map['edibleQtyPerUnit'] as num?)?.toDouble(),
+          kcal: (map['kcal'] as num?)?.toDouble(),
+          proteins: (map['proteins'] as num?)?.toDouble() ?? 0.0,
+          carbsByDifference: (map['carbsByDifference'] as num?)?.toDouble(),
+          carbsAvailable: (map['carbsAvailable'] as num?)?.toDouble(),
+          dietaryFiber: (map['dietaryFiber'] as num?)?.toDouble(),
+          fats: (map['fats'] as num?)?.toDouble() ?? 0.0,
+          isSupplement: map['isSupplement'] as bool? ?? false,
+          isPortable: map['isPortable'] as bool? ?? true,
+          isStockRaw: map['isStockRaw'] as bool? ?? false,
+        );
+      }).toList();
+
+      await db.batch((batch) {
+        batch.insertAllOnConflictUpdate(db.products, products);
+      });
+    }
+
     final existingExercises = await db.select(db.exerciseData).get();
 
     if (existingExercises.length < 500 || pastVersion != currentVersionCode) {

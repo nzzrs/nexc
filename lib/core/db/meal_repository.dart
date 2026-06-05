@@ -10,6 +10,7 @@
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:collection/collection.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'app_database.dart';
 import 'enums.dart';
 import 'relations.dart';
@@ -272,16 +273,116 @@ class MealRepository {
     return db.delete(db.mealPlans).delete(mealPlan);
   }
 
-  Future<void> updateMealItem(MealItem mealItem) {
-    return db.update(db.mealItems).replace(mealItem);
+  Future<void> _adjustStockForMealItem(MealItem item, double multiplier) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final enabled = prefs.getBool('enable_stock_tracking') ?? true;
+      if (!enabled) return;
+
+      final houseList = await (db.select(db.houses)..limit(1)).get();
+      if (houseList.isEmpty) return;
+      final houseId = houseList.first.id;
+
+      if (item.type == MealItemType.PRODUCT) {
+        await _adjustProductStock(item.targetId, houseId, item.amount, item.amountUnit, multiplier);
+      } else if (item.type == MealItemType.RECIPE) {
+        final ingredients = await (db.select(db.recipeIngredients)..where((ri) => ri.recipeId.equals(item.targetId))).get();
+        for (final ing in ingredients) {
+          final scaledAmount = ing.amount * item.amount;
+          AmountUnit ingUnit = AmountUnit.GRAMS;
+          final unitStr = ing.amountUnits?.toLowerCase().trim();
+          if (unitStr == 'ml') {
+            ingUnit = AmountUnit.ML;
+          } else if (unitStr == 'unit' || unitStr == 'units') {
+            ingUnit = AmountUnit.UNITS;
+          }
+          await _adjustProductStock(ing.productId, houseId, scaledAmount, ingUnit, multiplier);
+        }
+      }
+    } catch (_) {}
   }
 
-  Future<void> deleteMealItem(MealItem mealItem) {
-    return db.delete(db.mealItems).delete(mealItem);
+  Future<void> _adjustProductStock(int productId, int houseId, double amount, AmountUnit unit, double multiplier) async {
+    final product = await (db.select(db.products)..where((p) => p.id.equals(productId))).getSingleOrNull();
+    if (product == null) return;
+
+    final stock = await (db.select(db.productStocks)
+          ..where((ps) => ps.productId.equals(productId) & ps.houseId.equals(houseId)))
+        .getSingleOrNull();
+    if (stock == null) return;
+
+    final double unitW = (product.unitWeight != null && product.unitWeight! > 0)
+        ? product.unitWeight!.toDouble()
+        : 0.0;
+    final double mlToG = (product.mlToGFactor != null && product.mlToGFactor! > 0)
+        ? product.mlToGFactor!.toDouble()
+        : 0.0;
+
+    double rawGramsToDeduct = 0.0;
+    double rawMlToDeduct = 0.0;
+    double rawUnitsToDeduct = 0.0;
+
+    if (unit == AmountUnit.UNITS) {
+      rawUnitsToDeduct = amount;
+      rawGramsToDeduct = rawUnitsToDeduct * unitW;
+      rawMlToDeduct = mlToG > 0 ? rawGramsToDeduct / mlToG : 0.0;
+    } else if (unit == AmountUnit.ML) {
+      final double rawMl = (product.isStockRaw && product.edibleQtyPerUnit != null && product.edibleQtyPerUnit! > 0)
+          ? amount / product.edibleQtyPerUnit!
+          : amount;
+      rawMlToDeduct = rawMl;
+      rawGramsToDeduct = mlToG > 0 ? rawMlToDeduct * mlToG : 0.0;
+      rawUnitsToDeduct = unitW > 0 ? rawGramsToDeduct / unitW : 0.0;
+    } else {
+      final double rawGrams = (product.isStockRaw && product.edibleQtyPerUnit != null && product.edibleQtyPerUnit! > 0)
+          ? amount / product.edibleQtyPerUnit!
+          : amount;
+      rawGramsToDeduct = rawGrams;
+      rawMlToDeduct = mlToG > 0 ? rawGramsToDeduct / mlToG : 0.0;
+      rawUnitsToDeduct = unitW > 0 ? rawGramsToDeduct / unitW : 0.0;
+    }
+
+    double nextGrams = stock.quantityGrams + (rawGramsToDeduct * multiplier);
+    double nextMl = stock.quantityMl + (rawMlToDeduct * multiplier);
+    double nextUnits = stock.quantityUnits + (rawUnitsToDeduct * multiplier);
+
+    if (nextGrams < 0) nextGrams = 0.0;
+    if (nextMl < 0) nextMl = 0.0;
+    if (nextUnits < 0) nextUnits = 0.0;
+
+    nextGrams = double.parse(nextGrams.toStringAsFixed(2));
+    nextMl = double.parse(nextMl.toStringAsFixed(2));
+    nextUnits = double.parse(nextUnits.toStringAsFixed(2));
+
+    double newQty = nextGrams;
+    final defaultUnit = (product.defaultUnits ?? 'g').toLowerCase().trim();
+    if (defaultUnit == 'units' || defaultUnit == 'unit') {
+      newQty = nextUnits;
+    } else if (defaultUnit == 'ml') {
+      newQty = nextMl;
+    }
+
+    newQty = double.parse(newQty.toStringAsFixed(2));
+
+    await (db.update(db.productStocks)..where((ps) => ps.id.equals(stock.id)))
+        .write(ProductStocksCompanion(
+          quantity: Value(newQty),
+          quantityGrams: Value(nextGrams),
+          quantityMl: Value(nextMl),
+          quantityUnits: Value(nextUnits),
+        ));
   }
 
-  Future<int> insertMealItem(MealItem mealItem) {
-    if (mealItem.id == 0) {
+  Future<void> updateMealItem(MealItem mealItem) async {
+    await db.update(db.mealItems).replace(mealItem);
+  }
+
+  Future<void> deleteMealItem(MealItem mealItem) async {
+    await db.delete(db.mealItems).delete(mealItem);
+  }
+
+  Future<int> insertMealItem(MealItem mealItem) async {
+    if (mealItem.id == 0 || mealItem.id > 100000) {
       return db.into(db.mealItems).insert(
             MealItemsCompanion.insert(
               mealId: mealItem.mealId,
@@ -369,6 +470,7 @@ class MealRepository {
             time: m.meal.time,
             notes: m.meal.notes,
             position: m.meal.position,
+            atHome: m.meal.atHome,
           ),
           items: newItems,
         );
@@ -474,6 +576,7 @@ class MealRepository {
                   time: mealWithItems.meal.time,
                   notes: mealWithItems.meal.notes,
                   position: 0,
+                  atHome: Value(mealWithItems.meal.atHome),
                 ),
               );
 
@@ -490,6 +593,9 @@ class MealRepository {
                     position: itemDetail.mealItem.position,
                   ),
                 );
+            if (mealWithItems.meal.atHome) {
+              await _adjustStockForMealItem(itemDetail.mealItem, -1.0);
+            }
           }
         }
       }
@@ -567,15 +673,15 @@ class MealRepository {
 
     // 1. Insert Products
     final productsList = [
-      const Product(id: 10001, name: "Whole Milk", defaultUnits: "ml", edibleQtyPerUnit: 1.0, proteins: 3.3, carbsAvailable: 4.7, fats: 3.6, isSupplement: false, isPortable: true),
-      const Product(id: 10002, name: "Oatmeal Cookies", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 6.5, carbsAvailable: 65.0, fats: 15.0, isSupplement: false, isPortable: true),
-      const Product(id: 10003, name: "Creatine Monohydrate", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 0.0, carbsAvailable: 0.0, fats: 0.0, isSupplement: true, isPortable: true),
-      const Product(id: 10004, name: "Chicken Breast", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 31.0, carbsAvailable: 0.0, fats: 3.6, isSupplement: false, isPortable: true),
-      const Product(id: 10005, name: "Cooked Rice", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 2.7, carbsAvailable: 28.0, fats: 0.3, isSupplement: false, isPortable: true),
-      const Product(id: 10006, name: "Banana", defaultUnits: "g", edibleQtyPerUnit: 0.65, proteins: 1.1, carbsAvailable: 22.8, fats: 0.3, isSupplement: false, isPortable: true),
-      const Product(id: 10007, name: "Whole Eggs", defaultUnits: "unit", edibleQtyPerUnit: 0.88, proteins: 13.0, carbsAvailable: 1.1, fats: 11.0, isSupplement: false, isPortable: true),
-      const Product(id: 10008, name: "Fresh Spinach", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 2.9, carbsAvailable: 3.6, fats: 0.4, isSupplement: false, isPortable: false),
-      const Product(id: 10009, name: "Grilled Salmon", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 25.0, carbsAvailable: 0.0, fats: 13.0, isSupplement: false, isPortable: false),
+      const Product(id: 10001, name: "Whole Milk", defaultUnits: "ml", edibleQtyPerUnit: 1.0, proteins: 3.3, carbsAvailable: 4.7, fats: 3.6, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10002, name: "Oatmeal Cookies", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 6.5, carbsAvailable: 65.0, fats: 15.0, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10003, name: "Creatine Monohydrate", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 0.0, carbsAvailable: 0.0, fats: 0.0, isSupplement: true, isPortable: true, isStockRaw: false),
+      const Product(id: 10004, name: "Chicken Breast", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 31.0, carbsAvailable: 0.0, fats: 3.6, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10005, name: "Cooked Rice", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 2.7, carbsAvailable: 28.0, fats: 0.3, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10006, name: "Banana", defaultUnits: "g", edibleQtyPerUnit: 0.65, proteins: 1.1, carbsAvailable: 22.8, fats: 0.3, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10007, name: "Whole Eggs", defaultUnits: "unit", edibleQtyPerUnit: 0.88, proteins: 13.0, carbsAvailable: 1.1, fats: 11.0, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10008, name: "Fresh Spinach", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 2.9, carbsAvailable: 3.6, fats: 0.4, isSupplement: false, isPortable: false, isStockRaw: false),
+      const Product(id: 10009, name: "Grilled Salmon", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 25.0, carbsAvailable: 0.0, fats: 13.0, isSupplement: false, isPortable: false, isStockRaw: false),
     ];
 
     for (final p in productsList) {
@@ -610,25 +716,25 @@ class MealRepository {
       isTemporal: false,
     );
 
-    final m1 = const Meal(id: 40001, mealPlanId: 30001, name: "Breakfast & Supplementation", time: LocalTime(8, 0), notes: "Take immediately upon waking up with plenty of water.", position: 0);
+    final m1 = const Meal(id: 40001, mealPlanId: 30001, name: "Breakfast & Supplementation", time: LocalTime(8, 0), notes: "Take immediately upon waking up with plenty of water.", position: 0, atHome: true);
     final m1Items = [
       MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40001, type: MealItemType.PRODUCT, targetId: 10001, amount: 250.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 0), product: productsList[0]),
       MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40001, type: MealItemType.PRODUCT, targetId: 10002, amount: 50.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 1), product: productsList[1]),
       MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40001, type: MealItemType.PRODUCT, targetId: 10003, amount: 5.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 2), product: productsList[2]),
     ];
 
-    final m2 = const Meal(id: 40002, mealPlanId: 30001, name: "Lunch", time: LocalTime(13, 30), notes: "Main meal of the day.", position: 1);
+    final m2 = const Meal(id: 40002, mealPlanId: 30001, name: "Lunch", time: LocalTime(13, 30), notes: "Main meal of the day.", position: 1, atHome: true);
     final m2Items = [
       MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40002, type: MealItemType.PRODUCT, targetId: 10004, amount: 100.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 0), product: productsList[3]),
       MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40002, type: MealItemType.PRODUCT, targetId: 10005, amount: 100.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 1), product: productsList[4]),
     ];
 
-    final m3 = const Meal(id: 40003, mealPlanId: 30001, name: "Pre-Workout Snack", time: LocalTime(17, 0), notes: "1 hour before training.", position: 2);
+    final m3 = const Meal(id: 40003, mealPlanId: 30001, name: "Pre-Workout Snack", time: LocalTime(17, 0), notes: "1 hour before training.", position: 2, atHome: true);
     final m3Items = [
       MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40003, type: MealItemType.PRODUCT, targetId: 10006, amount: 100.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 0), product: productsList[5]),
     ];
 
-    final m4 = const Meal(id: 40004, mealPlanId: 30001, name: "Dinner", time: LocalTime(21, 0), notes: "Light meal before sleeping.", position: 3);
+    final m4 = const Meal(id: 40004, mealPlanId: 30001, name: "Dinner", time: LocalTime(21, 0), notes: "Light meal before sleeping.", position: 3, atHome: true);
     final m4Items = [
       MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40004, type: MealItemType.RECIPE, targetId: 20001, amount: 1.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 0), recipe: RecipeWithIngredients(recipe: scrambledEggs, ingredients: scrambledIngredients)),
     ];
@@ -654,13 +760,13 @@ class MealRepository {
       isTemporal: false,
     );
 
-    final cleanBulkM1 = const Meal(id: 40005, mealPlanId: 30002, name: "Breakfast", time: LocalTime(7, 30), notes: "High carb and protein to start the day.", position: 0);
+    final cleanBulkM1 = const Meal(id: 40005, mealPlanId: 30002, name: "Breakfast", time: LocalTime(7, 30), notes: "High carb and protein to start the day.", position: 0, atHome: true);
     final cleanBulkM1Items = [
       MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40005, type: MealItemType.RECIPE, targetId: 20001, amount: 1.5, amountUnit: AmountUnit.GRAMS, consumed: false, position: 0), recipe: RecipeWithIngredients(recipe: scrambledEggs, ingredients: scrambledIngredients)),
       MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40005, type: MealItemType.PRODUCT, targetId: 10006, amount: 150.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 1), product: productsList[5]),
     ];
 
-    final cleanBulkM2 = const Meal(id: 40006, mealPlanId: 30002, name: "Lunch", time: LocalTime(13, 0), notes: "Post-workout nutrient replenishment.", position: 1);
+    final cleanBulkM2 = const Meal(id: 40006, mealPlanId: 30002, name: "Lunch", time: LocalTime(13, 0), notes: "Post-workout nutrient replenishment.", position: 1, atHome: true);
     final cleanBulkM2Items = [
       MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40006, type: MealItemType.PRODUCT, targetId: 10004, amount: 150.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 0), product: productsList[3]),
       MealItemWithDetails(mealItem: const MealItem(id: 0, mealId: 40006, type: MealItemType.PRODUCT, targetId: 10005, amount: 200.0, amountUnit: AmountUnit.GRAMS, consumed: false, position: 1), product: productsList[4]),

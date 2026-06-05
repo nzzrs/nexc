@@ -13,6 +13,7 @@ import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/providers/profile_providers.dart';
 import '../../core/components/nexc_scaffold.dart';
+import '../../core/components/body_heatmap.dart';
 
 class StatisticsScreen extends ConsumerWidget {
   const StatisticsScreen({super.key});
@@ -73,6 +74,16 @@ class StatisticsScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 20),
+                    Text("Targeted Muscles Heatmap", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 8),
+                    Builder(builder: (context) {
+                      final maxCount = muscleTargetCounts.values.fold(0, (max, val) => val > max ? val : max);
+                      final intensities = muscleTargetCounts.map(
+                        (m, count) => MapEntry(m, maxCount > 0 ? count / maxCount : 0.0),
+                      );
+                      return BodyHeatmap(intensities: intensities);
+                    }),
                     const SizedBox(height: 20),
                     Text("Top Target Muscles", style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
                     const SizedBox(height: 8),

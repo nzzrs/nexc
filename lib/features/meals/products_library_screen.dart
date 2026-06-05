@@ -13,6 +13,8 @@ import '../../core/db/app_database.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/components/nexc_scaffold.dart';
+import '../../core/providers/settings_provider.dart';
+import '../../core/integrations/ai_service.dart';
 
 class ProductsLibraryScreen extends ConsumerStatefulWidget {
   const ProductsLibraryScreen({super.key});
@@ -22,6 +24,8 @@ class ProductsLibraryScreen extends ConsumerStatefulWidget {
 }
 
 class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
+  String _searchQuery = "";
+
   void _showAddEditProduct(BuildContext context, Product product) {
     showDialog(
       context: context,
@@ -37,8 +41,6 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
     );
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(allProductsProvider);
@@ -49,16 +51,17 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
       fabAction: () {
         _showAddEditProduct(
           context,
-          const Product(
+          Product(
             id: 0,
-            name: "",
+            name: _searchQuery.trim(),
             defaultUnits: "g",
             edibleQtyPerUnit: 1.0,
             proteins: 0.0,
-            carbsAvailable: 0.0,
+            carbsAvailable: null,
             fats: 0.0,
             isSupplement: false,
             isPortable: true,
+            isStockRaw: false,
           ),
         );
       },
@@ -69,48 +72,71 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) => Center(child: Text("Error: $err")),
           data: (products) {
-            if (products.isEmpty) {
-              return const Center(child: Text("No products"));
-            }
+            final filteredProducts = _searchQuery.isEmpty ? products : products.searchAndSort(_searchQuery);
 
-            return ListView.builder(
-              padding: const EdgeInsets.all(16.0),
-              itemCount: products.length,
-              itemBuilder: (context, index) {
-                final product = products[index];
-                return Padding(
-                  key: ValueKey(product.id),
-                  padding: const EdgeInsets.only(bottom: 8.0),
-                  child: ProductCard(
-                    product: product,
-                    onClick: () {
-                      _showAddEditProduct(context, product);
-                    },
-                    onDelete: () async {
-                      final confirm = await showDialog<bool>(
-                        context: context,
-                        builder: (context) => AlertDialog(
-                          title: const Text("Delete Product"),
-                          content: Text("Are you sure you want to delete '${product.name}'?"),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, false),
-                              child: const Text("Cancel"),
-                            ),
-                            TextButton(
-                              onPressed: () => Navigator.pop(context, true),
-                              child: Text("Delete", style: TextStyle(color: Theme.of(context).colorScheme.error)),
-                            ),
-                          ],
-                        ),
-                      );
-                      if (confirm == true) {
-                        ref.read(mealRepositoryProvider).deleteProduct(product);
-                      }
+            return Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextField(
+                    decoration: const InputDecoration(
+                      labelText: "Search products...",
+                      prefixIcon: Icon(Icons.search),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
+                      ),
+                    ),
+                    onChanged: (val) {
+                      setState(() {
+                        _searchQuery = val;
+                      });
                     },
                   ),
-                );
-              },
+                ),
+                Expanded(
+                  child: filteredProducts.isEmpty
+                      ? const Center(child: Text("No products found"))
+                      : ListView.builder(
+                          padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 80.0),
+                          itemCount: filteredProducts.length,
+                          itemBuilder: (context, index) {
+                            final product = filteredProducts[index];
+                            return Padding(
+                              key: ValueKey(product.id),
+                              padding: const EdgeInsets.only(bottom: 8.0),
+                              child: ProductCard(
+                                product: product,
+                                onClick: () {
+                                  _showAddEditProduct(context, product);
+                                },
+                                onDelete: () async {
+                                  final confirm = await showDialog<bool>(
+                                    context: context,
+                                    builder: (context) => AlertDialog(
+                                      title: const Text("Delete Product"),
+                                      content: Text("Are you sure you want to delete '${product.name}'?"),
+                                      actions: [
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, false),
+                                          child: const Text("Cancel"),
+                                        ),
+                                        TextButton(
+                                          onPressed: () => Navigator.pop(context, true),
+                                          child: Text("Delete", style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                                        ),
+                                      ],
+                                    ),
+                                  );
+                                  if (confirm == true) {
+                                    ref.read(mealRepositoryProvider).deleteProduct(product);
+                                  }
+                                },
+                              ),
+                            );
+                          },
+                        ),
+                ),
+              ],
             );
           },
         );
@@ -223,7 +249,7 @@ class ProductCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text("Default: ${product.units}"),
+                      Text("Default: ${product.units}${product.unitWeight != null ? ' (${product.unitWeight}g)' : ''}"),
                     ],
                   ),
                 ],
@@ -236,7 +262,7 @@ class ProductCard extends StatelessWidget {
   }
 }
 
-class AddEditProductDialog extends StatefulWidget {
+class AddEditProductDialog extends ConsumerStatefulWidget {
   final Product product;
   final VoidCallback onDismiss;
   final void Function(Product) onConfirm;
@@ -249,10 +275,10 @@ class AddEditProductDialog extends StatefulWidget {
   });
 
   @override
-  State<AddEditProductDialog> createState() => _AddEditProductDialogState();
+  ConsumerState<AddEditProductDialog> createState() => _AddEditProductDialogState();
 }
 
-class _AddEditProductDialogState extends State<AddEditProductDialog> {
+class _AddEditProductDialogState extends ConsumerState<AddEditProductDialog> {
   late TextEditingController _nameController;
   late String _selectedDefaultUnit;
   late TextEditingController _ediblePercentController;
@@ -263,8 +289,11 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
   late TextEditingController _dietaryFiberController;
   late TextEditingController _carbsByDifferenceController;
   late TextEditingController _mlToGFactorController;
+  late TextEditingController _unitWeightController;
   late bool _isSupplement;
   late bool _isPortable;
+  late bool _isStockRaw;
+  bool _isAiLoading = false;
 
   @override
   void initState() {
@@ -281,8 +310,10 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     _dietaryFiberController = TextEditingController(text: widget.product.dietaryFiber?.toString() ?? "");
     _carbsByDifferenceController = TextEditingController(text: widget.product.carbsByDifference?.toString() ?? "");
     _mlToGFactorController = TextEditingController(text: widget.product.mlToGFactor?.toString() ?? "");
+    _unitWeightController = TextEditingController(text: widget.product.unitWeight?.toString() ?? "");
     _isSupplement = widget.product.isSupplement;
     _isPortable = widget.product.isPortable;
+    _isStockRaw = widget.product.isStockRaw;
   }
 
   @override
@@ -296,6 +327,7 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     _dietaryFiberController.dispose();
     _carbsByDifferenceController.dispose();
     _mlToGFactorController.dispose();
+    _unitWeightController.dispose();
     super.dispose();
   }
 
@@ -309,12 +341,110 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              TextField(
-                controller: _nameController,
-                decoration: const InputDecoration(
-                  labelText: "Name",
-                  border: OutlineInputBorder(),
-                ),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: _nameController,
+                      decoration: const InputDecoration(
+                        labelText: "Name",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  if (ref.watch(settingsProvider).enableAiProductCreation) ...[
+                    const SizedBox(width: 8),
+                    _isAiLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : IconButton.filledTonal(
+                            icon: const Icon(Icons.auto_awesome),
+                            tooltip: "Autofill with AI",
+                            onPressed: () async {
+                              final name = _nameController.text.trim();
+                              if (name.isEmpty) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(content: Text("Enter a product name first")),
+                                );
+                                return;
+                              }
+                              setState(() {
+                                _isAiLoading = true;
+                              });
+                              try {
+                                final settings = ref.read(settingsProvider);
+                                final details = await AIService.autofillProduct(
+                                  provider: settings.aiProvider,
+                                  apiKey: settings.aiToken,
+                                  model: settings.aiModel,
+                                  productName: name,
+                                );
+                                  final isEdit = widget.product.id != 0;
+                                  if (!isEdit || _nameController.text.trim().isEmpty) {
+                                    _nameController.text = details.name;
+                                  }
+                                  if (!isEdit || _kcalController.text.trim().isEmpty) {
+                                    _kcalController.text = details.kcal.toStringAsFixed(0);
+                                  }
+                                  if (!isEdit || _proteinsController.text.trim().isEmpty) {
+                                    _proteinsController.text = details.proteins.toStringAsFixed(1);
+                                  }
+                                  if (!isEdit || _carbsController.text.trim().isEmpty) {
+                                    _carbsController.text = details.carbsAvailable.toStringAsFixed(1);
+                                  }
+                                  if (!isEdit || _carbsByDifferenceController.text.trim().isEmpty) {
+                                    _carbsByDifferenceController.text = details.carbsByDifference.toStringAsFixed(1);
+                                  }
+                                  if (!isEdit || _dietaryFiberController.text.trim().isEmpty) {
+                                    _dietaryFiberController.text = details.dietaryFiber.toStringAsFixed(1);
+                                  }
+                                  if (!isEdit || _fatsController.text.trim().isEmpty) {
+                                    _fatsController.text = details.fats.toStringAsFixed(1);
+                                  }
+                                  if (!isEdit || _unitWeightController.text.trim().isEmpty) {
+                                    _unitWeightController.text = details.unitWeight?.toString() ?? "";
+                                  }
+                                  if (!isEdit || _mlToGFactorController.text.trim().isEmpty) {
+                                    _mlToGFactorController.text = details.mlToGFactor?.toString() ?? "";
+                                  }
+                                  if (!isEdit || _ediblePercentController.text.trim().isEmpty || _ediblePercentController.text == "100") {
+                                    if (details.edibleQtyPerUnit != null) {
+                                      _ediblePercentController.text = (details.edibleQtyPerUnit! * 100.0).toStringAsFixed(0);
+                                    }
+                                  }
+                                  setState(() {
+                                    _selectedDefaultUnit = ['g', 'ml', 'unit'].contains(details.defaultUnits)
+                                        ? details.defaultUnits
+                                        : 'g';
+                                    _isSupplement = details.isSupplement;
+                                    _isPortable = details.isPortable;
+                                    _isStockRaw = details.isStockRaw;
+                                  });
+                                 if (context.mounted) {
+                                   ScaffoldMessenger.of(context).showSnackBar(
+                                     const SnackBar(content: Text("Autofilled product details!")),
+                                   );
+                                 }
+                              } catch (e) {
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text("AI Error: $e")),
+                                  );
+                                }
+                              } finally {
+                                if (mounted) {
+                                  setState(() {
+                                    _isAiLoading = false;
+                                  });
+                                }
+                              }
+                            },
+                          ),
+                  ],
+                ],
               ),
               const SizedBox(height: 12),
               Row(
@@ -340,13 +470,28 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                       },
                     ),
                   ),
-                  const SizedBox(width: 8),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
                   Expanded(
                     child: TextField(
                       controller: _mlToGFactorController,
                       keyboardType: TextInputType.number,
                       decoration: const InputDecoration(
                         labelText: "ml to g factor",
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: _unitWeightController,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: "Unit weight (g)",
                         border: OutlineInputBorder(),
                       ),
                     ),
@@ -489,6 +634,25 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                   ),
                 ],
               ),
+              Row(
+                children: [
+                  Expanded(
+                    child: CheckboxListTile(
+                      title: const Text("Is Stock Raw", style: TextStyle(fontSize: 12)),
+                      value: _isStockRaw,
+                      dense: true,
+                      contentPadding: EdgeInsets.zero,
+                      controlAffinity: ListTileControlAffinity.leading,
+                      onChanged: (val) {
+                        if (val != null) {
+                          setState(() => _isStockRaw = val);
+                        }
+                      },
+                    ),
+                  ),
+                  const Expanded(child: SizedBox()),
+                ],
+              ),
             ],
           ),
         ),
@@ -516,8 +680,10 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
                 dietaryFiber: double.tryParse(_dietaryFiberController.text),
                 fats: double.tryParse(_fatsController.text) ?? 0.0,
                 mlToGFactor: int.tryParse(_mlToGFactorController.text),
+                unitWeight: int.tryParse(_unitWeightController.text),
                 isSupplement: _isSupplement,
                 isPortable: _isPortable,
+                isStockRaw: _isStockRaw,
               );
               widget.onConfirm(newProduct);
             }
@@ -527,4 +693,3 @@ class _AddEditProductDialogState extends State<AddEditProductDialog> {
     );
   }
 }
-

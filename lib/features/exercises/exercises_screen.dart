@@ -15,10 +15,12 @@ import '../../core/db/dataset_repository.dart';
 
 class ExercisesScreen extends ConsumerStatefulWidget {
   final bool addExercises; // true if selecting multiple, false if selecting single
+  final bool isSelectionMode; // true if selecting, false if browsing
 
   const ExercisesScreen({
     super.key,
     this.addExercises = true,
+    this.isSelectionMode = true,
   });
 
   @override
@@ -359,46 +361,33 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                           '${ex.category.name} • ${ex.equipment?.name ?? "No Equipment"}',
                           style: theme.textTheme.bodySmall,
                         ),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            IconButton(
-                              icon: const Icon(Icons.info_outline),
-                              onPressed: () {
-                                Navigator.pushNamed(
-                                  context,
-                                  '/exercises/info',
-                                  arguments: ex.id,
-                                );
-                              },
-                            ),
-                            if (widget.addExercises)
-                              Checkbox(
-                                value: isSelected,
-                                onChanged: (val) {
-                                  setState(() {
-                                    if (val == true) {
-                                      _selectedExercises.add(ex);
-                                    } else {
-                                      _selectedExercises.removeWhere((e) => e.id == ex.id);
-                                    }
-                                  });
-                                },
-                              ),
-                          ],
-                        ),
+                        trailing: widget.isSelectionMode
+                            ? (widget.addExercises
+                                ? Checkbox(
+                                    value: isSelected,
+                                    onChanged: (val) {
+                                      setState(() {
+                                        if (val == true) {
+                                          _selectedExercises.add(ex);
+                                        } else {
+                                          _selectedExercises.removeWhere((e) => e.id == ex.id);
+                                        }
+                                      });
+                                    },
+                                  )
+                                : IconButton(
+                                    icon: const Icon(Icons.check),
+                                    onPressed: () {
+                                      Navigator.pop(context, [ex]);
+                                    },
+                                  ))
+                            : null,
                         onTap: () {
-                          if (widget.addExercises) {
-                            setState(() {
-                              if (isSelected) {
-                                _selectedExercises.removeWhere((e) => e.id == ex.id);
-                              } else {
-                                _selectedExercises.add(ex);
-                              }
-                            });
-                          } else {
-                            Navigator.pop(context, [ex]);
-                          }
+                          Navigator.pushNamed(
+                            context,
+                            '/exercises/info',
+                            arguments: ex.id,
+                          );
                         },
                       ),
                     );

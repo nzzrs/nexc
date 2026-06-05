@@ -67,12 +67,44 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
     _loadWorkout();
     _initNotifications();
     _configureAudioMixing();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (ref.read(settingsProvider).workoutScreenOn) {
         WakelockPlus.enable();
       }
-      Permission.ignoreBatteryOptimizations.request();
+      await Permission.notification.request();
+      _updateWorkoutForegroundService();
     });
+  }
+
+  Future<void> _updateWorkoutForegroundService() async {
+    final androidDetails = AndroidNotificationDetails(
+      'workout_session_channel',
+      'Active Workout',
+      channelDescription: 'Keeps workout stopwatch running in background',
+      importance: Importance.low,
+      priority: Priority.low,
+      showWhen: false,
+      onlyAlertOnce: true,
+      ongoing: true,
+    );
+    try {
+      await _notificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.startForegroundService(
+            id: 888,
+            title: 'Workout in Progress',
+            body: 'Duration: ${_formatTime(_elapsedSeconds)}',
+            notificationDetails: androidDetails,
+          );
+    } catch (_) {}
+  }
+
+  Future<void> _stopWorkoutForegroundService() async {
+    try {
+      await _notificationsPlugin
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>()
+          ?.stopForegroundService();
+    } catch (_) {}
   }
 
   void _configureAudioMixing() {
@@ -253,6 +285,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
       if (_elapsedSeconds % 10 == 0) {
         _saveProgressToDb();
       }
+      _updateWorkoutForegroundService();
     });
   }
 
@@ -555,6 +588,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> {
     _setStopwatchTimer?.cancel();
     _audioPlayer.dispose();
     _cancelRestNotification();
+    _stopWorkoutForegroundService();
     WakelockPlus.disable();
     super.dispose();
   }

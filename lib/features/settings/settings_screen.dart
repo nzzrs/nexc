@@ -245,6 +245,105 @@ class SettingsScreen extends ConsumerWidget {
               Navigator.pushNamed(context, '/backup');
             },
           ),
+
+          const SizedBox(height: 16),
+
+          // Features Configuration
+          _buildSectionHeader(context, 'Features Configuration'),
+          _SettingItem(
+            settingName: 'Meal Tracking',
+            settingDesc: settings.enableMealTracking ? 'Meal tracking enabled' : 'Meal tracking disabled',
+            icon: Icons.restaurant_outlined,
+            isChecked: settings.enableMealTracking,
+            onClick: () => notifier.setEnableMealTracking(!settings.enableMealTracking),
+          ),
+          _SettingItem(
+            settingName: 'Stock Tracking',
+            settingDesc: !settings.enableMealTracking
+                ? 'Requires Meal Tracking'
+                : (settings.enableStockTracking ? 'Stock tracking enabled' : 'Stock tracking disabled'),
+            icon: Icons.inventory_2_outlined,
+            isChecked: settings.enableStockTracking,
+            enabled: settings.enableMealTracking,
+            onClick: () => notifier.setEnableStockTracking(!settings.enableStockTracking),
+          ),
+
+          const SizedBox(height: 16),
+
+          // AI Integrations
+          _buildSectionHeader(context, 'AI Integrations'),
+          _SettingItem(
+            settingName: 'AI Stock Logging',
+            settingDesc: 'Log stock via receipt photo uploads',
+            icon: Icons.receipt_long_outlined,
+            isChecked: settings.enableAiStockLogging,
+            onClick: () => notifier.setEnableAiStockLogging(!settings.enableAiStockLogging),
+          ),
+          _SettingItem(
+            settingName: 'AI Product Creation',
+            settingDesc: 'Autofill nutrition details using AI predictions',
+            icon: Icons.auto_awesome_outlined,
+            isChecked: settings.enableAiProductCreation,
+            onClick: () => notifier.setEnableAiProductCreation(!settings.enableAiProductCreation),
+          ),
+
+          if (settings.enableAiStockLogging || settings.enableAiProductCreation) ...[
+            const SizedBox(height: 8),
+            Card(
+              elevation: 0,
+              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'AI API Configuration',
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 12),
+                    DropdownButtonFormField<String>(
+                      value: settings.aiProvider,
+                      decoration: const InputDecoration(
+                        labelText: 'API Provider',
+                        border: OutlineInputBorder(),
+                      ),
+                      items: const [
+                        DropdownMenuItem(value: 'gemini', child: Text('Gemini API (AI Studio)')),
+                        DropdownMenuItem(value: 'openrouter', child: Text('OpenRouter')),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          notifier.setAiProvider(val);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      initialValue: settings.aiToken,
+                      obscureText: true,
+                      decoration: const InputDecoration(
+                        labelText: 'API Token / Key',
+                        border: OutlineInputBorder(),
+                      ),
+                      onChanged: (val) => notifier.setAiToken(val),
+                    ),
+                    const SizedBox(height: 12),
+                    TextFormField(
+                      initialValue: settings.aiModel,
+                      decoration: InputDecoration(
+                        labelText: 'Model Name',
+                        hintText: settings.aiProvider == 'gemini' ? 'gemini-1.5-flash' : 'google/gemini-2.5-flash',
+                        border: const OutlineInputBorder(),
+                      ),
+                      onChanged: (val) => notifier.setAiModel(val),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -271,6 +370,7 @@ class _SettingItem extends StatelessWidget {
   final VoidCallback onClick;
   final bool? isChecked;
   final VoidCallback? onInfoClick;
+  final bool enabled;
 
   const _SettingItem({
     required this.settingName,
@@ -279,6 +379,7 @@ class _SettingItem extends StatelessWidget {
     required this.onClick,
     this.isChecked,
     this.onInfoClick,
+    this.enabled = true,
   });
 
   @override
@@ -292,50 +393,53 @@ class _SettingItem extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.0),
         ),
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        color: theme.colorScheme.surfaceVariant.withOpacity(enabled ? 0.3 : 0.1),
         child: InkWell(
           borderRadius: BorderRadius.circular(16.0),
-          onTap: onClick,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-            child: Row(
-              children: [
-                Icon(
-                  icon,
-                  color: theme.colorScheme.onSurfaceVariant,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        settingName,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        settingDesc,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                      ),
-                    ],
+          onTap: enabled ? onClick : null,
+          child: Opacity(
+            opacity: enabled ? 1.0 : 0.5,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+              child: Row(
+                children: [
+                  Icon(
+                    icon,
+                    color: theme.colorScheme.onSurfaceVariant,
                   ),
-                ),
-                if (onInfoClick != null)
-                  IconButton(
-                    icon: Icon(Icons.info_outline, color: theme.colorScheme.primary),
-                    onPressed: onInfoClick,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          settingName,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          settingDesc,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
+                        ),
+                      ],
+                    ),
                   ),
-                if (isChecked != null)
-                  Switch(
-                    value: isChecked!,
-                    onChanged: (val) => onClick(),
-                  ),
-              ],
+                  if (onInfoClick != null)
+                    IconButton(
+                      icon: Icon(Icons.info_outline, color: theme.colorScheme.primary),
+                      onPressed: enabled ? onInfoClick : null,
+                    ),
+                  if (isChecked != null)
+                    Switch(
+                      value: isChecked!,
+                      onChanged: enabled ? (val) => onClick() : null,
+                    ),
+                ],
+              ),
             ),
           ),
         ),

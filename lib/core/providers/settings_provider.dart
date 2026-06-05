@@ -41,6 +41,15 @@ class SettingsState {
   final bool enableActivity;
   final bool enableAdvancedBody;
 
+  // New toggles
+  final bool enableMealTracking;
+  final bool enableStockTracking;
+  final bool enableAiStockLogging;
+  final bool enableAiProductCreation;
+  final String aiProvider;
+  final String aiToken;
+  final String aiModel;
+
   const SettingsState({
     required this.themeMode,
     required this.materialMode,
@@ -61,6 +70,13 @@ class SettingsState {
     required this.enableAdvancedSleep,
     required this.enableActivity,
     required this.enableAdvancedBody,
+    required this.enableMealTracking,
+    required this.enableStockTracking,
+    required this.enableAiStockLogging,
+    required this.enableAiProductCreation,
+    required this.aiProvider,
+    required this.aiToken,
+    required this.aiModel,
   });
 
   SettingsState copyWith({
@@ -83,6 +99,13 @@ class SettingsState {
     bool? enableAdvancedSleep,
     bool? enableActivity,
     bool? enableAdvancedBody,
+    bool? enableMealTracking,
+    bool? enableStockTracking,
+    bool? enableAiStockLogging,
+    bool? enableAiProductCreation,
+    String? aiProvider,
+    String? aiToken,
+    String? aiModel,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -104,6 +127,13 @@ class SettingsState {
       enableAdvancedSleep: enableAdvancedSleep ?? this.enableAdvancedSleep,
       enableActivity: enableActivity ?? this.enableActivity,
       enableAdvancedBody: enableAdvancedBody ?? this.enableAdvancedBody,
+      enableMealTracking: enableMealTracking ?? this.enableMealTracking,
+      enableStockTracking: enableStockTracking ?? this.enableStockTracking,
+      enableAiStockLogging: enableAiStockLogging ?? this.enableAiStockLogging,
+      enableAiProductCreation: enableAiProductCreation ?? this.enableAiProductCreation,
+      aiProvider: aiProvider ?? this.aiProvider,
+      aiToken: aiToken ?? this.aiToken,
+      aiModel: aiModel ?? this.aiModel,
     );
   }
 }
@@ -143,6 +173,14 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final enableActivity = prefs.getBool('enable_activity') ?? false;
     final enableAdvancedBody = prefs.getBool('enable_advanced_body') ?? false;
 
+    final enableMealTracking = prefs.getBool('enable_meal_tracking') ?? true;
+    final enableStockTracking = prefs.getBool('enable_stock_tracking') ?? true;
+    final enableAiStockLogging = prefs.getBool('enable_ai_stock_logging') ?? false;
+    final enableAiProductCreation = prefs.getBool('enable_ai_product_creation') ?? false;
+    final aiProvider = prefs.getString('ai_provider') ?? 'gemini';
+    final aiToken = prefs.getString('ai_token') ?? '';
+    final aiModel = prefs.getString('ai_model') ?? '';
+
     return SettingsState(
       themeMode: themeMode,
       materialMode: materialMode,
@@ -163,6 +201,13 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       enableAdvancedSleep: enableAdvancedSleep,
       enableActivity: enableActivity,
       enableAdvancedBody: enableAdvancedBody,
+      enableMealTracking: enableMealTracking,
+      enableStockTracking: enableStockTracking,
+      enableAiStockLogging: enableAiStockLogging,
+      enableAiProductCreation: enableAiProductCreation,
+      aiProvider: aiProvider,
+      aiToken: aiToken,
+      aiModel: aiModel,
     );
   }
 
@@ -273,6 +318,49 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setEnableAdvancedBody(bool val) async {
     await _prefs.setBool('enable_advanced_body', val);
     state = state.copyWith(enableAdvancedBody: val);
+  }
+
+  Future<void> setEnableMealTracking(bool val) async {
+    await _prefs.setBool('enable_meal_tracking', val);
+    if (!val) {
+      await _prefs.setBool('enable_stock_tracking', false);
+      state = state.copyWith(
+        enableMealTracking: false,
+        enableStockTracking: false,
+      );
+    } else {
+      state = state.copyWith(enableMealTracking: true);
+    }
+  }
+
+  Future<void> setEnableStockTracking(bool val) async {
+    await _prefs.setBool('enable_stock_tracking', val);
+    state = state.copyWith(enableStockTracking: val);
+  }
+
+  Future<void> setEnableAiStockLogging(bool val) async {
+    await _prefs.setBool('enable_ai_stock_logging', val);
+    state = state.copyWith(enableAiStockLogging: val);
+  }
+
+  Future<void> setEnableAiProductCreation(bool val) async {
+    await _prefs.setBool('enable_ai_product_creation', val);
+    state = state.copyWith(enableAiProductCreation: val);
+  }
+
+  Future<void> setAiProvider(String val) async {
+    await _prefs.setString('ai_provider', val);
+    state = state.copyWith(aiProvider: val);
+  }
+
+  Future<void> setAiToken(String val) async {
+    await _prefs.setString('ai_token', val);
+    state = state.copyWith(aiToken: val);
+  }
+
+  Future<void> setAiModel(String val) async {
+    await _prefs.setString('ai_model', val);
+    state = state.copyWith(aiModel: val);
   }
 }
 

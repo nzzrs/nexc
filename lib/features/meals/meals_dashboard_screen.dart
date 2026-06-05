@@ -17,6 +17,8 @@ import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/providers/settings_provider.dart';
+import 'products_library_screen.dart';
+import 'recipes_library_screen.dart';
 
 String formatDouble(double val) {
   if (val == val.toInt().toDouble()) {
@@ -928,24 +930,74 @@ class MealTrackCard extends ConsumerWidget {
                         ],
                       ),
                       const SizedBox(height: 6),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: isPortable
-                              ? theme.colorScheme.primaryContainer.withOpacity(0.5)
-                              : theme.colorScheme.errorContainer.withOpacity(0.5),
-                          borderRadius: BorderRadius.circular(4),
-                        ),
-                        child: Text(
-                          isPortable ? "Portable" : "Home only",
-                          style: theme.textTheme.labelSmall?.copyWith(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: isPortable
-                                    ? theme.colorScheme.onPrimaryContainer
-                                    : theme.colorScheme.onErrorContainer,
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: isPortable
+                                  ? theme.colorScheme.primaryContainer.withOpacity(0.5)
+                                  : theme.colorScheme.errorContainer.withOpacity(0.5),
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              isPortable ? "Portable" : "Home only",
+                              style: theme.textTheme.labelSmall?.copyWith(
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                    color: isPortable
+                                        ? theme.colorScheme.onPrimaryContainer
+                                        : theme.colorScheme.onErrorContainer,
+                                  ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () {
+                              ref.read(mealRepositoryProvider).updateMeal(
+                                    meal.copyWith(atHome: !meal.atHome),
+                                  );
+                            },
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: meal.atHome
+                                    ? Colors.green.withOpacity(0.15)
+                                    : theme.colorScheme.secondaryContainer.withOpacity(0.5),
+                                borderRadius: BorderRadius.circular(4),
+                                border: Border.all(
+                                  color: meal.atHome
+                                      ? Colors.green.withOpacity(0.5)
+                                      : theme.colorScheme.outlineVariant,
+                                  width: 1,
+                                ),
                               ),
-                        ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    meal.atHome ? Icons.home : Icons.restaurant_menu,
+                                    size: 12,
+                                    color: meal.atHome
+                                        ? Colors.green[800]
+                                        : theme.colorScheme.onSecondaryContainer,
+                                  ),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    meal.atHome ? "At Home" : "Outside",
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                          fontSize: 10,
+                                          fontWeight: FontWeight.bold,
+                                          color: meal.atHome
+                                              ? Colors.green[800]
+                                              : theme.colorScheme.onSecondaryContainer,
+                                        ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
@@ -1070,20 +1122,37 @@ class MealTrackCard extends ConsumerWidget {
                                         detail.mealItem.copyWith(amountUnit: newUnit),
                                       );
                                 },
-                                itemBuilder: (context) => [
-                                  PopupMenuItem(
-                                    value: AmountUnit.GRAMS,
-                                    child: Text(detail.product?.units.isNotEmpty == true ? detail.product!.units : "g"),
-                                  ),
-                                  PopupMenuItem(
-                                    value: AmountUnit.ML,
-                                    child: const Text("ml"),
-                                  ),
-                                  PopupMenuItem(
-                                    value: AmountUnit.UNITS,
-                                    child: const Text("units"),
-                                  ),
-                                ],
+                                itemBuilder: (context) {
+                                  final list = <PopupMenuEntry<AmountUnit>>[
+                                    PopupMenuItem(
+                                      value: AmountUnit.GRAMS,
+                                      child: Text(detail.product?.units.isNotEmpty == true ? detail.product!.units : "g"),
+                                    ),
+                                  ];
+                                  if (detail.mealItem.type == MealItemType.PRODUCT) {
+                                    final prod = detail.product;
+                                    if (prod != null) {
+                                      if (prod.mlToGFactor != null && prod.mlToGFactor! > 0) {
+                                        list.add(const PopupMenuItem(
+                                          value: AmountUnit.ML,
+                                          child: Text("ml"),
+                                        ));
+                                      }
+                                      if (prod.unitWeight != null && prod.unitWeight! > 0) {
+                                        list.add(const PopupMenuItem(
+                                          value: AmountUnit.UNITS,
+                                          child: Text("units"),
+                                        ));
+                                      }
+                                    }
+                                  } else {
+                                    list.add(const PopupMenuItem(
+                                      value: AmountUnit.UNITS,
+                                      child: Text("units"),
+                                    ));
+                                  }
+                                  return list;
+                                },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
@@ -1548,7 +1617,7 @@ class MealPlanCard extends StatelessWidget {
   }
 }
 
-class AddMealItemDialog extends StatefulWidget {
+class AddMealItemDialog extends ConsumerStatefulWidget {
   final List<Product> products;
   final List<RecipeWithIngredients> recipes;
   final VoidCallback onDismiss;
@@ -1563,10 +1632,10 @@ class AddMealItemDialog extends StatefulWidget {
   });
 
   @override
-  State<AddMealItemDialog> createState() => _AddMealItemDialogState();
+  ConsumerState<AddMealItemDialog> createState() => _AddMealItemDialogState();
 }
 
-class _AddMealItemDialogState extends State<AddMealItemDialog> {
+class _AddMealItemDialogState extends ConsumerState<AddMealItemDialog> {
   MealItemType _type = MealItemType.PRODUCT;
   String _searchQuery = "";
   int? _selectedProductId;
@@ -1585,9 +1654,7 @@ class _AddMealItemDialogState extends State<AddMealItemDialog> {
     final theme = Theme.of(context);
     final filteredProducts = _searchQuery.isEmpty
         ? widget.products
-        : widget.products
-            .where((p) => p.name.toLowerCase().contains(_searchQuery.toLowerCase()))
-            .toList();
+        : widget.products.searchAndSort(_searchQuery);
 
     final filteredRecipes = _searchQuery.isEmpty
         ? widget.recipes
@@ -1657,14 +1724,74 @@ class _AddMealItemDialogState extends State<AddMealItemDialog> {
                   );
                 }),
               ] else ...[
-                TextField(
-                  autofocus: true,
-                  decoration: const InputDecoration(
-                    labelText: "Search food...",
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(),
-                  ),
-                  onChanged: (val) => setState(() => _searchQuery = val),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        autofocus: true,
+                        decoration: const InputDecoration(
+                          labelText: "Search food...",
+                          prefixIcon: Icon(Icons.search),
+                          border: OutlineInputBorder(),
+                        ),
+                        onChanged: (val) => setState(() => _searchQuery = val),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    IconButton.filledTonal(
+                      icon: const Icon(Icons.add),
+                      tooltip: _type == MealItemType.PRODUCT ? "Add Product" : "Add Recipe",
+                      onPressed: () {
+                        if (_type == MealItemType.PRODUCT) {
+                           showDialog(
+                            context: context,
+                            builder: (ctx) => AddEditProductDialog(
+                              product: Product(
+                                id: 0,
+                                name: _searchQuery,
+                                defaultUnits: "g",
+                                edibleQtyPerUnit: 1.0,
+                                kcal: 0.0,
+                                proteins: 0.0,
+                                carbsAvailable: null,
+                                fats: 0.0,
+                                isSupplement: false,
+                                isPortable: true,
+                                isStockRaw: false,
+                              ),
+                              onDismiss: () => Navigator.pop(ctx),
+                              onConfirm: (newProd) async {
+                                final newId = await ref.read(mealRepositoryProvider).saveProduct(newProd);
+                                setState(() {
+                                  _selectedProductId = newId;
+                                });
+                                if (ctx.mounted) Navigator.pop(ctx);
+                              },
+                            ),
+                          );
+                        } else {
+                          showDialog(
+                            context: context,
+                            builder: (ctx) => AddEditRecipeDialog(
+                              recipeWithIngredients: RecipeWithIngredients(
+                                recipe: Recipe(id: 0, name: _searchQuery, instructions: "", isPortable: false),
+                                ingredients: [],
+                              ),
+                              products: widget.products,
+                              onDismiss: () => Navigator.pop(ctx),
+                              onConfirm: (newRec) async {
+                                final newId = await ref.read(mealRepositoryProvider).saveRecipeWithIngredients(newRec);
+                                setState(() {
+                                  _selectedRecipeId = newId;
+                                });
+                                if (ctx.mounted) Navigator.pop(ctx);
+                              },
+                            ),
+                          );
+                        }
+                      },
+                    ),
+                  ],
                 ),
                 const SizedBox(height: 8),
                 ConstrainedBox(
@@ -1693,33 +1820,60 @@ class _AddMealItemDialogState extends State<AddMealItemDialog> {
               ],
               if (isItemSelected) ...[
                 const SizedBox(height: 8),
-                Row(
-                  children: [
-                    ChoiceChip(
-                      label: const Text("Grams"),
-                      selected: _amountUnit == AmountUnit.GRAMS,
-                      onSelected: (selected) {
-                        if (selected) setState(() => _amountUnit = AmountUnit.GRAMS);
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text("ml"),
-                      selected: _amountUnit == AmountUnit.ML,
-                      onSelected: (selected) {
-                        if (selected) setState(() => _amountUnit = AmountUnit.ML);
-                      },
-                    ),
-                    const SizedBox(width: 8),
-                    ChoiceChip(
-                      label: const Text("Units"),
-                      selected: _amountUnit == AmountUnit.UNITS,
-                      onSelected: (selected) {
-                        if (selected) setState(() => _amountUnit = AmountUnit.UNITS);
-                      },
-                    ),
-                  ],
-                ),
+                Builder(builder: (context) {
+                  final prod = _type == MealItemType.PRODUCT
+                      ? widget.products.firstWhereOrNull((p) => p.id == _selectedProductId)
+                      : null;
+                  final showMl = _type == MealItemType.PRODUCT &&
+                      prod != null &&
+                      prod.mlToGFactor != null &&
+                      prod.mlToGFactor! > 0;
+                  final showUnits = _type == MealItemType.RECIPE ||
+                      (_type == MealItemType.PRODUCT &&
+                          prod != null &&
+                          prod.unitWeight != null &&
+                          prod.unitWeight! > 0);
+
+                  // Keep unit consistent
+                  if (_amountUnit == AmountUnit.ML && !showMl) {
+                    Future.microtask(() => setState(() => _amountUnit = AmountUnit.GRAMS));
+                  }
+                  if (_amountUnit == AmountUnit.UNITS && !showUnits) {
+                    Future.microtask(() => setState(() => _amountUnit = AmountUnit.GRAMS));
+                  }
+
+                  return Row(
+                    children: [
+                      ChoiceChip(
+                        label: const Text("Grams"),
+                        selected: _amountUnit == AmountUnit.GRAMS,
+                        onSelected: (selected) {
+                          if (selected) setState(() => _amountUnit = AmountUnit.GRAMS);
+                        },
+                      ),
+                      if (showMl) ...[
+                        const SizedBox(width: 8),
+                        ChoiceChip(
+                          label: const Text("ml"),
+                          selected: _amountUnit == AmountUnit.ML,
+                          onSelected: (selected) {
+                            if (selected) setState(() => _amountUnit = AmountUnit.ML);
+                          },
+                        ),
+                      ],
+                      if (showUnits) ...[
+                        const SizedBox(width: 8),
+                        ChoiceChip(
+                          label: const Text("Units"),
+                          selected: _amountUnit == AmountUnit.UNITS,
+                          onSelected: (selected) {
+                            if (selected) setState(() => _amountUnit = AmountUnit.UNITS);
+                          },
+                        ),
+                      ],
+                    ],
+                  );
+                }),
                 if (_amountUnit == AmountUnit.UNITS && _type == MealItemType.PRODUCT) ...[
                   const SizedBox(height: 4),
                   ValueListenableBuilder<TextEditingValue>(

@@ -8,22 +8,22 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/components/nexc_scaffold.dart';
+import '../core/providers/settings_provider.dart';
 import 'home/home_screen.dart';
 import 'meals/meals_dashboard_screen.dart';
 import 'profile/profile_screen.dart';
 import 'notifications/notification_permission_dialog.dart';
 
-enum MainScreenPage { home, meals, profile }
-
-class MainScreen extends StatefulWidget {
+class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
 
   @override
-  State<MainScreen> createState() => _MainScreenState();
+  ConsumerState<MainScreen> createState() => _MainScreenState();
 }
 
-class _MainScreenState extends State<MainScreen> {
+class _MainScreenState extends ConsumerState<MainScreen> {
   final PageController _pageController = PageController(initialPage: 0);
   int _currentPageIndex = 0;
 
@@ -57,6 +57,32 @@ class _MainScreenState extends State<MainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final settings = ref.watch(settingsProvider);
+
+    final tabs = [
+      (
+        icon: const Icon(Icons.fitness_center_outlined),
+        selectedIcon: const Icon(Icons.fitness_center),
+        label: 'Workout',
+        screen: const HomeScreen(),
+      ),
+      if (settings.enableMealTracking)
+        (
+          icon: const Icon(Icons.restaurant_outlined),
+          selectedIcon: const Icon(Icons.restaurant),
+          label: 'Meals',
+          screen: const MealsDashboardScreen(),
+        ),
+      (
+        icon: const Icon(Icons.person_outline),
+        selectedIcon: const Icon(Icons.person),
+        label: 'Profile',
+        screen: const ProfileScreen(),
+      ),
+    ];
+
+    final currentIndex = _currentPageIndex.clamp(0, tabs.length - 1);
+
     return NexcScaffold(
       title: RichText(
         text: TextSpan(
@@ -76,9 +102,8 @@ class _MainScreenState extends State<MainScreen> {
         Icon(Icons.settings_outlined),
       ],
       actionsElevated: const [false, false],
-      fabAction: _currentPageIndex == MainScreenPage.home.index
+      fabAction: currentIndex == 0
           ? () {
-              // Navigate to create routine / edit workout with id 0
               Navigator.pushNamed(context, '/edit-workout', arguments: 0);
             }
           : null,
@@ -91,7 +116,7 @@ class _MainScreenState extends State<MainScreen> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
+              color: Colors.black.withOpacity(0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -100,25 +125,15 @@ class _MainScreenState extends State<MainScreen> {
         child: ClipRRect(
           borderRadius: BorderRadius.circular(24),
           child: NavigationBar(
-            selectedIndex: _currentPageIndex,
+            selectedIndex: currentIndex,
             onDestinationSelected: _onNavBarItemTapped,
-            destinations: const [
-              NavigationDestination(
-                icon: Icon(Icons.fitness_center_outlined),
-                selectedIcon: Icon(Icons.fitness_center),
-                label: 'Workout',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.restaurant_outlined),
-                selectedIcon: Icon(Icons.restaurant),
-                label: 'Meals',
-              ),
-              NavigationDestination(
-                icon: Icon(Icons.person_outline),
-                selectedIcon: Icon(Icons.person),
-                label: 'Profile',
-              ),
-            ],
+            destinations: tabs.map((tab) {
+              return NavigationDestination(
+                icon: tab.icon,
+                selectedIcon: tab.selectedIcon,
+                label: tab.label,
+              );
+            }).toList(),
           ),
         ),
       ),
@@ -126,11 +141,7 @@ class _MainScreenState extends State<MainScreen> {
         return PageView(
           controller: _pageController,
           onPageChanged: _onPageChanged,
-          children: const [
-            HomeScreen(),
-            MealsDashboardScreen(),
-            ProfileScreen(),
-          ],
+          children: tabs.map((tab) => tab.screen).toList(),
         );
       },
     );

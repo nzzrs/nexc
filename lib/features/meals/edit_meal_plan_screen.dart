@@ -543,6 +543,7 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                       time: LocalTime(now.hour, now.minute),
                       notes: "",
                       position: plan.meals.length,
+                      atHome: true,
                     );
                     ref.read(editMealPlanProvider(widget.mealPlanId).notifier).addMeal(meal);
                   },
@@ -821,16 +822,37 @@ class MealEditCard extends StatelessWidget {
                                       .read(editMealPlanProvider(meal.mealPlanId).notifier)
                                       .updateMealItemUnit(meal.id, detail.mealItem.id, newUnit);
                                 },
-                                itemBuilder: (context) => [
-                                  PopupMenuItem(
-                                    value: AmountUnit.GRAMS,
-                                    child: Text(detail.product?.units.isNotEmpty == true ? detail.product!.units : "g"),
-                                  ),
-                                  PopupMenuItem(
-                                    value: AmountUnit.UNITS,
-                                    child: const Text("units"),
-                                  ),
-                                ],
+                                 itemBuilder: (context) {
+                                   final list = <PopupMenuEntry<AmountUnit>>[
+                                     PopupMenuItem(
+                                       value: AmountUnit.GRAMS,
+                                       child: Text(detail.product?.units.isNotEmpty == true ? detail.product!.units : "g"),
+                                     ),
+                                   ];
+                                   if (detail.mealItem.type == MealItemType.PRODUCT) {
+                                     final prod = detail.product;
+                                     if (prod != null) {
+                                       if (prod.mlToGFactor != null && prod.mlToGFactor! > 0) {
+                                         list.add(const PopupMenuItem(
+                                           value: AmountUnit.ML,
+                                           child: Text("ml"),
+                                         ));
+                                       }
+                                       if (prod.unitWeight != null && prod.unitWeight! > 0) {
+                                         list.add(const PopupMenuItem(
+                                           value: AmountUnit.UNITS,
+                                           child: Text("units"),
+                                         ));
+                                       }
+                                     }
+                                   } else {
+                                     list.add(const PopupMenuItem(
+                                       value: AmountUnit.UNITS,
+                                       child: Text("units"),
+                                     ));
+                                   }
+                                   return list;
+                                 },
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(

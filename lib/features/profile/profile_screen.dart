@@ -15,6 +15,8 @@ import '../../core/db/enums.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/db/relations.dart';
 import '../../core/providers/profile_providers.dart';
+import '../../core/providers/settings_provider.dart';
+
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -32,6 +34,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
     final mealLogsAsync = ref.watch(profileMealLogsProvider);
     final pointsAsync = ref.watch(profilePointsProvider);
     final chartMode = ref.watch(workoutChartModeProvider);
+    final settings = ref.watch(settingsProvider);
 
     return ListView(
       padding: const EdgeInsets.all(16.0),
@@ -78,30 +81,6 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: _MenuButton(
-                text: "Products",
-                icon: Icons.inventory_2_outlined,
-                onPressed: () {
-                  Navigator.pushNamed(context, '/meals/products');
-                },
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _MenuButton(
-                text: "Recipes",
-                icon: Icons.restaurant,
-                onPressed: () {
-                  Navigator.pushNamed(context, '/meals/recipes');
-                },
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _MenuButton(
                 text: "Calendar",
                 icon: Icons.calendar_month,
                 onPressed: () {
@@ -121,6 +100,44 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             ),
           ],
         ),
+        if (settings.enableMealTracking) ...[
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _MenuButton(
+                  text: "Products",
+                  icon: Icons.inventory_2_outlined,
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/meals/products');
+                  },
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: _MenuButton(
+                  text: "Recipes",
+                  icon: Icons.restaurant,
+                  onPressed: () {
+                    Navigator.pushNamed(context, '/meals/recipes');
+                  },
+                ),
+              ),
+              if (settings.enableStockTracking) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _MenuButton(
+                    text: "Stock",
+                    icon: Icons.storefront_outlined,
+                    onPressed: () {
+                      Navigator.pushNamed(context, '/profile/stock');
+                    },
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
         const SizedBox(height: 24),
         // Overview Section
         Text(
@@ -201,140 +218,142 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             );
           },
         ),
-        const SizedBox(height: 24),
-        // Your Meals Section
-        Text(
-          "Your meals",
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 8),
-        mealLogsAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text("Error: $err")),
-          data: (logs) {
-            if (logs.isEmpty) {
-              return Card(
-                child: Padding(
-                  padding: const EdgeInsets.all(24.0),
-                  child: Column(
-                    children: [
-                      Icon(Icons.restaurant, size: 48, color: theme.colorScheme.primary.withOpacity(0.5)),
-                      const SizedBox(height: 12),
-                      const Text(
-                        "No meal log history yet",
-                        textAlign: TextAlign.center,
-                      ),
-                    ],
-                  ),
-                ),
-              );
-            }
-
-            return Column(
-              children: logs.map((planWithMeals) {
-                final plan = planWithMeals.mealPlan;
-                final meals = planWithMeals.meals;
-
-                // Totals calculations
-                double totalProt = 0.0;
-                double totalCarb = 0.0;
-                double totalFat = 0.0;
-                int totalItems = 0;
-                int consumedCount = 0;
-
-                for (final m in meals) {
-                  for (final detail in m.items) {
-                    totalItems++;
-                    if (detail.mealItem.consumed) consumedCount++;
-
-                    final scale = detail.macroScale;
-                    if (detail.mealItem.type == MealItemType.PRODUCT && detail.product != null) {
-                      totalProt += detail.product!.proteins * scale;
-                      totalCarb += detail.product!.carbs * scale;
-                      totalFat += detail.product!.fats * scale;
-                    } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
-                      for (final ing in detail.recipe!.ingredients) {
-                        final ingScale = (ing.ingredient.amount / 100.0) * scale;
-                        totalProt += ing.product.proteins * ingScale;
-                        totalCarb += ing.product.carbs * ingScale;
-                        totalFat += ing.product.fats * ingScale;
-                      }
-                    }
-                  }
-                }
-
-                final formatter =
-                    "${plan.created.month}/${plan.created.day}/${plan.created.year} ${plan.created.hour.toString().padLeft(2, '0')}:${plan.created.minute.toString().padLeft(2, '0')}";
-
+        if (settings.enableMealTracking) ...[
+          const SizedBox(height: 24),
+          // Your Meals Section
+          Text(
+            "Your meals",
+            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 8),
+          mealLogsAsync.when(
+            loading: () => const Center(child: CircularProgressIndicator()),
+            error: (err, stack) => Center(child: Text("Error: $err")),
+            data: (logs) {
+              if (logs.isEmpty) {
                 return Card(
-                  margin: const EdgeInsets.only(bottom: 8.0),
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
                       children: [
-                        Expanded(
-                          child: InkWell(
-                            onTap: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/meals/track-plan',
-                                arguments: plan.id,
-                              );
-                            },
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  plan.title,
-                                  style: theme.textTheme.titleMedium?.copyWith(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                ),
-                                const SizedBox(height: 6),
-                                Text("Eaten on: $formatter"),
-                                Text("Progress: $consumedCount / $totalItems items eaten"),
-                                Text(
-                                  "Macros: P ${totalProt.toStringAsFixed(1)}g | C ${totalCarb.toStringAsFixed(1)}g | F ${totalFat.toStringAsFixed(1)}g",
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                        IconButton(
-                          icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
-                          onPressed: () async {
-                            final confirm = await showDialog<bool>(
-                              context: context,
-                              builder: (context) => AlertDialog(
-                                title: const Text("Delete Meal Log"),
-                                content: const Text("Are you sure you want to delete this meal log?"),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, false),
-                                    child: const Text("Cancel"),
-                                  ),
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(context, true),
-                                    child: Text("Delete", style: TextStyle(color: theme.colorScheme.error)),
-                                  ),
-                                ],
-                              ),
-                            );
-                            if (confirm == true) {
-                              ref.read(mealRepositoryProvider).deleteMealPlan(plan);
-                            }
-                          },
+                        Icon(Icons.restaurant, size: 48, color: theme.colorScheme.primary.withOpacity(0.5)),
+                        const SizedBox(height: 12),
+                        const Text(
+                          "No meal log history yet",
+                          textAlign: TextAlign.center,
                         ),
                       ],
                     ),
                   ),
                 );
-              }).toList(),
-            );
-          },
-        ),
+              }
+
+              return Column(
+                children: logs.map((planWithMeals) {
+                  final plan = planWithMeals.mealPlan;
+                  final meals = planWithMeals.meals;
+
+                  // Totals calculations
+                  double totalProt = 0.0;
+                  double totalCarb = 0.0;
+                  double totalFat = 0.0;
+                  int totalItems = 0;
+                  int consumedCount = 0;
+
+                  for (final m in meals) {
+                    for (final detail in m.items) {
+                      totalItems++;
+                      if (detail.mealItem.consumed) consumedCount++;
+
+                      final scale = detail.macroScale;
+                      if (detail.mealItem.type == MealItemType.PRODUCT && detail.product != null) {
+                        totalProt += detail.product!.proteins * scale;
+                        totalCarb += detail.product!.carbs * scale;
+                        totalFat += detail.product!.fats * scale;
+                      } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
+                        for (final ing in detail.recipe!.ingredients) {
+                          final ingScale = (ing.ingredient.amount / 100.0) * scale;
+                          totalProt += ing.product.proteins * ingScale;
+                          totalCarb += ing.product.carbs * ingScale;
+                          totalFat += ing.product.fats * ingScale;
+                        }
+                      }
+                    }
+                  }
+
+                  final formatter =
+                      "${plan.created.month}/${plan.created.day}/${plan.created.year} ${plan.created.hour.toString().padLeft(2, '0')}:${plan.created.minute.toString().padLeft(2, '0')}";
+
+                  return Card(
+                    margin: const EdgeInsets.only(bottom: 8.0),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.pushNamed(
+                                  context,
+                                  '/meals/track-plan',
+                                  arguments: plan.id,
+                                );
+                              },
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    plan.title,
+                                    style: theme.textTheme.titleMedium?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                        ),
+                                  ),
+                                  const SizedBox(height: 6),
+                                  Text("Eaten on: $formatter"),
+                                  Text("Progress: $consumedCount / $totalItems items eaten"),
+                                  Text(
+                                    "Macros: P ${totalProt.toStringAsFixed(1)}g | C ${totalCarb.toStringAsFixed(1)}g | F ${totalFat.toStringAsFixed(1)}g",
+                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                          IconButton(
+                            icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                            onPressed: () async {
+                              final confirm = await showDialog<bool>(
+                                context: context,
+                                builder: (context) => AlertDialog(
+                                  title: const Text("Delete Meal Log"),
+                                  content: const Text("Are you sure you want to delete this meal log?"),
+                                  actions: [
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, false),
+                                      child: const Text("Cancel"),
+                                    ),
+                                    TextButton(
+                                      onPressed: () => Navigator.pop(context, true),
+                                      child: Text("Delete", style: TextStyle(color: theme.colorScheme.error)),
+                                    ),
+                                  ],
+                                ),
+                              );
+                              if (confirm == true) {
+                                ref.read(mealRepositoryProvider).deleteMealPlan(plan);
+                              }
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+          ),
+        ],
       ],
     );
   }

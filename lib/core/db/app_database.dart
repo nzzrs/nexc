@@ -13,8 +13,10 @@ import 'package:drift/drift.dart';
 import 'package:drift/native.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
+import 'package:string_similarity/string_similarity.dart';
 
 import 'enums.dart';
+import 'relations.dart';
 
 part 'app_database.g.dart';
 
@@ -299,6 +301,55 @@ class Products extends Table {
   RealColumn get fats => real()();
   BoolColumn get isSupplement => boolean().named('isSupplement')();
   BoolColumn get isPortable => boolean().named('isPortable').withDefault(const Constant(true))();
+  IntColumn get unitWeight => integer().named('unitWeight').nullable()();
+  BoolColumn get isStockRaw => boolean().named('isStockRaw').withDefault(const Constant(false))();
+}
+
+@DataClassName('House')
+class Houses extends Table {
+  @override
+  String get tableName => 'houses';
+
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text()();
+}
+
+@DataClassName('ProductStock')
+class ProductStocks extends Table {
+  @override
+  String get tableName => 'product_stocks';
+
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get productId => integer().named('productId')();
+  IntColumn get houseId => integer().named('houseId')();
+  RealColumn get quantity => real()();
+  RealColumn get minTriggerQuantity => real().named('minTriggerQuantity').nullable()();
+  RealColumn get quantityGrams => real().named('quantityGrams').withDefault(const Constant(0.0))();
+  RealColumn get quantityMl => real().named('quantityMl').withDefault(const Constant(0.0))();
+  RealColumn get quantityUnits => real().named('quantityUnits').withDefault(const Constant(0.0))();
+
+  @override
+  List<String> get customConstraints => [
+    'FOREIGN KEY(productId) REFERENCES products(id) ON UPDATE NO ACTION ON DELETE CASCADE',
+    'FOREIGN KEY(houseId) REFERENCES houses(id) ON UPDATE NO ACTION ON DELETE CASCADE',
+    'UNIQUE(productId, houseId)',
+  ];
+}
+
+@DataClassName('ReceiptMapping')
+class ReceiptMappings extends Table {
+  @override
+  String get tableName => 'receipt_mappings';
+
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get receiptName => text()();
+  IntColumn get productId => integer().named('productId')();
+
+  @override
+  List<String> get customConstraints => [
+    'FOREIGN KEY(productId) REFERENCES products(id) ON UPDATE NO ACTION ON DELETE CASCADE',
+    'UNIQUE(receipt_name)',
+  ];
 }
 
 @DataClassName('Recipe')
@@ -363,6 +414,7 @@ class Meals extends Table {
   TextColumn get time => text().map(const LocalTimeConverter())();
   TextColumn get notes => text()();
   IntColumn get position => integer()();
+  BoolColumn get atHome => boolean().named('atHome').withDefault(const Constant(true))();
 
   @override
   List<String> get customConstraints => [
@@ -423,12 +475,16 @@ class Users extends Table {
   Meals,
   MealItems,
   Users,
+  Houses,
+  ProductStocks,
+  ReceiptMappings,
 ])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
+  AppDatabase.executor(QueryExecutor executor) : super(executor);
 
   @override
-  int get schemaVersion => 15;
+  int get schemaVersion => 19;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -521,6 +577,29 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(users);
             await m.addColumn(workouts, workouts.isTemporal);
           }
+          if (from < 16) {
+            try {
+              await m.addColumn(products, products.unitWeight);
+            } catch (_) {}
+            await m.createTable(houses);
+            await m.createTable(productStocks);
+          }
+          if (from < 17) {
+            await m.createTable(receiptMappings);
+          }
+          if (from < 18) {
+            try {
+              await m.addColumn(products, products.isStockRaw);
+            } catch (_) {}
+          }
+          if (from < 19) {
+            try {
+              await m.addColumn(productStocks, productStocks.quantityGrams);
+              await m.addColumn(productStocks, productStocks.quantityMl);
+              await m.addColumn(productStocks, productStocks.quantityUnits);
+              await m.addColumn(meals, meals.atHome);
+            } catch (_) {}
+          }
         },
       );
 }
@@ -549,5 +628,162 @@ extension ProductExtension on Product {
   int get quantity => 0;
   double get ediblePercent => edibleQtyPerUnit != null ? (edibleQtyPerUnit! * 100.0) : 100.0;
   double get weight => 0.0;
-  int? get unitWeight => null;
+}
+
+List<String> getSearchStems(String query) {
+  final queryLower = query.toLowerCase().trim();
+  if (queryLower.isEmpty) return [];
+  final stems = {queryLower};
+  
+  if (queryLower.endsWith('ies') && queryLower.length > 3) {
+    stems.add(queryLower.substring(0, queryLower.length - 3) + 'y');
+  } else if (queryLower.endsWith('s') && queryLower.length > 3) {
+    stems.add(queryLower.substring(0, queryLower.length - 1));
+  }
+  
+  for (final s in List<String>.from(stems)) {
+    if (s.endsWith('y') && s.length > 1) {
+      stems.add(s.substring(0, s.length - 1) + 'ies');
+    } else if (!s.endsWith('s')) {
+      stems.add(s + 's');
+    }
+  }
+  
+  final Map<String, List<String>> synonymMap = {
+    'oatmeal': ['oat', 'oats'],
+    'oatmeals': ['oat', 'oats'],
+    'potato': ['potatoes', 'potato'],
+    'tomato': ['tomatoes', 'tomato'],
+  };
+  
+  for (final stem in List<String>.from(stems)) {
+    if (synonymMap.containsKey(stem)) {
+      stems.addAll(synonymMap[stem]!);
+    }
+  }
+  
+  return stems.toList();
+}
+
+extension ProductSearchExtension on Iterable<Product> {
+  List<Product> searchAndSort(String query) {
+    if (query.isEmpty) return toList();
+    
+    final queryLower = query.toLowerCase().trim();
+    final stems = getSearchStems(query);
+    
+    final scored = map((p) {
+      final nameLower = p.name.toLowerCase();
+      double score = 0.0;
+      
+      if (stems.any((s) => nameLower == s)) {
+        score += 10.0;
+      }
+      
+      if (stems.any((s) => nameLower.startsWith(s))) {
+        score += 5.0;
+      } else if (stems.any((s) => nameLower.contains(s))) {
+        score += 2.0;
+      }
+      
+      final words = nameLower.split(RegExp(r'[^a-zA-Z0-9]'));
+      if (words.any((w) => stems.contains(w))) {
+        score += 3.0;
+      } else if (words.any((w) => stems.any((s) => w.startsWith(s)))) {
+        score += 1.5;
+      }
+      
+      final similarity = StringSimilarity.compareTwoStrings(nameLower, queryLower);
+      score += similarity * 3.0;
+      
+      score -= p.name.length * 0.001;
+      
+      if (nameLower.contains('babyfood')) {
+        score -= 1.0;
+      }
+      
+      if (words.contains('raw') && !queryLower.contains('raw')) {
+        score += 1.0;
+      }
+      
+      return _ScoredProduct(p, score);
+    }).toList();
+
+    final filtered = scored.where((sp) {
+      final nameLower = sp.product.name.toLowerCase();
+      final similarity = StringSimilarity.compareTwoStrings(nameLower, queryLower);
+      return stems.any((s) => nameLower.contains(s)) || similarity > 0.2;
+    }).toList();
+    
+    filtered.sort((a, b) => b.score.compareTo(a.score));
+    return filtered.map((sp) => sp.product).toList();
+  }
+}
+
+class _ScoredProduct {
+  final Product product;
+  final double score;
+  _ScoredProduct(this.product, this.score);
+}
+
+extension RecipeSearchExtension on Iterable<RecipeWithIngredients> {
+  List<RecipeWithIngredients> searchAndSort(String query) {
+    if (query.isEmpty) return toList();
+    
+    final queryLower = query.toLowerCase().trim();
+    final stems = getSearchStems(query);
+    
+    final scored = map((r) {
+      final nameLower = r.recipe.name.toLowerCase();
+      double score = 0.0;
+      
+      if (stems.any((s) => nameLower == s)) {
+        score += 10.0;
+      }
+      
+      if (stems.any((s) => nameLower.startsWith(s))) {
+        score += 5.0;
+      } else if (stems.any((s) => nameLower.contains(s))) {
+        score += 2.0;
+      }
+      
+      for (final ing in r.ingredients) {
+        final ingNameLower = ing.product.name.toLowerCase();
+        if (stems.any((s) => ingNameLower == s)) {
+          score += 4.0;
+        } else if (stems.any((s) => ingNameLower.startsWith(s))) {
+          score += 2.0;
+        } else if (stems.any((s) => ingNameLower.contains(s))) {
+          score += 1.0;
+        }
+      }
+      
+      final similarity = StringSimilarity.compareTwoStrings(nameLower, queryLower);
+      score += similarity * 3.0;
+      
+      score -= r.recipe.name.length * 0.001;
+      
+      return _ScoredRecipe(r, score);
+    }).toList();
+    
+    final filtered = scored.where((sr) {
+      final nameLower = sr.recipe.recipe.name.toLowerCase();
+      final similarity = StringSimilarity.compareTwoStrings(nameLower, queryLower);
+      final ingMatch = sr.recipe.ingredients.any((ing) {
+        final ingNameLower = ing.product.name.toLowerCase();
+        return stems.any((s) => ingNameLower.contains(s)) || 
+               StringSimilarity.compareTwoStrings(ingNameLower, queryLower) > 0.3;
+      });
+      return stems.any((s) => nameLower.contains(s)) || similarity > 0.2 || ingMatch;
+    }).toList();
+    
+    filtered.sort((a, b) => b.score.compareTo(a.score));
+    return filtered.map((sr) => sr.recipe).toList();
+  }
+}
+
+class _ScoredRecipe {
+  final RecipeWithIngredients recipe;
+  final double score;
+  _ScoredRecipe(this.recipe, this.score);
 }

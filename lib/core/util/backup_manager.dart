@@ -297,6 +297,7 @@ class BackupManager {
         'time': meal.meal.time.toString(),
         'notes': meal.meal.notes,
         'position': meal.meal.position,
+        'atHome': meal.meal.atHome,
         'items': meal.items.map((item) => {
           'type': item.mealItem.type.name,
           'amount': item.mealItem.amount,
@@ -385,6 +386,7 @@ class BackupManager {
             time: LocalTime.parse(mJson['time'] ?? '12:00'),
             notes: mJson['notes'] ?? '',
             position: mJson['position'] ?? 0,
+            atHome: mJson['atHome'] ?? true,
           );
 
           final List<dynamic> itemsJson = mJson['items'] ?? [];
@@ -564,6 +566,7 @@ class BackupManager {
           fats: (item['fats'] as num?)?.toDouble() ?? 0.0,
           isSupplement: item['isSupplement'] ?? false,
           isPortable: item['isPortable'] ?? true,
+          isStockRaw: item['isStockRaw'] ?? false,
         );
         await mealRepo.saveProduct(product);
       }

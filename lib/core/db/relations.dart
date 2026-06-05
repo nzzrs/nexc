@@ -135,13 +135,25 @@ extension RecipeWithIngredientsExt on RecipeWithIngredients {
 }
 
 double getEdibleWeightPerUnit(Product p) {
-  if (p.edibleQtyPerUnit != null && p.edibleQtyPerUnit! > 0) return p.edibleQtyPerUnit!;
-  final name = p.name.toLowerCase();
-  if (name.contains('banana')) return 118.0;
-  if (name.contains('egg')) return 50.0;
-  if (name.contains('apple')) return 150.0;
-  if (name.contains('orange')) return 130.0;
-  return 100.0; // fallback
+  final double unitW;
+  if (p.unitWeight != null && p.unitWeight! > 0) {
+    unitW = p.unitWeight!.toDouble();
+  } else {
+    final name = p.name.toLowerCase();
+    if (name.contains('banana')) {
+      unitW = 120.0;
+    } else if (name.contains('egg')) {
+      unitW = 57.0;
+    } else if (name.contains('apple')) {
+      unitW = 182.0;
+    } else if (name.contains('orange')) {
+      unitW = 150.0;
+    } else {
+      unitW = 100.0;
+    }
+  }
+  final edibleFraction = p.edibleQtyPerUnit ?? 1.0;
+  return unitW * edibleFraction;
 }
 
 extension MealItemWithDetailsExt on MealItemWithDetails {

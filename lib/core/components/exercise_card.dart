@@ -127,7 +127,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
     final sets = widget.exerciseWithSets.sets;
 
     return Card(
-      color: theme.colorScheme.surfaceContainerLow,
+      color: theme.colorScheme.surfaceVariant,
       margin: const EdgeInsets.only(left: 0, right: 0, bottom: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
@@ -300,80 +300,50 @@ class _ExerciseCardState extends State<ExerciseCard> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 12),
-                      // Rest Time Controls
-                      if (!_showSlider) ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Row(
-                                children: [
-                                  IconButton(
-                                    icon: const Icon(Icons.info_outline),
-                                    onPressed: () => widget.showInfo('REST_TIME'),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Text(
-                                    'Rest time: ${ex.restTime}s',
-                                    style: theme.textTheme.bodyMedium,
-                                  ),
-                                ],
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.edit_outlined),
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  setState(() {
-                                    _showSlider = true;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
-                        ),
-                      ] else ...[
-                        Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                          child: Row(
-                            children: [
-                              Expanded(
-                                child: Slider(
-                                  value: ex.restTime.toDouble(),
-                                  min: 0,
-                                  max: 600,
-                                  divisions: 40,
-                                  label: '${ex.restTime}s',
-                                  onChanged: (val) {
-                                    widget.updateExerciseRestTime(val.round(), ex.id);
-                                    _restTimeController.text = val.round().toString();
-                                  },
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Icons.info_outline),
+                              onPressed: () => widget.showInfo('REST_TIME'),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Rest time: ',
+                              style: theme.textTheme.bodyMedium,
+                            ),
+                            SizedBox(
+                              width: 60,
+                              child: TextFormField(
+                                controller: _restTimeController,
+                                keyboardType: TextInputType.number,
+                                textAlign: TextAlign.center,
+                                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                                decoration: const InputDecoration(
+                                  isDense: true,
+                                  contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
                                 ),
-                              ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                icon: const Icon(Icons.add_circle_outline, size: 28),
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  final newVal = (ex.restTime + 15).clamp(0, 3600);
-                                  widget.updateExerciseRestTime(newVal, ex.id);
-                                  _restTimeController.text = newVal.toString();
+                                onFieldSubmitted: (val) {
+                                  final parsed = int.tryParse(val) ?? ex.restTime;
+                                  widget.updateExerciseRestTime(parsed, ex.id);
+                                },
+                                onTapOutside: (_) {
+                                  final parsed = int.tryParse(_restTimeController.text) ?? ex.restTime;
+                                  widget.updateExerciseRestTime(parsed, ex.id);
+                                  FocusManager.instance.primaryFocus?.unfocus();
                                 },
                               ),
-                              const SizedBox(width: 8),
-                              IconButton(
-                                icon: const Icon(Icons.check, size: 28),
-                                onPressed: () {
-                                  HapticFeedback.lightImpact();
-                                  setState(() {
-                                    _showSlider = false;
-                                  });
-                                },
-                              ),
-                            ],
-                          ),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              's',
+                              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                            ),
+                          ],
                         ),
-                      ],
+                      ),
                       const SizedBox(height: 8),
                       const Divider(),
 

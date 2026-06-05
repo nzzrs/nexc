@@ -31,6 +31,7 @@ import 'features/calendar/calendar_screen.dart';
 import 'features/profile/statistics_screen.dart';
 import 'features/profile/measurements_screen.dart';
 
+import 'features/profile/stock_screen.dart';
 import 'features/workout/info_workout_screen.dart';
 import 'features/profile/personal_info_screen.dart';
 import 'features/settings/measurements_settings_screen.dart';
@@ -106,7 +107,10 @@ class MyApp extends ConsumerWidget {
             },
             '/exercises': (context) {
               final args = ModalRoute.of(context)!.settings.arguments as bool? ?? true;
-              return ExercisesScreen(addExercises: args);
+              return ExercisesScreen(
+                addExercises: args,
+                isSelectionMode: false,
+              );
             },
             '/exercises/info': (context) {
               final args = ModalRoute.of(context)!.settings.arguments as String;
@@ -126,6 +130,7 @@ class MyApp extends ConsumerWidget {
             '/profile/statistics': (context) => const StatisticsScreen(),
             '/profile/measurements': (context) => const MeasurementsScreen(),
             '/profile/personal-info': (context) => const PersonalInfoScreen(),
+            '/profile/stock': (context) => const StockScreen(),
             '/settings/measurements': (context) => const MeasurementsSettingsScreen(),
           },
           debugShowCheckedModeBanner: false,

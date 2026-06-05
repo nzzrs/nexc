@@ -4374,6 +4374,22 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("isPortable" IN (0, 1))'),
       defaultValue: const Constant(true));
+  static const VerificationMeta _unitWeightMeta =
+      const VerificationMeta('unitWeight');
+  @override
+  late final GeneratedColumn<int> unitWeight = GeneratedColumn<int>(
+      'unitWeight', aliasedName, true,
+      type: DriftSqlType.int, requiredDuringInsert: false);
+  static const VerificationMeta _isStockRawMeta =
+      const VerificationMeta('isStockRaw');
+  @override
+  late final GeneratedColumn<bool> isStockRaw = GeneratedColumn<bool>(
+      'isStockRaw', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("isStockRaw" IN (0, 1))'),
+      defaultValue: const Constant(false));
   @override
   List<GeneratedColumn> get $columns => [
         id,
@@ -4388,7 +4404,9 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
         dietaryFiber,
         fats,
         isSupplement,
-        isPortable
+        isPortable,
+        unitWeight,
+        isStockRaw
       ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -4475,6 +4493,18 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
           isPortable.isAcceptableOrUnknown(
               data['isPortable']!, _isPortableMeta));
     }
+    if (data.containsKey('unitWeight')) {
+      context.handle(
+          _unitWeightMeta,
+          unitWeight.isAcceptableOrUnknown(
+              data['unitWeight']!, _unitWeightMeta));
+    }
+    if (data.containsKey('isStockRaw')) {
+      context.handle(
+          _isStockRawMeta,
+          isStockRaw.isAcceptableOrUnknown(
+              data['isStockRaw']!, _isStockRawMeta));
+    }
     return context;
   }
 
@@ -4510,6 +4540,10 @@ class $ProductsTable extends Products with TableInfo<$ProductsTable, Product> {
           .read(DriftSqlType.bool, data['${effectivePrefix}isSupplement'])!,
       isPortable: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}isPortable'])!,
+      unitWeight: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}unitWeight']),
+      isStockRaw: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}isStockRaw'])!,
     );
   }
 
@@ -4533,6 +4567,8 @@ class Product extends DataClass implements Insertable<Product> {
   final double fats;
   final bool isSupplement;
   final bool isPortable;
+  final int? unitWeight;
+  final bool isStockRaw;
   const Product(
       {required this.id,
       required this.name,
@@ -4546,7 +4582,9 @@ class Product extends DataClass implements Insertable<Product> {
       this.dietaryFiber,
       required this.fats,
       required this.isSupplement,
-      required this.isPortable});
+      required this.isPortable,
+      this.unitWeight,
+      required this.isStockRaw});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -4577,6 +4615,10 @@ class Product extends DataClass implements Insertable<Product> {
     map['fats'] = Variable<double>(fats);
     map['isSupplement'] = Variable<bool>(isSupplement);
     map['isPortable'] = Variable<bool>(isPortable);
+    if (!nullToAbsent || unitWeight != null) {
+      map['unitWeight'] = Variable<int>(unitWeight);
+    }
+    map['isStockRaw'] = Variable<bool>(isStockRaw);
     return map;
   }
 
@@ -4607,6 +4649,10 @@ class Product extends DataClass implements Insertable<Product> {
       fats: Value(fats),
       isSupplement: Value(isSupplement),
       isPortable: Value(isPortable),
+      unitWeight: unitWeight == null && nullToAbsent
+          ? const Value.absent()
+          : Value(unitWeight),
+      isStockRaw: Value(isStockRaw),
     );
   }
 
@@ -4628,6 +4674,8 @@ class Product extends DataClass implements Insertable<Product> {
       fats: serializer.fromJson<double>(json['fats']),
       isSupplement: serializer.fromJson<bool>(json['isSupplement']),
       isPortable: serializer.fromJson<bool>(json['isPortable']),
+      unitWeight: serializer.fromJson<int?>(json['unitWeight']),
+      isStockRaw: serializer.fromJson<bool>(json['isStockRaw']),
     );
   }
   @override
@@ -4647,6 +4695,8 @@ class Product extends DataClass implements Insertable<Product> {
       'fats': serializer.toJson<double>(fats),
       'isSupplement': serializer.toJson<bool>(isSupplement),
       'isPortable': serializer.toJson<bool>(isPortable),
+      'unitWeight': serializer.toJson<int?>(unitWeight),
+      'isStockRaw': serializer.toJson<bool>(isStockRaw),
     };
   }
 
@@ -4663,7 +4713,9 @@ class Product extends DataClass implements Insertable<Product> {
           Value<double?> dietaryFiber = const Value.absent(),
           double? fats,
           bool? isSupplement,
-          bool? isPortable}) =>
+          bool? isPortable,
+          Value<int?> unitWeight = const Value.absent(),
+          bool? isStockRaw}) =>
       Product(
         id: id ?? this.id,
         name: name ?? this.name,
@@ -4685,6 +4737,8 @@ class Product extends DataClass implements Insertable<Product> {
         fats: fats ?? this.fats,
         isSupplement: isSupplement ?? this.isSupplement,
         isPortable: isPortable ?? this.isPortable,
+        unitWeight: unitWeight.present ? unitWeight.value : this.unitWeight,
+        isStockRaw: isStockRaw ?? this.isStockRaw,
       );
   @override
   String toString() {
@@ -4701,7 +4755,9 @@ class Product extends DataClass implements Insertable<Product> {
           ..write('dietaryFiber: $dietaryFiber, ')
           ..write('fats: $fats, ')
           ..write('isSupplement: $isSupplement, ')
-          ..write('isPortable: $isPortable')
+          ..write('isPortable: $isPortable, ')
+          ..write('unitWeight: $unitWeight, ')
+          ..write('isStockRaw: $isStockRaw')
           ..write(')'))
         .toString();
   }
@@ -4720,7 +4776,9 @@ class Product extends DataClass implements Insertable<Product> {
       dietaryFiber,
       fats,
       isSupplement,
-      isPortable);
+      isPortable,
+      unitWeight,
+      isStockRaw);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -4737,7 +4795,9 @@ class Product extends DataClass implements Insertable<Product> {
           other.dietaryFiber == this.dietaryFiber &&
           other.fats == this.fats &&
           other.isSupplement == this.isSupplement &&
-          other.isPortable == this.isPortable);
+          other.isPortable == this.isPortable &&
+          other.unitWeight == this.unitWeight &&
+          other.isStockRaw == this.isStockRaw);
 }
 
 class ProductsCompanion extends UpdateCompanion<Product> {
@@ -4754,6 +4814,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
   final Value<double> fats;
   final Value<bool> isSupplement;
   final Value<bool> isPortable;
+  final Value<int?> unitWeight;
+  final Value<bool> isStockRaw;
   const ProductsCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
@@ -4768,6 +4830,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     this.fats = const Value.absent(),
     this.isSupplement = const Value.absent(),
     this.isPortable = const Value.absent(),
+    this.unitWeight = const Value.absent(),
+    this.isStockRaw = const Value.absent(),
   });
   ProductsCompanion.insert({
     this.id = const Value.absent(),
@@ -4783,6 +4847,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     required double fats,
     required bool isSupplement,
     this.isPortable = const Value.absent(),
+    this.unitWeight = const Value.absent(),
+    this.isStockRaw = const Value.absent(),
   })  : name = Value(name),
         proteins = Value(proteins),
         fats = Value(fats),
@@ -4801,6 +4867,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     Expression<double>? fats,
     Expression<bool>? isSupplement,
     Expression<bool>? isPortable,
+    Expression<int>? unitWeight,
+    Expression<bool>? isStockRaw,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -4816,6 +4884,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       if (fats != null) 'fats': fats,
       if (isSupplement != null) 'isSupplement': isSupplement,
       if (isPortable != null) 'isPortable': isPortable,
+      if (unitWeight != null) 'unitWeight': unitWeight,
+      if (isStockRaw != null) 'isStockRaw': isStockRaw,
     });
   }
 
@@ -4832,7 +4902,9 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       Value<double?>? dietaryFiber,
       Value<double>? fats,
       Value<bool>? isSupplement,
-      Value<bool>? isPortable}) {
+      Value<bool>? isPortable,
+      Value<int?>? unitWeight,
+      Value<bool>? isStockRaw}) {
     return ProductsCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
@@ -4847,6 +4919,8 @@ class ProductsCompanion extends UpdateCompanion<Product> {
       fats: fats ?? this.fats,
       isSupplement: isSupplement ?? this.isSupplement,
       isPortable: isPortable ?? this.isPortable,
+      unitWeight: unitWeight ?? this.unitWeight,
+      isStockRaw: isStockRaw ?? this.isStockRaw,
     );
   }
 
@@ -4892,6 +4966,12 @@ class ProductsCompanion extends UpdateCompanion<Product> {
     if (isPortable.present) {
       map['isPortable'] = Variable<bool>(isPortable.value);
     }
+    if (unitWeight.present) {
+      map['unitWeight'] = Variable<int>(unitWeight.value);
+    }
+    if (isStockRaw.present) {
+      map['isStockRaw'] = Variable<bool>(isStockRaw.value);
+    }
     return map;
   }
 
@@ -4910,7 +4990,9 @@ class ProductsCompanion extends UpdateCompanion<Product> {
           ..write('dietaryFiber: $dietaryFiber, ')
           ..write('fats: $fats, ')
           ..write('isSupplement: $isSupplement, ')
-          ..write('isPortable: $isPortable')
+          ..write('isPortable: $isPortable, ')
+          ..write('unitWeight: $unitWeight, ')
+          ..write('isStockRaw: $isStockRaw')
           ..write(')'))
         .toString();
   }
@@ -6043,9 +6125,18 @@ class $MealsTable extends Meals with TableInfo<$MealsTable, Meal> {
   late final GeneratedColumn<int> position = GeneratedColumn<int>(
       'position', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _atHomeMeta = const VerificationMeta('atHome');
+  @override
+  late final GeneratedColumn<bool> atHome = GeneratedColumn<bool>(
+      'atHome', aliasedName, false,
+      type: DriftSqlType.bool,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('CHECK ("atHome" IN (0, 1))'),
+      defaultValue: const Constant(true));
   @override
   List<GeneratedColumn> get $columns =>
-      [id, mealPlanId, name, time, notes, position];
+      [id, mealPlanId, name, time, notes, position, atHome];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -6086,6 +6177,10 @@ class $MealsTable extends Meals with TableInfo<$MealsTable, Meal> {
     } else if (isInserting) {
       context.missing(_positionMeta);
     }
+    if (data.containsKey('atHome')) {
+      context.handle(_atHomeMeta,
+          atHome.isAcceptableOrUnknown(data['atHome']!, _atHomeMeta));
+    }
     return context;
   }
 
@@ -6107,6 +6202,8 @@ class $MealsTable extends Meals with TableInfo<$MealsTable, Meal> {
           .read(DriftSqlType.string, data['${effectivePrefix}notes'])!,
       position: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}position'])!,
+      atHome: attachedDatabase.typeMapping
+          .read(DriftSqlType.bool, data['${effectivePrefix}atHome'])!,
     );
   }
 
@@ -6126,13 +6223,15 @@ class Meal extends DataClass implements Insertable<Meal> {
   final LocalTime time;
   final String notes;
   final int position;
+  final bool atHome;
   const Meal(
       {required this.id,
       required this.mealPlanId,
       required this.name,
       required this.time,
       required this.notes,
-      required this.position});
+      required this.position,
+      required this.atHome});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -6144,6 +6243,7 @@ class Meal extends DataClass implements Insertable<Meal> {
     }
     map['notes'] = Variable<String>(notes);
     map['position'] = Variable<int>(position);
+    map['atHome'] = Variable<bool>(atHome);
     return map;
   }
 
@@ -6155,6 +6255,7 @@ class Meal extends DataClass implements Insertable<Meal> {
       time: Value(time),
       notes: Value(notes),
       position: Value(position),
+      atHome: Value(atHome),
     );
   }
 
@@ -6168,6 +6269,7 @@ class Meal extends DataClass implements Insertable<Meal> {
       time: serializer.fromJson<LocalTime>(json['time']),
       notes: serializer.fromJson<String>(json['notes']),
       position: serializer.fromJson<int>(json['position']),
+      atHome: serializer.fromJson<bool>(json['atHome']),
     );
   }
   @override
@@ -6180,6 +6282,7 @@ class Meal extends DataClass implements Insertable<Meal> {
       'time': serializer.toJson<LocalTime>(time),
       'notes': serializer.toJson<String>(notes),
       'position': serializer.toJson<int>(position),
+      'atHome': serializer.toJson<bool>(atHome),
     };
   }
 
@@ -6189,7 +6292,8 @@ class Meal extends DataClass implements Insertable<Meal> {
           String? name,
           LocalTime? time,
           String? notes,
-          int? position}) =>
+          int? position,
+          bool? atHome}) =>
       Meal(
         id: id ?? this.id,
         mealPlanId: mealPlanId ?? this.mealPlanId,
@@ -6197,6 +6301,7 @@ class Meal extends DataClass implements Insertable<Meal> {
         time: time ?? this.time,
         notes: notes ?? this.notes,
         position: position ?? this.position,
+        atHome: atHome ?? this.atHome,
       );
   @override
   String toString() {
@@ -6206,13 +6311,15 @@ class Meal extends DataClass implements Insertable<Meal> {
           ..write('name: $name, ')
           ..write('time: $time, ')
           ..write('notes: $notes, ')
-          ..write('position: $position')
+          ..write('position: $position, ')
+          ..write('atHome: $atHome')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, mealPlanId, name, time, notes, position);
+  int get hashCode =>
+      Object.hash(id, mealPlanId, name, time, notes, position, atHome);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -6222,7 +6329,8 @@ class Meal extends DataClass implements Insertable<Meal> {
           other.name == this.name &&
           other.time == this.time &&
           other.notes == this.notes &&
-          other.position == this.position);
+          other.position == this.position &&
+          other.atHome == this.atHome);
 }
 
 class MealsCompanion extends UpdateCompanion<Meal> {
@@ -6232,6 +6340,7 @@ class MealsCompanion extends UpdateCompanion<Meal> {
   final Value<LocalTime> time;
   final Value<String> notes;
   final Value<int> position;
+  final Value<bool> atHome;
   const MealsCompanion({
     this.id = const Value.absent(),
     this.mealPlanId = const Value.absent(),
@@ -6239,6 +6348,7 @@ class MealsCompanion extends UpdateCompanion<Meal> {
     this.time = const Value.absent(),
     this.notes = const Value.absent(),
     this.position = const Value.absent(),
+    this.atHome = const Value.absent(),
   });
   MealsCompanion.insert({
     this.id = const Value.absent(),
@@ -6247,6 +6357,7 @@ class MealsCompanion extends UpdateCompanion<Meal> {
     required LocalTime time,
     required String notes,
     required int position,
+    this.atHome = const Value.absent(),
   })  : mealPlanId = Value(mealPlanId),
         name = Value(name),
         time = Value(time),
@@ -6259,6 +6370,7 @@ class MealsCompanion extends UpdateCompanion<Meal> {
     Expression<String>? time,
     Expression<String>? notes,
     Expression<int>? position,
+    Expression<bool>? atHome,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
@@ -6267,6 +6379,7 @@ class MealsCompanion extends UpdateCompanion<Meal> {
       if (time != null) 'time': time,
       if (notes != null) 'notes': notes,
       if (position != null) 'position': position,
+      if (atHome != null) 'atHome': atHome,
     });
   }
 
@@ -6276,7 +6389,8 @@ class MealsCompanion extends UpdateCompanion<Meal> {
       Value<String>? name,
       Value<LocalTime>? time,
       Value<String>? notes,
-      Value<int>? position}) {
+      Value<int>? position,
+      Value<bool>? atHome}) {
     return MealsCompanion(
       id: id ?? this.id,
       mealPlanId: mealPlanId ?? this.mealPlanId,
@@ -6284,6 +6398,7 @@ class MealsCompanion extends UpdateCompanion<Meal> {
       time: time ?? this.time,
       notes: notes ?? this.notes,
       position: position ?? this.position,
+      atHome: atHome ?? this.atHome,
     );
   }
 
@@ -6309,6 +6424,9 @@ class MealsCompanion extends UpdateCompanion<Meal> {
     if (position.present) {
       map['position'] = Variable<int>(position.value);
     }
+    if (atHome.present) {
+      map['atHome'] = Variable<bool>(atHome.value);
+    }
     return map;
   }
 
@@ -6320,7 +6438,8 @@ class MealsCompanion extends UpdateCompanion<Meal> {
           ..write('name: $name, ')
           ..write('time: $time, ')
           ..write('notes: $notes, ')
-          ..write('position: $position')
+          ..write('position: $position, ')
+          ..write('atHome: $atHome')
           ..write(')'))
         .toString();
   }
@@ -6950,6 +7069,801 @@ class UsersCompanion extends UpdateCompanion<UserData> {
   }
 }
 
+class $HousesTable extends Houses with TableInfo<$HousesTable, House> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $HousesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+      'name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, name];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'houses';
+  @override
+  VerificationContext validateIntegrity(Insertable<House> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+          _nameMeta, name.isAcceptableOrUnknown(data['name']!, _nameMeta));
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  House map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return House(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      name: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
+    );
+  }
+
+  @override
+  $HousesTable createAlias(String alias) {
+    return $HousesTable(attachedDatabase, alias);
+  }
+}
+
+class House extends DataClass implements Insertable<House> {
+  final int id;
+  final String name;
+  const House({required this.id, required this.name});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    return map;
+  }
+
+  HousesCompanion toCompanion(bool nullToAbsent) {
+    return HousesCompanion(
+      id: Value(id),
+      name: Value(name),
+    );
+  }
+
+  factory House.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return House(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+    };
+  }
+
+  House copyWith({int? id, String? name}) => House(
+        id: id ?? this.id,
+        name: name ?? this.name,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('House(')
+          ..write('id: $id, ')
+          ..write('name: $name')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is House && other.id == this.id && other.name == this.name);
+}
+
+class HousesCompanion extends UpdateCompanion<House> {
+  final Value<int> id;
+  final Value<String> name;
+  const HousesCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+  });
+  HousesCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+  }) : name = Value(name);
+  static Insertable<House> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+    });
+  }
+
+  HousesCompanion copyWith({Value<int>? id, Value<String>? name}) {
+    return HousesCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('HousesCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ProductStocksTable extends ProductStocks
+    with TableInfo<$ProductStocksTable, ProductStock> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ProductStocksTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _productIdMeta =
+      const VerificationMeta('productId');
+  @override
+  late final GeneratedColumn<int> productId = GeneratedColumn<int>(
+      'productId', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _houseIdMeta =
+      const VerificationMeta('houseId');
+  @override
+  late final GeneratedColumn<int> houseId = GeneratedColumn<int>(
+      'houseId', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _quantityMeta =
+      const VerificationMeta('quantity');
+  @override
+  late final GeneratedColumn<double> quantity = GeneratedColumn<double>(
+      'quantity', aliasedName, false,
+      type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _minTriggerQuantityMeta =
+      const VerificationMeta('minTriggerQuantity');
+  @override
+  late final GeneratedColumn<double> minTriggerQuantity =
+      GeneratedColumn<double>('minTriggerQuantity', aliasedName, true,
+          type: DriftSqlType.double, requiredDuringInsert: false);
+  static const VerificationMeta _quantityGramsMeta =
+      const VerificationMeta('quantityGrams');
+  @override
+  late final GeneratedColumn<double> quantityGrams = GeneratedColumn<double>(
+      'quantityGrams', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _quantityMlMeta =
+      const VerificationMeta('quantityMl');
+  @override
+  late final GeneratedColumn<double> quantityMl = GeneratedColumn<double>(
+      'quantityMl', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  static const VerificationMeta _quantityUnitsMeta =
+      const VerificationMeta('quantityUnits');
+  @override
+  late final GeneratedColumn<double> quantityUnits = GeneratedColumn<double>(
+      'quantityUnits', aliasedName, false,
+      type: DriftSqlType.double,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0.0));
+  @override
+  List<GeneratedColumn> get $columns => [
+        id,
+        productId,
+        houseId,
+        quantity,
+        minTriggerQuantity,
+        quantityGrams,
+        quantityMl,
+        quantityUnits
+      ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'product_stocks';
+  @override
+  VerificationContext validateIntegrity(Insertable<ProductStock> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('productId')) {
+      context.handle(_productIdMeta,
+          productId.isAcceptableOrUnknown(data['productId']!, _productIdMeta));
+    } else if (isInserting) {
+      context.missing(_productIdMeta);
+    }
+    if (data.containsKey('houseId')) {
+      context.handle(_houseIdMeta,
+          houseId.isAcceptableOrUnknown(data['houseId']!, _houseIdMeta));
+    } else if (isInserting) {
+      context.missing(_houseIdMeta);
+    }
+    if (data.containsKey('quantity')) {
+      context.handle(_quantityMeta,
+          quantity.isAcceptableOrUnknown(data['quantity']!, _quantityMeta));
+    } else if (isInserting) {
+      context.missing(_quantityMeta);
+    }
+    if (data.containsKey('minTriggerQuantity')) {
+      context.handle(
+          _minTriggerQuantityMeta,
+          minTriggerQuantity.isAcceptableOrUnknown(
+              data['minTriggerQuantity']!, _minTriggerQuantityMeta));
+    }
+    if (data.containsKey('quantityGrams')) {
+      context.handle(
+          _quantityGramsMeta,
+          quantityGrams.isAcceptableOrUnknown(
+              data['quantityGrams']!, _quantityGramsMeta));
+    }
+    if (data.containsKey('quantityMl')) {
+      context.handle(
+          _quantityMlMeta,
+          quantityMl.isAcceptableOrUnknown(
+              data['quantityMl']!, _quantityMlMeta));
+    }
+    if (data.containsKey('quantityUnits')) {
+      context.handle(
+          _quantityUnitsMeta,
+          quantityUnits.isAcceptableOrUnknown(
+              data['quantityUnits']!, _quantityUnitsMeta));
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ProductStock map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ProductStock(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      productId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}productId'])!,
+      houseId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}houseId'])!,
+      quantity: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}quantity'])!,
+      minTriggerQuantity: attachedDatabase.typeMapping.read(
+          DriftSqlType.double, data['${effectivePrefix}minTriggerQuantity']),
+      quantityGrams: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}quantityGrams'])!,
+      quantityMl: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}quantityMl'])!,
+      quantityUnits: attachedDatabase.typeMapping
+          .read(DriftSqlType.double, data['${effectivePrefix}quantityUnits'])!,
+    );
+  }
+
+  @override
+  $ProductStocksTable createAlias(String alias) {
+    return $ProductStocksTable(attachedDatabase, alias);
+  }
+}
+
+class ProductStock extends DataClass implements Insertable<ProductStock> {
+  final int id;
+  final int productId;
+  final int houseId;
+  final double quantity;
+  final double? minTriggerQuantity;
+  final double quantityGrams;
+  final double quantityMl;
+  final double quantityUnits;
+  const ProductStock(
+      {required this.id,
+      required this.productId,
+      required this.houseId,
+      required this.quantity,
+      this.minTriggerQuantity,
+      required this.quantityGrams,
+      required this.quantityMl,
+      required this.quantityUnits});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['productId'] = Variable<int>(productId);
+    map['houseId'] = Variable<int>(houseId);
+    map['quantity'] = Variable<double>(quantity);
+    if (!nullToAbsent || minTriggerQuantity != null) {
+      map['minTriggerQuantity'] = Variable<double>(minTriggerQuantity);
+    }
+    map['quantityGrams'] = Variable<double>(quantityGrams);
+    map['quantityMl'] = Variable<double>(quantityMl);
+    map['quantityUnits'] = Variable<double>(quantityUnits);
+    return map;
+  }
+
+  ProductStocksCompanion toCompanion(bool nullToAbsent) {
+    return ProductStocksCompanion(
+      id: Value(id),
+      productId: Value(productId),
+      houseId: Value(houseId),
+      quantity: Value(quantity),
+      minTriggerQuantity: minTriggerQuantity == null && nullToAbsent
+          ? const Value.absent()
+          : Value(minTriggerQuantity),
+      quantityGrams: Value(quantityGrams),
+      quantityMl: Value(quantityMl),
+      quantityUnits: Value(quantityUnits),
+    );
+  }
+
+  factory ProductStock.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ProductStock(
+      id: serializer.fromJson<int>(json['id']),
+      productId: serializer.fromJson<int>(json['productId']),
+      houseId: serializer.fromJson<int>(json['houseId']),
+      quantity: serializer.fromJson<double>(json['quantity']),
+      minTriggerQuantity:
+          serializer.fromJson<double?>(json['minTriggerQuantity']),
+      quantityGrams: serializer.fromJson<double>(json['quantityGrams']),
+      quantityMl: serializer.fromJson<double>(json['quantityMl']),
+      quantityUnits: serializer.fromJson<double>(json['quantityUnits']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'productId': serializer.toJson<int>(productId),
+      'houseId': serializer.toJson<int>(houseId),
+      'quantity': serializer.toJson<double>(quantity),
+      'minTriggerQuantity': serializer.toJson<double?>(minTriggerQuantity),
+      'quantityGrams': serializer.toJson<double>(quantityGrams),
+      'quantityMl': serializer.toJson<double>(quantityMl),
+      'quantityUnits': serializer.toJson<double>(quantityUnits),
+    };
+  }
+
+  ProductStock copyWith(
+          {int? id,
+          int? productId,
+          int? houseId,
+          double? quantity,
+          Value<double?> minTriggerQuantity = const Value.absent(),
+          double? quantityGrams,
+          double? quantityMl,
+          double? quantityUnits}) =>
+      ProductStock(
+        id: id ?? this.id,
+        productId: productId ?? this.productId,
+        houseId: houseId ?? this.houseId,
+        quantity: quantity ?? this.quantity,
+        minTriggerQuantity: minTriggerQuantity.present
+            ? minTriggerQuantity.value
+            : this.minTriggerQuantity,
+        quantityGrams: quantityGrams ?? this.quantityGrams,
+        quantityMl: quantityMl ?? this.quantityMl,
+        quantityUnits: quantityUnits ?? this.quantityUnits,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('ProductStock(')
+          ..write('id: $id, ')
+          ..write('productId: $productId, ')
+          ..write('houseId: $houseId, ')
+          ..write('quantity: $quantity, ')
+          ..write('minTriggerQuantity: $minTriggerQuantity, ')
+          ..write('quantityGrams: $quantityGrams, ')
+          ..write('quantityMl: $quantityMl, ')
+          ..write('quantityUnits: $quantityUnits')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, productId, houseId, quantity,
+      minTriggerQuantity, quantityGrams, quantityMl, quantityUnits);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ProductStock &&
+          other.id == this.id &&
+          other.productId == this.productId &&
+          other.houseId == this.houseId &&
+          other.quantity == this.quantity &&
+          other.minTriggerQuantity == this.minTriggerQuantity &&
+          other.quantityGrams == this.quantityGrams &&
+          other.quantityMl == this.quantityMl &&
+          other.quantityUnits == this.quantityUnits);
+}
+
+class ProductStocksCompanion extends UpdateCompanion<ProductStock> {
+  final Value<int> id;
+  final Value<int> productId;
+  final Value<int> houseId;
+  final Value<double> quantity;
+  final Value<double?> minTriggerQuantity;
+  final Value<double> quantityGrams;
+  final Value<double> quantityMl;
+  final Value<double> quantityUnits;
+  const ProductStocksCompanion({
+    this.id = const Value.absent(),
+    this.productId = const Value.absent(),
+    this.houseId = const Value.absent(),
+    this.quantity = const Value.absent(),
+    this.minTriggerQuantity = const Value.absent(),
+    this.quantityGrams = const Value.absent(),
+    this.quantityMl = const Value.absent(),
+    this.quantityUnits = const Value.absent(),
+  });
+  ProductStocksCompanion.insert({
+    this.id = const Value.absent(),
+    required int productId,
+    required int houseId,
+    required double quantity,
+    this.minTriggerQuantity = const Value.absent(),
+    this.quantityGrams = const Value.absent(),
+    this.quantityMl = const Value.absent(),
+    this.quantityUnits = const Value.absent(),
+  })  : productId = Value(productId),
+        houseId = Value(houseId),
+        quantity = Value(quantity);
+  static Insertable<ProductStock> custom({
+    Expression<int>? id,
+    Expression<int>? productId,
+    Expression<int>? houseId,
+    Expression<double>? quantity,
+    Expression<double>? minTriggerQuantity,
+    Expression<double>? quantityGrams,
+    Expression<double>? quantityMl,
+    Expression<double>? quantityUnits,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (productId != null) 'productId': productId,
+      if (houseId != null) 'houseId': houseId,
+      if (quantity != null) 'quantity': quantity,
+      if (minTriggerQuantity != null) 'minTriggerQuantity': minTriggerQuantity,
+      if (quantityGrams != null) 'quantityGrams': quantityGrams,
+      if (quantityMl != null) 'quantityMl': quantityMl,
+      if (quantityUnits != null) 'quantityUnits': quantityUnits,
+    });
+  }
+
+  ProductStocksCompanion copyWith(
+      {Value<int>? id,
+      Value<int>? productId,
+      Value<int>? houseId,
+      Value<double>? quantity,
+      Value<double?>? minTriggerQuantity,
+      Value<double>? quantityGrams,
+      Value<double>? quantityMl,
+      Value<double>? quantityUnits}) {
+    return ProductStocksCompanion(
+      id: id ?? this.id,
+      productId: productId ?? this.productId,
+      houseId: houseId ?? this.houseId,
+      quantity: quantity ?? this.quantity,
+      minTriggerQuantity: minTriggerQuantity ?? this.minTriggerQuantity,
+      quantityGrams: quantityGrams ?? this.quantityGrams,
+      quantityMl: quantityMl ?? this.quantityMl,
+      quantityUnits: quantityUnits ?? this.quantityUnits,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (productId.present) {
+      map['productId'] = Variable<int>(productId.value);
+    }
+    if (houseId.present) {
+      map['houseId'] = Variable<int>(houseId.value);
+    }
+    if (quantity.present) {
+      map['quantity'] = Variable<double>(quantity.value);
+    }
+    if (minTriggerQuantity.present) {
+      map['minTriggerQuantity'] = Variable<double>(minTriggerQuantity.value);
+    }
+    if (quantityGrams.present) {
+      map['quantityGrams'] = Variable<double>(quantityGrams.value);
+    }
+    if (quantityMl.present) {
+      map['quantityMl'] = Variable<double>(quantityMl.value);
+    }
+    if (quantityUnits.present) {
+      map['quantityUnits'] = Variable<double>(quantityUnits.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ProductStocksCompanion(')
+          ..write('id: $id, ')
+          ..write('productId: $productId, ')
+          ..write('houseId: $houseId, ')
+          ..write('quantity: $quantity, ')
+          ..write('minTriggerQuantity: $minTriggerQuantity, ')
+          ..write('quantityGrams: $quantityGrams, ')
+          ..write('quantityMl: $quantityMl, ')
+          ..write('quantityUnits: $quantityUnits')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $ReceiptMappingsTable extends ReceiptMappings
+    with TableInfo<$ReceiptMappingsTable, ReceiptMapping> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $ReceiptMappingsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+      'id', aliasedName, false,
+      hasAutoIncrement: true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultConstraints:
+          GeneratedColumn.constraintIsAlways('PRIMARY KEY AUTOINCREMENT'));
+  static const VerificationMeta _receiptNameMeta =
+      const VerificationMeta('receiptName');
+  @override
+  late final GeneratedColumn<String> receiptName = GeneratedColumn<String>(
+      'receipt_name', aliasedName, false,
+      type: DriftSqlType.string, requiredDuringInsert: true);
+  static const VerificationMeta _productIdMeta =
+      const VerificationMeta('productId');
+  @override
+  late final GeneratedColumn<int> productId = GeneratedColumn<int>(
+      'productId', aliasedName, false,
+      type: DriftSqlType.int, requiredDuringInsert: true);
+  @override
+  List<GeneratedColumn> get $columns => [id, receiptName, productId];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'receipt_mappings';
+  @override
+  VerificationContext validateIntegrity(Insertable<ReceiptMapping> instance,
+      {bool isInserting = false}) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('receipt_name')) {
+      context.handle(
+          _receiptNameMeta,
+          receiptName.isAcceptableOrUnknown(
+              data['receipt_name']!, _receiptNameMeta));
+    } else if (isInserting) {
+      context.missing(_receiptNameMeta);
+    }
+    if (data.containsKey('productId')) {
+      context.handle(_productIdMeta,
+          productId.isAcceptableOrUnknown(data['productId']!, _productIdMeta));
+    } else if (isInserting) {
+      context.missing(_productIdMeta);
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  ReceiptMapping map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return ReceiptMapping(
+      id: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
+      receiptName: attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}receipt_name'])!,
+      productId: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}productId'])!,
+    );
+  }
+
+  @override
+  $ReceiptMappingsTable createAlias(String alias) {
+    return $ReceiptMappingsTable(attachedDatabase, alias);
+  }
+}
+
+class ReceiptMapping extends DataClass implements Insertable<ReceiptMapping> {
+  final int id;
+  final String receiptName;
+  final int productId;
+  const ReceiptMapping(
+      {required this.id, required this.receiptName, required this.productId});
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['receipt_name'] = Variable<String>(receiptName);
+    map['productId'] = Variable<int>(productId);
+    return map;
+  }
+
+  ReceiptMappingsCompanion toCompanion(bool nullToAbsent) {
+    return ReceiptMappingsCompanion(
+      id: Value(id),
+      receiptName: Value(receiptName),
+      productId: Value(productId),
+    );
+  }
+
+  factory ReceiptMapping.fromJson(Map<String, dynamic> json,
+      {ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return ReceiptMapping(
+      id: serializer.fromJson<int>(json['id']),
+      receiptName: serializer.fromJson<String>(json['receiptName']),
+      productId: serializer.fromJson<int>(json['productId']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'receiptName': serializer.toJson<String>(receiptName),
+      'productId': serializer.toJson<int>(productId),
+    };
+  }
+
+  ReceiptMapping copyWith({int? id, String? receiptName, int? productId}) =>
+      ReceiptMapping(
+        id: id ?? this.id,
+        receiptName: receiptName ?? this.receiptName,
+        productId: productId ?? this.productId,
+      );
+  @override
+  String toString() {
+    return (StringBuffer('ReceiptMapping(')
+          ..write('id: $id, ')
+          ..write('receiptName: $receiptName, ')
+          ..write('productId: $productId')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, receiptName, productId);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is ReceiptMapping &&
+          other.id == this.id &&
+          other.receiptName == this.receiptName &&
+          other.productId == this.productId);
+}
+
+class ReceiptMappingsCompanion extends UpdateCompanion<ReceiptMapping> {
+  final Value<int> id;
+  final Value<String> receiptName;
+  final Value<int> productId;
+  const ReceiptMappingsCompanion({
+    this.id = const Value.absent(),
+    this.receiptName = const Value.absent(),
+    this.productId = const Value.absent(),
+  });
+  ReceiptMappingsCompanion.insert({
+    this.id = const Value.absent(),
+    required String receiptName,
+    required int productId,
+  })  : receiptName = Value(receiptName),
+        productId = Value(productId);
+  static Insertable<ReceiptMapping> custom({
+    Expression<int>? id,
+    Expression<String>? receiptName,
+    Expression<int>? productId,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (receiptName != null) 'receipt_name': receiptName,
+      if (productId != null) 'productId': productId,
+    });
+  }
+
+  ReceiptMappingsCompanion copyWith(
+      {Value<int>? id, Value<String>? receiptName, Value<int>? productId}) {
+    return ReceiptMappingsCompanion(
+      id: id ?? this.id,
+      receiptName: receiptName ?? this.receiptName,
+      productId: productId ?? this.productId,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (receiptName.present) {
+      map['receipt_name'] = Variable<String>(receiptName.value);
+    }
+    if (productId.present) {
+      map['productId'] = Variable<int>(productId.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('ReceiptMappingsCompanion(')
+          ..write('id: $id, ')
+          ..write('receiptName: $receiptName, ')
+          ..write('productId: $productId')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   _$AppDatabaseManager get managers => _$AppDatabaseManager(this);
@@ -6975,6 +7889,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $MealsTable meals = $MealsTable(this);
   late final $MealItemsTable mealItems = $MealItemsTable(this);
   late final $UsersTable users = $UsersTable(this);
+  late final $HousesTable houses = $HousesTable(this);
+  late final $ProductStocksTable productStocks = $ProductStocksTable(this);
+  late final $ReceiptMappingsTable receiptMappings =
+      $ReceiptMappingsTable(this);
   late final Index indexExercisesWorkoutId = Index('index_exercises_workoutId',
       'CREATE INDEX index_exercises_workoutId ON exercises (workoutId)');
   late final Index indexExercisesWorkoutIdPosition = Index(
@@ -7022,6 +7940,9 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         meals,
         mealItems,
         users,
+        houses,
+        productStocks,
+        receiptMappings,
         indexExercisesWorkoutId,
         indexExercisesWorkoutIdPosition,
         indexExercisesExerciseDataId,
@@ -8921,6 +9842,8 @@ typedef $$ProductsTableInsertCompanionBuilder = ProductsCompanion Function({
   required double fats,
   required bool isSupplement,
   Value<bool> isPortable,
+  Value<int?> unitWeight,
+  Value<bool> isStockRaw,
 });
 typedef $$ProductsTableUpdateCompanionBuilder = ProductsCompanion Function({
   Value<int> id,
@@ -8936,6 +9859,8 @@ typedef $$ProductsTableUpdateCompanionBuilder = ProductsCompanion Function({
   Value<double> fats,
   Value<bool> isSupplement,
   Value<bool> isPortable,
+  Value<int?> unitWeight,
+  Value<bool> isStockRaw,
 });
 
 class $$ProductsTableTableManager extends RootTableManager<
@@ -8971,6 +9896,8 @@ class $$ProductsTableTableManager extends RootTableManager<
             Value<double> fats = const Value.absent(),
             Value<bool> isSupplement = const Value.absent(),
             Value<bool> isPortable = const Value.absent(),
+            Value<int?> unitWeight = const Value.absent(),
+            Value<bool> isStockRaw = const Value.absent(),
           }) =>
               ProductsCompanion(
             id: id,
@@ -8986,6 +9913,8 @@ class $$ProductsTableTableManager extends RootTableManager<
             fats: fats,
             isSupplement: isSupplement,
             isPortable: isPortable,
+            unitWeight: unitWeight,
+            isStockRaw: isStockRaw,
           ),
           getInsertCompanionBuilder: ({
             Value<int> id = const Value.absent(),
@@ -9001,6 +9930,8 @@ class $$ProductsTableTableManager extends RootTableManager<
             required double fats,
             required bool isSupplement,
             Value<bool> isPortable = const Value.absent(),
+            Value<int?> unitWeight = const Value.absent(),
+            Value<bool> isStockRaw = const Value.absent(),
           }) =>
               ProductsCompanion.insert(
             id: id,
@@ -9016,6 +9947,8 @@ class $$ProductsTableTableManager extends RootTableManager<
             fats: fats,
             isSupplement: isSupplement,
             isPortable: isPortable,
+            unitWeight: unitWeight,
+            isStockRaw: isStockRaw,
           ),
         ));
 }
@@ -9099,6 +10032,16 @@ class $$ProductsTableFilterComposer
       column: $state.table.isPortable,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get unitWeight => $state.composableBuilder(
+      column: $state.table.unitWeight,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<bool> get isStockRaw => $state.composableBuilder(
+      column: $state.table.isStockRaw,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
 class $$ProductsTableOrderingComposer
@@ -9166,6 +10109,16 @@ class $$ProductsTableOrderingComposer
 
   ColumnOrderings<bool> get isPortable => $state.composableBuilder(
       column: $state.table.isPortable,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get unitWeight => $state.composableBuilder(
+      column: $state.table.unitWeight,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<bool> get isStockRaw => $state.composableBuilder(
+      column: $state.table.isStockRaw,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
@@ -9671,6 +10624,7 @@ typedef $$MealsTableInsertCompanionBuilder = MealsCompanion Function({
   required LocalTime time,
   required String notes,
   required int position,
+  Value<bool> atHome,
 });
 typedef $$MealsTableUpdateCompanionBuilder = MealsCompanion Function({
   Value<int> id,
@@ -9679,6 +10633,7 @@ typedef $$MealsTableUpdateCompanionBuilder = MealsCompanion Function({
   Value<LocalTime> time,
   Value<String> notes,
   Value<int> position,
+  Value<bool> atHome,
 });
 
 class $$MealsTableTableManager extends RootTableManager<
@@ -9706,6 +10661,7 @@ class $$MealsTableTableManager extends RootTableManager<
             Value<LocalTime> time = const Value.absent(),
             Value<String> notes = const Value.absent(),
             Value<int> position = const Value.absent(),
+            Value<bool> atHome = const Value.absent(),
           }) =>
               MealsCompanion(
             id: id,
@@ -9714,6 +10670,7 @@ class $$MealsTableTableManager extends RootTableManager<
             time: time,
             notes: notes,
             position: position,
+            atHome: atHome,
           ),
           getInsertCompanionBuilder: ({
             Value<int> id = const Value.absent(),
@@ -9722,6 +10679,7 @@ class $$MealsTableTableManager extends RootTableManager<
             required LocalTime time,
             required String notes,
             required int position,
+            Value<bool> atHome = const Value.absent(),
           }) =>
               MealsCompanion.insert(
             id: id,
@@ -9730,6 +10688,7 @@ class $$MealsTableTableManager extends RootTableManager<
             time: time,
             notes: notes,
             position: position,
+            atHome: atHome,
           ),
         ));
 }
@@ -9780,6 +10739,11 @@ class $$MealsTableFilterComposer
       column: $state.table.position,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<bool> get atHome => $state.composableBuilder(
+      column: $state.table.atHome,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
 }
 
 class $$MealsTableOrderingComposer
@@ -9812,6 +10776,11 @@ class $$MealsTableOrderingComposer
 
   ColumnOrderings<int> get position => $state.composableBuilder(
       column: $state.table.position,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<bool> get atHome => $state.composableBuilder(
+      column: $state.table.atHome,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
@@ -10107,6 +11076,383 @@ class $$UsersTableOrderingComposer
           ColumnOrderings(column, joinBuilders: joinBuilders));
 }
 
+typedef $$HousesTableInsertCompanionBuilder = HousesCompanion Function({
+  Value<int> id,
+  required String name,
+});
+typedef $$HousesTableUpdateCompanionBuilder = HousesCompanion Function({
+  Value<int> id,
+  Value<String> name,
+});
+
+class $$HousesTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $HousesTable,
+    House,
+    $$HousesTableFilterComposer,
+    $$HousesTableOrderingComposer,
+    $$HousesTableProcessedTableManager,
+    $$HousesTableInsertCompanionBuilder,
+    $$HousesTableUpdateCompanionBuilder> {
+  $$HousesTableTableManager(_$AppDatabase db, $HousesTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$HousesTableFilterComposer(ComposerState(db, table)),
+          orderingComposer:
+              $$HousesTableOrderingComposer(ComposerState(db, table)),
+          getChildManagerBuilder: (p) => $$HousesTableProcessedTableManager(p),
+          getUpdateCompanionBuilder: ({
+            Value<int> id = const Value.absent(),
+            Value<String> name = const Value.absent(),
+          }) =>
+              HousesCompanion(
+            id: id,
+            name: name,
+          ),
+          getInsertCompanionBuilder: ({
+            Value<int> id = const Value.absent(),
+            required String name,
+          }) =>
+              HousesCompanion.insert(
+            id: id,
+            name: name,
+          ),
+        ));
+}
+
+class $$HousesTableProcessedTableManager extends ProcessedTableManager<
+    _$AppDatabase,
+    $HousesTable,
+    House,
+    $$HousesTableFilterComposer,
+    $$HousesTableOrderingComposer,
+    $$HousesTableProcessedTableManager,
+    $$HousesTableInsertCompanionBuilder,
+    $$HousesTableUpdateCompanionBuilder> {
+  $$HousesTableProcessedTableManager(super.$state);
+}
+
+class $$HousesTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $HousesTable> {
+  $$HousesTableFilterComposer(super.$state);
+  ColumnFilters<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get name => $state.composableBuilder(
+      column: $state.table.name,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+}
+
+class $$HousesTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $HousesTable> {
+  $$HousesTableOrderingComposer(super.$state);
+  ColumnOrderings<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get name => $state.composableBuilder(
+      column: $state.table.name,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+}
+
+typedef $$ProductStocksTableInsertCompanionBuilder = ProductStocksCompanion
+    Function({
+  Value<int> id,
+  required int productId,
+  required int houseId,
+  required double quantity,
+  Value<double?> minTriggerQuantity,
+  Value<double> quantityGrams,
+  Value<double> quantityMl,
+  Value<double> quantityUnits,
+});
+typedef $$ProductStocksTableUpdateCompanionBuilder = ProductStocksCompanion
+    Function({
+  Value<int> id,
+  Value<int> productId,
+  Value<int> houseId,
+  Value<double> quantity,
+  Value<double?> minTriggerQuantity,
+  Value<double> quantityGrams,
+  Value<double> quantityMl,
+  Value<double> quantityUnits,
+});
+
+class $$ProductStocksTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ProductStocksTable,
+    ProductStock,
+    $$ProductStocksTableFilterComposer,
+    $$ProductStocksTableOrderingComposer,
+    $$ProductStocksTableProcessedTableManager,
+    $$ProductStocksTableInsertCompanionBuilder,
+    $$ProductStocksTableUpdateCompanionBuilder> {
+  $$ProductStocksTableTableManager(_$AppDatabase db, $ProductStocksTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$ProductStocksTableFilterComposer(ComposerState(db, table)),
+          orderingComposer:
+              $$ProductStocksTableOrderingComposer(ComposerState(db, table)),
+          getChildManagerBuilder: (p) =>
+              $$ProductStocksTableProcessedTableManager(p),
+          getUpdateCompanionBuilder: ({
+            Value<int> id = const Value.absent(),
+            Value<int> productId = const Value.absent(),
+            Value<int> houseId = const Value.absent(),
+            Value<double> quantity = const Value.absent(),
+            Value<double?> minTriggerQuantity = const Value.absent(),
+            Value<double> quantityGrams = const Value.absent(),
+            Value<double> quantityMl = const Value.absent(),
+            Value<double> quantityUnits = const Value.absent(),
+          }) =>
+              ProductStocksCompanion(
+            id: id,
+            productId: productId,
+            houseId: houseId,
+            quantity: quantity,
+            minTriggerQuantity: minTriggerQuantity,
+            quantityGrams: quantityGrams,
+            quantityMl: quantityMl,
+            quantityUnits: quantityUnits,
+          ),
+          getInsertCompanionBuilder: ({
+            Value<int> id = const Value.absent(),
+            required int productId,
+            required int houseId,
+            required double quantity,
+            Value<double?> minTriggerQuantity = const Value.absent(),
+            Value<double> quantityGrams = const Value.absent(),
+            Value<double> quantityMl = const Value.absent(),
+            Value<double> quantityUnits = const Value.absent(),
+          }) =>
+              ProductStocksCompanion.insert(
+            id: id,
+            productId: productId,
+            houseId: houseId,
+            quantity: quantity,
+            minTriggerQuantity: minTriggerQuantity,
+            quantityGrams: quantityGrams,
+            quantityMl: quantityMl,
+            quantityUnits: quantityUnits,
+          ),
+        ));
+}
+
+class $$ProductStocksTableProcessedTableManager extends ProcessedTableManager<
+    _$AppDatabase,
+    $ProductStocksTable,
+    ProductStock,
+    $$ProductStocksTableFilterComposer,
+    $$ProductStocksTableOrderingComposer,
+    $$ProductStocksTableProcessedTableManager,
+    $$ProductStocksTableInsertCompanionBuilder,
+    $$ProductStocksTableUpdateCompanionBuilder> {
+  $$ProductStocksTableProcessedTableManager(super.$state);
+}
+
+class $$ProductStocksTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $ProductStocksTable> {
+  $$ProductStocksTableFilterComposer(super.$state);
+  ColumnFilters<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get productId => $state.composableBuilder(
+      column: $state.table.productId,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get houseId => $state.composableBuilder(
+      column: $state.table.houseId,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<double> get quantity => $state.composableBuilder(
+      column: $state.table.quantity,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<double> get minTriggerQuantity => $state.composableBuilder(
+      column: $state.table.minTriggerQuantity,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<double> get quantityGrams => $state.composableBuilder(
+      column: $state.table.quantityGrams,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<double> get quantityMl => $state.composableBuilder(
+      column: $state.table.quantityMl,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<double> get quantityUnits => $state.composableBuilder(
+      column: $state.table.quantityUnits,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+}
+
+class $$ProductStocksTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $ProductStocksTable> {
+  $$ProductStocksTableOrderingComposer(super.$state);
+  ColumnOrderings<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get productId => $state.composableBuilder(
+      column: $state.table.productId,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get houseId => $state.composableBuilder(
+      column: $state.table.houseId,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<double> get quantity => $state.composableBuilder(
+      column: $state.table.quantity,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<double> get minTriggerQuantity => $state.composableBuilder(
+      column: $state.table.minTriggerQuantity,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<double> get quantityGrams => $state.composableBuilder(
+      column: $state.table.quantityGrams,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<double> get quantityMl => $state.composableBuilder(
+      column: $state.table.quantityMl,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<double> get quantityUnits => $state.composableBuilder(
+      column: $state.table.quantityUnits,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+}
+
+typedef $$ReceiptMappingsTableInsertCompanionBuilder = ReceiptMappingsCompanion
+    Function({
+  Value<int> id,
+  required String receiptName,
+  required int productId,
+});
+typedef $$ReceiptMappingsTableUpdateCompanionBuilder = ReceiptMappingsCompanion
+    Function({
+  Value<int> id,
+  Value<String> receiptName,
+  Value<int> productId,
+});
+
+class $$ReceiptMappingsTableTableManager extends RootTableManager<
+    _$AppDatabase,
+    $ReceiptMappingsTable,
+    ReceiptMapping,
+    $$ReceiptMappingsTableFilterComposer,
+    $$ReceiptMappingsTableOrderingComposer,
+    $$ReceiptMappingsTableProcessedTableManager,
+    $$ReceiptMappingsTableInsertCompanionBuilder,
+    $$ReceiptMappingsTableUpdateCompanionBuilder> {
+  $$ReceiptMappingsTableTableManager(
+      _$AppDatabase db, $ReceiptMappingsTable table)
+      : super(TableManagerState(
+          db: db,
+          table: table,
+          filteringComposer:
+              $$ReceiptMappingsTableFilterComposer(ComposerState(db, table)),
+          orderingComposer:
+              $$ReceiptMappingsTableOrderingComposer(ComposerState(db, table)),
+          getChildManagerBuilder: (p) =>
+              $$ReceiptMappingsTableProcessedTableManager(p),
+          getUpdateCompanionBuilder: ({
+            Value<int> id = const Value.absent(),
+            Value<String> receiptName = const Value.absent(),
+            Value<int> productId = const Value.absent(),
+          }) =>
+              ReceiptMappingsCompanion(
+            id: id,
+            receiptName: receiptName,
+            productId: productId,
+          ),
+          getInsertCompanionBuilder: ({
+            Value<int> id = const Value.absent(),
+            required String receiptName,
+            required int productId,
+          }) =>
+              ReceiptMappingsCompanion.insert(
+            id: id,
+            receiptName: receiptName,
+            productId: productId,
+          ),
+        ));
+}
+
+class $$ReceiptMappingsTableProcessedTableManager extends ProcessedTableManager<
+    _$AppDatabase,
+    $ReceiptMappingsTable,
+    ReceiptMapping,
+    $$ReceiptMappingsTableFilterComposer,
+    $$ReceiptMappingsTableOrderingComposer,
+    $$ReceiptMappingsTableProcessedTableManager,
+    $$ReceiptMappingsTableInsertCompanionBuilder,
+    $$ReceiptMappingsTableUpdateCompanionBuilder> {
+  $$ReceiptMappingsTableProcessedTableManager(super.$state);
+}
+
+class $$ReceiptMappingsTableFilterComposer
+    extends FilterComposer<_$AppDatabase, $ReceiptMappingsTable> {
+  $$ReceiptMappingsTableFilterComposer(super.$state);
+  ColumnFilters<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<String> get receiptName => $state.composableBuilder(
+      column: $state.table.receiptName,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnFilters<int> get productId => $state.composableBuilder(
+      column: $state.table.productId,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+}
+
+class $$ReceiptMappingsTableOrderingComposer
+    extends OrderingComposer<_$AppDatabase, $ReceiptMappingsTable> {
+  $$ReceiptMappingsTableOrderingComposer(super.$state);
+  ColumnOrderings<int> get id => $state.composableBuilder(
+      column: $state.table.id,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get receiptName => $state.composableBuilder(
+      column: $state.table.receiptName,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get productId => $state.composableBuilder(
+      column: $state.table.productId,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+}
+
 class _$AppDatabaseManager {
   final _$AppDatabase _db;
   _$AppDatabaseManager(this._db);
@@ -10143,4 +11489,10 @@ class _$AppDatabaseManager {
       $$MealItemsTableTableManager(_db, _db.mealItems);
   $$UsersTableTableManager get users =>
       $$UsersTableTableManager(_db, _db.users);
+  $$HousesTableTableManager get houses =>
+      $$HousesTableTableManager(_db, _db.houses);
+  $$ProductStocksTableTableManager get productStocks =>
+      $$ProductStocksTableTableManager(_db, _db.productStocks);
+  $$ReceiptMappingsTableTableManager get receiptMappings =>
+      $$ReceiptMappingsTableTableManager(_db, _db.receiptMappings);
 }

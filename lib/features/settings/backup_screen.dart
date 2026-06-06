@@ -132,7 +132,7 @@ Workout plans are imported as a JSON array of workout objects.
 | `timeElapsed` | `Int` | Default elapsed time in seconds. |
 | `created` | `String` | ISO 8601 Date string. |
 | `completed` | `String` | ISO 8601 Date string. |
-| `isTemporal` | `Bool?` | Optional. If set to `true`, this routine template will auto-delete upon completion. Useful for one-off/AI routines. |
+| `isTemporal` | `Bool?` | Optional. If `true`, auto-deletes upon completion. |
 | `exercises` | `Array` | List of exercise items in the plan. |
 
 ### Exercise Fields
@@ -140,12 +140,12 @@ Workout plans are imported as a JSON array of workout objects.
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `exerciseId` | `String` | Unique ID of the exercise. |
-| `name` | `String` | Name of the exercise (used if it doesn't exist in local database). |
+| `name` | `String` | Name of the exercise (used if not found in local database). |
 | `notes` | `String` | Exercise-specific notes. |
-| `setMode` | `String` | Set mode. Options: `LOAD`, `BODYWEIGHT`, `BODYWEIGHT_WITH_LOAD`, `TIME`, `TIME_WITH_LOAD`. |
+| `setMode` | `String` | `LOAD`, `BODYWEIGHT`, `BODYWEIGHT_WITH_LOAD`, `TIME`, `TIME_WITH_LOAD`. |
 | `restTime` | `Int` | Rest time in seconds between sets. |
 | `supersetGroupId` | `String?` | Optional identifier to group supersets. |
-| `sets` | `Array` | Sets logs list. |
+| `sets` | `Array` | Sets list. |
 
 ### Set Fields
 
@@ -154,9 +154,9 @@ Workout plans are imported as a JSON array of workout objects.
 | `load` | `Double` | Weight load (kg/lbs). |
 | `reps` | `Int` | Target repetitions count. |
 | `elapsedTime` | `Int` | Target set duration in seconds (optional). |
-| `rpe` | `String?` | Optional. Rated Perceived Exertion (1 to 10). If omitted, defaults to empty/none. |
-| `rir` | `Int?` | Optional. Reps in Reserve. If omitted, defaults to empty/none. |
-| `completed` | `Bool` | Whether target was achieved. It is highly recommended to set this to `false` for imported templates (indicating sets are not yet performed/done). |
+| `rpe` | `String?` | Rated Perceived Exertion (1-10). |
+| `rir` | `Int?` | Reps in Reserve. |
+| `completed` | `Bool` | Set to `false` for imported templates. |
 
 ### Example
 
@@ -196,7 +196,7 @@ Workout plans are imported as a JSON array of workout objects.
 
 ## 2. Exercises
 
-Exercises database is imported as a JSON array of custom exercises.
+Exercises are imported as a JSON array of custom exercises.
 
 ### Fields Description
 
@@ -206,9 +206,9 @@ Exercises database is imported as a JSON array of custom exercises.
 | `name` | `String` | Name of the exercise. |
 | `level` | `String` | `BEGINNER`, `INTERMEDIATE`, `ADVANCED`. |
 | `category` | `String` | `STRENGTH`, `STRETCHING`, `PLYOMETRICS`, `STRONGMAN`, `POWERLIFTING`, `CARDIO`, `OLYMPIC_WEIGHTLIFTING`. |
-| `equipment` | `String?` | Equipment. Options: `BARBELL`, `DUMBBELL`, `CABLE`, `MACHINE`, `KETTLEBELLS`, `BANDS`, `MEDICINE_BALL`, `BODY_ONLY`, `FOAM_ROLL`, `EXERCISE_BALL`, `E_Z_CURL_BAR`, `OTHER`. |
-| `force` | `String?` | Force type. Options: `PUSH`, `PULL`, `STATIC`. |
-| `mechanic` | `String?` | Mechanic type. Options: `COMPOUND`, `ISOLATION`. |
+| `equipment` | `String?` | `BARBELL`, `DUMBBELL`, `CABLE`, `MACHINE`, `KETTLEBELLS`, `BANDS`, `MEDICINE_BALL`, `BODY_ONLY`, `FOAM_ROLL`, `EXERCISE_BALL`, `E_Z_CURL_BAR`, `OTHER`. |
+| `force` | `String?` | `PUSH`, `PULL`, `STATIC`. |
+| `mechanic` | `String?` | `COMPOUND`, `ISOLATION`. |
 | `primaryMuscles` | `Array` | Muscle names (e.g. `chest`, `triceps`). |
 | `secondaryMuscles` | `Array` | Muscle names. |
 | `instructions` | `Array` | List of instruction text paragraphs. |
@@ -220,13 +220,13 @@ Exercises database is imported as a JSON array of custom exercises.
 
 Meal plans are imported as a JSON array of templates.
 
-### Fields Description
+### Meal Plan Fields
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `title` | `String` | Title of the meal plan. |
 | `notes` | `String` | Overall plan description. |
-| `isTemporal` | `Bool?` | Optional. If set to `true`, this meal plan auto-deletes when finished/done. |
+| `isTemporal` | `Bool?` | If `true`, auto-deletes when completed. |
 | `meals` | `Array` | List of meals within the plan. |
 
 ### Meal Fields
@@ -234,39 +234,25 @@ Meal plans are imported as a JSON array of templates.
 | Field | Type | Description |
 | :--- | :--- | :--- |
 | `name` | `String` | Meal name (e.g. Breakfast). |
-| `time` | `String` | Time format (e.g. `08:00`). |
+| `time` | `String` | Time as HH:mm:ss (e.g. 08:00:00). |
 | `notes` | `String` | Meal description. |
 | `position` | `Int` | Ordering index of the meal. |
+| `atHome` | `Bool` | Whether the meal is eaten at home. Default: true. |
 | `items` | `Array` | List of meal items. |
 
 ### Meal Item Fields
 
-Each meal item can reference a product or recipe in two ways:
-
-**Option A — Direct DB reference** (requires entities already imported):
-
 | Field | Type | Description |
 | :--- | :--- | :--- |
-| `type` | `String` | `PRODUCT` or `RECIPE`. |
-| `targetId` | `Int` | Database ID of the existing product or recipe. |
-| `amount` | `Double` | Portion quantity. |
-| `amountUnit` | `String` | `GRAMS` or `UNITS`. |
-| `consumed` | `Bool` | Whether it is marked consumed. |
+| `type` | `String` | PRODUCT or RECIPE. |
+| `amount` | `Double` | Portion quantity in the specified unit. |
+| `amountUnit` | `String` | GRAMS, ML, or UNITS. Default: GRAMS. |
+| `consumed` | `Bool` | Whether it is marked consumed. Default: false. |
 | `position` | `Int` | Ordering index of the item. |
+| `product` | `Object` | Embedded product (for type=PRODUCT). |
+| `recipe` | `Object` | Embedded recipe (for type=RECIPE). |
 
-**Option B — Embedded object** (auto-creates if not found by name):
-
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `type` | `String` | `PRODUCT` or `RECIPE`. |
-| `product` | `Object` | Embedded product JSON (for type=PRODUCT). |
-| `recipe` | `Object` | Embedded recipe JSON (for type=RECIPE). |
-| `amount` | `Double` | Portion quantity. |
-| `amountUnit` | `String` | `GRAMS` or `UNITS`. |
-| `consumed` | `Bool` | Whether it is marked consumed. |
-| `position` | `Int` | Ordering index of the item. |
-
-> Each PRODUCT/RECIPE item **must** have either a `targetId` or an embedded `product`/`recipe` object. If `targetId` is used, the referenced product/recipe must already exist in the database.
+> Each item must have either a targetId (DB reference) or an embedded product/recipe object.
 
 ---
 
@@ -278,18 +264,20 @@ Products are imported as a JSON array.
 
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
-| `name` | `String` | **Yes** | Product name. |
-| `proteins` | `Double` | No (default 0) | Protein per reference weight. |
-| `carbsAvailable` | `Double` | No | Available carbs per reference weight. |
-| `fats` | `Double` | No (default 0) | Fat per reference weight. |
-| `kcal` | `Double` | No | Calories per reference weight. |
-| `dietaryFiber` | `Double` | No | Dietary fiber per reference weight. |
-| `carbsByDifference` | `Double` | No | Carbs by difference. |
-| `defaultUnits` | `String` | No | Default unit (`g`, `ml`, `units`). |
-| `ediblePercent` | `Double` | No (default 100) | Edible percentage of the product (0 to 100). |
-| `mlToGFactor` | `Int` | No | Conversion factor ml to g. |
-| `isSupplement` | `Bool` | No (default false) | Whether product is a supplement. |
-| `isPortable` | `Bool` | No (default true) | Whether product is portable. |
+| `name` | `String` | Yes | Product name. |
+| `proteins` | `Double` | No | Protein per 100 g. |
+| `fats` | `Double` | No | Fat per 100 g. |
+| `carbsAvailable` | `Double` | No | Available (net) carbs per 100 g. |
+| `carbsByDifference` | `Double` | No | Carbs by difference per 100 g. |
+| `dietaryFiber` | `Double` | No | Dietary fiber per 100 g. |
+| `kcal` | `Double` | No | Kilocalories per 100 g. |
+| `mlToGFactor` | `Int` | No | ml-to-g conversion factor (e.g. 103 for whole milk). If 0, ml unit is hidden. |
+| `unitWeight` | `Int` | No | Weight of one unit in grams (e.g. 120 for a banana). If 0, units are hidden. |
+| `edibleQtyPerUnit` | `Double` | No | Edible grams per unit. Used with isStockRaw. |
+| `defaultUnits` | `String` | No | Default stock unit: g, ml, or units. |
+| `isSupplement` | `Bool` | No | true for supplements. Default: false. |
+| `isPortable` | `Bool` | No | Whether portable. Default: true. |
+| `isStockRaw` | `Bool` | No | true if stock includes non-edible parts (peel, shell, etc.). App uses edibleQtyPerUnit to compute actual consumed grams. Default: false. |
 
 ---
 
@@ -301,20 +289,19 @@ Recipes are imported as a JSON array.
 
 | Field | Type | Required | Description |
 | :--- | :--- | :--- | :--- |
-| `name` | `String` | **Yes** | Recipe name. |
+| `name` | `String` | Yes | Recipe name. |
 | `instructions` | `String` | No | Preparation instructions. |
-| `isPortable` | `Bool` | No (default true) | Whether recipe is portable. |
+| `isPortable` | `Bool` | No | Whether portable. Default: true. |
 | `ingredients` | `Array` | No | Ingredient list. |
 
 ### Ingredient Fields
 
 | Field | Type | Description |
 | :--- | :--- | :--- |
-| `productName` | `String` | Must match an existing product name (case-insensitive). |
-| `amount` | `Double` | Quantity. |
-| `amountUnits` | `String?` | Optional unit label. |
+| `amount` | `Double` | Quantity in grams. |
+| `product` | `Object` | A full Product object (see section 4). |
 
-> **Important**: All ingredient `productName` values must match existing products. Import products before recipes.
+> All ingredient products must either exist in the database (matched by name) or be provided as embedded objects.
 ''');
                               await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Import Format Specifications');
                             } catch (e) {

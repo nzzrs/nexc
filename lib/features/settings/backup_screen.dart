@@ -499,6 +499,27 @@ Recipes are imported as a JSON array.
             },
             onImport: () => _handleImport(context, backupManager.importRecipes, 'Recipes'),
           ),
+          const Divider(height: 32),
+          _buildBackupSection(
+            context,
+            title: 'Stock',
+            description: 'Import or export your stock inventory and house data. Products must already exist in the database before importing stock.',
+            onExport: () async {
+              try {
+                await backupManager.exportStock();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Stock exported successfully')),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Stock export failed: $e')),
+                );
+              }
+            },
+            onImport: () => _handleImport(context, backupManager.importStock, 'Stock'),
+          ),
         ],
       ),
     );

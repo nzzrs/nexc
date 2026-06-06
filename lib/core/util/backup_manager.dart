@@ -22,6 +22,7 @@ import '../db/relations.dart';
 import '../db/workout_repository.dart';
 import '../db/meal_repository.dart';
 import '../db/dataset_repository.dart';
+import '../db/stock_repository.dart';
 import '../providers/db_provider.dart';
 
 class ImportResult {
@@ -37,12 +38,14 @@ class BackupManager {
   final WorkoutRepository workoutRepo;
   final MealRepository mealRepo;
   final DatasetRepository datasetRepo;
+  final StockRepository stockRepo;
 
   BackupManager({
     required this.db,
     required this.workoutRepo,
     required this.mealRepo,
     required this.datasetRepo,
+    required this.stockRepo,
   });
 
   Future<void> exportDatabase() async {
@@ -671,6 +674,94 @@ class BackupManager {
       return ImportResult.fail(e.toString());
     }
   }
+
+  Future<void> exportStock() async {
+    final houses = await stockRepo.getHouses();
+    final exportList = <Map<String, dynamic>>[];
+
+    for (final house in houses) {
+      final stocks = await stockRepo.getStocksWithProductForHouse(house.id);
+      exportList.add({
+        'houseName': house.name,
+        'items': stocks.map((s) => {
+          'productName': s.product.name,
+          'quantity': s.stock.quantity,
+          'unit': s.product.defaultUnits ?? 'g',
+          'minTriggerQuantity': s.stock.minTriggerQuantity,
+        }).toList(),
+      });
+    }
+
+    final jsonString = jsonEncode(exportList);
+    final tempDir = await getTemporaryDirectory();
+    final file = File(p.join(tempDir.path, 'nexc_stock.json'));
+    await file.writeAsString(jsonString);
+    await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Stock Backup');
+  }
+
+  Future<ImportResult> importStock() async {
+    try {
+      final result = await FilePicker.platform.pickFiles();
+      if (result == null || result.files.single.path == null) {
+        return const ImportResult(success: false, error: 'No file selected');
+      }
+
+      final file = File(result.files.single.path!);
+      final content = await file.readAsString();
+      final List<dynamic> data = jsonDecode(content);
+
+      final productCache = await db.select(db.products).get();
+      final houseCache = await stockRepo.getHouses();
+
+      for (int hi = 0; hi < data.length; hi++) {
+        final houseJson = data[hi];
+        final houseName = houseJson['houseName'] as String? ?? 'House #${hi + 1}';
+
+        // Find or create house
+        House? house = houseCache.firstWhereOrNull(
+          (h) => h.name.toLowerCase() == houseName.toLowerCase(),
+        );
+        if (house == null) {
+          await stockRepo.saveHouse(House(id: 0, name: houseName));
+          final all = await stockRepo.getHouses();
+          house = all.firstWhereOrNull((h) => h.name.toLowerCase() == houseName.toLowerCase());
+          if (house == null) continue;
+        }
+
+        final List<dynamic> items = houseJson['items'] ?? [];
+        for (int si = 0; si < items.length; si++) {
+          final itemJson = items[si];
+          final productName = itemJson['productName'] as String? ?? '';
+          if (productName.isEmpty) continue;
+
+          final product = productCache.firstWhereOrNull(
+            (p) => p.name.toLowerCase() == productName.toLowerCase(),
+          );
+          if (product == null) {
+            return ImportResult.fail(
+              'House "$houseName", item #${si + 1}: '
+              'product "$productName" not found in database. Import products first.',
+            );
+          }
+
+          final quantity = (itemJson['quantity'] as num?)?.toDouble() ?? 0.0;
+          final unit = itemJson['unit'] as String? ?? product.defaultUnits ?? 'g';
+          final trigger = (itemJson['minTriggerQuantity'] as num?)?.toDouble();
+
+          await stockRepo.saveStock(
+            productId: product.id,
+            houseId: house.id,
+            quantity: quantity,
+            minTriggerQuantity: trigger,
+            inputUnit: unit,
+          );
+        }
+      }
+      return const ImportResult.ok();
+    } catch (e) {
+      return ImportResult.fail(e.toString());
+    }
+  }
 }
 
 final backupManagerProvider = Provider<BackupManager>((ref) {
@@ -678,11 +769,13 @@ final backupManagerProvider = Provider<BackupManager>((ref) {
   final workoutRepo = ref.watch(workoutRepositoryProvider);
   final mealRepo = ref.watch(mealRepositoryProvider);
   final datasetRepo = ref.watch(datasetRepositoryProvider);
+  final stockRepo = ref.watch(stockRepositoryProvider);
 
   return BackupManager(
     db: db,
     workoutRepo: workoutRepo,
     mealRepo: mealRepo,
     datasetRepo: datasetRepo,
+    stockRepo: stockRepo,
   );
 });

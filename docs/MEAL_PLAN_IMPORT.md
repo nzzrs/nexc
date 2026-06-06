@@ -1,252 +1,251 @@
 # Meal Plan Import JSON Format
 
-Meal plans in Nexc can be imported and exported using a simple, self-contained JSON schema. This allows you to transfer plans, including all their referenced products and recipes, between devices.
+Meal plans in Nexc can be imported and exported using a self-contained JSON schema. This transfers plans — including all referenced products and recipes — between devices.
 
 ## Schema Details
 
-A meal plan backup file is a JSON array of **Meal Plan Objects**.
-
-### 1. Meal Plan Object
-- **`title`** (String, required): Name of the plan.
-- **`notes`** (String, optional): Description or goals.
-- **`state`** (String, optional): Usually `"TEMPLATE"` for reusable plans.
-- **`created`** (String, optional): ISO LocalDateTime (e.g., `"2026-05-26T08:00:00"`).
-- **`completed`** (String, optional): ISO LocalDateTime.
-- **`meals`** (Array of Meals, optional): The scheduled meal slots.
-
-### 2. Meal Object
-- **`name`** (String, required): Name of the meal slot (e.g., "Desayuno", "Almuerzo").
-- **`time`** (String, required): Scheduled time in ISO LocalTime format (e.g., `"08:30:00"`).
-- **`notes`** (String, optional): Special instructions ("cómo comer").
-- **`position`** (Int, optional): Chronological ordering.
-- **`items`** (Array of Meal Items, required): Foods/supplements in this meal.
-
-### 3. Meal Item Object
-- **`type`** (String, required): Either `"PRODUCT"` or `"RECIPE"`.
-- **`amount`** (Double, required): Quantity in grams or units (e.g., `100.0` for 100g, or `5.0` for 5g/scoops).
-- **`consumed`** (Boolean, optional): Check-off status. Default is `false`.
-- **`position`** (Int, optional): Ordering.
-- **`product`** (Product Object, optional): Required if type is `"PRODUCT"`.
-- **`recipe`** (Recipe Object, optional): Required if type is `"RECIPE"`.
-
-### 4. Product Object
-- **`name`** (String, required): Name of the food/supplement.
-- **`weight`** (Double): Packaging weight (g/ml).
-- **`cost`** (Double): Price per unit weight.
-- **`quantity`** (Int): Current stock quantity.
-- **`units`** (String): Units of weight (e.g., `"g"`, `"ml"`, `"scoop"`).
-- **`ediblePercent`** (Double): Est. edible percentage (e.g., `1.0` = 100%).
-- **`edibleQtyPerUnit`** (Double): Est. edible quantity per packaging unit.
-- **`proteins`** (Double): Proteins per 100g.
-- **`carbs`** (Double): Carbohydrates per 100g.
-- **`fats`** (Double): Fats per 100g.
-- **`isSupplement`** (Boolean): Differentiates natural food from supplements (e.g., creatine).
-
-### 5. Recipe Object
-- **`name`** (String, required): Name of the prepared dish.
-- **`instructions`** (String): Process/steps.
-- **`isPortable`** (Boolean): Suitability to eat on-the-go (e.g., `true` or `false`).
-- **`ingredients`** (Array of Recipe Ingredients):
-  - **`amount`** (Double): Amount of this ingredient (g).
-  - **`product`** (Product Object): Details of the ingredient product.
+A meal plan import file is a JSON array of **Meal Plan Objects**.
 
 ---
 
-## Example Import JSON File
+### 1. Meal Plan Object
 
-Here is an example plan covering a day, including 4 structured meals with foods, recipes, and supplements (like milk, cookies, and creatine for breakfast; chicken and rice for lunch):
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `title` | String | ✅ | Name of the plan. |
+| `notes` | String | | Description or goals. |
+| `state` | String | | `"TEMPLATE"` for reusable plans. See states below. |
+| `created` | String | | ISO LocalDateTime (e.g. `"2026-05-26T08:00:00"`). |
+| `completed` | String | | ISO LocalDateTime. |
+| `meals` | Array | | Scheduled meal slots. |
+
+**`state` values:** `TEMPLATE`, `RUNNING`, `COMPLETED`
+
+---
+
+### 2. Meal Object
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | String | ✅ | Name of the meal slot (e.g. `"Breakfast"`). |
+| `time` | String | ✅ | Scheduled time as `"HH:mm:ss"` (e.g. `"08:30:00"`). |
+| `notes` | String | | Special instructions. |
+| `position` | Int | | Chronological ordering (0-indexed). |
+| `atHome` | Boolean | | Whether the meal is eaten at home. Default: `true`. |
+| `items` | Array | ✅ | Foods/supplements in this meal. |
+
+---
+
+### 3. Meal Item Object
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `type` | String | ✅ | `"PRODUCT"` or `"RECIPE"`. |
+| `amount` | Double | ✅ | Quantity in the unit specified by `amountUnit`. |
+| `amountUnit` | String | | Unit for `amount`. Default: `"GRAMS"`. See units below. |
+| `consumed` | Boolean | | Check-off status. Default: `false`. |
+| `position` | Int | | Ordering within the meal. |
+| `product` | Object | | Required if `type` is `"PRODUCT"`. |
+| `recipe` | Object | | Required if `type` is `"RECIPE"`. |
+
+**`amountUnit` values:** `GRAMS`, `ML`, `UNITS`
+
+---
+
+### 4. Product Object
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | String | ✅ | Name of the food/supplement. |
+| `proteins` | Double | ✅ | Proteins per 100 g. |
+| `fats` | Double | ✅ | Fats per 100 g. |
+| `isSupplement` | Boolean | ✅ | `true` for supplements (e.g. creatine, whey). |
+| `carbsAvailable` | Double | | Available (net) carbs per 100 g. |
+| `carbsByDifference` | Double | | Carbs by difference per 100 g (includes fiber). |
+| `dietaryFiber` | Double | | Dietary fiber per 100 g. |
+| `kcal` | Double | | Kilocalories per 100 g (optional, can be computed). |
+| `mlToGFactor` | Int | | ml-to-g conversion factor (e.g. `103` for whole milk). If `0` or omitted, ml unit is hidden for this product. |
+| `unitWeight` | Int | | Weight of one unit in grams (e.g. `120` for a banana). If `0` or omitted, units are hidden for this product. |
+| `edibleQtyPerUnit` | Double | | Edible grams per unit (e.g. `78` for a banana with peel). Used with `isStockRaw`. |
+| `defaultUnits` | String | | Default unit for stock display: `"g"`, `"ml"`, or `"units"`. |
+| `isPortable` | Boolean | | Whether the product can be eaten on-the-go. Default: `true`. |
+| `isStockRaw` | Boolean | | `true` if the stock includes non-edible parts (e.g. banana with peel, egg with shell). When `true`, the app uses `edibleQtyPerUnit` to compute actual consumed grams and deducts stock accordingly. Default: `false`. |
+
+> **Note on carbs:** Use either `carbsAvailable` or `carbsByDifference`. If both are provided, `carbsAvailable` is used for nutritional display. `carbsByDifference` is stored separately for reference.
+
+---
+
+### 5. Recipe Object
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `name` | String | ✅ | Name of the dish. |
+| `instructions` | String | | Preparation steps. |
+| `isPortable` | Boolean | | Suitable to eat on-the-go. Default: `true`. |
+| `ingredients` | Array | | List of ingredient objects. |
+
+**Recipe Ingredient Object:**
+
+| Field | Type | Required | Description |
+|---|---|---|---|
+| `amount` | Double | ✅ | Amount in grams. |
+| `product` | Object | ✅ | A Product Object (see above). |
+
+---
+
+## Example Import File
 
 ```json
 [
   {
-    "title": "Daily High-Protein & Supplement Plan",
-    "notes": "Focused day including natural food and pre/post training supplements.",
+    "title": "Daily High-Protein Plan",
+    "notes": "Focused day with natural food and supplements.",
     "state": "TEMPLATE",
     "meals": [
       {
-        "name": "Desayuno & Suplementación",
+        "name": "Breakfast & Supplementation",
         "time": "08:00:00",
-        "notes": "Tomar inmediatamente al despertar con abundante agua.",
+        "notes": "Take immediately upon waking with plenty of water.",
         "position": 0,
+        "atHome": true,
         "items": [
           {
             "type": "PRODUCT",
             "amount": 250.0,
+            "amountUnit": "ML",
             "consumed": false,
             "position": 0,
             "product": {
-              "name": "Leche Entera",
-              "weight": 1000.0,
-              "cost": 1.20,
-              "quantity": 2,
-              "units": "ml",
-              "ediblePercent": 1.0,
-              "edibleQtyPerUnit": 0.0,
+              "name": "Whole Milk",
               "proteins": 3.3,
-              "carbs": 4.7,
               "fats": 3.6,
-              "isSupplement": false
-            }
-          },
-          {
-            "type": "PRODUCT",
-            "amount": 50.0,
-            "consumed": false,
-            "position": 1,
-            "product": {
-              "name": "Galletas de Avena",
-              "weight": 200.0,
-              "cost": 1.50,
-              "quantity": 5,
-              "units": "g",
-              "ediblePercent": 1.0,
-              "edibleQtyPerUnit": 0.0,
-              "proteins": 6.5,
-              "carbs": 65.0,
-              "fats": 15.0,
-              "isSupplement": false
+              "carbsAvailable": 4.7,
+              "kcal": 65.0,
+              "mlToGFactor": 103,
+              "defaultUnits": "ml",
+              "isSupplement": false,
+              "isPortable": true,
+              "isStockRaw": false
             }
           },
           {
             "type": "PRODUCT",
             "amount": 5.0,
-            "consumed": false,
-            "position": 2,
-            "product": {
-              "name": "Creatina Monohidratada",
-              "weight": 300.0,
-              "cost": 18.00,
-              "quantity": 1,
-              "units": "g",
-              "ediblePercent": 1.0,
-              "edibleQtyPerUnit": 0.0,
-              "proteins": 0.0,
-              "carbs": 0.0,
-              "fats": 0.0,
-              "isSupplement": true
-            }
-          }
-        ]
-      },
-      {
-        "name": "Almuerzo",
-        "time": "13:30:00",
-        "notes": "Comida principal del día.",
-        "position": 1,
-        "items": [
-          {
-            "type": "PRODUCT",
-            "amount": 100.0,
-            "consumed": false,
-            "position": 0,
-            "product": {
-              "name": "Pollo (Pechuga)",
-              "weight": 1000.0,
-              "cost": 7.50,
-              "quantity": 1,
-              "units": "g",
-              "ediblePercent": 1.0,
-              "edibleQtyPerUnit": 0.0,
-              "proteins": 31.0,
-              "carbs": 0.0,
-              "fats": 3.6,
-              "isSupplement": false
-            }
-          },
-          {
-            "type": "PRODUCT",
-            "amount": 100.0,
+            "amountUnit": "GRAMS",
             "consumed": false,
             "position": 1,
             "product": {
-              "name": "Arroz Cocido",
-              "weight": 1000.0,
-              "cost": 1.50,
-              "quantity": 3,
-              "units": "g",
-              "ediblePercent": 1.0,
-              "edibleQtyPerUnit": 0.0,
-              "proteins": 2.7,
-              "carbs": 28.0,
-              "fats": 0.3,
-              "isSupplement": false
+              "name": "Creatine Monohydrate",
+              "proteins": 0.0,
+              "fats": 0.0,
+              "carbsAvailable": 0.0,
+              "defaultUnits": "g",
+              "isSupplement": true,
+              "isPortable": true,
+              "isStockRaw": false
             }
           }
         ]
       },
       {
-        "name": "Merienda Pre-Entreno",
-        "time": "17:00:00",
-        "notes": "1 hora antes de entrenar.",
-        "position": 2,
+        "name": "Lunch",
+        "time": "13:30:00",
+        "notes": "Main meal of the day.",
+        "position": 1,
+        "atHome": true,
         "items": [
           {
             "type": "PRODUCT",
             "amount": 100.0,
+            "amountUnit": "GRAMS",
             "consumed": false,
             "position": 0,
             "product": {
-              "name": "Plátano",
-              "weight": 150.0,
-              "cost": 0.30,
-              "quantity": 6,
-              "units": "g",
-              "ediblePercent": 0.65,
-              "edibleQtyPerUnit": 97.5,
-              "proteins": 1.1,
-              "carbs": 22.8,
-              "fats": 0.3,
-              "isSupplement": false
+              "name": "Chicken Breast",
+              "proteins": 31.0,
+              "fats": 3.6,
+              "carbsAvailable": 0.0,
+              "defaultUnits": "g",
+              "isSupplement": false,
+              "isPortable": false,
+              "isStockRaw": false
             }
           }
         ]
       },
       {
-        "name": "Cena",
+        "name": "Pre-Workout Snack",
+        "time": "17:00:00",
+        "notes": "1 hour before training.",
+        "position": 2,
+        "atHome": false,
+        "items": [
+          {
+            "type": "PRODUCT",
+            "amount": 2.0,
+            "amountUnit": "UNITS",
+            "consumed": false,
+            "position": 0,
+            "product": {
+              "name": "Banana",
+              "proteins": 1.1,
+              "fats": 0.3,
+              "carbsAvailable": 22.8,
+              "dietaryFiber": 2.6,
+              "unitWeight": 120,
+              "edibleQtyPerUnit": 78,
+              "defaultUnits": "units",
+              "isSupplement": false,
+              "isPortable": true,
+              "isStockRaw": true
+            }
+          }
+        ]
+      },
+      {
+        "name": "Dinner",
         "time": "21:00:00",
-        "notes": "Comida ligera antes de dormir.",
+        "notes": "Light meal before sleeping.",
         "position": 3,
+        "atHome": true,
         "items": [
           {
             "type": "RECIPE",
             "amount": 1.0,
+            "amountUnit": "GRAMS",
             "consumed": false,
             "position": 0,
             "recipe": {
-              "name": "Huevos Revueltos con Espinaca",
-              "instructions": "Calentar sartén con una gota de aceite. Verter 2 huevos batidos y espinacas limpias. Cocinar 3 minutos.",
-              "isPortable": true,
+              "name": "Scrambled Eggs with Spinach",
+              "instructions": "Heat pan with a drop of oil. Pour 2 beaten eggs and clean spinach. Cook 3 minutes.",
+              "isPortable": false,
               "ingredients": [
                 {
                   "amount": 120.0,
                   "product": {
-                    "name": "Huevo Duro/Fresco",
-                    "weight": 60.0,
-                    "cost": 0.15,
-                    "quantity": 30,
-                    "units": "unit",
-                    "ediblePercent": 0.88,
-                    "edibleQtyPerUnit": 52.8,
+                    "name": "Egg",
                     "proteins": 13.0,
-                    "carbs": 1.1,
                     "fats": 11.0,
-                    "isSupplement": false
+                    "carbsAvailable": 1.1,
+                    "unitWeight": 60,
+                    "edibleQtyPerUnit": 53,
+                    "defaultUnits": "units",
+                    "isSupplement": false,
+                    "isPortable": true,
+                    "isStockRaw": true
                   }
                 },
                 {
                   "amount": 50.0,
                   "product": {
-                    "name": "Espinaca Fresca",
-                    "weight": 250.0,
-                    "cost": 1.20,
-                    "quantity": 1,
-                    "units": "g",
-                    "ediblePercent": 0.95,
-                    "edibleQtyPerUnit": 0.0,
+                    "name": "Fresh Spinach",
                     "proteins": 2.9,
-                    "carbs": 3.6,
                     "fats": 0.4,
-                    "isSupplement": false
+                    "carbsAvailable": 3.6,
+                    "defaultUnits": "g",
+                    "isSupplement": false,
+                    "isPortable": false,
+                    "isStockRaw": false
                   }
                 }
               ]
@@ -258,3 +257,15 @@ Here is an example plan covering a day, including 4 structured meals with foods,
   }
 ]
 ```
+
+---
+
+## Notes on Stock Integration
+
+Products imported via meal plans are matched by name to existing products in the database. If a product with the same name already exists, its nutritional data is **not** overwritten — only the meal item reference is created.
+
+Stock tracking fields (`isStockRaw`, `unitWeight`, `edibleQtyPerUnit`, `mlToGFactor`) affect how the app deducts stock when meals are logged:
+
+- **`isStockRaw = true`**: Stock is in raw/unpeeled form. The app uses `edibleQtyPerUnit` to compute the true consumed grams and deducts proportionally.
+- **`mlToGFactor`**: Converts between ml and g for liquids. If `0`, the ml option is hidden.
+- **`unitWeight`**: Enables the "units" amount option. If `0`, units are hidden.

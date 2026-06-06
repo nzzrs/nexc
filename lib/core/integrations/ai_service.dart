@@ -138,7 +138,9 @@ class AIService {
 
     try {
       if (provider == 'gemini') {
-        final defaultModel = model.isEmpty ? 'gemini-1.5-flash' : model;
+        // DEFAULT MODEL: gemini-2.5-flash — do NOT downgrade this without discussion.
+        // 1.5-flash lacks multimodal quality needed for receipt parsing.
+        final defaultModel = model.isEmpty ? 'gemini-2.5-flash' : model;
         final url = Uri.parse(
             'https://generativelanguage.googleapis.com/v1beta/models/$defaultModel:generateContent?key=$apiKey');
 
@@ -316,7 +318,9 @@ class AIService {
     };
 
     if (provider == 'gemini') {
-      final defaultModel = model.isEmpty ? 'gemini-1.5-flash' : model;
+      // DEFAULT MODEL: gemini-2.5-flash — do NOT downgrade this without discussion.
+      // 1.5-flash produces poor results for nutritional autofill.
+      final defaultModel = model.isEmpty ? 'gemini-2.5-flash' : model;
       final url = Uri.parse(
           'https://generativelanguage.googleapis.com/v1beta/models/$defaultModel:generateContent?key=$apiKey');
 

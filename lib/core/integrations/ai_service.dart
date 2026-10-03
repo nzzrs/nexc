@@ -394,4 +394,364 @@ class AIService {
       return AIProductDetails.fromJson(parsed as Map<String, dynamic>);
     }
   }
+
+  static Future<Map<String, int?>> disambiguateReceiptItems({
+    required String provider,
+    required String apiKey,
+    required String model,
+    required List<Map<String, dynamic>> itemsWithCandidates,
+  }) async {
+    if (itemsWithCandidates.isEmpty || apiKey.trim().isEmpty) return {};
+
+    final prompt = "You are a grocery item matching assistant. "
+        "For each receipt item below, pick the ID of the candidate product that best corresponds to it. "
+        "If none of the candidates match, return null for matchedProductId. "
+        "Receipt items and their close candidates:\n"
+        "${json.encode(itemsWithCandidates)}";
+
+    final schema = {
+      "type": "OBJECT",
+      "properties": {
+        "matches": {
+          "type": "ARRAY",
+          "items": {
+            "type": "OBJECT",
+            "properties": {
+              "receiptName": {"type": "STRING"},
+              "matchedProductId": {"type": "INTEGER", "nullable": true}
+            },
+            "required": ["receiptName"]
+          }
+        }
+      },
+      "required": ["matches"]
+    };
+
+    try {
+      if (provider == 'gemini') {
+        final defaultModel = model.isEmpty ? 'gemini-2.5-flash' : model;
+        final url = Uri.parse(
+            'https://generativelanguage.googleapis.com/v1beta/models/$defaultModel:generateContent?key=$apiKey');
+
+        final body = json.encode({
+          "contents": [
+            {
+              "parts": [
+                {"text": prompt},
+              ]
+            }
+          ],
+          "generationConfig": {
+            "responseMimeType": "application/json",
+            "responseSchema": schema,
+          }
+        });
+
+        final response = await http.post(
+          url,
+          headers: {"Content-Type": "application/json"},
+          body: body,
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final text = data['candidates'][0]['content']['parts'][0]['text'] as String;
+          final parsed = json.decode(text);
+          final matches = parsed['matches'] as List? ?? [];
+          final result = <String, int?>{};
+          for (final m in matches) {
+            final name = m['receiptName'] as String?;
+            final id = m['matchedProductId'] as int?;
+            if (name != null) {
+              result[name.toLowerCase().trim()] = id;
+            }
+          }
+          return result;
+        }
+      } else {
+        // OpenRouter
+        final defaultModel = model.isEmpty ? 'google/gemini-2.5-flash' : model;
+        final url = Uri.parse('https://openrouter.ai/api/v1/chat/completions');
+
+        final body = json.encode({
+          "model": defaultModel,
+          "messages": [
+            {"role": "user", "content": prompt}
+          ],
+          "response_format": {
+            "type": "json_schema",
+            "json_schema": {
+              "name": "receipt_matches",
+              "strict": true,
+              "schema": schema,
+            }
+          }
+        });
+
+        final response = await http.post(
+          url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $apiKey",
+          },
+          body: body,
+        );
+
+        if (response.statusCode == 200) {
+          final data = json.decode(response.body);
+          final text = data['choices'][0]['message']['content'] as String;
+          final parsed = json.decode(text);
+          final matches = parsed['matches'] as List? ?? [];
+          final result = <String, int?>{};
+          for (final m in matches) {
+            final name = m['receiptName'] as String?;
+            final id = m['matchedProductId'] as int?;
+            if (name != null) {
+              result[name.toLowerCase().trim()] = id;
+            }
+          }
+          return result;
+        }
+      }
+    } catch (_) {
+      // Graceful fallback on network or API failures
+    }
+    return {};
+  }
+
+  /// Build AI user context prompt adhering strictly to privacy permission toggles
+  static String buildUserContextPrompt({
+    required bool enableAiAssistant,
+    required bool enablePreferences,
+    required String userPreferences,
+    required bool allowMealHistory,
+    String? mealHistorySummary,
+    required bool allowWorkoutHistory,
+    String? workoutHistorySummary,
+    required bool allowStatistics,
+    String? statisticsSummary,
+    required bool allowMeasurements,
+    String? measurementsSummary,
+  }) {
+    if (!enableAiAssistant) {
+      return "AI Assistant is deactivated.";
+    }
+
+    final buffer = StringBuffer();
+    buffer.writeln("USER CONTEXT & PREFERENCES (Only approved data included):");
+
+    if (enablePreferences && userPreferences.trim().isNotEmpty) {
+      buffer.writeln("- User Preferences & Medical/Training notes: $userPreferences");
+    }
+
+    if (allowWorkoutHistory && workoutHistorySummary != null && workoutHistorySummary.isNotEmpty) {
+      buffer.writeln("- Workout History: $workoutHistorySummary");
+    }
+
+    if (allowMealHistory && mealHistorySummary != null && mealHistorySummary.isNotEmpty) {
+      buffer.writeln("- Meal History / Nutrition: $mealHistorySummary");
+    }
+
+    if (allowStatistics && statisticsSummary != null && statisticsSummary.isNotEmpty) {
+      buffer.writeln("- User Statistics & Progress: $statisticsSummary");
+    }
+
+    if (allowMeasurements && measurementsSummary != null && measurementsSummary.isNotEmpty) {
+      buffer.writeln("- Recent Measurements: $measurementsSummary");
+    }
+
+    return buffer.toString();
+  }
+
+  /// AI Exercise Replacement by Muscle Group Similarity
+  /// Reorders or suggests exercises that match primary/secondary muscle targets.
+  static Future<List<String>> getReplacementSuggestions({
+    required String provider,
+    required String apiKey,
+    required String model,
+    required String targetExerciseName,
+    required List<String> targetMuscles,
+    required List<Map<String, dynamic>> availableExercises,
+  }) async {
+    // Local similarity algorithm as fast & reliable offline-first fallback
+    final sortedByMuscleMatch = List<Map<String, dynamic>>.from(availableExercises);
+
+    sortedByMuscleMatch.sort((a, b) => (b['commonMuscles'] as int).compareTo(a['commonMuscles'] as int));
+
+    final localFallbackIds = sortedByMuscleMatch
+        .where((e) => e['name'] != targetExerciseName)
+        .take(5)
+        .map((e) => e['id'] as String)
+        .toList();
+
+    if (apiKey.isEmpty) {
+      return localFallbackIds;
+    }
+
+    final prompt = "Given target exercise '$targetExerciseName' which trains: ${targetMuscles.join(', ')}. "
+        "Select up to 5 best replacement exercise IDs from the following list of candidate exercises based on biomechanical similarity and muscle group targets: "
+        "${jsonEncode(availableExercises.take(40).toList())}. Return a JSON array of strings containing just the exercise IDs in best order.";
+
+    try {
+      if (provider == 'gemini') {
+        final defaultModel = model.isEmpty ? 'gemini-2.5-flash' : model;
+        final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/$defaultModel:generateContent?key=$apiKey');
+        final response = await http.post(
+          url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "contents": [
+              {"parts": [{"text": prompt}]}
+            ],
+            "generationConfig": {
+              "responseMimeType": "application/json",
+            }
+          }),
+        );
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final text = data['candidates'][0]['content']['parts'][0]['text'] as String;
+          final List<dynamic> ids = jsonDecode(text);
+          return ids.map((e) => e.toString()).toList();
+        }
+      }
+    } catch (_) {}
+
+    return localFallbackIds;
+  }
+
+  /// AI Workout Reordering: "Machine Busy"
+  /// Given the current workout exercises and the busy exercise index,
+  /// reorders the list to push the busy exercise to a later appropriate slot.
+  static List<int> reorderMachineBusy({
+    required int busyIndex,
+    required int totalExercises,
+  }) {
+    if (totalExercises <= 1 || busyIndex < 0 || busyIndex >= totalExercises) {
+      return List.generate(totalExercises, (i) => i);
+    }
+    final order = List.generate(totalExercises, (i) => i);
+    final removed = order.removeAt(busyIndex);
+    // Push towards the end or next available slot
+    order.add(removed);
+    return order;
+  }
+
+  /// AI Custom Exercise Creator
+  static Future<Map<String, dynamic>?> generateCustomExercise({
+    required String provider,
+    required String apiKey,
+    required String model,
+    required String exerciseDescription,
+  }) async {
+    const prompt = "Create a detailed exercise definition based on this description. "
+        "Return JSON with: name (string), category (one of: STRENGTH, CARDIO, STRETCHING, POWERLIFTING, OLYMPIC_WEIGHTLIFTING, PLYOMETRICS), "
+        "level (BEGINNER, INTERMEDIATE, EXPERT), force (PUSH, PULL, STATIC), mechanic (COMPOUND, ISOLATION), "
+        "equipment (BARBELL, DUMBBELL, MACHINE, CABLE, BODY_ONLY, BANDS, KETTLEBELLS, OTHER), "
+        "primaryMuscles (array of strings from: CHEST, SHOULDERS, TRICEPS, BICEPS, LATS, MIDDLE_BACK, LOWER_BACK, QUADRICEPS, HAMSTRINGS, GLUTES, CALVES, ABDOMINALS), "
+        "instructions (array of steps as strings).";
+
+    if (apiKey.isEmpty) {
+      return {
+        "name": exerciseDescription,
+        "category": "STRENGTH",
+        "level": "BEGINNER",
+        "force": "PUSH",
+        "mechanic": "COMPOUND",
+        "equipment": "MACHINE",
+        "primaryMuscles": ["CHEST"],
+        "instructions": ["Set up the machine", "Execute with controlled form", "Return slowly"],
+      };
+    }
+
+    try {
+      if (provider == 'gemini') {
+        final defaultModel = model.isEmpty ? 'gemini-2.5-flash' : model;
+        final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/$defaultModel:generateContent?key=$apiKey');
+        final response = await http.post(
+          url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({
+            "contents": [
+              {"parts": [{"text": "$prompt\nDescription: $exerciseDescription"}]}
+            ],
+            "generationConfig": {
+              "responseMimeType": "application/json",
+            }
+          }),
+        );
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final text = data['candidates'][0]['content']['parts'][0]['text'] as String;
+          return jsonDecode(text) as Map<String, dynamic>;
+        }
+      }
+    } catch (_) {}
+
+    return {
+      "name": exerciseDescription,
+      "category": "STRENGTH",
+      "level": "BEGINNER",
+      "force": "PUSH",
+      "mechanic": "COMPOUND",
+      "equipment": "MACHINE",
+      "primaryMuscles": ["CHEST"],
+      "instructions": ["Perform repetitions safely with correct posture"],
+    };
+  }
+
+  /// Interactive Workout Chat Creator
+  static Future<String> chatWithWorkoutAssistant({
+    required String provider,
+    required String apiKey,
+    required String model,
+    required String userContext,
+    required List<Map<String, String>> conversationHistory,
+    required String userMessage,
+  }) async {
+    if (apiKey.isEmpty) {
+      return "AI Workout Assistant: I have received your request ('$userMessage'). Please configure your AI API key in Settings to receive personalized real-time workout recommendations based on your preferences.";
+    }
+
+    final systemPrompt = "You are an expert fitness coach and workout planner in the Nexc fitness app. "
+        "Your task is to answer user training questions and design tailored workout routines. "
+        "Use any allowed user context provided below:\n$userContext\n"
+        "Keep responses structured, encouraging, concise and practical.";
+
+    try {
+      if (provider == 'gemini') {
+        final defaultModel = model.isEmpty ? 'gemini-2.5-flash' : model;
+        final url = Uri.parse('https://generativelanguage.googleapis.com/v1beta/models/$defaultModel:generateContent?key=$apiKey');
+        final contents = [
+          {
+            "parts": [{"text": systemPrompt}]
+          },
+          ...conversationHistory.map((m) => {
+            "role": m['role'] == 'user' ? 'user' : 'model',
+            "parts": [{"text": m['content'] ?? ''}],
+          }),
+          {
+            "role": "user",
+            "parts": [{"text": userMessage}]
+          }
+        ];
+
+        final response = await http.post(
+          url,
+          headers: {"Content-Type": "application/json"},
+          body: jsonEncode({"contents": contents}),
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return data['candidates'][0]['content']['parts'][0]['text'] as String;
+        }
+      }
+    } catch (e) {
+      return "Error contacting AI service: $e";
+    }
+
+    return "Could not process request at this time. Please check your AI network settings.";
+  }
 }
+

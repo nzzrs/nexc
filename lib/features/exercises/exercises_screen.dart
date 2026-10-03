@@ -12,15 +12,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/dataset_repository.dart';
+import '../../core/integrations/ai_service.dart';
+import '../../core/providers/settings_provider.dart';
 
 class ExercisesScreen extends ConsumerStatefulWidget {
   final bool addExercises; // true if selecting multiple, false if selecting single
   final bool isSelectionMode; // true if selecting, false if browsing
+  final ExerciseDataDC? targetExerciseToReplace;
 
   const ExercisesScreen({
     super.key,
     this.addExercises = true,
     this.isSelectionMode = true,
+    this.targetExerciseToReplace,
   });
 
   @override
@@ -159,7 +163,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
           if (_showFilters)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
@@ -298,13 +302,23 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   return _fuzzyScore(ex.name, _query) > 60;
                 }).toList();
 
-                // Sort: Selected first, then query/default order
+                // Sort: Selected first, then AI/muscle similarity replacements first if replacing, then query
                 final sorted = List<ExerciseDataDC>.from(filtered);
+                final targetMuscles = widget.targetExerciseToReplace?.primaryMuscles.toSet() ?? {};
+
                 sorted.sort((a, b) {
                   final aSelected = _selectedExercises.contains(a);
                   final bSelected = _selectedExercises.contains(b);
                   if (aSelected && !bSelected) return -1;
                   if (!aSelected && bSelected) return 1;
+
+                  if (widget.targetExerciseToReplace != null && _query.isEmpty) {
+                    final aMatches = a.primaryMuscles.any((m) => targetMuscles.contains(m));
+                    final bMatches = b.primaryMuscles.any((m) => targetMuscles.contains(m));
+                    if (aMatches && !bMatches) return -1;
+                    if (!aMatches && bMatches) return 1;
+                  }
+
                   if (_query.isNotEmpty) {
                     final scoreA = _fuzzyScore(a.name, _query);
                     final scoreB = _fuzzyScore(b.name, _query);
@@ -314,7 +328,31 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                 });
 
                 if (sorted.isEmpty) {
-                  return const Center(child: Text('No exercises found.'));
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.search_off, size: 48, color: theme.colorScheme.onSurfaceVariant),
+                          const SizedBox(height: 12),
+                          Text('No exercises found', style: theme.textTheme.titleMedium),
+                          const SizedBox(height: 16),
+                          FilledButton.icon(
+                            icon: const Icon(Icons.add),
+                            label: const Text('Create Exercise'),
+                            onPressed: () => _openCreateExerciseDialog(initialName: _query),
+                          ),
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.auto_awesome),
+                            label: const Text('Create with AI'),
+                            onPressed: () => _createWithAi(initialName: _query),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
                 }
 
                 return ListView.builder(
@@ -324,7 +362,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     final isSelected = _selectedExercises.any((e) => e.id == ex.id);
 
                     return Container(
-                      color: isSelected ? theme.colorScheme.primaryContainer.withOpacity(0.24) : null,
+                      color: isSelected ? theme.colorScheme.primaryContainer.withValues(alpha: 0.24) : null,
                       child: ListTile(
                         selected: isSelected,
                         leading: Container(
@@ -450,6 +488,153 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
         );
       },
     );
+  }
+
+  Future<void> _openCreateExerciseDialog({String initialName = ''}) async {
+    final nameController = TextEditingController(text: initialName);
+    final categoryNotifier = ValueNotifier<Category>(Category.STRENGTH);
+    final muscleNotifier = ValueNotifier<Muscle>(widget.targetExerciseToReplace?.primaryMuscles.firstOrNull ?? Muscle.CHEST);
+
+    final created = await showDialog<ExerciseDataDC>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Create Custom Exercise'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(labelText: 'Exercise Name', border: OutlineInputBorder()),
+              ),
+              const SizedBox(height: 12),
+              ValueListenableBuilder<Category>(
+                valueListenable: categoryNotifier,
+                builder: (context, cat, _) => DropdownButtonFormField<Category>(
+                  initialValue: cat,
+                  decoration: const InputDecoration(labelText: 'Category', border: OutlineInputBorder()),
+                  items: Category.values.map((c) => DropdownMenuItem(value: c, child: Text(c.name))).toList(),
+                  onChanged: (val) {
+                    if (val != null) categoryNotifier.value = val;
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              ValueListenableBuilder<Muscle>(
+                valueListenable: muscleNotifier,
+                builder: (context, mus, _) => DropdownButtonFormField<Muscle>(
+                  initialValue: mus,
+                  decoration: const InputDecoration(labelText: 'Primary Muscle', border: OutlineInputBorder()),
+                  items: Muscle.values.map((m) => DropdownMenuItem(value: m, child: Text(m.name))).toList(),
+                  onChanged: (val) {
+                    if (val != null) muscleNotifier.value = val;
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCEL')),
+          FilledButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              final newId = 'custom_${DateTime.now().millisecondsSinceEpoch}';
+              final ex = ExerciseDataDC(
+                id: newId,
+                name: name,
+                level: Level.BEGINNER,
+                category: categoryNotifier.value,
+                primaryMuscles: [muscleNotifier.value],
+                secondaryMuscles: const [],
+                instructions: const [],
+                images: const [],
+                isCustomExercise: true,
+              );
+              await ref.read(datasetRepositoryProvider).upsertExercise(ex);
+              if (ctx.mounted) Navigator.pop(ctx, ex);
+            },
+            child: const Text('SAVE'),
+          ),
+        ],
+      ),
+    );
+
+    if (created != null && mounted) {
+      if (widget.isSelectionMode) {
+        Navigator.of(context).pop([created]);
+      }
+    }
+  }
+
+  Future<void> _createWithAi({String initialName = ''}) async {
+    final promptController = TextEditingController(text: initialName);
+
+    final confirmed = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.auto_awesome, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Create with AI'),
+          ],
+        ),
+        content: TextField(
+          controller: promptController,
+          decoration: const InputDecoration(
+            hintText: 'Describe exercise (e.g. Dumbbell rear delt fly on incline bench)',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('CANCEL')),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, promptController.text.trim()),
+            child: const Text('GENERATE'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == null || confirmed.isEmpty || !mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Generating exercise with AI...')));
+
+    final settings = ref.read(settingsProvider);
+    final result = await AIService.generateCustomExercise(
+      provider: settings.aiProvider,
+      apiKey: settings.aiToken,
+      model: settings.aiModel,
+      exerciseDescription: confirmed,
+    );
+
+    if (result != null && mounted) {
+      final name = result['name'] as String? ?? confirmed;
+      final newId = 'custom_ai_${DateTime.now().millisecondsSinceEpoch}';
+      final ex = ExerciseDataDC(
+        id: newId,
+        name: name,
+        level: Level.BEGINNER,
+        category: Category.values.firstWhere(
+          (c) => c.name == result['category'],
+          orElse: () => Category.STRENGTH,
+        ),
+        primaryMuscles: [
+          widget.targetExerciseToReplace?.primaryMuscles.firstOrNull ?? Muscle.CHEST,
+        ],
+        secondaryMuscles: const [],
+        instructions: (result['instructions'] as List<dynamic>?)?.map((e) => e.toString()).toList() ?? const [],
+        images: const [],
+        isCustomExercise: true,
+      );
+      await ref.read(datasetRepositoryProvider).upsertExercise(ex);
+      if (mounted && widget.isSelectionMode) {
+        Navigator.of(context).pop([ex]);
+      }
+    }
   }
 }
 

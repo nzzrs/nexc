@@ -11,6 +11,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../db/enums.dart';
 import '../db/relations.dart';
 import '../db/workout_repository.dart';
+import '../integrations/ai_service.dart';
 
 final routinesProvider = StreamProvider<List<WorkoutWithExercisesAndSets>>((ref) {
   final repo = ref.watch(workoutRepositoryProvider);
@@ -21,3 +22,8 @@ final runningWorkoutProvider = StreamProvider<WorkoutWithExercisesAndSets?>((ref
   final repo = ref.watch(workoutRepositoryProvider);
   return repo.watchWorkoutsWithExercisesAndSetsByState(WorkoutState.RUNNING).map((list) => list.firstOrNull);
 });
+
+final activeWorkoutScrollOffsetProvider = StateProvider<double>((ref) => 0.0);
+
+final aiServiceProvider = Provider<AIService>((ref) => AIService());
+

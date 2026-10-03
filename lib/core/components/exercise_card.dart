@@ -8,10 +8,8 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import '../db/enums.dart';
 import '../db/relations.dart';
-import '../db/app_database.dart';
 
 class ExerciseCard extends StatefulWidget {
   const ExerciseCard({
@@ -41,6 +39,7 @@ class ExerciseCard extends StatefulWidget {
     this.applyPreviousSetPerformance,
     this.onSupersetToggle,
     this.onReplace,
+    this.onMachineBusy,
     this.onMoveUp,
     this.onMoveDown,
     this.isFirst = false,
@@ -75,6 +74,7 @@ class ExerciseCard extends StatefulWidget {
   final Function(int)? applyPreviousSetPerformance;
   final Function(int)? onSupersetToggle;
   final Function(int)? onReplace;
+  final Function(int)? onMachineBusy;
   final Function(int)? onMoveUp;
   final Function(int)? onMoveDown;
   final bool isFirst;
@@ -88,7 +88,6 @@ class ExerciseCard extends StatefulWidget {
 }
 
 class _ExerciseCardState extends State<ExerciseCard> {
-  bool _showSlider = false;
   bool _isNotesExpanded = false;
   late TextEditingController _notesController;
   late TextEditingController _restTimeController;
@@ -127,7 +126,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
     final sets = widget.exerciseWithSets.sets;
 
     return Card(
-      color: theme.colorScheme.surfaceVariant,
+      color: theme.colorScheme.surfaceContainerHigh,
       margin: const EdgeInsets.only(left: 0, right: 0, bottom: 16),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
@@ -160,7 +159,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
                   index: widget.index,
                   child: Icon(
                     Icons.drag_handle,
-                    color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -173,7 +172,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
                           width: 50,
                           height: 50,
                           decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceVariant,
+                            color: theme.colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: dc.images.isNotEmpty
@@ -219,6 +218,9 @@ class _ExerciseCardState extends State<ExerciseCard> {
                       case 'replace':
                         widget.onReplace?.call(ex.id);
                         break;
+                      case 'machine_busy':
+                        widget.onMachineBusy?.call(ex.id);
+                        break;
                       case 'delete':
                         widget.onDelete(ex.id);
                         break;
@@ -241,8 +243,18 @@ class _ExerciseCardState extends State<ExerciseCard> {
                       child: Row(
                         children: const [
                           Icon(Icons.swap_horiz),
-                          const SizedBox(width: 8),
+                          SizedBox(width: 8),
                           Text('Replace exercise'),
+                        ],
+                      ),
+                    ),
+                    PopupMenuItem(
+                      value: 'machine_busy',
+                      child: Row(
+                        children: const [
+                          Icon(Icons.access_time),
+                          SizedBox(width: 8),
+                          Text('Machine busy (push for later)'),
                         ],
                       ),
                     ),
@@ -304,11 +316,6 @@ class _ExerciseCardState extends State<ExerciseCard> {
                         padding: const EdgeInsets.symmetric(horizontal: 16.0),
                         child: Row(
                           children: [
-                            IconButton(
-                              icon: const Icon(Icons.info_outline),
-                              onPressed: () => widget.showInfo('REST_TIME'),
-                            ),
-                            const SizedBox(width: 8),
                             Text(
                               'Rest time: ',
                               style: theme.textTheme.bodyMedium,
@@ -355,15 +362,13 @@ class _ExerciseCardState extends State<ExerciseCard> {
                             Expanded(
                               child: Row(
                                 children: [
-                                  GestureDetector(
-                                    onTap: () => widget.showInfo('TYPE_OF_SET'),
-                                    child: const Icon(Icons.info_outline, size: 20),
-                                  ),
-                                  const SizedBox(width: 8),
                                   Flexible(
                                     child: Text(
-                                      'Type of set',
-                                      style: theme.textTheme.bodyMedium,
+                                      'Type',
+                                      style: theme.textTheme.labelMedium?.copyWith(
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                        fontWeight: FontWeight.w500,
+                                      ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
@@ -373,6 +378,10 @@ class _ExerciseCardState extends State<ExerciseCard> {
                             DropdownButton<SetMode>(
                               value: ex.setMode,
                               underline: const SizedBox(),
+                              isDense: true,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: theme.colorScheme.onSurface,
+                              ),
                               onChanged: (mode) {
                                 if (mode != null) {
                                   widget.updateExerciseSetMode(mode, ex.id);
@@ -381,7 +390,12 @@ class _ExerciseCardState extends State<ExerciseCard> {
                               items: SetMode.values.map((mode) {
                                 return DropdownMenuItem(
                                   value: mode,
-                                  child: Text(mode.name.replaceAll('_', ' ').toUpperCase()),
+                                  child: Text(
+                                    mode.name.replaceAll('_', ' ').toUpperCase(),
+                                    style: theme.textTheme.labelSmall?.copyWith(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                                 );
                               }).toList(),
                             ),
@@ -394,7 +408,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
                         child: Card(
-                          color: theme.colorScheme.surfaceContainerHighest,
+                          color: theme.colorScheme.surfaceContainerLow,
                           elevation: 0,
                           clipBehavior: Clip.antiAlias,
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -405,7 +419,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
                               Container(
                                 padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+                                  color: theme.colorScheme.surfaceContainerHighest,
                                 ),
                                 child: Row(
                                   children: [
@@ -538,7 +552,7 @@ class _SetRow extends StatefulWidget {
   final Function(int)? applyPreviousSetPerformance;
 
   const _SetRow({
-    Key? key,
+    super.key,
     required this.set,
     required this.index,
     required this.setMode,
@@ -556,7 +570,7 @@ class _SetRow extends StatefulWidget {
     required this.deleteSet,
     this.updateIdSetWithRunningStopwatch,
     this.applyPreviousSetPerformance,
-  }) : super(key: key);
+  });
 
   @override
   State<_SetRow> createState() => _SetRowState();
@@ -654,9 +668,9 @@ class _SetRowState extends State<_SetRow> {
         padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
         decoration: BoxDecoration(
           color: set.completed
-              ? theme.colorScheme.primaryContainer.withOpacity(0.25)
+              ? theme.colorScheme.primaryContainer
               : Colors.transparent,
-          border: Border(bottom: BorderSide(color: theme.dividerColor.withOpacity(0.1))),
+          border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1))),
         ),
         child: Builder(
           builder: (context) {
@@ -681,13 +695,13 @@ class _SetRowState extends State<_SetRow> {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: set.completed
-                        ? theme.colorScheme.surface.withOpacity(0.6)
-                        : theme.colorScheme.surfaceContainerLowest,
+                        ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
+                        : theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
                       color: set.completed
-                          ? theme.colorScheme.primary.withOpacity(0.3)
-                          : theme.colorScheme.outlineVariant.withOpacity(0.8),
+                          ? theme.colorScheme.primary.withValues(alpha: 0.4)
+                          : theme.colorScheme.outlineVariant,
                       width: 1,
                     ),
                   ),
@@ -728,7 +742,7 @@ class _SetRowState extends State<_SetRow> {
                             onPressed: () => widget.applyPreviousSetPerformance?.call(set.id),
                             child: Text(
                               displayVal,
-                              style: TextStyle(fontSize: 11, color: set.completed ? theme.colorScheme.onPrimaryContainer.withOpacity(0.8) : theme.colorScheme.primary, fontWeight: FontWeight.bold),
+                              style: TextStyle(fontSize: 11, color: set.completed ? theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.8) : theme.colorScheme.tertiary, fontWeight: FontWeight.bold),
                             ),
                           ),
                         );

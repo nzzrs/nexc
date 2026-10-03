@@ -22,7 +22,7 @@ import '../../core/db/enums.dart';
 import 'workout_summary_screen.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/workout_repository.dart';
-import '../../core/db/dataset_repository.dart';
+import '../../core/integrations/ai_service.dart';
 import '../../core/components/exercise_card.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/providers/workout_providers.dart';
@@ -755,213 +755,6 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> with WidgetsBindi
     return SetMode.LOAD;
   }
 
-  Future<void> _showAiAssistantDialog() async {
-    final choice = await showDialog<String>(
-      context: context,
-      builder: (context) {
-        return SimpleDialog(
-          title: Row(
-            children: [
-              Icon(Icons.auto_awesome, color: Theme.of(context).colorScheme.primary),
-              const SizedBox(width: 8),
-              const Text('AI Workout Assistant'),
-            ],
-          ),
-          children: [
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(context, 'reorder'),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.0),
-                child: Row(
-                  children: [
-                    Icon(Icons.swap_vert),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Smart Reorder Exercises', style: TextStyle(fontWeight: FontWeight.bold)),
-                          Text('Compounds & heavy work first, isolations later', style: TextStyle(fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            SimpleDialogOption(
-              onPressed: () => Navigator.pop(context, 'exchange'),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(vertical: 8.0),
-                child: Row(
-                  children: [
-                    Icon(Icons.swap_horiz),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Exchange Exercise', style: TextStyle(fontWeight: FontWeight.bold)),
-                          Text('Find biomechanically equivalent swaps', style: TextStyle(fontSize: 12)),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        );
-      },
-    );
-
-    if (choice == 'reorder') {
-      _applyAiSmartReorder();
-    } else if (choice == 'exchange') {
-      _showAiExchangeDialog();
-    }
-  }
-
-  void _applyAiSmartReorder() {
-    setState(() {
-      _exercises.sort((a, b) {
-        final aComp = a.exerciseDC.mechanic == Mechanic.COMPOUND ? 0 : 1;
-        final bComp = b.exerciseDC.mechanic == Mechanic.COMPOUND ? 0 : 1;
-        if (aComp != bComp) return aComp.compareTo(bComp);
-
-        int catScore(Category c) {
-          switch (c) {
-            case Category.OLYMPIC_WEIGHTLIFTING:
-            case Category.POWERLIFTING:
-              return 0;
-            case Category.STRONGMAN:
-              return 1;
-            case Category.STRENGTH:
-              return 2;
-            case Category.PLYOMETRICS:
-              return 3;
-            case Category.CARDIO:
-              return 4;
-            case Category.STRETCHING:
-              return 5;
-          }
-        }
-        return catScore(a.exerciseDC.category).compareTo(catScore(b.exerciseDC.category));
-      });
-
-      for (int i = 0; i < _exercises.length; i++) {
-        _exercises[i] = _exercises[i].copyWith(
-          exercise: _exercises[i].exercise.copyWith(position: i),
-        );
-      }
-    });
-    _saveProgressToDb();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('AI reordered exercises: compounds first')),
-      );
-    }
-  }
-
-  Future<void> _showAiExchangeDialog() async {
-    final datasetRepo = ref.read(datasetRepositoryProvider);
-    final chosenIdx = await showDialog<int>(
-      context: context,
-      builder: (context) {
-        return SimpleDialog(
-          title: const Text('Choose Exercise to Exchange'),
-          children: [
-            for (int i = 0; i < _exercises.length; i++)
-              SimpleDialogOption(
-                onPressed: () => Navigator.pop(context, i),
-                child: Text('${i + 1}. ${_exercises[i].exerciseDC.name}'),
-              ),
-          ],
-        );
-      },
-    );
-
-    if (chosenIdx == null || !mounted) return;
-    final currentEx = _exercises[chosenIdx];
-    final allExercises = await datasetRepo.getExercises();
-
-    final candidates = allExercises.where((e) {
-      if (e.id == currentEx.exerciseDC.id) return false;
-      return e.primaryMuscles.any((m) => currentEx.exerciseDC.primaryMuscles.contains(m));
-    }).toList();
-
-    candidates.sort((a, b) {
-      int score(ExerciseDataDC e) {
-        int s = 0;
-        if (e.mechanic == currentEx.exerciseDC.mechanic) s += 2;
-        if (e.equipment == currentEx.exerciseDC.equipment) s += 2;
-        if (e.category == currentEx.exerciseDC.category) s += 1;
-        return -s;
-      }
-      return score(a).compareTo(score(b));
-    });
-
-    final topCandidates = candidates.take(5).toList();
-    if (topCandidates.isEmpty) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No equivalent alternatives found')),
-        );
-      }
-      return;
-    }
-
-    if (!mounted) return;
-    final selectedSwap = await showDialog<ExerciseDataDC>(
-      context: context,
-      builder: (context) {
-        return SimpleDialog(
-          title: Text('AI Alternatives for ${currentEx.exerciseDC.name}'),
-          children: [
-            for (final alt in topCandidates)
-              SimpleDialogOption(
-                onPressed: () => Navigator.pop(context, alt),
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 4.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(alt.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      Text(
-                        '${alt.equipment?.name ?? "Any"} • ${alt.mechanic?.name ?? "General"}',
-                        style: const TextStyle(fontSize: 12, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
-    );
-
-    if (selectedSwap == null || !mounted) return;
-    final repo = ref.read(workoutRepositoryProvider);
-    final storedMode = await repo.getLastSetModeForExercise(selectedSwap.id);
-    final initialSetMode = storedMode ?? _defaultSetMode(selectedSwap);
-
-    setState(() {
-      _exercises[chosenIdx] = _exercises[chosenIdx].copyWith(
-        exerciseDC: selectedSwap,
-        exercise: _exercises[chosenIdx].exercise.copyWith(
-          exerciseDataId: selectedSwap.id,
-          setMode: initialSetMode,
-        ),
-      );
-    });
-    _saveProgressToDb();
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Exchanged with ${selectedSwap.name}')),
-      );
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
@@ -1026,52 +819,19 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> with WidgetsBindi
     );
 
     Future<void> handlePop() async {
-      final confirmed = await showDialog<String>(
-        context: context,
-        barrierDismissible: true,
-        builder: (context) {
-          final theme = Theme.of(context);
-          return AlertDialog(
-            title: const Text('Discard Workout?'),
-            content: const Text('Do you want to discard this workout or save it as a draft?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, 'discard'),
-                child: Text('DISCARD', style: TextStyle(color: theme.colorScheme.error)),
-              ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, 'save'),
-                child: const Text('SAVE'),
-              ),
-            ],
-          );
-        },
+      _stopwatchTimer?.cancel();
+      _restTimer?.cancel();
+      _setStopwatchTimer?.cancel();
+      _cancelRestNotification();
+      final repo = ref.read(workoutRepositoryProvider);
+      await repo.addWorkoutWithExercisesAndSets(
+        WorkoutWithExercisesAndSets(
+          workout: _workout.copyWith(timeElapsed: _elapsedSeconds),
+          exercisesWithSets: _exercises,
+        ),
       );
-
-      if (!context.mounted) return;
-      if (confirmed == 'discard') {
-        ref.read(activeWorkoutScrollOffsetProvider.notifier).state = 0.0;
-        final repo = ref.read(workoutRepositoryProvider);
-        await repo.deleteWorkout(_workout);
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
-      } else if (confirmed == 'save') {
-        // Save as draft or complete it
-        _stopwatchTimer?.cancel();
-        _restTimer?.cancel();
-        _setStopwatchTimer?.cancel();
-        _cancelRestNotification();
-        final repo = ref.read(workoutRepositoryProvider);
-        await repo.addWorkoutWithExercisesAndSets(
-          WorkoutWithExercisesAndSets(
-            workout: _workout.copyWith(timeElapsed: _elapsedSeconds),
-            exercisesWithSets: _exercises,
-          ),
-        );
-        if (context.mounted) {
-          Navigator.pop(context);
-        }
+      if (context.mounted) {
+        Navigator.pop(context);
       }
     }
 
@@ -1089,12 +849,14 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> with WidgetsBindi
             onPressed: handlePop,
           ),
           actions: [
+            IconButton(
+              icon: const Icon(Icons.auto_awesome),
+              tooltip: "AI Workout Creator",
+              onPressed: () {
+                Navigator.pushNamed(context, '/workout/ai-chat');
+              },
+            ),
             if (_exercises.isNotEmpty) ...[
-              IconButton(
-                icon: const Icon(Icons.auto_awesome),
-                tooltip: "AI Workout Assistant",
-                onPressed: _showAiAssistantDialog,
-              ),
               IconButton(
                 icon: Icon(_isReordering ? Icons.check : Icons.swap_vert),
                 tooltip: _isReordering ? "Done Reordering" : "Reorder Exercises",
@@ -1392,12 +1154,34 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> with WidgetsBindi
                         }
                       },
                       isFirst: exIndex == 0,
-                      isLast: exIndex == _exercises.length - 1,
+                      onMachineBusy: (exId) {
+                        if (_exercises.length <= 1) return;
+                        final newOrder = AIService.reorderMachineBusy(
+                          busyIndex: exIndex,
+                          totalExercises: _exercises.length,
+                        );
+                        setState(() {
+                          final reordered = newOrder.map((idx) => _exercises[idx]).toList();
+                          for (int i = 0; i < reordered.length; i++) {
+                            reordered[i] = reordered[i].copyWith(
+                              exercise: reordered[i].exercise.copyWith(position: i),
+                            );
+                          }
+                          _exercises = reordered;
+                        });
+                        _saveProgressToDb();
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Pushed "${eWs.exerciseDC.name}" for later')),
+                        );
+                      },
                       onReplace: (exId) async {
                         final result = await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const ExercisesScreen(addExercises: false),
+                            builder: (context) => ExercisesScreen(
+                              addExercises: false,
+                              targetExerciseToReplace: eWs.exerciseDC,
+                            ),
                           ),
                         );
                         if (!mounted) return;

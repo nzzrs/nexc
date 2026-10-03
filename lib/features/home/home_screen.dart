@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/workout_repository.dart';
 import '../../core/providers/workout_providers.dart';
+import '../../core/providers/settings_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -237,10 +238,29 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
               ),
             ),
             IconButton.filledTonal(
-              icon: const Icon(Icons.auto_awesome),
-              tooltip: 'AI Workout Creator',
+              icon: Icon(
+                Icons.auto_awesome,
+                color: ref.watch(settingsProvider).aiWorkoutGenerationEnabled
+                    ? null
+                    : theme.disabledColor,
+              ),
+              tooltip: ref.watch(settingsProvider).aiWorkoutGenerationEnabled
+                  ? 'AI Workout Creator'
+                  : 'AI Workout Creator (Disabled in Settings)',
               onPressed: () {
-                Navigator.pushNamed(context, '/workout/ai-chat');
+                if (ref.read(settingsProvider).aiWorkoutGenerationEnabled) {
+                  Navigator.pushNamed(context, '/workout/ai-chat');
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('AI workout generation is disabled in Settings.'),
+                      action: SnackBarAction(
+                        label: 'Settings',
+                        onPressed: () => Navigator.pushNamed(context, '/settings'),
+                      ),
+                    ),
+                  );
+                }
               },
             ),
           ],

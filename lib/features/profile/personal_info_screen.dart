@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/profile_providers.dart';
+import '../../core/providers/settings_provider.dart';
 
 class PersonalInfoScreen extends ConsumerStatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -19,18 +20,23 @@ class PersonalInfoScreen extends ConsumerStatefulWidget {
 
 class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   final _heightController = TextEditingController();
+  late TextEditingController _preferencesController;
   DateTime? _selectedBirthDate;
   bool _isLoading = true;
 
   @override
   void initState() {
     super.initState();
+    _preferencesController = TextEditingController(
+      text: ref.read(settingsProvider).userPreferences,
+    );
     _loadUserData();
   }
 
   @override
   void dispose() {
     _heightController.dispose();
+    _preferencesController.dispose();
     super.dispose();
   }
 
@@ -65,6 +71,15 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     }
   }
 
+  Future<void> _savePreferences() async {
+    await ref.read(settingsProvider.notifier).setUserPreferences(_preferencesController.text);
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Preferences saved successfully')),
+      );
+    }
+  }
+
   int? _calculateAge(DateTime? birthDate) {
     if (birthDate == null) return null;
     final today = DateTime.now();
@@ -94,6 +109,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final age = _calculateAge(_selectedBirthDate);
+    final settings = ref.watch(settingsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -179,6 +195,68 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                           icon: const Icon(Icons.save_outlined),
                           label: const Text('Save Details'),
                         ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  elevation: 2,
+                  child: Padding(
+                    padding: const EdgeInsets.all(24.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    "User Preferences",
+                                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    "AI uses this context to tailor workouts and meal plans",
+                                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Switch(
+                              value: settings.enableUserPreferences,
+                              onChanged: (val) {
+                                ref.read(settingsProvider.notifier).setEnableUserPreferences(val);
+                              },
+                            ),
+                          ],
+                        ),
+                        if (settings.enableUserPreferences) ...[
+                          const SizedBox(height: 16),
+                          TextField(
+                            controller: _preferencesController,
+                            minLines: 4,
+                            maxLines: 12,
+                            decoration: InputDecoration(
+                              hintText: "Paste or write your detailed preferences, schedule constraints, fitness goals, or dietary requirements here...",
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          FilledButton.icon(
+                            onPressed: _savePreferences,
+                            style: FilledButton.styleFrom(
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            ),
+                            icon: const Icon(Icons.save_outlined),
+                            label: const Text('Save Preferences'),
+                          ),
+                        ],
                       ],
                     ),
                   ),

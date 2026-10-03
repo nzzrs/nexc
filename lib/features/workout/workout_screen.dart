@@ -850,10 +850,27 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen> with WidgetsBindi
           ),
           actions: [
             IconButton(
-              icon: const Icon(Icons.auto_awesome),
-              tooltip: "AI Workout Creator",
+              icon: Icon(
+                Icons.auto_awesome,
+                color: settings.aiWorkoutGenerationEnabled ? null : theme.disabledColor,
+              ),
+              tooltip: settings.aiWorkoutGenerationEnabled
+                  ? "AI Workout Creator"
+                  : "AI Workout Creator (Disabled in Settings)",
               onPressed: () {
-                Navigator.pushNamed(context, '/workout/ai-chat');
+                if (settings.aiWorkoutGenerationEnabled) {
+                  Navigator.pushNamed(context, '/workout/ai-chat');
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('AI workout generation is disabled in Settings.'),
+                      action: SnackBarAction(
+                        label: 'Settings',
+                        onPressed: () => Navigator.pushNamed(context, '/settings'),
+                      ),
+                    ),
+                  );
+                }
               },
             ),
             if (_exercises.isNotEmpty) ...[

@@ -779,7 +779,18 @@ class AIService {
     final systemPrompt = "You are an expert fitness coach and workout planner in the Nexc fitness app. "
         "Your task is to answer user training questions and design tailored workout routines. "
         "Use any allowed user context provided below:\n$userContext\n"
-        "Keep responses structured, encouraging, concise and practical.";
+        "Keep responses structured, encouraging, concise and practical.\n\n"
+        "When proposing or designing a workout routine, please format it clearly in markdown with:\n"
+        "- A routine title on its own line (e.g. '### Routine: Upper Body Hypertrophy' or 'Routine: Leg Day Power')\n"
+        "- For each exercise, specify the exercise name, number of sets, and target reps (or duration) (e.g. '• Barbell Bench Press: 3 sets x 8-12 reps')\n"
+        "- You may also include a JSON code block with tag ```json containing:\n"
+        "{\n"
+        "  \"title\": \"Routine Title\",\n"
+        "  \"notes\": \"Short description\",\n"
+        "  \"exercises\": [\n"
+        "    {\"name\": \"Exercise Name\", \"sets\": 3, \"reps\": 10, \"load\": 50.0, \"restTime\": 90}\n"
+        "  ]\n"
+        "}``` so the app can provide an instant 1-tap 'Save as Routine' button.";
 
     try {
       if (provider == 'gemini') {
@@ -808,13 +819,44 @@ class AIService {
         if (response.statusCode == 200) {
           final data = jsonDecode(response.body);
           return data['candidates'][0]['content']['parts'][0]['text'] as String;
+        } else {
+          return "Gemini API error: ${response.statusCode} - ${response.body}";
+        }
+      } else {
+        // OpenRouter
+        final defaultModel = model.isEmpty ? 'google/gemini-2.5-flash' : model;
+        final url = Uri.parse('https://openrouter.ai/api/v1/chat/completions');
+        final messages = [
+          {"role": "system", "content": systemPrompt},
+          ...conversationHistory.map((m) => {
+            "role": m['role'] == 'user' ? 'user' : 'assistant',
+            "content": m['content'] ?? '',
+          }),
+          {"role": "user", "content": userMessage},
+        ];
+
+        final response = await http.post(
+          url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $apiKey",
+          },
+          body: jsonEncode({
+            "model": defaultModel,
+            "messages": messages,
+          }),
+        );
+
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          return data['choices'][0]['message']['content'] as String;
+        } else {
+          return "OpenRouter API error: ${response.statusCode} - ${response.body}";
         }
       }
     } catch (e) {
       return "Error contacting AI service: $e";
     }
-
-    return "Could not process request at this time. Please check your AI network settings.";
   }
 }
 

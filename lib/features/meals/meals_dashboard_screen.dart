@@ -1570,8 +1570,6 @@ class MealPlanCard extends StatelessWidget {
                       selected: true,
                       onSelected: onDeselect != null ? (_) => onDeselect!() : null,
                       avatar: const Icon(Icons.check, size: 16),
-                      deleteIcon: const Icon(Icons.close, size: 16),
-                      onDeleted: onDeselect,
                     )
                   else
                     OutlinedButton.icon(

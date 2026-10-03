@@ -254,7 +254,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
                         children: const [
                           Icon(Icons.access_time),
                           SizedBox(width: 8),
-                          Text('Machine busy (push for later)'),
+                          Text('Machine busy'),
                         ],
                       ),
                     ),

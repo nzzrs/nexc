@@ -10,8 +10,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:collection/collection.dart';
-import 'package:drift/drift.dart' show Value;
-import '../../core/db/app_database.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
@@ -19,6 +17,8 @@ import '../../core/providers/meals_providers.dart';
 import '../../core/providers/settings_provider.dart';
 import 'products_library_screen.dart';
 import 'recipes_library_screen.dart';
+import 'add_meal_item_screen.dart';
+import '../../core/util/day_window_helper.dart';
 
 String formatDouble(double val) {
   if (val == val.toInt().toDouble()) {
@@ -66,127 +66,89 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
     super.dispose();
   }
 
-  void _showAddMealDialog(BuildContext context, int planId) {
-    final nameController = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Add Meal"),
-        content: SizedBox(
-          width: 400,
-          child: TextField(
-            controller: nameController,
-            autofocus: true,
-            decoration: const InputDecoration(
-              labelText: "Meal Name",
-              hintText: "e.g. Breakfast, Snack",
-            ),
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
-          ),
-          TextButton(
-            onPressed: () async {
-              final name = nameController.text.trim();
-              if (name.isNotEmpty) {
-                final now = DateTime.now();
-                final localTime = LocalTime(now.hour, now.minute);
-                await ref.read(mealRepositoryProvider).addMealToPlan(
-                      mealPlanId: planId,
-                      name: name,
-                      time: localTime,
-                    );
-                if (context.mounted) Navigator.pop(context);
-              }
-            },
-            child: const Text("Save"),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showAddMealItemDialog(BuildContext context, int mealId, List<Product> products, List<RecipeWithIngredients> recipes) {
-    showDialog(
-      context: context,
-      builder: (context) => AddMealItemDialog(
-        products: products,
-        recipes: recipes,
-        onDismiss: () => Navigator.pop(context),
-        onConfirm: (type, targetId, amount, amountUnit) {
-          ref.read(mealRepositoryProvider).addMealItemToMeal(
-                mealId: mealId,
-                type: type,
-                targetId: targetId,
-                amount: amount,
-                amountUnit: amountUnit,
-              );
-          Navigator.pop(context);
-        },
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddMealItemScreen(
+          mealId: mealId,
+          products: products,
+          recipes: recipes,
+        ),
       ),
     );
   }
 
   void _showReplaceDialog(BuildContext context, int itemId, List<Product> products, List<RecipeWithIngredients> recipes) {
-    showDialog(
-      context: context,
-      builder: (context) => AddMealItemDialog(
-        products: products,
-        recipes: recipes,
-        onDismiss: () => Navigator.pop(context),
-        onConfirm: (type, targetId, amount, amountUnit) {
-          ref.read(mealRepositoryProvider).replaceMealItemInMeal(
-                oldItemId: itemId,
-                newType: type,
-                newTargetId: targetId,
-                newAmount: amount,
-                newAmountUnit: amountUnit,
-              );
-          Navigator.pop(context);
-        },
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddMealItemScreen(
+          mealId: 0,
+          isReplace: true,
+          replaceItemId: itemId,
+          products: products,
+          recipes: recipes,
+        ),
       ),
     );
   }
 
   void _showOptionsDialog(BuildContext context, int itemId, List<Product> products, List<RecipeWithIngredients> recipes) {
+    final theme = Theme.of(context);
+    final plan = ref.read(todayMealPlanProvider).value;
+    MealItemWithDetails? targetDetail;
+    for (final m in plan?.meals ?? []) {
+      for (final d in m.items) {
+        if (d.mealItem.id == itemId) {
+          targetDetail = d;
+          break;
+        }
+      }
+    }
+    final itemName = targetDetail?.displayName ?? 'Meal Item';
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Meal Item Options"),
-        content: const Text("Select action for this item in today's session."),
+        title: Text(itemName),
+        content: const Text("Choose an action for this item in today's meal log:"),
+        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showReplaceDialog(context, itemId, products, recipes);
-            },
-            child: const Text("Replace"),
-          ),
-          TextButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              final repo = ref.read(mealRepositoryProvider);
-              final plan = ref.read(todayMealPlanProvider).value;
-              MealItem? targetItem;
-              for (final m in plan?.meals ?? []) {
-                for (final d in m.items) {
-                  if (d.mealItem.id == itemId) {
-                    targetItem = d.mealItem;
-                  }
-                }
-              }
-              if (targetItem != null) {
-                await repo.deleteMealItem(targetItem);
-              }
-            },
-            child: Text("Delete", style: TextStyle(color: Theme.of(context).colorScheme.error)),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: theme.colorScheme.error,
+                    side: BorderSide(color: theme.colorScheme.error),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    if (targetDetail != null) {
+                      await ref.read(mealRepositoryProvider).deleteMealItem(targetDetail.mealItem);
+                    }
+                  },
+                  icon: const Icon(Icons.delete_outline, size: 18),
+                  label: const Text("Delete"),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: FilledButton.icon(
+                  style: FilledButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () {
+                    Navigator.pop(context);
+                    _showReplaceDialog(context, itemId, products, recipes);
+                  },
+                  icon: const Icon(Icons.swap_horiz, size: 18),
+                  label: const Text("Replace"),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -243,7 +205,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
       );
     }
 
-    if (mounted) {
+    if (context.mounted) {
       _showAddMealItemDialog(context, mealId, products, recipes);
     }
   }
@@ -403,20 +365,33 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                     final targetCarb = settings.targetCarbs;
                     final targetFat = settings.targetFats;
 
+                    final sortedMeals = List<MealWithItems>.from(plan.meals)..sort((a, b) {
+                      final aMin = DayWindowHelper.getMinutesFromDayStart(a.meal.time, settings.dayStartHour, 0);
+                      final bMin = DayWindowHelper.getMinutesFromDayStart(b.meal.time, settings.dayStartHour, 0);
+                      return aMin.compareTo(bMin);
+                    });
+
+                    final consumedMacrosAsync = ref.watch(todayTotalConsumedMacrosProvider);
+                    final consumed = consumedMacrosAsync.value ?? ConsumedMacros(
+                      protein: totalProtConsumed,
+                      carbs: totalCarbConsumed,
+                      fats: totalFatConsumed,
+                    );
+
                     return ListView(
                       padding: const EdgeInsets.all(16.0),
                       children: [
                         TodayMacrosCard(
-                          protConsumed: totalProtConsumed,
+                          protConsumed: consumed.protein,
                           protTarget: targetProt,
-                          carbConsumed: totalCarbConsumed,
+                          carbConsumed: consumed.carbs,
                           carbTarget: targetCarb,
-                          fatConsumed: totalFatConsumed,
+                          fatConsumed: consumed.fats,
                           fatTarget: targetFat,
                           onEditGoals: () => _showEditGoalsDialog(context, targetProt, targetCarb, targetFat),
                         ),
                         const SizedBox(height: 12),
-                        ...meals.map((mealWithItems) {
+                        ...sortedMeals.map((mealWithItems) {
                           return MealTrackCard(
                             key: ValueKey(mealWithItems.meal.id),
                             mealWithItems: mealWithItems,
@@ -446,79 +421,81 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                             },
                           );
                         }),
-                        const SizedBox(height: 16),
-                        Center(
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.start,
-                            children: [
-                              IconButton.outlined(
-                                style: IconButton.styleFrom(
-                                  foregroundColor: theme.colorScheme.error,
-                                  side: BorderSide(color: theme.colorScheme.error),
-                                  padding: const EdgeInsets.all(12),
-                                ),
-                                onPressed: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: const Text("Discard Today's Meals"),
-                                      content: const Text("Are you sure you want to discard today's meals log? This cannot be undone."),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context, false),
-                                          child: const Text("Cancel"),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context, true),
-                                          child: Text("Discard", style: TextStyle(color: theme.colorScheme.error)),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    await ref.read(mealRepositoryProvider).deleteMealPlan(plan.mealPlan);
-                                    await ref.read(settingsProvider.notifier).restorePrePlanTargetMacros();
-                                  }
-                                },
-                                icon: const Icon(Icons.delete_outline),
-                              ),
-                              const SizedBox(width: 16),
-                              IconButton.filled(
-                                style: IconButton.styleFrom(
-                                  padding: const EdgeInsets.all(12),
-                                ),
-                                onPressed: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: const Text("Save Today's Meals"),
-                                      content: const Text("This will save all items marked as eaten to your logs and remove any uneaten items. Proceed?"),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context, false),
-                                          child: const Text("Cancel"),
-                                        ),
-                                        TextButton(
-                                          onPressed: () => Navigator.pop(context, true),
-                                          child: const Text("Save"),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    await ref.read(mealRepositoryProvider).saveTodayMeals(plan);
-                                    if (context.mounted) {
-                                      ScaffoldMessenger.of(context).showSnackBar(
-                                        const SnackBar(content: Text("Today's meals logged successfully!")),
-                                      );
+                        if (sortedMeals.isNotEmpty) ...[
+                          const SizedBox(height: 16),
+                          Center(
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.start,
+                              children: [
+                                IconButton.outlined(
+                                  style: IconButton.styleFrom(
+                                    foregroundColor: theme.colorScheme.error,
+                                    side: BorderSide(color: theme.colorScheme.error),
+                                    padding: const EdgeInsets.all(12),
+                                  ),
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text("Discard Today's Meals"),
+                                        content: const Text("Are you sure you want to discard today's meals log? This cannot be undone."),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, false),
+                                            child: const Text("Cancel"),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, true),
+                                            child: Text("Discard", style: TextStyle(color: theme.colorScheme.error)),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      await ref.read(mealRepositoryProvider).deleteMealPlan(plan.mealPlan);
+                                      await ref.read(settingsProvider.notifier).restorePrePlanTargetMacros();
                                     }
-                                  }
-                                },
-                                icon: const Icon(Icons.check),
-                              ),
-                            ],
+                                  },
+                                  icon: const Icon(Icons.delete_outline),
+                                ),
+                                const SizedBox(width: 16),
+                                IconButton.filled(
+                                  style: IconButton.styleFrom(
+                                    padding: const EdgeInsets.all(12),
+                                  ),
+                                  onPressed: () async {
+                                    final confirm = await showDialog<bool>(
+                                      context: context,
+                                      builder: (context) => AlertDialog(
+                                        title: const Text("Save Today's Meals"),
+                                        content: const Text("This will save all items marked as eaten to your logs and remove any uneaten items. Proceed?"),
+                                        actions: [
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, false),
+                                            child: const Text("Cancel"),
+                                          ),
+                                          TextButton(
+                                            onPressed: () => Navigator.pop(context, true),
+                                            child: const Text("Save"),
+                                          ),
+                                        ],
+                                      ),
+                                    );
+                                    if (confirm == true) {
+                                      await ref.read(mealRepositoryProvider).saveTodayMeals(plan);
+                                      if (context.mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text("Today's meals logged successfully!")),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  icon: const Icon(Icons.check),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
+                        ],
                         const SizedBox(height: 40),
                       ],
                     );
@@ -611,11 +588,21 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                                 proceed = (confirm == true);
                               }
                               if (proceed) {
-                               await ref.read(mealRepositoryProvider).selectMealPlanForToday(plan);
-                               final targetP = plan.mealPlan.targetProtein ?? 0.0;
-                               final targetC = plan.mealPlan.targetCarbs ?? 0.0;
-                               final targetF = plan.mealPlan.targetFats ?? 0.0;
-                               await ref.read(settingsProvider.notifier).overwriteTargetMacrosWithPlan(targetP, targetC, targetF);
+                                await ref.read(mealRepositoryProvider).selectMealPlanForToday(plan);
+                                final targetP = plan.mealPlan.targetProtein ?? 0.0;
+                                final targetC = plan.mealPlan.targetCarbs ?? 0.0;
+                                final targetF = plan.mealPlan.targetFats ?? 0.0;
+                                final isZeroOrNull = (targetP <= 0.0 && targetC <= 0.0 && targetF <= 0.0);
+                                final shouldOverride = !settings.defaultMacrosOverrideMealPlan && !isZeroOrNull;
+                                if (shouldOverride) {
+                                  await ref.read(settingsProvider.notifier).overwriteTargetMacrosWithPlan(targetP, targetC, targetF);
+                                }
+                              }
+                            },
+                            onDeselect: () async {
+                              if (todayPlan != null) {
+                                await ref.read(mealRepositoryProvider).deleteMealPlan(todayPlan.mealPlan);
+                                await ref.read(settingsProvider.notifier).restorePrePlanTargetMacros();
                               }
                             },
                           ),
@@ -677,7 +664,7 @@ class TodayMacrosCard extends StatelessWidget {
                 ),
                 IconButton(
                   icon: const Icon(Icons.edit, size: 20),
-                  color: theme.colorScheme.onSecondaryContainer.withOpacity(0.7),
+                  color: theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.7),
                   onPressed: onEditGoals,
                 ),
               ],
@@ -811,7 +798,7 @@ class _CircularMacroIndicatorState extends State<CircularMacroIndicator>
                   height: 76,
                   child: CircularProgressIndicator(
                     value: _progressAnim.value,
-                    backgroundColor: indicatorColor.withOpacity(0.15),
+                    backgroundColor: indicatorColor.withValues(alpha: 0.15),
                     color: indicatorColor,
                     strokeWidth: 6,
                   ),
@@ -831,13 +818,13 @@ class _CircularMacroIndicatorState extends State<CircularMacroIndicator>
                     Container(
                       height: 1,
                       width: 24,
-                      color: theme.colorScheme.onSecondaryContainer.withOpacity(0.3),
+                      color: theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.3),
                       margin: const EdgeInsets.symmetric(vertical: 2),
                     ),
                     Text(
                       widget.target.toStringAsFixed(0),
                       style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSecondaryContainer.withOpacity(0.7),
+                        color: theme.colorScheme.onSecondaryContainer.withValues(alpha: 0.7),
                       ),
                     ),
                   ],
@@ -936,8 +923,8 @@ class MealTrackCard extends ConsumerWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
                               color: isPortable
-                                  ? theme.colorScheme.primaryContainer.withOpacity(0.5)
-                                  : theme.colorScheme.errorContainer.withOpacity(0.5),
+                                  ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
+                                  : theme.colorScheme.errorContainer.withValues(alpha: 0.5),
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
@@ -962,12 +949,12 @@ class MealTrackCard extends ConsumerWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: meal.atHome
-                                    ? Colors.green.withOpacity(0.15)
-                                    : theme.colorScheme.secondaryContainer.withOpacity(0.5),
+                                    ? Colors.green.withValues(alpha: 0.15)
+                                    : theme.colorScheme.secondaryContainer.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(4),
                                 border: Border.all(
                                   color: meal.atHome
-                                      ? Colors.green.withOpacity(0.5)
+                                      ? Colors.green.withValues(alpha: 0.5)
                                       : theme.colorScheme.outlineVariant,
                                   width: 1,
                                 ),
@@ -1080,7 +1067,7 @@ class MealTrackCard extends ConsumerWidget {
                                   Container(
                                     padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                     decoration: BoxDecoration(
-                                      color: theme.colorScheme.errorContainer.withOpacity(0.5),
+                                      color: theme.colorScheme.errorContainer.withValues(alpha: 0.5),
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
@@ -1156,9 +1143,9 @@ class MealTrackCard extends ConsumerWidget {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.surfaceVariant,
+                                    color: theme.colorScheme.surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
+                                    border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.3)),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -1454,6 +1441,7 @@ class MealPlanCard extends StatelessWidget {
   final VoidCallback onClick;
   final VoidCallback onDelete;
   final VoidCallback onSelect;
+  final VoidCallback? onDeselect;
 
   const MealPlanCard({
     super.key,
@@ -1462,6 +1450,7 @@ class MealPlanCard extends StatelessWidget {
     required this.onClick,
     required this.onDelete,
     required this.onSelect,
+    this.onDeselect,
   });
 
   @override
@@ -1577,10 +1566,12 @@ class MealPlanCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   if (isSelected)
                     InputChip(
-                      label: const Text("Active today"),
+                      label: const Text("Selected"),
                       selected: true,
-                      onSelected: (_) {},
+                      onSelected: onDeselect != null ? (_) => onDeselect!() : null,
                       avatar: const Icon(Icons.check, size: 16),
+                      deleteIcon: const Icon(Icons.close, size: 16),
+                      onDeleted: onDeselect,
                     )
                   else
                     OutlinedButton.icon(
@@ -1608,7 +1599,7 @@ class MealPlanCard extends StatelessWidget {
     return Chip(
       labelPadding: EdgeInsets.zero,
       padding: const EdgeInsets.symmetric(horizontal: 8),
-      backgroundColor: color.withOpacity(0.6),
+      backgroundColor: color.withValues(alpha: 0.6),
       label: Text(
         "$label: $valStr",
         style: theme.textTheme.labelSmall?.copyWith(fontSize: 10),
@@ -1652,9 +1643,14 @@ class _AddMealItemDialogState extends ConsumerState<AddMealItemDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final filteredProducts = _searchQuery.isEmpty
-        ? widget.products
-        : widget.products.searchAndSort(_searchQuery);
+    final usageCounts = ref.watch(productUsageCountsProvider).value;
+    final inStockProductIds = ref.watch(inStockProductIdsProvider).value;
+
+    final filteredProducts = widget.products.searchAndSort(
+      _searchQuery,
+      usageCounts: usageCounts,
+      inStockProductIds: inStockProductIds,
+    );
 
     final filteredRecipes = _searchQuery.isEmpty
         ? widget.recipes

@@ -8,11 +8,9 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' show Value;
 import '../exercises/exercises_screen.dart';
-import '../../core/db/app_database.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/workout_repository.dart';
@@ -201,13 +199,17 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
     }
   }
 
-  void _addExercise(ExerciseDataDC dc) {
+  Future<void> _addExercise(ExerciseDataDC dc) async {
+    final repo = ref.read(workoutRepositoryProvider);
+    final storedMode = await repo.getLastSetModeForExercise(dc.id);
+    final initialSetMode = storedMode ?? _defaultSetMode(dc);
+    if (!mounted) return;
     setState(() {
       final newEx = Exercise(
         id: DateTime.now().millisecondsSinceEpoch + _exercises.length, // local temp id
         exerciseDataId: dc.id,
         notes: '',
-        setMode: _defaultSetMode(dc),
+        setMode: initialSetMode,
         restTime: 90,
         position: _exercises.length,
         workoutId: _workout.id,
@@ -215,9 +217,11 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
       final newSet = WorkoutSet(
         id: DateTime.now().millisecondsSinceEpoch + _exercises.length + 1000,
         load: 0.0,
+        weightUnit: WeightUnit.kg,
         reps: 0,
         elapsedTime: 0,
         completed: false,
+        setType: SetType.NORMAL,
         exerciseId: newEx.id,
       );
 
@@ -367,9 +371,11 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
                         WorkoutSet(
                           id: DateTime.now().millisecondsSinceEpoch,
                           load: lastSet?.load ?? 0.0,
+                          weightUnit: lastSet?.weightUnit ?? WeightUnit.kg,
                           reps: lastSet?.reps ?? 0,
                           elapsedTime: lastSet?.elapsedTime ?? 0,
                           completed: false,
+                          setType: lastSet?.setType ?? SetType.NORMAL,
                           exerciseId: exId,
                         ),
                       );
@@ -394,35 +400,47 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
                       _exercises[index] = eWs.copyWith(sets: setList);
                     });
                   },
-                  updateExerciseNotes: (text, exId) {
-                    _exercises[index] = eWs.copyWith(
-                      exercise: eWs.exercise.copyWith(notes: text),
-                    );
+                   updateExerciseNotes: (text, exId) {
+                    setState(() {
+                      _exercises[index] = eWs.copyWith(
+                        exercise: eWs.exercise.copyWith(notes: text),
+                      );
+                    });
                   },
                   updateExerciseRestTime: (restTime, exId) {
-                    _exercises[index] = eWs.copyWith(
-                      exercise: eWs.exercise.copyWith(restTime: restTime),
-                    );
+                    setState(() {
+                      _exercises[index] = eWs.copyWith(
+                        exercise: eWs.exercise.copyWith(restTime: restTime),
+                      );
+                    });
                   },
                   updateExerciseSetMode: (setMode, exId) {
-                    _exercises[index] = eWs.copyWith(
-                      exercise: eWs.exercise.copyWith(setMode: setMode),
-                    );
+                    setState(() {
+                      _exercises[index] = eWs.copyWith(
+                        exercise: eWs.exercise.copyWith(setMode: setMode),
+                      );
+                    });
                   },
                   updateSetTime: (time, setId) {
-                    _exercises[index] = eWs.copyWith(
-                      sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(elapsedTime: time) : s).toList(),
-                    );
+                    setState(() {
+                      _exercises[index] = eWs.copyWith(
+                        sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(elapsedTime: time) : s).toList(),
+                      );
+                    });
                   },
                   updateSetReps: (reps, setId) {
-                    _exercises[index] = eWs.copyWith(
-                      sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(reps: reps) : s).toList(),
-                    );
+                    setState(() {
+                      _exercises[index] = eWs.copyWith(
+                        sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(reps: reps) : s).toList(),
+                      );
+                    });
                   },
                   updateSetLoad: (load, setId) {
-                    _exercises[index] = eWs.copyWith(
-                      sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(load: load) : s).toList(),
-                    );
+                    setState(() {
+                      _exercises[index] = eWs.copyWith(
+                        sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(load: load) : s).toList(),
+                      );
+                    });
                   },
                   updateSetCompleted: (completed, setId) {},
                   showInfo: (info) {},
@@ -452,11 +470,17 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
                       ),
                     );
                     if (result != null && result is List<ExerciseDataDC> && result.isNotEmpty) {
+                      final newDC = result.first;
+                      final repo = ref.read(workoutRepositoryProvider);
+                      final storedMode = await repo.getLastSetModeForExercise(newDC.id);
+                      final initialSetMode = storedMode ?? _defaultSetMode(newDC);
+                      if (!mounted) return;
                       setState(() {
                         final replaced = _exercises[index].copyWith(
-                          exerciseDC: result.first,
+                          exerciseDC: newDC,
                           exercise: _exercises[index].exercise.copyWith(
-                            exerciseDataId: result.first.id,
+                            exerciseDataId: newDC.id,
+                            setMode: initialSetMode,
                           ),
                         );
                         _exercises[index] = replaced;
@@ -489,7 +513,7 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
               );
               if (result != null && result is List<ExerciseDataDC>) {
                 for (final dc in result) {
-                  _addExercise(dc);
+                  await _addExercise(dc);
                 }
               }
             },

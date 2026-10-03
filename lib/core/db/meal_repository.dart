@@ -11,10 +11,10 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:collection/collection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'app_database.dart';
 import 'enums.dart';
 import 'relations.dart';
 import '../providers/db_provider.dart';
+import '../util/day_window_helper.dart';
 
 class MealRepository {
   final AppDatabase db;
@@ -420,10 +420,7 @@ class MealRepository {
             ..where((mp) => mp.state.equalsValue(MealPlanState.ACTIVE)))
           .get();
       final existingTodayPlan = logsList.firstWhereOrNull(
-        (mp) =>
-            mp.created.year == now.year &&
-            mp.created.month == now.month &&
-            mp.created.day == now.day,
+        (mp) => DayWindowHelper.isWithinDayWindow(mp.created, now, 5, 0),
       );
 
       if (existingTodayPlan != null) {
@@ -640,7 +637,7 @@ class MealRepository {
       state: MealPlanState.ACTIVE,
       created: now,
       completed: now,
-      isTemporal: true,
+      isTemporal: false,
     );
     return saveMealPlanWithMealsAndItems(
       MealPlanWithMealsAndItems(mealPlan: newPlan, meals: []),

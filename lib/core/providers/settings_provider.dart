@@ -50,6 +50,24 @@ class SettingsState {
   final String aiToken;
   final String aiModel;
 
+  // Day window & macro override settings
+  final int dayStartHour;
+  final bool defaultMacrosOverrideMealPlan;
+  final double? savedCustomTargetProtein;
+  final double? savedCustomTargetCarbs;
+  final double? savedCustomTargetFats;
+
+  // User freeform preferences
+  final String userPreferences;
+  final bool enableUserPreferences;
+
+  // AI workout creator granular permissions
+  final bool enableAiWorkoutAssistant;
+  final bool aiAllowMealHistory;
+  final bool aiAllowWorkoutHistory;
+  final bool aiAllowStatistics;
+  final bool aiAllowMeasurements;
+
   const SettingsState({
     required this.themeMode,
     required this.materialMode,
@@ -77,6 +95,18 @@ class SettingsState {
     required this.aiProvider,
     required this.aiToken,
     required this.aiModel,
+    required this.dayStartHour,
+    required this.defaultMacrosOverrideMealPlan,
+    this.savedCustomTargetProtein,
+    this.savedCustomTargetCarbs,
+    this.savedCustomTargetFats,
+    this.userPreferences = '',
+    this.enableUserPreferences = false,
+    this.enableAiWorkoutAssistant = true,
+    this.aiAllowMealHistory = true,
+    this.aiAllowWorkoutHistory = true,
+    this.aiAllowStatistics = true,
+    this.aiAllowMeasurements = true,
   });
 
   SettingsState copyWith({
@@ -106,6 +136,18 @@ class SettingsState {
     String? aiProvider,
     String? aiToken,
     String? aiModel,
+    int? dayStartHour,
+    bool? defaultMacrosOverrideMealPlan,
+    double? savedCustomTargetProtein,
+    double? savedCustomTargetCarbs,
+    double? savedCustomTargetFats,
+    String? userPreferences,
+    bool? enableUserPreferences,
+    bool? enableAiWorkoutAssistant,
+    bool? aiAllowMealHistory,
+    bool? aiAllowWorkoutHistory,
+    bool? aiAllowStatistics,
+    bool? aiAllowMeasurements,
   }) {
     return SettingsState(
       themeMode: themeMode ?? this.themeMode,
@@ -134,6 +176,18 @@ class SettingsState {
       aiProvider: aiProvider ?? this.aiProvider,
       aiToken: aiToken ?? this.aiToken,
       aiModel: aiModel ?? this.aiModel,
+      dayStartHour: dayStartHour ?? this.dayStartHour,
+      defaultMacrosOverrideMealPlan: defaultMacrosOverrideMealPlan ?? this.defaultMacrosOverrideMealPlan,
+      savedCustomTargetProtein: savedCustomTargetProtein ?? this.savedCustomTargetProtein,
+      savedCustomTargetCarbs: savedCustomTargetCarbs ?? this.savedCustomTargetCarbs,
+      savedCustomTargetFats: savedCustomTargetFats ?? this.savedCustomTargetFats,
+      userPreferences: userPreferences ?? this.userPreferences,
+      enableUserPreferences: enableUserPreferences ?? this.enableUserPreferences,
+      enableAiWorkoutAssistant: enableAiWorkoutAssistant ?? this.enableAiWorkoutAssistant,
+      aiAllowMealHistory: aiAllowMealHistory ?? this.aiAllowMealHistory,
+      aiAllowWorkoutHistory: aiAllowWorkoutHistory ?? this.aiAllowWorkoutHistory,
+      aiAllowStatistics: aiAllowStatistics ?? this.aiAllowStatistics,
+      aiAllowMeasurements: aiAllowMeasurements ?? this.aiAllowMeasurements,
     );
   }
 }
@@ -181,6 +235,22 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final aiToken = prefs.getString('ai_token') ?? '';
     final aiModel = prefs.getString('ai_model') ?? '';
 
+    final dayStartHour = prefs.getInt('day_start_hour') ?? 5;
+    final defaultMacrosOverrideMealPlan = prefs.getBool('default_macros_override_meal_plan') ?? false;
+
+    final savedCustomTargetProtein = prefs.getDouble('saved_custom_target_protein');
+    final savedCustomTargetCarbs = prefs.getDouble('saved_custom_target_carbs');
+    final savedCustomTargetFats = prefs.getDouble('saved_custom_target_fats');
+
+    final userPreferences = prefs.getString('user_preferences') ?? '';
+    final enableUserPreferences = prefs.getBool('enable_user_preferences') ?? false;
+
+    final enableAiWorkoutAssistant = prefs.getBool('enable_ai_workout_assistant') ?? true;
+    final aiAllowMealHistory = prefs.getBool('ai_allow_meal_history') ?? true;
+    final aiAllowWorkoutHistory = prefs.getBool('ai_allow_workout_history') ?? true;
+    final aiAllowStatistics = prefs.getBool('ai_allow_statistics') ?? true;
+    final aiAllowMeasurements = prefs.getBool('ai_allow_measurements') ?? true;
+
     return SettingsState(
       themeMode: themeMode,
       materialMode: materialMode,
@@ -208,6 +278,18 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       aiProvider: aiProvider,
       aiToken: aiToken,
       aiModel: aiModel,
+      dayStartHour: dayStartHour,
+      defaultMacrosOverrideMealPlan: defaultMacrosOverrideMealPlan,
+      savedCustomTargetProtein: savedCustomTargetProtein,
+      savedCustomTargetCarbs: savedCustomTargetCarbs,
+      savedCustomTargetFats: savedCustomTargetFats,
+      userPreferences: userPreferences,
+      enableUserPreferences: enableUserPreferences,
+      enableAiWorkoutAssistant: enableAiWorkoutAssistant,
+      aiAllowMealHistory: aiAllowMealHistory,
+      aiAllowWorkoutHistory: aiAllowWorkoutHistory,
+      aiAllowStatistics: aiAllowStatistics,
+      aiAllowMeasurements: aiAllowMeasurements,
     );
   }
 
@@ -361,6 +443,78 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setAiModel(String val) async {
     await _prefs.setString('ai_model', val);
     state = state.copyWith(aiModel: val);
+  }
+
+  Future<void> setDayStartHour(int hour) async {
+    await _prefs.setInt('day_start_hour', hour);
+    state = state.copyWith(dayStartHour: hour);
+  }
+
+  Future<void> setDefaultMacrosOverrideMealPlan(bool val) async {
+    await _prefs.setBool('default_macros_override_meal_plan', val);
+    state = state.copyWith(defaultMacrosOverrideMealPlan: val);
+  }
+
+  Future<void> saveCustomTargetMacros({
+    required double protein,
+    required double carbs,
+    required double fats,
+  }) async {
+    await _prefs.setDouble('saved_custom_target_protein', protein);
+    await _prefs.setDouble('saved_custom_target_carbs', carbs);
+    await _prefs.setDouble('saved_custom_target_fats', fats);
+    state = state.copyWith(
+      savedCustomTargetProtein: protein,
+      savedCustomTargetCarbs: carbs,
+      savedCustomTargetFats: fats,
+    );
+  }
+
+  Future<void> restoreSavedCustomTargetMacros() async {
+    if (state.savedCustomTargetProtein != null &&
+        state.savedCustomTargetCarbs != null &&
+        state.savedCustomTargetFats != null) {
+      await setTargetMacros(
+        state.savedCustomTargetProtein!,
+        state.savedCustomTargetCarbs!,
+        state.savedCustomTargetFats!,
+      );
+    }
+  }
+
+  Future<void> setUserPreferences(String val) async {
+    await _prefs.setString('user_preferences', val);
+    state = state.copyWith(userPreferences: val);
+  }
+
+  Future<void> setEnableUserPreferences(bool val) async {
+    await _prefs.setBool('enable_user_preferences', val);
+    state = state.copyWith(enableUserPreferences: val);
+  }
+
+  Future<void> setEnableAiWorkoutAssistant(bool val) async {
+    await _prefs.setBool('enable_ai_workout_assistant', val);
+    state = state.copyWith(enableAiWorkoutAssistant: val);
+  }
+
+  Future<void> setAiAllowMealHistory(bool val) async {
+    await _prefs.setBool('ai_allow_meal_history', val);
+    state = state.copyWith(aiAllowMealHistory: val);
+  }
+
+  Future<void> setAiAllowWorkoutHistory(bool val) async {
+    await _prefs.setBool('ai_allow_workout_history', val);
+    state = state.copyWith(aiAllowWorkoutHistory: val);
+  }
+
+  Future<void> setAiAllowStatistics(bool val) async {
+    await _prefs.setBool('ai_allow_statistics', val);
+    state = state.copyWith(aiAllowStatistics: val);
+  }
+
+  Future<void> setAiAllowMeasurements(bool val) async {
+    await _prefs.setBool('ai_allow_measurements', val);
+    state = state.copyWith(aiAllowMeasurements: val);
   }
 }
 

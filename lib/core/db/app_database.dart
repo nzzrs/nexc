@@ -8,12 +8,10 @@
  */
 
 import 'dart:convert';
-import 'dart:io';
 import 'package:drift/drift.dart';
-import 'package:drift/native.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:string_similarity/string_similarity.dart';
+
+import 'connection/connection.dart' as impl;
 
 import 'enums.dart';
 import 'relations.dart';
@@ -168,9 +166,17 @@ class Sets extends Table {
 
   IntColumn get id => integer().autoIncrement()();
   RealColumn get load => real()();
+  TextColumn get weightUnit => text()
+      .named('weightUnit')
+      .map(const EnumNameConverter<WeightUnit>(WeightUnit.values))
+      .withDefault(const Constant('kg'))();
   IntColumn get reps => integer()();
   IntColumn get elapsedTime => integer().named('elapsedTime')();
   BoolColumn get completed => boolean()();
+  TextColumn get setType => text()
+      .named('setType')
+      .map(const EnumNameConverter<SetType>(SetType.values))
+      .withDefault(const Constant('NORMAL'))();
   RealColumn get rpe => real().nullable()();
   IntColumn get rir => integer().nullable()();
   IntColumn get exerciseId => integer().named('exerciseId')();
@@ -480,11 +486,11 @@ class Users extends Table {
   ReceiptMappings,
 ])
 class AppDatabase extends _$AppDatabase {
-  AppDatabase() : super(_openConnection());
-  AppDatabase.executor(QueryExecutor executor) : super(executor);
+  AppDatabase() : super(impl.openConnection());
+  AppDatabase.executor(super.executor);
 
   @override
-  int get schemaVersion => 19;
+  int get schemaVersion => 20;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
@@ -514,16 +520,16 @@ class AppDatabase extends _$AppDatabase {
           if (from < 14) {
             // Version 14 Migration:
             // 1. Rename dataset to exercise_data
-            await m.issueCustomQuery('ALTER TABLE dataset RENAME TO exercise_data;');
+            await customStatement('ALTER TABLE dataset RENAME TO exercise_data;');
             
             // 2. Add columns to exercises: exerciseDataId, drop idExerciseDC.
-            await m.issueCustomQuery('ALTER TABLE exercises RENAME COLUMN idExerciseDC TO exerciseDataId;');
+            await customStatement('ALTER TABLE exercises RENAME COLUMN idExerciseDC TO exerciseDataId;');
             
             // 3. Sets: drop intensityScale column.
-            await m.issueCustomQuery('ALTER TABLE sets DROP COLUMN intensityScale;');
+            await customStatement('ALTER TABLE sets DROP COLUMN intensityScale;');
             
             // 4. Products migration (recreate table, map columns)
-            await m.issueCustomQuery('''
+            await customStatement('''
               CREATE TABLE products_new (
                 id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
                 name TEXT NOT NULL,
@@ -542,18 +548,18 @@ class AppDatabase extends _$AppDatabase {
                 isPortable BOOLEAN NOT NULL DEFAULT 1
               );
             ''');
-            await m.issueCustomQuery('''
+            await customStatement('''
               INSERT INTO products_new (id, name, weight, defaultUnits, edibleQtyPerUnit, proteins, carbsAvailable, fats, isSupplement, isPortable)
               SELECT id, name, weight, units, edibleQtyPerUnit, proteins, carbs, fats, isSupplement, isPortable FROM products;
             ''');
-            await m.issueCustomQuery('DROP TABLE products;');
-            await m.issueCustomQuery('ALTER TABLE products_new RENAME TO products;');
+            await customStatement('DROP TABLE products;');
+            await customStatement('ALTER TABLE products_new RENAME TO products;');
             
             // 5. RecipeIngredients: add amountUnits
-            await m.issueCustomQuery('ALTER TABLE recipe_ingredients ADD COLUMN amountUnits TEXT;');
+            await customStatement('ALTER TABLE recipe_ingredients ADD COLUMN amountUnits TEXT;');
             
             // 6. MealPlans: add isTemporal
-            await m.issueCustomQuery('ALTER TABLE meal_plans ADD COLUMN isTemporal BOOLEAN NOT NULL DEFAULT 0;');
+            await customStatement('ALTER TABLE meal_plans ADD COLUMN isTemporal BOOLEAN NOT NULL DEFAULT 0;');
             
             // 7. Split measurements table into body_measurements and advanced_body_measurements
             await m.createTable(bodyMeasurements);
@@ -563,15 +569,15 @@ class AppDatabase extends _$AppDatabase {
             await m.createTable(advancedSleepMeasurements);
             
             // Copy existing measurements
-            await m.issueCustomQuery('''
+            await customStatement('''
               INSERT INTO body_measurements (id, bodyWeight, date)
               SELECT id, bodyWeight, date FROM measurements;
             ''');
-            await m.issueCustomQuery('''
+            await customStatement('''
               INSERT INTO advanced_body_measurements (bodyFatPercentage, muscleMassPercentage, date)
               SELECT bodyFatPercentage, muscleMassPercentage, date FROM measurements;
             ''');
-            await m.issueCustomQuery('DROP TABLE measurements;');
+            await customStatement('DROP TABLE measurements;');
           }
           if (from < 15) {
             await m.createTable(users);
@@ -600,27 +606,16 @@ class AppDatabase extends _$AppDatabase {
               await m.addColumn(meals, meals.atHome);
             } catch (_) {}
           }
+          if (from < 20) {
+            try {
+              await m.addColumn(sets, sets.setType);
+              await m.addColumn(sets, sets.weightUnit);
+            } catch (_) {}
+          }
         },
       );
 }
 
-QueryExecutor _openConnection() {
-  return LazyDatabase(() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final file = File(p.join(dbFolder.path, 'nexc_database'));
-    
-    // On Android, if the Room database already exists, we must use it.
-    if (Platform.isAndroid) {
-      // Room databases on Android are located at: /data/data/org.nexc/databases/nexc_database
-      final androidDbFile = File('/data/data/org.nexc/databases/nexc_database');
-      if (await androidDbFile.exists()) {
-        return NativeDatabase(androidDbFile);
-      }
-    }
-    
-    return NativeDatabase(file);
-  });
-}
 
 extension ProductExtension on Product {
   double get carbs => carbsAvailable ?? carbsByDifference ?? 0.0;
@@ -636,16 +631,16 @@ List<String> getSearchStems(String query) {
   final stems = {queryLower};
   
   if (queryLower.endsWith('ies') && queryLower.length > 3) {
-    stems.add(queryLower.substring(0, queryLower.length - 3) + 'y');
+    stems.add('${queryLower.substring(0, queryLower.length - 3)}y');
   } else if (queryLower.endsWith('s') && queryLower.length > 3) {
     stems.add(queryLower.substring(0, queryLower.length - 1));
   }
   
   for (final s in List<String>.from(stems)) {
     if (s.endsWith('y') && s.length > 1) {
-      stems.add(s.substring(0, s.length - 1) + 'ies');
+      stems.add('${s.substring(0, s.length - 1)}ies');
     } else if (!s.endsWith('s')) {
-      stems.add(s + 's');
+      stems.add('${s}s');
     }
   }
   
@@ -666,8 +661,28 @@ List<String> getSearchStems(String query) {
 }
 
 extension ProductSearchExtension on Iterable<Product> {
-  List<Product> searchAndSort(String query) {
-    if (query.isEmpty) return toList();
+  List<Product> searchAndSort(
+    String query, {
+    Map<int, int>? usageCounts,
+    Set<int>? inStockProductIds,
+  }) {
+    if (query.isEmpty) {
+      final list = toList();
+      list.sort((a, b) {
+        final aInStock = inStockProductIds?.contains(a.id) ?? false;
+        final bInStock = inStockProductIds?.contains(b.id) ?? false;
+        if (aInStock != bInStock) {
+          return aInStock ? -1 : 1;
+        }
+        final aUse = usageCounts?[a.id] ?? 0;
+        final bUse = usageCounts?[b.id] ?? 0;
+        if (aUse != bUse) {
+          return bUse.compareTo(aUse);
+        }
+        return a.name.toLowerCase().compareTo(b.name.toLowerCase());
+      });
+      return list;
+    }
     
     final queryLower = query.toLowerCase().trim();
     final stems = getSearchStems(query);
@@ -704,6 +719,14 @@ extension ProductSearchExtension on Iterable<Product> {
       
       if (words.contains('raw') && !queryLower.contains('raw')) {
         score += 1.0;
+      }
+
+      if (inStockProductIds != null && inStockProductIds.contains(p.id)) {
+        score += 50.0;
+      }
+
+      if (usageCounts != null && usageCounts.containsKey(p.id)) {
+        score += (usageCounts[p.id]! * 2.0).clamp(0.0, 25.0);
       }
       
       return _ScoredProduct(p, score);

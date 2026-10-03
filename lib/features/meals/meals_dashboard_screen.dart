@@ -1629,6 +1629,7 @@ class AddMealItemDialog extends ConsumerStatefulWidget {
 class _AddMealItemDialogState extends ConsumerState<AddMealItemDialog> {
   MealItemType _type = MealItemType.PRODUCT;
   String _searchQuery = "";
+  final TextEditingController _searchController = TextEditingController();
   int? _selectedProductId;
   int? _selectedRecipeId;
   final TextEditingController _amountController = TextEditingController();
@@ -1636,6 +1637,7 @@ class _AddMealItemDialogState extends ConsumerState<AddMealItemDialog> {
 
   @override
   void dispose() {
+    _searchController.dispose();
     _amountController.dispose();
     super.dispose();
   }
@@ -1724,11 +1726,21 @@ class _AddMealItemDialogState extends ConsumerState<AddMealItemDialog> {
                   children: [
                     Expanded(
                       child: TextField(
+                        controller: _searchController,
                         autofocus: true,
-                        decoration: const InputDecoration(
+                        decoration: InputDecoration(
                           labelText: "Search food...",
-                          prefixIcon: Icon(Icons.search),
-                          border: OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.search),
+                          suffixIcon: _searchQuery.isNotEmpty
+                              ? IconButton(
+                                  icon: const Icon(Icons.clear),
+                                  onPressed: () {
+                                    _searchController.clear();
+                                    setState(() => _searchQuery = "");
+                                  },
+                                )
+                              : null,
+                          border: const OutlineInputBorder(),
                         ),
                         onChanged: (val) => setState(() => _searchQuery = val),
                       ),

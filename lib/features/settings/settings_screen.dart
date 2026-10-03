@@ -262,7 +262,7 @@ class SettingsScreen extends ConsumerWidget {
           if (settings.enableMealTracking) ...[
             _SettingItem(
               settingName: 'Day start hour',
-              settingDesc: 'New day starts at ${settings.dayStartHour.toString().padLeft(2, '0')}:00 (resets daily macros)',
+              settingDesc: 'New day starts at ${settings.dayStartHour.toString().padLeft(2, '0')}:00',
               icon: Icons.access_time,
               onClick: () async {
                 final picked = await showTimePicker(

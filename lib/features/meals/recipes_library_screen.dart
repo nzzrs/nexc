@@ -24,6 +24,13 @@ class RecipesLibraryScreen extends ConsumerStatefulWidget {
 
 class _RecipesLibraryScreenState extends ConsumerState<RecipesLibraryScreen> {
   String _searchQuery = "";
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _showAddEditRecipe(BuildContext context, RecipeWithIngredients recipe, List<Product> products) {
     showDialog(
@@ -86,10 +93,22 @@ class _RecipesLibraryScreenState extends ConsumerState<RecipesLibraryScreen> {
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: TextField(
-                    decoration: const InputDecoration(
+                    controller: _searchController,
+                    decoration: InputDecoration(
                       labelText: "Search recipes...",
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchQuery = "";
+                                });
+                              },
+                            )
+                          : null,
+                      border: const OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12.0)),
                       ),
                     ),

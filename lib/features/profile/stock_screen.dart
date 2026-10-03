@@ -38,6 +38,7 @@ class StockScreen extends ConsumerStatefulWidget {
 class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   String _searchQuery = "";
+  final TextEditingController _stockSearchController = TextEditingController();
   bool _isImporting = false;
 
   final Set<int> _shoppingChecked = {};
@@ -77,6 +78,7 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
   @override
   void dispose() {
     _tabController.dispose();
+    _stockSearchController.dispose();
     super.dispose();
   }
 
@@ -1019,10 +1021,20 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
         Padding(
           padding: const EdgeInsets.all(16.0),
           child: TextField(
-            decoration: const InputDecoration(
+            controller: _stockSearchController,
+            decoration: InputDecoration(
               labelText: "Search stock...",
-              prefixIcon: Icon(Icons.search),
-              border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
+              prefixIcon: const Icon(Icons.search),
+              suffixIcon: _searchQuery.isNotEmpty
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _stockSearchController.clear();
+                        setState(() => _searchQuery = "");
+                      },
+                    )
+                  : null,
+              border: const OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(12))),
             ),
             onChanged: (val) => setState(() => _searchQuery = val),
           ),

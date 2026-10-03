@@ -27,6 +27,13 @@ class ProductsLibraryScreen extends ConsumerStatefulWidget {
 
 class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
   String _searchQuery = "";
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   void _showAddEditProduct(BuildContext context, Product product) {
     Navigator.push(
@@ -86,10 +93,22 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: TextField(
-                    decoration: const InputDecoration(
+                    controller: _searchController,
+                    decoration: InputDecoration(
                       labelText: "Search products...",
-                      prefixIcon: Icon(Icons.search),
-                      border: OutlineInputBorder(
+                      prefixIcon: const Icon(Icons.search),
+                      suffixIcon: _searchQuery.isNotEmpty
+                          ? IconButton(
+                              icon: const Icon(Icons.clear),
+                              onPressed: () {
+                                _searchController.clear();
+                                setState(() {
+                                  _searchQuery = "";
+                                });
+                              },
+                            )
+                          : null,
+                      border: const OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(12.0)),
                       ),
                     ),

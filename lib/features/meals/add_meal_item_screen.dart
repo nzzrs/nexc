@@ -57,12 +57,14 @@ class AddMealItemScreen extends ConsumerStatefulWidget {
 class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
   MealItemType _type = MealItemType.PRODUCT;
   String _searchQuery = "";
+  final TextEditingController _searchController = TextEditingController();
   final Map<String, _SelectedItemConfig> _selectedItems = {};
   final TextEditingController _amountController = TextEditingController(text: "100");
   AmountUnit _amountUnit = AmountUnit.GRAMS;
 
   @override
   void dispose() {
+    _searchController.dispose();
     _amountController.dispose();
     super.dispose();
   }
@@ -263,13 +265,17 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
               child: TextField(
+                controller: _searchController,
                 decoration: InputDecoration(
                   labelText: _type == MealItemType.PRODUCT ? "Search food or product..." : "Search recipes...",
                   prefixIcon: const Icon(Icons.search),
                   suffixIcon: _searchQuery.isNotEmpty
                       ? IconButton(
                           icon: const Icon(Icons.clear),
-                          onPressed: () => setState(() => _searchQuery = ""),
+                          onPressed: () {
+                            _searchController.clear();
+                            setState(() => _searchQuery = "");
+                          },
                         )
                       : null,
                   border: const OutlineInputBorder(

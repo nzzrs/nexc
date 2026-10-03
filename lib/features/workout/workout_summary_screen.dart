@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/providers/settings_provider.dart';
+import '../../core/util/workout_stats_helper.dart';
 
 String _formatSummaryDuration(int seconds) {
   final m = (seconds ~/ 60).toString().padLeft(2, '0');
@@ -117,15 +118,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
   }
 
   double _calculateTotalVolume() {
-    double total = 0;
-    for (final ex in widget.workoutData.exercisesWithSets) {
-      for (final s in ex.sets) {
-        if (s.completed) {
-          total += s.load * s.reps;
-        }
-      }
-    }
-    return total;
+    return WorkoutStatsHelper.calculateWorkoutTonnage(widget.workoutData);
   }
 
   int _totalCompletedSets() {
@@ -290,7 +283,25 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
                           Column(
                             children: [
                               Text(
-                                'Exercises done',
+                                'Hard Sets',
+                                style: theme.textTheme.labelMedium?.copyWith(
+                                  color: theme.colorScheme.onTertiaryContainer,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '${WorkoutStatsHelper.countHardSets(widget.workoutData)}',
+                                style: theme.textTheme.headlineSmall?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: theme.colorScheme.onTertiaryContainer,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Column(
+                            children: [
+                              Text(
+                                'Exercises',
                                 style: theme.textTheme.labelMedium?.copyWith(
                                   color: theme.colorScheme.onTertiaryContainer,
                                 ),
@@ -305,6 +316,44 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
                               ),
                             ],
                           ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Card(
+                    color: theme.colorScheme.surfaceContainerHighest,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.speed, size: 20, color: theme.colorScheme.primary),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Density: ${WorkoutStatsHelper.calculateWorkoutDensity(widget.workoutData).toStringAsFixed(1)} kg/s',
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (WorkoutStatsHelper.getPrimaryMuscleImpacted(widget.workoutData) != null) ...[
+                            Row(
+                              children: [
+                                Icon(Icons.fitness_center, size: 20, color: theme.colorScheme.secondary),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Focus: ${WorkoutStatsHelper.getPrimaryMuscleImpacted(widget.workoutData)!.name}',
+                                  style: theme.textTheme.bodyMedium?.copyWith(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
                         ],
                       ),
                     ),
@@ -329,9 +378,38 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    ex.exerciseDC.name,
+                                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                  ),
+                                ),
+                                if (WorkoutStatsHelper.calculateExerciseEstimatedOneRepMax(ex) > 0)
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                    decoration: BoxDecoration(
+                                      color: theme.colorScheme.secondaryContainer,
+                                      borderRadius: BorderRadius.circular(12),
+                                    ),
+                                    child: Text(
+                                      'e1RM: ${WorkoutStatsHelper.calculateExerciseEstimatedOneRepMax(ex).toStringAsFixed(1)} kg',
+                                      style: theme.textTheme.labelSmall?.copyWith(
+                                        color: theme.colorScheme.onSecondaryContainer,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ),
+                              ],
+                            ),
+                            const SizedBox(height: 4),
                             Text(
-                              ex.exerciseDC.name,
-                              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                              'Volume: ${WorkoutStatsHelper.calculateExerciseTonnage(ex).toStringAsFixed(0)} kg',
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                             const SizedBox(height: 8),
                             ...ex.sets.map((s) {
@@ -340,13 +418,53 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
                                 child: Row(
                                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(
-                                      '${s.load.toStringAsFixed(1)} kg x ${s.reps}',
-                                      style: TextStyle(
-                                        color: s.completed ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                                        fontWeight: s.completed ? FontWeight.normal : FontWeight.w300,
-                                        decoration: s.completed ? null : TextDecoration.lineThrough,
-                                      ),
+                                    Row(
+                                      children: [
+                                        if (s.setType != SetType.NORMAL) ...[
+                                          Container(
+                                            margin: const EdgeInsets.only(right: 6),
+                                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+                                            decoration: BoxDecoration(
+                                              color: s.setType == SetType.WARMUP
+                                                  ? Colors.amber.withValues(alpha: 0.2)
+                                                  : s.setType == SetType.DROP
+                                                      ? Colors.purple.withValues(alpha: 0.2)
+                                                      : s.setType == SetType.MYO
+                                                          ? Colors.teal.withValues(alpha: 0.2)
+                                                          : Colors.red.withValues(alpha: 0.2),
+                                              borderRadius: BorderRadius.circular(4),
+                                            ),
+                                            child: Text(
+                                              s.setType == SetType.WARMUP
+                                                  ? 'W'
+                                                  : s.setType == SetType.DROP
+                                                      ? 'D'
+                                                      : s.setType == SetType.MYO
+                                                          ? 'M'
+                                                          : 'F',
+                                              style: TextStyle(
+                                                fontSize: 10,
+                                                fontWeight: FontWeight.bold,
+                                                color: s.setType == SetType.WARMUP
+                                                    ? Colors.amber.shade800
+                                                    : s.setType == SetType.DROP
+                                                        ? Colors.purple.shade700
+                                                        : s.setType == SetType.MYO
+                                                            ? Colors.teal.shade700
+                                                            : Colors.red.shade700,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                        Text(
+                                          '${s.load.toStringAsFixed(1)} kg x ${s.reps}',
+                                          style: TextStyle(
+                                            color: s.completed ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                                            fontWeight: s.completed ? FontWeight.normal : FontWeight.w300,
+                                            decoration: s.completed ? null : TextDecoration.lineThrough,
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                     if (s.completed)
                                       Icon(Icons.check_circle, size: 16, color: theme.colorScheme.primary)

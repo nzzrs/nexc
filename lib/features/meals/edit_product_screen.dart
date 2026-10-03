@@ -7,6 +7,7 @@
  * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
  */
 
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
@@ -15,7 +16,7 @@ import '../../core/providers/settings_provider.dart';
 
 class EditProductScreen extends ConsumerStatefulWidget {
   final Product product;
-  final void Function(Product)? onConfirm;
+  final FutureOr<void> Function(Product)? onConfirm;
 
   const EditProductScreen({
     super.key,
@@ -81,7 +82,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     super.dispose();
   }
 
-  void _submit() {
+  Future<void> _submit() async {
     final name = _nameController.text.trim();
     if (name.isNotEmpty) {
       final ediblePct = double.tryParse(_ediblePercentController.text) ?? 100.0;
@@ -103,9 +104,11 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
         isStockRaw: _isStockRaw,
       );
       if (widget.onConfirm != null) {
-        widget.onConfirm!(newProduct);
+        await widget.onConfirm!(newProduct);
       }
-      Navigator.pop(context, newProduct);
+      if (mounted) {
+        Navigator.pop(context, newProduct);
+      }
     }
   }
 

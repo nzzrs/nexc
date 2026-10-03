@@ -14,8 +14,8 @@ import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/providers/meals_providers.dart';
-import 'products_library_screen.dart';
 import 'recipes_library_screen.dart';
+import 'edit_product_screen.dart';
 
 class _SelectedItemConfig {
   final MealItemType type;
@@ -70,26 +70,29 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
     super.dispose();
   }
 
-  void _showAddEditProductDialog(Product product) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AddEditProductDialog(
-        product: product,
-        onDismiss: () => Navigator.pop(ctx),
-        onConfirm: (updated) async {
-          final id = await ref.read(mealRepositoryProvider).saveProduct(updated);
-          final key = 'product_$id';
-          setState(() {
-            _selectedItems[key] = _SelectedItemConfig(
-              type: MealItemType.PRODUCT,
-              targetId: id,
-              name: updated.name,
-            );
-          });
-          if (ctx.mounted) Navigator.pop(ctx);
-        },
+  Future<void> _showAddEditProductDialog(Product product) async {
+    final savedProduct = await Navigator.push<Product>(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => EditProductScreen(
+          product: product,
+          onConfirm: (updated) async {
+            await ref.read(mealRepositoryProvider).saveProduct(updated);
+          },
+        ),
       ),
     );
+
+    if (savedProduct != null && mounted) {
+      final key = 'product_${savedProduct.id}';
+      setState(() {
+        _selectedItems[key] = _SelectedItemConfig(
+          type: MealItemType.PRODUCT,
+          targetId: savedProduct.id,
+          name: savedProduct.name,
+        );
+      });
+    }
   }
 
   void _showAddEditRecipeDialog(RecipeWithIngredients recipe) {

@@ -21,8 +21,8 @@ import '../../core/providers/settings_provider.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/integrations/ai_service.dart';
 import '../../core/components/nexc_scaffold.dart';
-import '../meals/products_library_screen.dart';
 import '../meals/product_selector_screen.dart';
+import '../meals/edit_product_screen.dart';
 import 'package:image_picker/image_picker.dart';
 
 // Providers for Stock Screen State
@@ -667,26 +667,28 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                                           IconButton(
                                             icon: const Icon(Icons.edit, size: 16),
                                             tooltip: "Edit Product",
-                                            onPressed: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (ctx) => AddEditProductDialog(
-                                                  product: item.matchedProduct!,
-                                                  onDismiss: () => Navigator.pop(ctx),
-                                                  onConfirm: (updatedProd) async {
-                                                    try {
-                                                      final repo = ref.read(mealRepositoryProvider);
-                                                      await repo.saveProduct(updatedProd);
-                                                      setDialogState(() {
-                                                        item.matchedProduct = updatedProd;
-                                                      });
-                                                    } catch (e, st) {
-                                                      _showCopyableErrorDialog("Product Edit Error", "$e\n\n$st");
-                                                    }
-                                                    if (ctx.mounted) Navigator.pop(ctx);
-                                                  },
+                                            onPressed: () async {
+                                              final updatedProd = await Navigator.push<Product>(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (ctx) => EditProductScreen(
+                                                    product: item.matchedProduct!,
+                                                    onConfirm: (prod) async {
+                                                      try {
+                                                        final repo = ref.read(mealRepositoryProvider);
+                                                        await repo.saveProduct(prod);
+                                                      } catch (e, st) {
+                                                        _showCopyableErrorDialog("Product Edit Error", "$e\n\n$st");
+                                                      }
+                                                    },
+                                                  ),
                                                 ),
                                               );
+                                              if (updatedProd != null) {
+                                                setDialogState(() {
+                                                  item.matchedProduct = updatedProd;
+                                                });
+                                              }
                                             },
                                             visualDensity: VisualDensity.compact,
                                           ),
@@ -705,44 +707,48 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                                         if (item.matchedProduct == null) ...[
                                           const SizedBox(width: 4),
                                           ElevatedButton.icon(
-                                            onPressed: () {
-                                              showDialog(
-                                                context: context,
-                                                builder: (ctx) => AddEditProductDialog(
-                                                  product: Product(
-                                                    id: 0,
-                                                    name: item.receiptName,
-                                                    defaultUnits: item.parsedUnit.toLowerCase() == 'l' || item.parsedUnit.toLowerCase() == 'ml' ? 'ml' : 'g',
-                                                    edibleQtyPerUnit: 1.0,
-                                                    proteins: 0.0,
-                                                    carbsAvailable: null,
-                                                    fats: 0.0,
-                                                    isSupplement: false,
-                                                    isPortable: true,
-                                                    isStockRaw: false,
-                                                  ),
-                                                  onDismiss: () => Navigator.pop(ctx),
-                                                  onConfirm: (newProd) async {
-                                                    try {
-                                                      final repo = ref.read(mealRepositoryProvider);
-                                                      final newId = await repo.saveProduct(newProd);
-                                                      final freshProducts = ref.read(allProductsProvider).value ?? [];
-                                                      final created = freshProducts.firstWhereOrNull((p) => p.id == newId);
-                                                      if (created != null) {
-                                                        final stockRepo = ref.read(stockRepositoryProvider);
-                                                        await stockRepo.saveReceiptMapping(receiptName: item.receiptName, productId: created.id);
-                                                        setDialogState(() {
-                                                          item.matchedProduct = created;
-                                                          item.matchState = 0;
-                                                        });
+                                            onPressed: () async {
+                                              Product? createdProd;
+                                              final newProd = await Navigator.push<Product>(
+                                                context,
+                                                MaterialPageRoute(
+                                                  builder: (ctx) => EditProductScreen(
+                                                    product: Product(
+                                                      id: 0,
+                                                      name: item.receiptName,
+                                                      defaultUnits: item.parsedUnit.toLowerCase() == 'l' || item.parsedUnit.toLowerCase() == 'ml' ? 'ml' : 'g',
+                                                      edibleQtyPerUnit: 1.0,
+                                                      proteins: 0.0,
+                                                      carbsAvailable: null,
+                                                      fats: 0.0,
+                                                      isSupplement: false,
+                                                      isPortable: true,
+                                                      isStockRaw: false,
+                                                    ),
+                                                    onConfirm: (prod) async {
+                                                      try {
+                                                        final repo = ref.read(mealRepositoryProvider);
+                                                        final newId = await repo.saveProduct(prod);
+                                                        final freshProducts = ref.read(allProductsProvider).value ?? [];
+                                                        createdProd = freshProducts.firstWhereOrNull((p) => p.id == newId) ?? prod.copyWith(id: newId);
+                                                        if (createdProd != null) {
+                                                          final stockRepo = ref.read(stockRepositoryProvider);
+                                                          await stockRepo.saveReceiptMapping(receiptName: item.receiptName, productId: createdProd!.id);
+                                                        }
+                                                      } catch (e, st) {
+                                                        _showCopyableErrorDialog("Product Creation Error", "$e\n\n$st");
                                                       }
-                                                    } catch (e, st) {
-                                                      _showCopyableErrorDialog("Product Creation Error", "$e\n\n$st");
-                                                    }
-                                                    if (ctx.mounted) Navigator.pop(ctx);
-                                                  },
+                                                    },
+                                                  ),
                                                 ),
                                               );
+                                              final finalProduct = createdProd ?? newProd;
+                                              if (finalProduct != null) {
+                                                setDialogState(() {
+                                                  item.matchedProduct = finalProduct;
+                                                  item.matchState = 0;
+                                                });
+                                              }
                                             },
                                             icon: const Icon(Icons.add, size: 14),
                                             label: const Text("Create"),

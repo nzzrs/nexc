@@ -15,8 +15,8 @@ import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/providers/settings_provider.dart';
-import 'products_library_screen.dart';
 import 'recipes_library_screen.dart';
+import 'edit_product_screen.dart';
 import 'add_meal_item_screen.dart';
 import '../../core/util/day_window_helper.dart';
 
@@ -1749,34 +1749,37 @@ class _AddMealItemDialogState extends ConsumerState<AddMealItemDialog> {
                     IconButton.filledTonal(
                       icon: const Icon(Icons.add),
                       tooltip: _type == MealItemType.PRODUCT ? "Add Product" : "Add Recipe",
-                      onPressed: () {
+                      onPressed: () async {
                         if (_type == MealItemType.PRODUCT) {
-                           showDialog(
-                            context: context,
-                            builder: (ctx) => AddEditProductDialog(
-                              product: Product(
-                                id: 0,
-                                name: _searchQuery,
-                                defaultUnits: "g",
-                                edibleQtyPerUnit: 1.0,
-                                kcal: 0.0,
-                                proteins: 0.0,
-                                carbsAvailable: null,
-                                fats: 0.0,
-                                isSupplement: false,
-                                isPortable: true,
-                                isStockRaw: false,
+                          int? createdId;
+                          final newProd = await Navigator.push<Product>(
+                            context,
+                            MaterialPageRoute(
+                              builder: (ctx) => EditProductScreen(
+                                product: Product(
+                                  id: 0,
+                                  name: _searchQuery,
+                                  defaultUnits: "g",
+                                  edibleQtyPerUnit: 1.0,
+                                  kcal: 0.0,
+                                  proteins: 0.0,
+                                  carbsAvailable: null,
+                                  fats: 0.0,
+                                  isSupplement: false,
+                                  isPortable: true,
+                                  isStockRaw: false,
+                                ),
+                                onConfirm: (prod) async {
+                                  createdId = await ref.read(mealRepositoryProvider).saveProduct(prod);
+                                },
                               ),
-                              onDismiss: () => Navigator.pop(ctx),
-                              onConfirm: (newProd) async {
-                                final newId = await ref.read(mealRepositoryProvider).saveProduct(newProd);
-                                setState(() {
-                                  _selectedProductId = newId;
-                                });
-                                if (ctx.mounted) Navigator.pop(ctx);
-                              },
                             ),
                           );
+                          if (newProd != null && mounted) {
+                            setState(() {
+                              _selectedProductId = createdId ?? newProd.id;
+                            });
+                          }
                         } else {
                           showDialog(
                             context: context,

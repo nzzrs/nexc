@@ -12,6 +12,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/integrations/ai_service.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/db/workout_repository.dart';
+import '../../core/db/meal_repository.dart';
+import '../../core/db/measurement_repository.dart';
+import '../../core/db/enums.dart';
 
 class WorkoutAiChatScreen extends ConsumerStatefulWidget {
   const WorkoutAiChatScreen({super.key});
@@ -73,18 +76,42 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
       }
     }
 
-    final contextPrompt = AIService.buildUserContextPrompt(
-      enableAiAssistant: settings.enableAiWorkoutAssistant,
-      enablePreferences: settings.enableUserPreferences,
+    String? mealSummary;
+    if (settings.aiAllowMealHistory) {
+      final mealPlans = await ref.read(mealRepositoryProvider).getMealPlansWithMealsAndItemsByState(MealPlanState.LOGGED).first;
+      if (mealPlans.isNotEmpty) {
+        final recentPlan = mealPlans.first;
+        mealSummary = '${mealPlans.length} logged meal plans. Recent: ${recentPlan.mealPlan.title} (${recentPlan.meals.length} meals).';
+      }
+    }
+
+    String? statsSummary;
+    if (settings.aiAllowUserStats) {
+      final allCompleted = await repo.watchWorkoutsWithExercisesAndSetsByState(WorkoutState.COMPLETED).first;
+      statsSummary = 'Total completed workouts: ${allCompleted.length}.';
+    }
+
+    String? measurementsSummary;
+    if (settings.aiAllowMeasurements) {
+      final measurements = await ref.read(measurementRepositoryProvider).getAllMeasurements().first;
+      if (measurements.isNotEmpty) {
+        final last = measurements.first;
+        measurementsSummary = 'Latest body weight: ${last.bodyWeight} kg on ${last.date.month}/${last.date.day}/${last.date.year}.';
+      }
+    }
+
+    final contextPrompt = AIService.assembleWorkoutAiPrompt(
+      aiWorkoutGenerationEnabled: settings.aiWorkoutGenerationEnabled,
+      aiAllowUserPreferences: settings.aiAllowUserPreferences,
       userPreferences: settings.userPreferences,
-      allowWorkoutHistory: settings.aiAllowWorkoutHistory,
+      aiAllowWorkoutHistory: settings.aiAllowWorkoutHistory,
       workoutHistorySummary: workoutSummary,
-      allowMealHistory: settings.aiAllowMealHistory,
-      mealHistorySummary: null,
-      allowStatistics: settings.aiAllowStatistics,
-      statisticsSummary: null,
-      allowMeasurements: settings.aiAllowMeasurements,
-      measurementsSummary: null,
+      aiAllowMealHistory: settings.aiAllowMealHistory,
+      mealHistorySummary: mealSummary,
+      aiAllowUserStats: settings.aiAllowUserStats,
+      statisticsSummary: statsSummary,
+      aiAllowMeasurements: settings.aiAllowMeasurements,
+      measurementsSummary: measurementsSummary,
     );
 
     final historyForApi = _messages.sublist(0, _messages.length - 1);

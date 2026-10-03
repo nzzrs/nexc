@@ -68,6 +68,11 @@ class SettingsState {
   final bool aiAllowStatistics;
   final bool aiAllowMeasurements;
 
+  // Aliases for workout AI creator preferences
+  bool get aiWorkoutGenerationEnabled => enableAiWorkoutAssistant;
+  bool get aiAllowUserStats => aiAllowStatistics;
+  bool get aiAllowUserPreferences => enableUserPreferences;
+
   const SettingsState({
     required this.themeMode,
     required this.materialMode,
@@ -516,6 +521,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     await _prefs.setBool('ai_allow_measurements', val);
     state = state.copyWith(aiAllowMeasurements: val);
   }
+
+  // Aliases for workout assistant settings
+  Future<void> setAiWorkoutGenerationEnabled(bool val) => setEnableAiWorkoutAssistant(val);
+  Future<void> setAiAllowUserStats(bool val) => setAiAllowStatistics(val);
+  Future<void> setAiAllowUserPreferences(bool val) => setEnableUserPreferences(val);
 }
 
 final settingsProvider = StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {

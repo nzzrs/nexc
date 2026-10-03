@@ -102,9 +102,15 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     final theme = Theme.of(context);
 
 
+    final isReplacing = widget.targetExerciseToReplace != null;
+
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.addExercises ? 'Add Exercises' : 'Select Exercise'),
+        title: Text(
+          widget.addExercises
+              ? 'Add Exercises'
+              : (isReplacing ? 'Replace Exercise' : 'Select Exercise'),
+        ),
         actions: [
           IconButton(
             icon: Icon(_showFilters ? Icons.filter_alt : Icons.filter_alt_outlined),
@@ -302,10 +308,37 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   return _fuzzyScore(ex.name, _query) > 60;
                 }).toList();
 
-                // Sort: Selected first, then AI/muscle similarity replacements first if replacing, then query
-                final sorted = List<ExerciseDataDC>.from(filtered);
                 final targetMuscles = widget.targetExerciseToReplace?.primaryMuscles.toSet() ?? {};
+                final targetSecondary = widget.targetExerciseToReplace?.secondaryMuscles.toSet() ?? {};
 
+                int computeSimilarity(ExerciseDataDC ex) {
+                  if (widget.targetExerciseToReplace == null || ex.id == widget.targetExerciseToReplace!.id) return 0;
+                  int score = 0;
+                  for (final m in ex.primaryMuscles) {
+                    if (targetMuscles.contains(m)) score += 5;
+                    if (targetSecondary.contains(m)) score += 2;
+                  }
+                  for (final m in ex.secondaryMuscles) {
+                    if (targetMuscles.contains(m)) score += 2;
+                    if (targetSecondary.contains(m)) score += 1;
+                  }
+                  return score;
+                }
+
+                // AI suggestions when in replace mode and not searching with query
+                final List<ExerciseDataDC> aiSuggestions = [];
+                if (widget.targetExerciseToReplace != null && _query.isEmpty) {
+                  final candidates = filtered
+                      .where((ex) => ex.id != widget.targetExerciseToReplace!.id)
+                      .map((ex) => MapEntry(ex, computeSimilarity(ex)))
+                      .where((entry) => entry.value > 0)
+                      .toList();
+                  candidates.sort((a, b) => b.value.compareTo(a.value));
+                  aiSuggestions.addAll(candidates.take(5).map((e) => e.key));
+                }
+
+                // Sort full catalog list
+                final sorted = List<ExerciseDataDC>.from(filtered);
                 sorted.sort((a, b) {
                   final aSelected = _selectedExercises.contains(a);
                   final bSelected = _selectedExercises.contains(b);
@@ -313,10 +346,9 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   if (!aSelected && bSelected) return 1;
 
                   if (widget.targetExerciseToReplace != null && _query.isEmpty) {
-                    final aMatches = a.primaryMuscles.any((m) => targetMuscles.contains(m));
-                    final bMatches = b.primaryMuscles.any((m) => targetMuscles.contains(m));
-                    if (aMatches && !bMatches) return -1;
-                    if (!aMatches && bMatches) return 1;
+                    final aScore = computeSimilarity(a);
+                    final bScore = computeSimilarity(b);
+                    if (aScore != bScore) return bScore.compareTo(aScore);
                   }
 
                   if (_query.isNotEmpty) {
@@ -355,80 +387,152 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   );
                 }
 
-                return ListView.builder(
-                  itemCount: sorted.length,
-                  itemBuilder: (context, index) {
-                    final ex = sorted[index];
-                    final isSelected = _selectedExercises.any((e) => e.id == ex.id);
+                Widget buildExerciseTile(ExerciseDataDC ex, {bool isAiSuggestion = false}) {
+                  final isSelected = _selectedExercises.any((e) => e.id == ex.id);
 
-                    return Container(
-                      color: isSelected ? theme.colorScheme.primaryContainer.withValues(alpha: 0.24) : null,
-                      child: ListTile(
-                        selected: isSelected,
-                        leading: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: ex.images.isNotEmpty
-                                ? Image.asset(
-                                    'assets/exercise_images/${ex.images.first.replaceAll('/', '_')}',
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Icon(
-                                      Icons.fitness_center,
-                                      color: theme.colorScheme.onPrimaryContainer,
-                                    ),
-                                  )
-                                : Icon(
+                  return Container(
+                    color: isSelected
+                        ? theme.colorScheme.primaryContainer.withValues(alpha: 0.24)
+                        : (isAiSuggestion ? theme.colorScheme.primaryContainer.withValues(alpha: 0.08) : null),
+                    child: ListTile(
+                      selected: isSelected,
+                      leading: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: ex.images.isNotEmpty
+                              ? Image.asset(
+                                  'assets/exercise_images/${ex.images.first.replaceAll('/', '_')}',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) => Icon(
                                     Icons.fitness_center,
                                     color: theme.colorScheme.onPrimaryContainer,
                                   ),
-                          ),
+                                )
+                              : Icon(
+                                  Icons.fitness_center,
+                                  color: theme.colorScheme.onPrimaryContainer,
+                                ),
                         ),
-                        title: Text(
-                          ex.name,
-                          style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '${ex.category.name} • ${ex.equipment?.name ?? "No Equipment"}',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        trailing: widget.isSelectionMode
-                            ? (widget.addExercises
-                                ? Checkbox(
-                                    value: isSelected,
-                                    onChanged: (val) {
-                                      setState(() {
-                                        if (val == true) {
-                                          _selectedExercises.add(ex);
-                                        } else {
-                                          _selectedExercises.removeWhere((e) => e.id == ex.id);
-                                        }
-                                      });
-                                    },
-                                  )
-                                : IconButton(
-                                    icon: const Icon(Icons.check),
-                                    onPressed: () {
-                                      Navigator.pop(context, [ex]);
-                                    },
-                                  ))
-                            : null,
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/exercises/info',
-                            arguments: ex.id,
-                          );
-                        },
                       ),
-                    );
+                      title: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              ex.name,
+                              style: TextStyle(
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                              ),
+                            ),
+                          ),
+                          if (isAiSuggestion)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(Icons.auto_awesome, size: 12, color: theme.colorScheme.primary),
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'AI MATCH',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      subtitle: Text(
+                        '${ex.category.name} • ${ex.equipment?.name ?? "No Equipment"} • ${ex.primaryMuscles.map((m) => m.name).join(', ')}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      trailing: widget.isSelectionMode
+                          ? (widget.addExercises
+                              ? Checkbox(
+                                  value: isSelected,
+                                  onChanged: (val) {
+                                    setState(() {
+                                      if (val == true) {
+                                        _selectedExercises.add(ex);
+                                      } else {
+                                        _selectedExercises.removeWhere((e) => e.id == ex.id);
+                                      }
+                                    });
+                                  },
+                                )
+                              : IconButton(
+                                  icon: const Icon(Icons.check),
+                                  onPressed: () {
+                                    Navigator.pop(context, [ex]);
+                                  },
+                                ))
+                          : null,
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/exercises/info',
+                          arguments: ex.id,
+                        );
+                      },
+                    ),
+                  );
+                }
+
+                if (aiSuggestions.isNotEmpty) {
+                  return ListView(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                        child: Row(
+                          children: [
+                            Icon(Icons.auto_awesome, size: 18, color: theme.colorScheme.primary),
+                            const SizedBox(width: 8),
+                            Text(
+                              'AI SUGGESTIONS (SIMILAR MUSCLES)',
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      ...aiSuggestions.map((ex) => buildExerciseTile(ex, isAiSuggestion: true)),
+                      const Divider(height: 24),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                        child: Text(
+                          'ALL EXERCISES',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      ...sorted.map((ex) => buildExerciseTile(ex, isAiSuggestion: false)),
+                    ],
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: sorted.length,
+                  itemBuilder: (context, index) {
+                    return buildExerciseTile(sorted[index], isAiSuggestion: false);
                   },
                 );
               },

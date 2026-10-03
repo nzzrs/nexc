@@ -41,6 +41,28 @@ void main() {
       expect(enabled, isNot(contains('Stats secret')));
     });
 
+    test('assembleWorkoutAiPrompt respects granular privacy boolean toggles', () {
+      final prompt = AIService.assembleWorkoutAiPrompt(
+        aiWorkoutGenerationEnabled: true,
+        aiAllowUserPreferences: false,
+        userPreferences: 'Private preference note',
+        aiAllowMealHistory: true,
+        mealHistorySummary: 'Oatmeal and chicken breast',
+        aiAllowWorkoutHistory: false,
+        workoutHistorySummary: 'Bench press 100kg',
+        aiAllowUserStats: true,
+        statisticsSummary: 'Volume 12000kg, 4-week streak',
+        aiAllowMeasurements: false,
+        measurementsSummary: 'Weight 80kg, Body fat 15%',
+      );
+
+      expect(prompt, contains('Oatmeal and chicken breast'));
+      expect(prompt, contains('Volume 12000kg, 4-week streak'));
+      expect(prompt, isNot(contains('Private preference note')));
+      expect(prompt, isNot(contains('Bench press 100kg')));
+      expect(prompt, isNot(contains('Weight 80kg')));
+    });
+
     test('reorderMachineBusy moves busy exercise to the end of routine', () {
       final reordered = AIService.reorderMachineBusy(busyIndex: 1, totalExercises: 4);
       // original [0, 1, 2, 3] -> remove 1 -> [0, 2, 3] -> push 1 -> [0, 2, 3, 1]

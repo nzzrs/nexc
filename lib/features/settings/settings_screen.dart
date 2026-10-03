@@ -314,7 +314,76 @@ class SettingsScreen extends ConsumerWidget {
             onClick: () => notifier.setEnableAiProductCreation(!settings.enableAiProductCreation),
           ),
 
-          if (settings.enableAiStockLogging || settings.enableAiProductCreation) ...[
+          // Workout AI Generator
+          _buildSectionHeader(context, 'AI Features & Privacy'),
+          _SettingItem(
+            settingName: 'AI Workout Creator',
+            settingDesc: settings.aiWorkoutGenerationEnabled
+                ? 'AI assisted workout generation enabled'
+                : 'AI assisted workout generation disabled',
+            icon: Icons.fitness_center_outlined,
+            isChecked: settings.aiWorkoutGenerationEnabled,
+            onClick: () => notifier.setAiWorkoutGenerationEnabled(!settings.aiWorkoutGenerationEnabled),
+          ),
+          if (settings.aiWorkoutGenerationEnabled) ...[
+            Padding(
+              padding: const EdgeInsets.only(left: 12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SettingItem(
+                    settingName: 'Include User Statistics',
+                    settingDesc: settings.aiAllowUserStats
+                        ? 'Workout volume, streak & metrics shared'
+                        : 'User statistics hidden from AI',
+                    icon: Icons.query_stats_outlined,
+                    isChecked: settings.aiAllowUserStats,
+                    onClick: () => notifier.setAiAllowUserStats(!settings.aiAllowUserStats),
+                  ),
+                  _SettingItem(
+                    settingName: 'Include Meal History',
+                    settingDesc: settings.aiAllowMealHistory
+                        ? 'Recent nutrition & logged meals shared'
+                        : 'Meal history hidden from AI',
+                    icon: Icons.restaurant_menu_outlined,
+                    isChecked: settings.aiAllowMealHistory,
+                    onClick: () => notifier.setAiAllowMealHistory(!settings.aiAllowMealHistory),
+                  ),
+                  _SettingItem(
+                    settingName: 'Include Workout History',
+                    settingDesc: settings.aiAllowWorkoutHistory
+                        ? 'Completed workouts & routine records shared'
+                        : 'Workout history hidden from AI',
+                    icon: Icons.history_outlined,
+                    isChecked: settings.aiAllowWorkoutHistory,
+                    onClick: () => notifier.setAiAllowWorkoutHistory(!settings.aiAllowWorkoutHistory),
+                  ),
+                  _SettingItem(
+                    settingName: 'Include User Preferences',
+                    settingDesc: settings.aiAllowUserPreferences
+                        ? 'Equipment & personal training notes shared'
+                        : 'User preferences hidden from AI',
+                    icon: Icons.person_pin_outlined,
+                    isChecked: settings.aiAllowUserPreferences,
+                    onClick: () => notifier.setAiAllowUserPreferences(!settings.aiAllowUserPreferences),
+                  ),
+                  _SettingItem(
+                    settingName: 'Include Measurements',
+                    settingDesc: settings.aiAllowMeasurements
+                        ? 'Weight & body measurements shared'
+                        : 'Measurements hidden from AI',
+                    icon: Icons.straighten_outlined,
+                    isChecked: settings.aiAllowMeasurements,
+                    onClick: () => notifier.setAiAllowMeasurements(!settings.aiAllowMeasurements),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          if (settings.enableAiStockLogging ||
+              settings.enableAiProductCreation ||
+              settings.aiWorkoutGenerationEnabled) ...[
             const SizedBox(height: 8),
             Card(
               elevation: 0,

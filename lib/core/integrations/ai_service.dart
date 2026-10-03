@@ -563,6 +563,35 @@ class AIService {
     return buffer.toString();
   }
 
+  /// Helper to assemble payload respecting all privacy flags
+  static String assembleWorkoutAiPrompt({
+    required bool aiWorkoutGenerationEnabled,
+    required bool aiAllowUserPreferences,
+    required String userPreferences,
+    required bool aiAllowMealHistory,
+    String? mealHistorySummary,
+    required bool aiAllowWorkoutHistory,
+    String? workoutHistorySummary,
+    required bool aiAllowUserStats,
+    String? statisticsSummary,
+    required bool aiAllowMeasurements,
+    String? measurementsSummary,
+  }) {
+    return buildUserContextPrompt(
+      enableAiAssistant: aiWorkoutGenerationEnabled,
+      enablePreferences: aiAllowUserPreferences,
+      userPreferences: userPreferences,
+      allowMealHistory: aiAllowMealHistory,
+      mealHistorySummary: mealHistorySummary,
+      allowWorkoutHistory: aiAllowWorkoutHistory,
+      workoutHistorySummary: workoutHistorySummary,
+      allowStatistics: aiAllowUserStats,
+      statisticsSummary: statisticsSummary,
+      allowMeasurements: aiAllowMeasurements,
+      measurementsSummary: measurementsSummary,
+    );
+  }
+
   /// AI Exercise Replacement by Muscle Group Similarity
   /// Reorders or suggests exercises that match primary/secondary muscle targets.
   static Future<List<String>> getReplacementSuggestions({
@@ -576,7 +605,11 @@ class AIService {
     // Local similarity algorithm as fast & reliable offline-first fallback
     final sortedByMuscleMatch = List<Map<String, dynamic>>.from(availableExercises);
 
-    sortedByMuscleMatch.sort((a, b) => (b['commonMuscles'] as int).compareTo(a['commonMuscles'] as int));
+    sortedByMuscleMatch.sort((a, b) {
+      final scoreA = (a['commonMuscles'] as num?)?.toInt() ?? 0;
+      final scoreB = (b['commonMuscles'] as num?)?.toInt() ?? 0;
+      return scoreB.compareTo(scoreA);
+    });
 
     final localFallbackIds = sortedByMuscleMatch
         .where((e) => e['name'] != targetExerciseName)
@@ -613,6 +646,36 @@ class AIService {
           final text = data['candidates'][0]['content']['parts'][0]['text'] as String;
           final List<dynamic> ids = jsonDecode(text);
           return ids.map((e) => e.toString()).toList();
+        }
+      } else {
+        // OpenRouter
+        final defaultModel = model.isEmpty ? 'google/gemini-2.5-flash' : model;
+        final url = Uri.parse('https://openrouter.ai/api/v1/chat/completions');
+        final response = await http.post(
+          url,
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": "Bearer $apiKey",
+          },
+          body: jsonEncode({
+            "model": defaultModel,
+            "messages": [
+              {"role": "user", "content": prompt}
+            ],
+            "response_format": {
+              "type": "json_object",
+            }
+          }),
+        );
+        if (response.statusCode == 200) {
+          final data = jsonDecode(response.body);
+          final text = data['choices'][0]['message']['content'] as String;
+          final parsed = jsonDecode(text);
+          if (parsed is List) {
+            return parsed.map((e) => e.toString()).toList();
+          } else if (parsed is Map && parsed.values.first is List) {
+            return (parsed.values.first as List).map((e) => e.toString()).toList();
+          }
         }
       }
     } catch (_) {}

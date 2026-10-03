@@ -466,7 +466,10 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
                     final result = await Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const ExercisesScreen(addExercises: false),
+                        builder: (context) => ExercisesScreen(
+                          addExercises: false,
+                          targetExerciseToReplace: _exercises[index].exerciseDC,
+                        ),
                       ),
                     );
                     if (result != null && result is List<ExerciseDataDC> && result.isNotEmpty) {

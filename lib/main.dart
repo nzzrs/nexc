@@ -36,6 +36,8 @@ import 'features/workout/info_workout_screen.dart';
 import 'features/profile/personal_info_screen.dart';
 import 'features/settings/measurements_settings_screen.dart';
 import 'features/workout/workout_ai_chat_screen.dart';
+import 'features/profile/all_workouts_history_screen.dart';
+import 'features/profile/all_meals_history_screen.dart';
 
 import 'core/db/workout_repository.dart';
 import 'core/db/meal_repository.dart';
@@ -135,6 +137,8 @@ class MyApp extends ConsumerWidget {
             '/biometrics': (context) => const BiometricsScreen(),
             '/profile/personal-info': (context) => const PersonalInfoScreen(),
             '/profile/stock': (context) => const StockScreen(),
+            '/profile/all-workouts': (context) => const AllWorkoutsHistoryScreen(),
+            '/profile/all-meals': (context) => const AllMealsHistoryScreen(),
             '/pantry': (context) => const PantryScreen(),
             '/settings/measurements': (context) => const MeasurementsSettingsScreen(),
           },

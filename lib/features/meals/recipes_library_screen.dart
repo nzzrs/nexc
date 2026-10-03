@@ -208,8 +208,8 @@ class RecipeCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: recipe.isPortable
-                                ? theme.colorScheme.primaryContainer.withOpacity(0.5)
-                                : theme.colorScheme.errorContainer.withOpacity(0.5),
+                                ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
+                                : theme.colorScheme.errorContainer.withValues(alpha: 0.5),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
@@ -268,7 +268,7 @@ class RecipeCard extends StatelessWidget {
   }
 }
 
-class AddEditRecipeDialog extends StatefulWidget {
+class AddEditRecipeDialog extends ConsumerStatefulWidget {
   final RecipeWithIngredients recipeWithIngredients;
   final List<Product> products;
   final VoidCallback onDismiss;
@@ -283,10 +283,10 @@ class AddEditRecipeDialog extends StatefulWidget {
   });
 
   @override
-  State<AddEditRecipeDialog> createState() => _AddEditRecipeDialogState();
+  ConsumerState<AddEditRecipeDialog> createState() => _AddEditRecipeDialogState();
 }
 
-class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
+class _AddEditRecipeDialogState extends ConsumerState<AddEditRecipeDialog> {
   late TextEditingController _nameController;
   late TextEditingController _instructionsController;
   late bool _isPortable;
@@ -319,9 +319,14 @@ class _AddEditRecipeDialogState extends State<AddEditRecipeDialog> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final filteredProducts = _searchQuery.isEmpty
-        ? widget.products
-        : widget.products.searchAndSort(_searchQuery);
+    final usageCounts = ref.watch(productUsageCountsProvider).value;
+    final inStockProductIds = ref.watch(inStockProductIdsProvider).value;
+    
+    final filteredProducts = widget.products.searchAndSort(
+      _searchQuery,
+      usageCounts: usageCounts,
+      inStockProductIds: inStockProductIds,
+    );
 
     return AlertDialog(
       title: Text(widget.recipeWithIngredients.recipe.id == 0 ? "Add Recipe" : "Edit Recipe"),

@@ -6,9 +6,59 @@
 import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
+import '../../core/providers/settings_provider.dart';
 
-class WorkoutSummaryScreen extends StatefulWidget {
+String _formatSummaryDuration(int seconds) {
+  final m = (seconds ~/ 60).toString().padLeft(2, '0');
+  final s = (seconds % 60).toString().padLeft(2, '0');
+  return '$m:$s';
+}
+
+String formatWorkoutSummaryText(
+  WorkoutWithExercisesAndSets workoutData, {
+  IntensityScale intensityScale = IntensityScale.both,
+}) {
+  final title = workoutData.workout.title;
+  final duration = _formatSummaryDuration(workoutData.workout.timeElapsed);
+  final volume = workoutData.exercisesWithSets.fold(0.0, (sum, item) {
+    return sum + item.sets.fold(0.0, (sSum, s) => sSum + (s.completed ? s.load * s.reps : 0.0));
+  });
+  final completedSets = workoutData.exercisesWithSets.fold(0, (sum, item) {
+    return sum + item.sets.where((s) => s.completed).length;
+  });
+  final totalSets = workoutData.exercisesWithSets.fold(0, (sum, item) => sum + item.sets.length);
+
+  final buffer = StringBuffer();
+  buffer.writeln('Workout Summary: $title');
+  buffer.writeln('Duration: $duration');
+  buffer.writeln('Total Volume: ${volume.toStringAsFixed(1)} kg');
+  buffer.writeln('Completed Sets: $completedSets/$totalSets');
+  buffer.writeln();
+  buffer.writeln('Exercises:');
+
+  final showRpe = intensityScale == IntensityScale.rpe || intensityScale == IntensityScale.both;
+  final showRir = intensityScale == IntensityScale.rir || intensityScale == IntensityScale.both;
+
+  for (final ex in workoutData.exercisesWithSets) {
+    final restMin = ex.exercise.restTime ~/ 60;
+    final restSec = ex.exercise.restTime % 60;
+    final restStr = restMin > 0 ? '${restMin}m ${restSec}s' : '${restSec}s';
+    buffer.writeln('- ${ex.exerciseDC.name} (Rest: $restStr):');
+    for (int i = 0; i < ex.sets.length; i++) {
+      final s = ex.sets[i];
+      final status = s.completed ? 'Done' : 'Incomplete';
+      final rpeStr = (showRpe && s.rpe != null) ? ', RPE ${s.rpe.toString().replaceAll(RegExp(r'\.0$'), '')}' : '';
+      final rirStr = (showRir && s.rir != null) ? ', RIR ${s.rir}' : '';
+      buffer.writeln('  Set ${i + 1}: ${s.load.toStringAsFixed(1)} kg x ${s.reps} reps ($status$rpeStr$rirStr)');
+    }
+  }
+  return buffer.toString();
+}
+
+class WorkoutSummaryScreen extends ConsumerStatefulWidget {
   final WorkoutWithExercisesAndSets workoutData;
 
   const WorkoutSummaryScreen({
@@ -17,10 +67,10 @@ class WorkoutSummaryScreen extends StatefulWidget {
   });
 
   @override
-  State<WorkoutSummaryScreen> createState() => _WorkoutSummaryScreenState();
+  ConsumerState<WorkoutSummaryScreen> createState() => _WorkoutSummaryScreenState();
 }
 
-class _WorkoutSummaryScreenState extends State<WorkoutSummaryScreen> with SingleTickerProviderStateMixin {
+class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   final List<_ConfettiParticle> _particles = [];
   final Random _random = Random();
@@ -84,35 +134,6 @@ class _WorkoutSummaryScreenState extends State<WorkoutSummaryScreen> with Single
 
   int _totalSets() {
     return widget.workoutData.exercisesWithSets.fold(0, (sum, item) => sum + item.sets.length);
-  }
-
-  String _getDetailedSummaryText() {
-    final title = widget.workoutData.workout.title;
-    final duration = _formatDuration(widget.workoutData.workout.timeElapsed);
-    final volume = _calculateTotalVolume();
-    final completedSets = _totalCompletedSets();
-    final totalSets = _totalSets();
-
-    final buffer = StringBuffer();
-    buffer.writeln('Workout Summary: $title');
-    buffer.writeln('Duration: $duration');
-    buffer.writeln('Total Volume: ${volume.toStringAsFixed(1)} kg');
-    buffer.writeln('Completed Sets: $completedSets/$totalSets');
-    buffer.writeln();
-    buffer.writeln('Exercises:');
-
-    for (final ex in widget.workoutData.exercisesWithSets) {
-      final restMin = ex.exercise.restTime ~/ 60;
-      final restSec = ex.exercise.restTime % 60;
-      final restStr = restMin > 0 ? '${restMin}m ${restSec}s' : '${restSec}s';
-      buffer.writeln('- ${ex.exerciseDC.name} (Rest: $restStr):');
-      for (int i = 0; i < ex.sets.length; i++) {
-        final s = ex.sets[i];
-        final status = s.completed ? 'Done' : 'Incomplete';
-        buffer.writeln('  Set ${i + 1}: ${s.load.toStringAsFixed(1)} kg x ${s.reps} reps ($status${s.rpe != null ? ', RPE ${s.rpe}' : ''})');
-      }
-    }
-    return buffer.toString();
   }
 
   @override
@@ -322,7 +343,7 @@ class _WorkoutSummaryScreenState extends State<WorkoutSummaryScreen> with Single
                                     Text(
                                       '${s.load.toStringAsFixed(1)} kg x ${s.reps}',
                                       style: TextStyle(
-                                        color: s.completed ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                                        color: s.completed ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                                         fontWeight: s.completed ? FontWeight.normal : FontWeight.w300,
                                         decoration: s.completed ? null : TextDecoration.lineThrough,
                                       ),
@@ -346,7 +367,10 @@ class _WorkoutSummaryScreenState extends State<WorkoutSummaryScreen> with Single
                   // Copy & Close Actions
                   FilledButton.icon(
                     onPressed: () {
-                      Clipboard.setData(ClipboardData(text: _getDetailedSummaryText()));
+                      final settings = ref.read(settingsProvider);
+                      Clipboard.setData(ClipboardData(
+                        text: formatWorkoutSummaryText(widget.workoutData, intensityScale: settings.intensityScale),
+                      ));
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(content: Text('Detailed summary copied to clipboard')),
                       );

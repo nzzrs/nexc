@@ -34,7 +34,7 @@ class BodyHeatmap extends StatelessWidget {
           padding: const EdgeInsets.all(8.0),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            color: theme.colorScheme.surfaceVariant.withOpacity(0.15),
+            color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.15),
           ),
           child: Row(
             children: [
@@ -110,11 +110,11 @@ class BodyOutlinePainter extends CustomPainter {
   Color _getHeatColor(Muscle muscle) {
     final intensity = intensities[muscle] ?? 0.0;
     if (intensity == 0.0) {
-      return isDark ? Colors.white.withOpacity(0.08) : Colors.black.withOpacity(0.06);
+      return isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.06);
     }
     // Color scale: Primary color at different opacities or HSL gradient
     return Color.lerp(
-      theme.colorScheme.primary.withOpacity(0.2),
+      theme.colorScheme.primary.withValues(alpha: 0.2),
       theme.colorScheme.primary,
       intensity,
     )!;
@@ -141,16 +141,14 @@ class BodyOutlinePainter extends CustomPainter {
     final double scaleY = size.height / 200;
 
     Path scalePath(Path path) {
-      return path.transform(Matrix4.identity()
-          .scaled(scaleX, scaleY)
-          .storage);
+      return path.transform(Matrix4.diagonal3Values(scaleX, scaleY, 1.0).storage);
     }
 
     if (isFront) {
       // Draw Head outline (aesthetic only)
       final head = scalePath(Path()
         ..addOval(const Rect.fromLTWH(42, 10, 16, 20)));
-      canvas.drawPath(head, Paint()..color = _getOutlineColor().withOpacity(0.1));
+      canvas.drawPath(head, Paint()..color = _getOutlineColor().withValues(alpha: 0.1));
       canvas.drawPath(head, outlinePaint);
 
       // Neck (Front)
@@ -292,7 +290,7 @@ class BodyOutlinePainter extends CustomPainter {
       // Draw Head outline (aesthetic only)
       final head = scalePath(Path()
         ..addOval(const Rect.fromLTWH(42, 10, 16, 20)));
-      canvas.drawPath(head, Paint()..color = _getOutlineColor().withOpacity(0.1));
+      canvas.drawPath(head, Paint()..color = _getOutlineColor().withValues(alpha: 0.1));
       canvas.drawPath(head, outlinePaint);
 
       // Neck (Back)

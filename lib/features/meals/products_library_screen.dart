@@ -16,6 +16,8 @@ import '../../core/components/nexc_scaffold.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/integrations/ai_service.dart';
 
+import 'edit_product_screen.dart';
+
 class ProductsLibraryScreen extends ConsumerStatefulWidget {
   const ProductsLibraryScreen({super.key});
 
@@ -27,16 +29,15 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
   String _searchQuery = "";
 
   void _showAddEditProduct(BuildContext context, Product product) {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => AddEditProductDialog(
-        product: product,
-        onDismiss: () => Navigator.pop(context),
-        onConfirm: (editedProduct) {
-          ref.read(mealRepositoryProvider).saveProduct(editedProduct);
-          Navigator.pop(context);
-        },
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => EditProductScreen(
+          product: product,
+          onConfirm: (editedProduct) {
+            ref.read(mealRepositoryProvider).saveProduct(editedProduct);
+          },
+        ),
       ),
     );
   }
@@ -68,11 +69,17 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
       fabIcon: const Icon(Icons.add),
       fabText: "Add Product",
       content: (context, padding) {
+        final usageCounts = ref.watch(productUsageCountsProvider).value;
+        final inStockProductIds = ref.watch(inStockProductIdsProvider).value;
         return productsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) => Center(child: Text("Error: $err")),
           data: (products) {
-            final filteredProducts = _searchQuery.isEmpty ? products : products.searchAndSort(_searchQuery);
+            final filteredProducts = products.searchAndSort(
+              _searchQuery,
+              usageCounts: usageCounts,
+              inStockProductIds: inStockProductIds,
+            );
 
             return Column(
               children: [
@@ -190,8 +197,8 @@ class ProductCard extends StatelessWidget {
                               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                               decoration: BoxDecoration(
                                 color: product.isPortable
-                                    ? theme.colorScheme.primaryContainer.withOpacity(0.5)
-                                    : theme.colorScheme.errorContainer.withOpacity(0.5),
+                                    ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
+                                    : theme.colorScheme.errorContainer.withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -210,7 +217,7 @@ class ProductCard extends StatelessWidget {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.tertiaryContainer.withOpacity(0.5),
+                                  color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
@@ -451,7 +458,7 @@ class _AddEditProductDialogState extends ConsumerState<AddEditProductDialog> {
                 children: [
                   Expanded(
                     child: DropdownButtonFormField<String>(
-                      value: _selectedDefaultUnit,
+                      initialValue: _selectedDefaultUnit,
                       decoration: const InputDecoration(
                         labelText: "Default Units",
                         border: OutlineInputBorder(),

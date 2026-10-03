@@ -36,7 +36,7 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
   WorkoutWithExercisesAndSets? _linkedRoutineData;
   List<WorkoutWithExercisesAndSets> _completedWorkoutsForChart = [];
   double _volume = 0.0;
-  WorkoutChart _chartMode = WorkoutChart.DURATION;
+  WorkoutChart _chartMode = WorkoutChart.duration;
   List<Point> _chartPoints = [];
 
   @override
@@ -112,10 +112,10 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
 
       double yVal = 0.0;
       switch (_chartMode) {
-        case WorkoutChart.DURATION:
+        case WorkoutChart.duration:
           yVal = w.workout.timeElapsed / 60.0;
           break;
-        case WorkoutChart.VOLUME:
+        case WorkoutChart.volume:
           double totalVol = 0.0;
           for (final exe in w.exercisesWithSets) {
             final includeBodyweight = exe.exercise.setMode == SetMode.BODYWEIGHT ||
@@ -128,7 +128,7 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
           }
           yVal = totalVol;
           break;
-        case WorkoutChart.REPS:
+        case WorkoutChart.reps:
           int totalReps = 0;
           for (final exe in w.exercisesWithSets) {
             for (final set in exe.sets) {
@@ -315,10 +315,10 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
               const SizedBox(height: 16),
               NexcCartesianChart(
                 points: _chartPoints,
-                decimalCount: _chartMode == WorkoutChart.DURATION ? 0 : 2,
-                suffix: _chartMode == WorkoutChart.DURATION
+                decimalCount: _chartMode == WorkoutChart.duration ? 0 : 2,
+                suffix: _chartMode == WorkoutChart.duration
                     ? "m"
-                    : _chartMode == WorkoutChart.VOLUME
+                    : _chartMode == WorkoutChart.volume
                         ? "kg"
                         : "",
                 chartMode: _chartMode,

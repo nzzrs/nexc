@@ -29,21 +29,23 @@ class SettingsScreen extends ConsumerWidget {
         return AlertDialog(
           title: Text(title),
           content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: options.map((option) {
-                return RadioListTile<T>(
-                  title: Text(labelBuilder(option)),
-                  value: option,
-                  groupValue: selectedValue,
-                  onChanged: (value) {
-                    if (value != null) {
-                      onSelected(value);
-                      Navigator.pop(context);
-                    }
-                  },
-                );
-              }).toList(),
+            child: RadioGroup<T>(
+              groupValue: selectedValue,
+              onChanged: (value) {
+                if (value != null) {
+                  onSelected(value);
+                  Navigator.pop(context);
+                }
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: options.map((option) {
+                  return RadioListTile<T>(
+                    title: Text(labelBuilder(option)),
+                    value: option,
+                  );
+                }).toList(),
+              ),
             ),
           ),
           actions: [
@@ -257,6 +259,31 @@ class SettingsScreen extends ConsumerWidget {
             isChecked: settings.enableMealTracking,
             onClick: () => notifier.setEnableMealTracking(!settings.enableMealTracking),
           ),
+          if (settings.enableMealTracking) ...[
+            _SettingItem(
+              settingName: 'Day start hour',
+              settingDesc: 'New day starts at ${settings.dayStartHour.toString().padLeft(2, '0')}:00 (resets daily macros)',
+              icon: Icons.access_time,
+              onClick: () async {
+                final picked = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay(hour: settings.dayStartHour, minute: 0),
+                );
+                if (picked != null) {
+                  notifier.setDayStartHour(picked.hour);
+                }
+              },
+            ),
+            _SettingItem(
+              settingName: 'Default macros override plans',
+              settingDesc: settings.defaultMacrosOverrideMealPlan
+                  ? 'Default target macros always override meal plan targets'
+                  : 'Meal plan targets take precedence when available',
+              icon: Icons.lock_outline,
+              isChecked: settings.defaultMacrosOverrideMealPlan,
+              onClick: () => notifier.setDefaultMacrosOverrideMealPlan(!settings.defaultMacrosOverrideMealPlan),
+            ),
+          ],
           _SettingItem(
             settingName: 'Stock Tracking',
             settingDesc: !settings.enableMealTracking
@@ -291,7 +318,7 @@ class SettingsScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             Card(
               elevation: 0,
-              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -304,7 +331,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: settings.aiProvider,
+                      initialValue: settings.aiProvider,
                       decoration: const InputDecoration(
                         labelText: 'API Provider',
                         border: OutlineInputBorder(),
@@ -393,7 +420,7 @@ class _SettingItem extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.0),
         ),
-        color: theme.colorScheme.surfaceVariant.withOpacity(enabled ? 0.3 : 0.1),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: enabled ? 0.3 : 0.1),
         child: InkWell(
           borderRadius: BorderRadius.circular(16.0),
           onTap: enabled ? onClick : null,

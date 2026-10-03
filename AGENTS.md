@@ -22,3 +22,8 @@ Off: "stop caveman" / "normal mode".
 ## Boundaries
 Code, commits, and PRs: normal prose allowed if necessary, but keep it tight.
 Security warnings and destructive confirmations: use normal grammar for clarity.
+
+# Rules
+
+- Before finishing a task, execute `flutter analyze`
+- Execute unit tests with `flutter test`

@@ -86,7 +86,7 @@ class _LinearWavyProgressIndicatorInternalState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final activeColor = widget.color ?? theme.colorScheme.primary;
-    final inactiveColor = widget.backgroundColor ?? theme.colorScheme.surfaceVariant;
+    final inactiveColor = widget.backgroundColor ?? theme.colorScheme.surfaceContainerHighest;
 
     return AnimatedBuilder(
       animation: _controller,
@@ -230,7 +230,6 @@ class _CircularWavyProgressIndicatorInternal extends StatefulWidget {
   final int waveCount;
 
   const _CircularWavyProgressIndicatorInternal({
-    super.key,
     required this.value,
     this.color,
     this.backgroundColor,
@@ -268,7 +267,7 @@ class _CircularWavyProgressIndicatorInternalState
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final activeColor = widget.color ?? theme.colorScheme.primary;
-    final inactiveColor = widget.backgroundColor ?? theme.colorScheme.surfaceVariant;
+    final inactiveColor = widget.backgroundColor ?? theme.colorScheme.surfaceContainerHighest;
 
     return AnimatedBuilder(
       animation: _controller,

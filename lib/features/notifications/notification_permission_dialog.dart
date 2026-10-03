@@ -7,6 +7,7 @@
  * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
  */
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -14,6 +15,7 @@ class NotificationPermissionDialog extends StatelessWidget {
   const NotificationPermissionDialog({super.key});
 
   static Future<void> showIfNeeded(BuildContext context) async {
+    if (kIsWeb) return;
     final status = await Permission.notification.status;
     if (status.isDenied || status.isPermanentlyDenied) {
       if (context.mounted) {

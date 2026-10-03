@@ -26,8 +26,30 @@ class ProfileScreen extends ConsumerStatefulWidget {
 }
 
 class _ProfileScreenState extends ConsumerState<ProfileScreen> {
+  late TextEditingController _preferencesController;
+
+  @override
+  void initState() {
+    super.initState();
+    _preferencesController = TextEditingController(
+      text: ref.read(settingsProvider).userPreferences,
+    );
+  }
+
+  @override
+  void dispose() {
+    _preferencesController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
+    ref.listen<SettingsState>(settingsProvider, (prev, next) {
+      if (prev?.userPreferences != next.userPreferences &&
+          _preferencesController.text != next.userPreferences) {
+        _preferencesController.text = next.userPreferences;
+      }
+    });
     final theme = Theme.of(context);
     final weekStreak = ref.watch(profileWeekStreakProvider);
     final workoutsAsync = ref.watch(completedWorkoutsProvider);
@@ -171,9 +193,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         const SizedBox(height: 24),
         // Your Workouts Section
-        Text(
-          "Your workouts",
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Your workouts",
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            workoutsAsync.maybeWhen(
+              data: (workouts) => workouts.length > 5
+                  ? TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/profile/all-workouts');
+                      },
+                      child: const Text("View all"),
+                    )
+                  : const SizedBox.shrink(),
+              orElse: () => const SizedBox.shrink(),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         workoutsAsync.when(
@@ -198,8 +236,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               );
             }
 
+            final displayed = workouts.take(5).toList();
             return Column(
-              children: workouts.map((w) {
+              children: displayed.map((w) {
                 final durationStr = '${(w.workout.timeElapsed ~/ 60)} min';
                 final dateStr =
                     "${w.workout.completed.month}/${w.workout.completed.day}/${w.workout.completed.year}";
@@ -221,9 +260,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         if (settings.enableMealTracking) ...[
           const SizedBox(height: 24),
           // Your Meals Section
-          Text(
-            "Your meals",
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Your meals",
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              mealLogsAsync.maybeWhen(
+                data: (logs) => logs.length > 5
+                    ? TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/profile/all-meals');
+                        },
+                        child: const Text("View all"),
+                      )
+                    : const SizedBox.shrink(),
+                orElse: () => const SizedBox.shrink(),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           mealLogsAsync.when(
@@ -248,8 +303,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 );
               }
 
+              final displayed = logs.take(5).toList();
               return Column(
-                children: logs.map((planWithMeals) {
+                children: displayed.map((planWithMeals) {
                   final plan = planWithMeals.mealPlan;
                   final meals = planWithMeals.meals;
 
@@ -356,6 +412,60 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             },
           ),
         ],
+        const SizedBox(height: 24),
+        // User Preferences Section
+        Card(
+          child: Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            "User Preferences",
+                            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            "AI uses this context to tailor workouts and meal plans",
+                            style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Switch(
+                      value: settings.enableUserPreferences,
+                      onChanged: (val) {
+                        ref.read(settingsProvider.notifier).setEnableUserPreferences(val);
+                      },
+                    ),
+                  ],
+                ),
+                if (settings.enableUserPreferences) ...[
+                  const SizedBox(height: 12),
+                  TextField(
+                    controller: _preferencesController,
+                    minLines: 4,
+                    maxLines: 12,
+                    decoration: const InputDecoration(
+                      hintText: "Paste or write your detailed preferences, schedule constraints, fitness goals, or dietary requirements here...",
+                      border: OutlineInputBorder(),
+                    ),
+                    onChanged: (val) {
+                      ref.read(settingsProvider.notifier).setUserPreferences(val);
+                    },
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }

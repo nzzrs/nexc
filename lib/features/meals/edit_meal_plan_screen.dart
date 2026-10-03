@@ -12,7 +12,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:collection/collection.dart';
 import 'package:drift/drift.dart' show Value;
-import '../../core/db/app_database.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
@@ -214,9 +213,6 @@ class EditMealPlanNotifier extends StateNotifier<MealPlanWithMealsAndItems?> {
     updatedMeals.sort((a, b) {
       final aTime = a.meal.time;
       final bTime = b.meal.time;
-      if (aTime == null && bTime == null) return 0;
-      if (aTime == null) return 1;
-      if (bTime == null) return -1;
       final aMinutes = aTime.hour * 60 + aTime.minute;
       final bMinutes = bTime.hour * 60 + bTime.minute;
       return aMinutes.compareTo(bMinutes);
@@ -252,7 +248,7 @@ void showFloatingToast(BuildContext context, String message) {
               borderRadius: BorderRadius.circular(24),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.2),
+                  color: Colors.black.withValues(alpha: 0.2),
                   blurRadius: 8,
                   offset: const Offset(0, 4),
                 ),
@@ -310,7 +306,9 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
       final initM = _initialPlan!.meals[i];
       if (curM.meal.name != initM.meal.name) return true;
       if (curM.meal.time.hour != initM.meal.time.hour ||
-          curM.meal.time.minute != initM.meal.time.minute) return true;
+          curM.meal.time.minute != initM.meal.time.minute) {
+        return true;
+      }
       if (curM.items.length != initM.items.length) return true;
       for (int j = 0; j < curM.items.length; j++) {
         final curIt = curM.items[j].mealItem;
@@ -358,12 +356,9 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
       }
     }
 
-    if (_initialPlan == null) {
-      // Store initial plan on first load
-      _initialPlan = plan;
-    }
+    _initialPlan ??= plan;
 
-    Future<void> _handlePop() async {
+    Future<void> handlePop() async {
       if (!_hasChanges(plan)) {
         Navigator.pop(context);
         return;
@@ -391,18 +386,19 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
         },
       );
 
+      if (!context.mounted) return;
       if (confirmed == 'discard') {
-        if (mounted) {
-          Navigator.pop(context);
-        }
+        Navigator.pop(context);
       } else if (confirmed == 'save') {
         if (plan.mealPlan.title.trim().isEmpty) {
           showFloatingToast(context, "Title cannot be empty");
           return;
         }
         ref.read(editMealPlanProvider(widget.mealPlanId).notifier).save(() {
-          showFloatingToast(context, "Meal plan saved");
-          Navigator.pop(context);
+          if (context.mounted) {
+            showFloatingToast(context, "Meal plan saved");
+            Navigator.pop(context);
+          }
         });
       }
     }
@@ -411,11 +407,11 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop) return;
-        await _handlePop();
+        await handlePop();
       },
       child: NexcScaffold(
         title: Text(isNew ? "Create Meal Plan" : "Edit Meal Plan"),
-        navigateBack: _handlePop,
+        navigateBack: handlePop,
         actions: [
           () {
             ref.read(editMealPlanProvider(widget.mealPlanId).notifier).save(() {
@@ -856,9 +852,9 @@ class MealEditCard extends StatelessWidget {
                                 child: Container(
                                   padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.surfaceVariant,
+                                    color: theme.colorScheme.surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: theme.colorScheme.outline.withOpacity(0.3)),
+                                    border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.3)),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,

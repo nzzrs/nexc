@@ -8,7 +8,6 @@
  */
 
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -23,6 +22,7 @@ import '../../core/providers/meals_providers.dart';
 import '../../core/integrations/ai_service.dart';
 import '../../core/components/nexc_scaffold.dart';
 import '../meals/products_library_screen.dart';
+import '../meals/product_selector_screen.dart';
 import 'package:image_picker/image_picker.dart';
 
 // Providers for Stock Screen State
@@ -44,6 +44,17 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
   final Set<int> _shoppingListInitialized = {};
   final Map<int, double> _shoppingQuantities = {};
   final Map<int, String> _shoppingUnits = {};
+
+  String _formatDouble(double val) {
+    final str = val.toStringAsFixed(2);
+    if (str.endsWith('.00')) {
+      return str.substring(0, str.length - 3);
+    }
+    if (str.endsWith('0')) {
+      return str.substring(0, str.length - 1);
+    }
+    return str;
+  }
 
   @override
   void initState() {
@@ -160,110 +171,25 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
     );
   }
 
-  void _showAddProductToStockDialog(int houseId, List<Product> products) {
-    String query = "";
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setDialogState) {
-          final filtered = query.isEmpty ? products : products.searchAndSort(query);
-          return AlertDialog(
-            title: const Text("Add Product to Stock"),
-            content: SizedBox(
-              width: 400,
-              height: 350,
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: const InputDecoration(
-                            labelText: "Search database...",
-                            prefixIcon: Icon(Icons.search),
-                          ),
-                          onChanged: (val) {
-                            setDialogState(() {
-                              query = val;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton.filledTonal(
-                        icon: const Icon(Icons.add),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (ctx) => AddEditProductDialog(
-                              product: Product(
-                                id: 0,
-                                name: query.trim(),
-                                defaultUnits: "g",
-                                edibleQtyPerUnit: 1.0,
-                                proteins: 0.0,
-                                carbsAvailable: null,
-                                fats: 0.0,
-                                isSupplement: false,
-                                isPortable: true,
-                                isStockRaw: false,
-                              ),
-                              onDismiss: () => Navigator.pop(ctx),
-                              onConfirm: (newProd) async {
-                                final repo = ref.read(stockRepositoryProvider);
-                                final mealRepo = ref.read(mealRepositoryProvider);
-                                final newId = await mealRepo.saveProduct(newProd);
-                                await repo.saveStock(
-                                  productId: newId,
-                                  houseId: houseId,
-                                  quantity: 0.0,
-                                  minTriggerQuantity: null,
-                                );
-                                if (ctx.mounted) Navigator.pop(ctx);
-                                if (context.mounted) Navigator.pop(context);
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        final p = filtered[index];
-                        return ListTile(
-                          title: Text(p.name),
-                          subtitle: Text("Unit: ${p.units}"),
-                          onTap: () async {
-                            final repo = ref.read(stockRepositoryProvider);
-                            await repo.saveStock(
-                              productId: p.id,
-                              houseId: houseId,
-                              quantity: 0.0,
-                              minTriggerQuantity: null,
-                            );
-                            if (context.mounted) Navigator.pop(context);
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Close"),
-              ),
-            ],
-          );
-        },
+  void _showAddProductToStockDialog(int houseId, List<Product> products) async {
+    final selectedProduct = await Navigator.push<Product>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const ProductSelectorScreen(
+          title: "Add Product to Stock",
+        ),
       ),
     );
+
+    if (selectedProduct != null) {
+      final repo = ref.read(stockRepositoryProvider);
+      await repo.saveStock(
+        productId: selectedProduct.id,
+        houseId: houseId,
+        quantity: 0.0,
+        minTriggerQuantity: null,
+      );
+    }
   }
 
   void _showReplaceProductDialog(
@@ -271,117 +197,28 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
     _ReceiptConfirmItem item,
     List<Product> products,
     void Function(void Function()) setDialogState,
-  ) {
-    String search = "";
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setSubState) {
-          final filtered = search.isEmpty ? products : products.searchAndSort(search);
-          return AlertDialog(
-            title: Text("Map '${item.receiptName}' to..."),
-            content: SizedBox(
-              width: 400,
-              height: 350,
-              child: Column(
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          decoration: const InputDecoration(
-                            labelText: "Search database...",
-                            prefixIcon: Icon(Icons.search),
-                          ),
-                          onChanged: (val) {
-                            setSubState(() {
-                              search = val;
-                            });
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton.filledTonal(
-                        icon: const Icon(Icons.add),
-                        onPressed: () {
-                          showDialog(
-                            context: context,
-                            builder: (ctx) => AddEditProductDialog(
-                              product: Product(
-                                id: 0,
-                                name: item.receiptName,
-                                defaultUnits: item.parsedUnit.toLowerCase() == 'l' || item.parsedUnit.toLowerCase() == 'ml' ? 'ml' : 'g',
-                                edibleQtyPerUnit: 1.0,
-                                kcal: 0.0,
-                                proteins: 0.0,
-                                carbsAvailable: 0.0,
-                                fats: 0.0,
-                                isSupplement: false,
-                                isPortable: true,
-                                isStockRaw: false,
-                              ),
-                              onDismiss: () => Navigator.pop(ctx),
-                              onConfirm: (newProd) async {
-                                final repo = ref.read(mealRepositoryProvider);
-                                final newId = await repo.saveProduct(newProd);
-                                final freshProducts = ref.read(allProductsProvider).value ?? [];
-                                final created = freshProducts.firstWhereOrNull((p) => p.id == newId);
-                                if (created != null) {
-                                  // Save relationship mapping
-                                  final stockRepo = ref.read(stockRepositoryProvider);
-                                  await stockRepo.saveReceiptMapping(receiptName: item.receiptName, productId: created.id);
-                                  setDialogState(() {
-                                    item.matchedProduct = created;
-                                    item.matchState = 0; // mapped
-                                  });
-                                }
-                                if (ctx.mounted) Navigator.pop(ctx);
-                                if (context.mounted) Navigator.pop(context);
-                              },
-                            ),
-                          );
-                        },
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 12),
-                  Expanded(
-                    child: ListView.builder(
-                      itemCount: filtered.length,
-                      itemBuilder: (context, index) {
-                        final p = filtered[index];
-                        return ListTile(
-                          title: Text(p.name),
-                          subtitle: Text("Unit: ${p.units}"),
-                          onTap: () async {
-                            final stockRepo = ref.read(stockRepositoryProvider);
-                            await stockRepo.saveReceiptMapping(
-                              receiptName: item.receiptName,
-                              productId: p.id,
-                            );
-                            setDialogState(() {
-                              item.matchedProduct = p;
-                              item.matchState = 0; // mapped
-                            });
-                            if (context.mounted) Navigator.pop(context);
-                          },
-                        );
-                      },
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text("Cancel"),
-              ),
-            ],
-          );
-        },
+  ) async {
+    final selectedProduct = await Navigator.push<Product>(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ProductSelectorScreen(
+          title: "Map '${item.receiptName}' to...",
+          initialQuery: item.receiptName,
+        ),
       ),
     );
+
+    if (selectedProduct != null) {
+      final stockRepo = ref.read(stockRepositoryProvider);
+      await stockRepo.saveReceiptMapping(
+        receiptName: item.receiptName,
+        productId: selectedProduct.id,
+      );
+      setDialogState(() {
+        item.matchedProduct = selectedProduct;
+        item.matchState = 0; // mapped
+      });
+    }
   }
 
   void _showManageHousesDialog() {
@@ -471,7 +308,7 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                 width: double.maxFinite,
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceVariant,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: SingleChildScrollView(
@@ -543,10 +380,9 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
     });
 
     try {
-      final file = File(pickedFile.path);
-      final bytes = await file.readAsBytes();
+      final bytes = await pickedFile.readAsBytes();
       final base64Image = base64Encode(bytes);
-      final extension = pickedFile.path.split('.').last.toLowerCase();
+      final extension = pickedFile.name.split('.').last.toLowerCase();
       final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
 
       final parsedItems = await AIService.parseReceipt(
@@ -564,8 +400,43 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
       final repo = ref.read(stockRepositoryProvider);
       final mappings = await repo.getReceiptMappings();
 
+      // Multi-stage matching: identify unmapped items and collect close candidate products
+      final usageCounts = ref.read(productUsageCountsProvider).value;
+      final inStockProductIds = ref.read(inStockProductIdsProvider).value;
+
+      final itemsWithCandidates = <Map<String, dynamic>>[];
+      for (final parsed in parsedItems) {
+        final hasExactMapping = mappings.any((m) => m.receiptName.toLowerCase() == parsed.name.toLowerCase().trim());
+        if (!hasExactMapping) {
+          final candidates = products.searchAndSort(
+            parsed.name,
+            usageCounts: usageCounts,
+            inStockProductIds: inStockProductIds,
+          ).take(5).map((p) => {"id": p.id, "name": p.name}).toList();
+
+          if (candidates.isNotEmpty) {
+            itemsWithCandidates.add({
+              "receiptName": parsed.name,
+              "candidates": candidates,
+            });
+          }
+        }
+      }
+
+      Map<String, int?> aiDisambiguated = {};
+      if (itemsWithCandidates.isNotEmpty && settings.aiToken.trim().isNotEmpty) {
+        try {
+          aiDisambiguated = await AIService.disambiguateReceiptItems(
+            provider: settings.aiProvider,
+            apiKey: settings.aiToken,
+            model: settings.aiModel,
+            itemsWithCandidates: itemsWithCandidates,
+          );
+        } catch (_) {}
+      }
+
       if (mounted) {
-        _showConfirmationDialog(houseId, parsedItems, products, mappings);
+        _showConfirmationDialog(houseId, parsedItems, products, mappings, aiDisambiguated);
       }
     } catch (e, stackTrace) {
       if (mounted) {
@@ -580,7 +451,15 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
     }
   }
 
-  void _showConfirmationDialog(int houseId, List<AIReceiptItem> parsedItems, List<Product> products, List<ReceiptMapping> mappings) {
+  void _showConfirmationDialog(
+    int houseId,
+    List<AIReceiptItem> parsedItems,
+    List<Product> products,
+    List<ReceiptMapping> mappings,
+    Map<String, int?> aiDisambiguated,
+  ) {
+    final usageCounts = ref.read(productUsageCountsProvider).value;
+    final inStockProductIds = ref.read(inStockProductIdsProvider).value;
     final resolvedList = parsedItems.map((parsed) {
       Product? matchedProduct;
       int matchState = 2; // Default: 🔴 Not Found
@@ -593,8 +472,23 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
         }
       }
 
+      if (matchedProduct == null && aiDisambiguated.isNotEmpty) {
+        final disambiguatedId = aiDisambiguated[parsed.name.toLowerCase().trim()];
+        if (disambiguatedId != null) {
+          final found = products.firstWhereOrNull((p) => p.id == disambiguatedId);
+          if (found != null) {
+            matchedProduct = found;
+            matchState = 0; // 🟢 AI Disambiguated Match
+          }
+        }
+      }
+
       if (matchedProduct == null) {
-        final matches = products.searchAndSort(parsed.name);
+        final matches = products.searchAndSort(
+          parsed.name,
+          usageCounts: usageCounts,
+          inStockProductIds: inStockProductIds,
+        );
         if (matches.isNotEmpty) {
           final firstMatch = matches.first;
           if (firstMatch.name.toLowerCase() == parsed.name.toLowerCase()) {
@@ -728,36 +622,83 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                                             ),
                                           ),
                                           const SizedBox(width: 8),
-                                          SizedBox(
-                                            width: 100,
-                                            child: DropdownButtonFormField<String>(
-                                              value: ['g', 'kg', 'ml', 'l', 'units'].contains(item.parsedUnit.toLowerCase()) ? item.parsedUnit.toLowerCase() : 'g',
-                                              decoration: const InputDecoration(
-                                                labelText: "Unit",
-                                                isDense: true,
-                                                border: OutlineInputBorder(),
-                                              ),
-                                              items: const [
-                                                DropdownMenuItem(value: 'g', child: Text('g')),
-                                                DropdownMenuItem(value: 'kg', child: Text('kg')),
-                                                DropdownMenuItem(value: 'ml', child: Text('ml')),
-                                                DropdownMenuItem(value: 'l', child: Text('l')),
-                                                DropdownMenuItem(value: 'units', child: Text('units')),
-                                              ],
-                                              onChanged: (val) {
-                                                if (val != null) {
-                                                  setDialogState(() {
-                                                    item.parsedUnit = val;
-                                                  });
+                                          Builder(
+                                            builder: (context) {
+                                              final p = item.matchedProduct;
+                                              final availableUnits = <String>['g', 'kg'];
+                                              if (p != null) {
+                                                if (p.mlToGFactor != null && p.mlToGFactor! > 0) {
+                                                  availableUnits.addAll(['ml', 'l']);
                                                 }
-                                              },
-                                            ),
+                                                if ((p.unitWeight != null && p.unitWeight! > 0) ||
+                                                    (p.defaultUnits != null && (p.defaultUnits!.toLowerCase() == 'unit' || p.defaultUnits!.toLowerCase() == 'units'))) {
+                                                  availableUnits.add('units');
+                                                }
+                                              } else {
+                                                availableUnits.addAll(['ml', 'l', 'units']);
+                                              }
+
+                                              String selectedUnit = item.parsedUnit.toLowerCase();
+                                              if (!availableUnits.contains(selectedUnit)) {
+                                                selectedUnit = availableUnits.first;
+                                                item.parsedUnit = selectedUnit;
+                                              }
+
+                                              return SizedBox(
+                                                width: 100,
+                                                child: DropdownButtonFormField<String>(
+                                                  initialValue: selectedUnit,
+                                                  decoration: const InputDecoration(
+                                                    labelText: "Unit",
+                                                    isDense: true,
+                                                    border: OutlineInputBorder(),
+                                                  ),
+                                                  items: availableUnits.map((u) => DropdownMenuItem(value: u, child: Text(u))).toList(),
+                                                  onChanged: (val) {
+                                                    if (val != null) {
+                                                      setDialogState(() {
+                                                        item.parsedUnit = val;
+                                                      });
+                                                    }
+                                                  },
+                                                ),
+                                              );
+                                            },
                                           ),
                                         ],
                                       ),
                                     ),
                                     Row(
                                       children: [
+                                        if (item.matchedProduct != null) ...[
+                                          IconButton(
+                                            icon: const Icon(Icons.edit, size: 16),
+                                            tooltip: "Edit Product",
+                                            onPressed: () {
+                                              showDialog(
+                                                context: context,
+                                                builder: (ctx) => AddEditProductDialog(
+                                                  product: item.matchedProduct!,
+                                                  onDismiss: () => Navigator.pop(ctx),
+                                                  onConfirm: (updatedProd) async {
+                                                    try {
+                                                      final repo = ref.read(mealRepositoryProvider);
+                                                      await repo.saveProduct(updatedProd);
+                                                      setDialogState(() {
+                                                        item.matchedProduct = updatedProd;
+                                                      });
+                                                    } catch (e, st) {
+                                                      _showCopyableErrorDialog("Product Edit Error", "$e\n\n$st");
+                                                    }
+                                                    if (ctx.mounted) Navigator.pop(ctx);
+                                                  },
+                                                ),
+                                              );
+                                            },
+                                            visualDensity: VisualDensity.compact,
+                                          ),
+                                          const SizedBox(width: 2),
+                                        ],
                                         TextButton.icon(
                                           icon: const Icon(Icons.swap_horiz, size: 14),
                                           label: const Text("Replace"),
@@ -897,7 +838,7 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
         final houses = snapshot.data ?? [];
 
         return NexcScaffold(
-          title: const Text("Stock Management"),
+          title: const Text("Stock"),
           navigateBack: () => Navigator.pop(context),
           actions: const [],
           actionsIcons: const [],
@@ -989,7 +930,7 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                       const SizedBox(width: 8),
                       Expanded(
                         child: DropdownButtonFormField<int>(
-                          value: activeHouseId,
+                          initialValue: activeHouseId,
                           decoration: const InputDecoration(
                             border: OutlineInputBorder(),
                             contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -1122,7 +1063,7 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                                         Padding(
                                           padding: const EdgeInsets.only(top: 2),
                                           child: Text(
-                                            "≈ ${(s.stock.quantity * s.product.edibleQtyPerUnit!).toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '').replaceAll(RegExp(r'([0-9])0$'), r'\1')} ${s.product.units} edible equivalent",
+                                            "≈ ${_formatDouble(s.stock.quantity * s.product.edibleQtyPerUnit!)} ${s.product.units} edible equivalent",
                                             style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.primary, fontWeight: FontWeight.bold),
                                           ),
                                         ),
@@ -1199,13 +1140,15 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                                 Text(
                                   s.stock.minTriggerQuantity == null
                                       ? "No minimum"
-                                      : "Minimum: ${s.stock.minTriggerQuantity!.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '').replaceAll(RegExp(r'([0-9])0$'), r'\1')} ${s.product.units}",
+                                      : "Minimum: ${_formatDouble(s.stock.minTriggerQuantity!)} ${s.product.units}",
                                   style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurfaceVariant),
                                 ),
                                 IconButton(
                                   icon: const Icon(Icons.edit, size: 18),
                                   onPressed: () {
-                                    final controller = TextEditingController(text: s.stock.minTriggerQuantity?.toString() ?? "");
+                                    final controller = TextEditingController(
+                                      text: s.stock.minTriggerQuantity != null ? _formatDouble(s.stock.minTriggerQuantity!) : "",
+                                    );
                                     showDialog(
                                       context: context,
                                       builder: (context) => AlertDialog(
@@ -1226,12 +1169,15 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                                           ),
                                           TextButton(
                                             onPressed: () async {
-                                              final val = double.tryParse(controller.text.trim());
+                                              String raw = controller.text.trim().replaceAll(',', '.');
+                                              raw = raw.replaceAll(RegExp(r'[a-zA-Z]+$'), '').trim();
+                                              final val = double.tryParse(raw);
                                               await repo.saveStock(
                                                 productId: s.product.id,
                                                 houseId: houseId,
                                                 quantity: s.stock.quantity,
                                                 minTriggerQuantity: val,
+                                                inputUnit: s.product.units,
                                               );
                                               if (context.mounted) Navigator.pop(context);
                                             },
@@ -1281,10 +1227,10 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
         final checked = _shoppingChecked.contains(s.product.id);
 
         return Card(
-          color: Theme.of(context).colorScheme.errorContainer.withOpacity(0.1),
+          color: Theme.of(context).colorScheme.errorContainer.withValues(alpha: 0.1),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
-            side: BorderSide(color: Theme.of(context).colorScheme.error.withOpacity(0.2)),
+            side: BorderSide(color: Theme.of(context).colorScheme.error.withValues(alpha: 0.2)),
           ),
           child: ListTile(
             leading: Checkbox(
@@ -1304,9 +1250,9 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
-              "Stock: ${s.stock.quantity.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '').replaceAll(RegExp(r'([0-9])0$'), r'\1')}"
-              "${s.product.isStockRaw && s.product.edibleQtyPerUnit != null && s.product.edibleQtyPerUnit! < 1.0 ? ' (≈ ${(s.stock.quantity * s.product.edibleQtyPerUnit!).toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '').replaceAll(RegExp(r'([0-9])0$'), r'\1')} edible)' : ''}"
-              " / Minimum: ${s.stock.minTriggerQuantity!.toStringAsFixed(2).replaceAll(RegExp(r'\.00$'), '').replaceAll(RegExp(r'([0-9])0$'), r'\1')} ${s.product.units}",
+              "Stock: ${_formatDouble(s.stock.quantity)}"
+              "${s.product.isStockRaw && s.product.edibleQtyPerUnit != null && s.product.edibleQtyPerUnit! < 1.0 ? ' (≈ ${_formatDouble(s.stock.quantity * s.product.edibleQtyPerUnit!)} edible)' : ''}"
+              "${s.stock.minTriggerQuantity == null ? '' : ' / Minimum: ${_formatDouble(s.stock.minTriggerQuantity!)} ${s.product.units}'}",
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1396,11 +1342,17 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
   void _showReplaceProductSelector(StockWithProduct oldStock, int houseId) {
     final products = ref.read(allProductsProvider).value ?? [];
     String query = "";
+    final usageCounts = ref.read(productUsageCountsProvider).value;
+    final inStockProductIds = ref.read(inStockProductIdsProvider).value;
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) {
-          final filtered = query.isEmpty ? products : products.searchAndSort(query);
+          final filtered = products.searchAndSort(
+            query,
+            usageCounts: usageCounts,
+            inStockProductIds: inStockProductIds,
+          );
           return AlertDialog(
             title: const Text("Replace with..."),
             content: SizedBox(

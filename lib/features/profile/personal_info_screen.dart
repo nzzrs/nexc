@@ -8,9 +8,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:drift/drift.dart' show Value;
-import '../../core/db/app_database.dart';
-import '../../core/providers/db_provider.dart';
+import '../../core/providers/profile_providers.dart';
 
 class PersonalInfoScreen extends ConsumerStatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -22,7 +20,6 @@ class PersonalInfoScreen extends ConsumerStatefulWidget {
 class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   final _heightController = TextEditingController();
   DateTime? _selectedBirthDate;
-  UserData? _currentUser;
   bool _isLoading = true;
 
   @override
@@ -38,12 +35,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   }
 
   Future<void> _loadUserData() async {
-    final db = ref.read(dbProvider);
-    final usersList = await db.select(db.users).get();
-    if (usersList.isNotEmpty) {
-      final user = usersList.first;
+    final user = await ref.read(userRepositoryProvider).getUser();
+    if (user != null) {
       setState(() {
-        _currentUser = user;
         _selectedBirthDate = user.birthDate;
         _heightController.text = user.height?.toStringAsFixed(1) ?? '';
         _isLoading = false;
@@ -56,24 +50,11 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   }
 
   Future<void> _saveUserData() async {
-    final db = ref.read(dbProvider);
     final heightVal = double.tryParse(_heightController.text);
-    
-    final companion = UsersCompanion(
-      id: _currentUser != null ? Value(_currentUser!.id) : const Value.absent(),
-      height: Value(heightVal),
-      birthDate: Value(_selectedBirthDate),
+    await ref.read(userRepositoryProvider).saveUser(
+      birthDate: _selectedBirthDate,
+      height: heightVal,
     );
-
-    if (_currentUser != null) {
-      await db.update(db.users).replace(UserData(
-        id: _currentUser!.id,
-        height: heightVal,
-        birthDate: _selectedBirthDate,
-      ));
-    } else {
-      await db.into(db.users).insert(companion);
-    }
 
     await _loadUserData();
 
@@ -169,7 +150,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.secondaryContainer.withOpacity(0.4),
+                              color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.4),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(

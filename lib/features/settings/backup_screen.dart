@@ -7,12 +7,10 @@
  * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
  */
 
-import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../core/util/backup_manager.dart';
 
@@ -88,7 +86,7 @@ class BackupScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16.0),
         children: [
           Card(
-            color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.3),
+            color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
             elevation: 0,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
             child: Padding(
@@ -111,9 +109,7 @@ class BackupScreen extends ConsumerWidget {
                         child: FilledButton.icon(
                           onPressed: () async {
                             try {
-                              final tempDir = await getTemporaryDirectory();
-                              final file = File(p.join(tempDir.path, 'nexc_import_format.md'));
-                              await file.writeAsString(r'''# Nexc Import Formats Specification
+                              const formatDoc = r'''# Nexc Import Formats Specification
 
 This document details the JSON schema specifications used for importing data into Nexc.
 
@@ -302,8 +298,14 @@ Recipes are imported as a JSON array.
 | `product` | `Object` | A full Product object (see section 4). |
 
 > All ingredient products must either exist in the database (matched by name) or be provided as embedded objects.
-''');
-                              await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Import Format Specifications');
+''';
+                              await Share.shareXFiles([
+                                XFile.fromData(
+                                  utf8.encode(formatDoc),
+                                  name: 'nexc_import_format.md',
+                                  mimeType: 'text/markdown',
+                                ),
+                              ], subject: 'Nexc Import Format Specifications');
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
@@ -418,6 +420,27 @@ Recipes are imported as a JSON array.
           const Divider(height: 32),
           _buildBackupSection(
             context,
+            title: 'Workout history',
+            description: 'Import or export your completed workouts history including exercises, weights, reps, and timestamps.',
+            onExport: () async {
+              try {
+                await backupManager.exportWorkoutHistory();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Workout history exported')),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Workout history export failed: $e')),
+                );
+              }
+            },
+            onImport: () => _handleImport(context, backupManager.importWorkoutHistory, 'Workout history'),
+          ),
+          const Divider(height: 32),
+          _buildBackupSection(
+            context,
             title: 'Exercises',
             description: 'Import or export your exercises database as portable JSON files.',
             onExport: () async {
@@ -456,6 +479,27 @@ Recipes are imported as a JSON array.
               }
             },
             onImport: () => _handleImport(context, backupManager.importMealPlans, 'Meal plans'),
+          ),
+          const Divider(height: 32),
+          _buildBackupSection(
+            context,
+            title: 'Meal history',
+            description: 'Import or export your logged meal history and consumed food items.',
+            onExport: () async {
+              try {
+                await backupManager.exportMealHistory();
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Meal history exported')),
+                );
+              } catch (e) {
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(content: Text('Meal history export failed: $e')),
+                );
+              }
+            },
+            onImport: () => _handleImport(context, backupManager.importMealHistory, 'Meal history'),
           ),
           const Divider(height: 32),
           _buildBackupSection(

@@ -27,13 +27,13 @@ void main() {
     // Trigger updateDatasetOnAppUpdate
     await container.read(datasetRepositoryProvider).updateDatasetOnAppUpdate(1);
 
-    // Verify products count is 7802 (7793 USDA products + 9 default products)
+    // Verify products count is 7598 (7589 cleaned USDA products + 9 default products)
     final productsCountExpr = db.products.id.count();
     final productsCountQuery = db.selectOnly(db.products)..addColumns([productsCountExpr]);
     final productsCountResult = await productsCountQuery.getSingle();
     final productsCount = productsCountResult.read(productsCountExpr) ?? 0;
 
-    expect(productsCount, equals(7802));
+    expect(productsCount, equals(7598));
 
     // Verify a sample USDA product is present
     final sample = await (db.select(db.products)..where((tbl) => tbl.id.equals(167512))).getSingle();
@@ -43,6 +43,23 @@ void main() {
     expect(sample.fats, equals(13.2));
     expect(sample.defaultUnits, equals("g"));
     expect(sample.isSupplement, isFalse);
+
+    // Verify cleaned apple and unit equivalences
+    final apple = await (db.select(db.products)..where((tbl) => tbl.id.equals(171688))).getSingle();
+    expect(apple.name, equals("Apples, raw"));
+    expect(apple.defaultUnits, equals("unit"));
+    expect(apple.unitWeight, equals(182));
+    expect(apple.canMeasureInUnits, isTrue);
+
+    // Verify redundant without-skin entry is removed
+    final redundantApple = await (db.select(db.products)..where((tbl) => tbl.id.equals(171689))).getSingleOrNull();
+    expect(redundantApple == null, isTrue);
+
+    // Verify Whole Milk unit equivalences
+    final milk = await (db.select(db.products)..where((tbl) => tbl.id.equals(10001))).getSingle();
+    expect(milk.defaultUnits, equals("ml"));
+    expect(milk.mlToGFactor, equals(1));
+    expect(milk.canMeasureInMl, isTrue);
 
     // Fetch all products to test relevance search
     final allProducts = await db.select(db.products).get();

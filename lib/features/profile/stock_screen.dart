@@ -627,18 +627,9 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                                           Builder(
                                             builder: (context) {
                                               final p = item.matchedProduct;
-                                              final availableUnits = <String>['g', 'kg'];
-                                              if (p != null) {
-                                                if (p.mlToGFactor != null && p.mlToGFactor! > 0) {
-                                                  availableUnits.addAll(['ml', 'l']);
-                                                }
-                                                if ((p.unitWeight != null && p.unitWeight! > 0) ||
-                                                    (p.defaultUnits != null && (p.defaultUnits!.toLowerCase() == 'unit' || p.defaultUnits!.toLowerCase() == 'units'))) {
-                                                  availableUnits.add('units');
-                                                }
-                                              } else {
-                                                availableUnits.addAll(['ml', 'l', 'units']);
-                                              }
+                                              final availableUnits = p != null
+                                                  ? p.availableStringUnits
+                                                  : <String>['g', 'kg', 'ml', 'l', 'units'];
 
                                               String selectedUnit = item.parsedUnit.toLowerCase();
                                               if (!availableUnits.contains(selectedUnit)) {
@@ -1086,8 +1077,8 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                                               builder: (context) {
                                                 final currentUnit = (s.product.units).toLowerCase();
                                                 String normalizedUnit = (currentUnit == 'unit' || currentUnit == 'units') ? 'units' : currentUnit;
-                                                final showMl = s.product.mlToGFactor != null && s.product.mlToGFactor! > 0;
-                                                final showUnits = s.product.unitWeight != null && s.product.unitWeight! > 0;
+                                                final showMl = s.product.canMeasureInMl;
+                                                final showUnits = s.product.canMeasureInUnits;
                                                 if (normalizedUnit == 'ml' && !showMl) normalizedUnit = 'g';
                                                 if (normalizedUnit == 'units' && !showUnits) normalizedUnit = 'g';
  
@@ -1288,8 +1279,8 @@ class _StockScreenState extends ConsumerState<StockScreen> with SingleTickerProv
                 Builder(
                   builder: (context) {
                     final currentUnit = _shoppingUnits[s.product.id] ?? s.product.units;
-                    final showMl = s.product.mlToGFactor != null && s.product.mlToGFactor! > 0;
-                    final showUnits = s.product.unitWeight != null && s.product.unitWeight! > 0;
+                    final showMl = s.product.canMeasureInMl;
+                    final showUnits = s.product.canMeasureInUnits;
                     
                     return DropdownButton<String>(
                       value: currentUnit,

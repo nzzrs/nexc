@@ -828,13 +828,13 @@ class MealEditCard extends StatelessWidget {
                                    if (detail.mealItem.type == MealItemType.PRODUCT) {
                                      final prod = detail.product;
                                      if (prod != null) {
-                                       if (prod.mlToGFactor != null && prod.mlToGFactor! > 0) {
+                                       if (prod.canMeasureInMl) {
                                          list.add(const PopupMenuItem(
                                            value: AmountUnit.ML,
                                            child: Text("ml"),
                                          ));
                                        }
-                                       if (prod.unitWeight != null && prod.unitWeight! > 0) {
+                                       if (prod.canMeasureInUnits) {
                                          list.add(const PopupMenuItem(
                                            value: AmountUnit.UNITS,
                                            child: Text("units"),

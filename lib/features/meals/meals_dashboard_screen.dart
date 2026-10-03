@@ -1119,13 +1119,13 @@ class MealTrackCard extends ConsumerWidget {
                                   if (detail.mealItem.type == MealItemType.PRODUCT) {
                                     final prod = detail.product;
                                     if (prod != null) {
-                                      if (prod.mlToGFactor != null && prod.mlToGFactor! > 0) {
+                                      if (prod.canMeasureInMl) {
                                         list.add(const PopupMenuItem(
                                           value: AmountUnit.ML,
                                           child: Text("ml"),
                                         ));
                                       }
-                                      if (prod.unitWeight != null && prod.unitWeight! > 0) {
+                                      if (prod.canMeasureInUnits) {
                                         list.add(const PopupMenuItem(
                                           value: AmountUnit.UNITS,
                                           child: Text("units"),
@@ -1834,13 +1834,11 @@ class _AddMealItemDialogState extends ConsumerState<AddMealItemDialog> {
                       : null;
                   final showMl = _type == MealItemType.PRODUCT &&
                       prod != null &&
-                      prod.mlToGFactor != null &&
-                      prod.mlToGFactor! > 0;
+                      prod.canMeasureInMl;
                   final showUnits = _type == MealItemType.RECIPE ||
                       (_type == MealItemType.PRODUCT &&
                           prod != null &&
-                          prod.unitWeight != null &&
-                          prod.unitWeight! > 0);
+                          prod.canMeasureInUnits);
 
                   // Keep unit consistent
                   if (_amountUnit == AmountUnit.ML && !showMl) {

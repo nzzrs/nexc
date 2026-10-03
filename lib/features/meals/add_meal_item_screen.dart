@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import 'package:collection/collection.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
@@ -414,32 +415,72 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        ChoiceChip(
-                          label: const Text("Grams"),
-                          selected: _amountUnit == AmountUnit.GRAMS,
-                          onSelected: (selected) {
-                            if (selected) setState(() => _amountUnit = AmountUnit.GRAMS);
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        ChoiceChip(
-                          label: const Text("ml"),
-                          selected: _amountUnit == AmountUnit.ML,
-                          onSelected: (selected) {
-                            if (selected) setState(() => _amountUnit = AmountUnit.ML);
-                          },
-                        ),
-                        const SizedBox(width: 8),
-                        ChoiceChip(
-                          label: const Text("Units"),
-                          selected: _amountUnit == AmountUnit.UNITS,
-                          onSelected: (selected) {
-                            if (selected) setState(() => _amountUnit = AmountUnit.UNITS);
-                          },
-                        ),
-                      ],
+                    Builder(
+                      builder: (context) {
+                        bool showMl = false;
+                        bool showUnits = false;
+
+                        if (_selectedItems.isNotEmpty) {
+                          bool allSupportMl = true;
+                          bool allSupportUnits = true;
+
+                          for (final item in _selectedItems.values) {
+                            if (item.type == MealItemType.PRODUCT) {
+                              final p = widget.products.firstWhereOrNull((prod) => prod.id == item.targetId);
+                              if (p == null || !p.canMeasureInMl) {
+                                allSupportMl = false;
+                              }
+                              if (p == null || !p.canMeasureInUnits) {
+                                allSupportUnits = false;
+                              }
+                            } else {
+                              allSupportMl = false;
+                            }
+                          }
+
+                          showMl = allSupportMl;
+                          showUnits = allSupportUnits;
+                        }
+
+                        if (_amountUnit == AmountUnit.ML && !showMl) {
+                          Future.microtask(() => setState(() => _amountUnit = AmountUnit.GRAMS));
+                        }
+                        if (_amountUnit == AmountUnit.UNITS && !showUnits) {
+                          Future.microtask(() => setState(() => _amountUnit = AmountUnit.GRAMS));
+                        }
+
+                        return Row(
+                          children: [
+                            ChoiceChip(
+                              label: const Text("Grams"),
+                              selected: _amountUnit == AmountUnit.GRAMS,
+                              onSelected: (selected) {
+                                if (selected) setState(() => _amountUnit = AmountUnit.GRAMS);
+                              },
+                            ),
+                            if (showMl) ...[
+                              const SizedBox(width: 8),
+                              ChoiceChip(
+                                label: const Text("ml"),
+                                selected: _amountUnit == AmountUnit.ML,
+                                onSelected: (selected) {
+                                  if (selected) setState(() => _amountUnit = AmountUnit.ML);
+                                },
+                              ),
+                            ],
+                            if (showUnits) ...[
+                              const SizedBox(width: 8),
+                              ChoiceChip(
+                                label: const Text("Units"),
+                                selected: _amountUnit == AmountUnit.UNITS,
+                                onSelected: (selected) {
+                                  if (selected) setState(() => _amountUnit = AmountUnit.UNITS);
+                                },
+                              ),
+                            ],
+                          ],
+                        );
+                      },
                     ),
                     const SizedBox(height: 12),
                     Row(

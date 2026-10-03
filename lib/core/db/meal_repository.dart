@@ -670,13 +670,13 @@ class MealRepository {
 
     // 1. Insert Products
     final productsList = [
-      const Product(id: 10001, name: "Whole Milk", defaultUnits: "ml", edibleQtyPerUnit: 1.0, proteins: 3.3, carbsAvailable: 4.7, fats: 3.6, isSupplement: false, isPortable: true, isStockRaw: false),
-      const Product(id: 10002, name: "Oatmeal Cookies", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 6.5, carbsAvailable: 65.0, fats: 15.0, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10001, name: "Whole Milk", defaultUnits: "ml", mlToGFactor: 1, edibleQtyPerUnit: 1.0, proteins: 3.3, carbsAvailable: 4.7, fats: 3.6, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10002, name: "Oatmeal Cookies", defaultUnits: "g", unitWeight: 30, edibleQtyPerUnit: 1.0, proteins: 6.5, carbsAvailable: 65.0, fats: 15.0, isSupplement: false, isPortable: true, isStockRaw: false),
       const Product(id: 10003, name: "Creatine Monohydrate", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 0.0, carbsAvailable: 0.0, fats: 0.0, isSupplement: true, isPortable: true, isStockRaw: false),
       const Product(id: 10004, name: "Chicken Breast", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 31.0, carbsAvailable: 0.0, fats: 3.6, isSupplement: false, isPortable: true, isStockRaw: false),
       const Product(id: 10005, name: "Cooked Rice", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 2.7, carbsAvailable: 28.0, fats: 0.3, isSupplement: false, isPortable: true, isStockRaw: false),
-      const Product(id: 10006, name: "Banana", defaultUnits: "g", edibleQtyPerUnit: 0.65, proteins: 1.1, carbsAvailable: 22.8, fats: 0.3, isSupplement: false, isPortable: true, isStockRaw: false),
-      const Product(id: 10007, name: "Whole Eggs", defaultUnits: "unit", edibleQtyPerUnit: 0.88, proteins: 13.0, carbsAvailable: 1.1, fats: 11.0, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10006, name: "Banana", defaultUnits: "unit", unitWeight: 120, edibleQtyPerUnit: 0.65, proteins: 1.1, carbsAvailable: 22.8, fats: 0.3, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10007, name: "Whole Eggs", defaultUnits: "unit", unitWeight: 57, edibleQtyPerUnit: 0.88, proteins: 13.0, carbsAvailable: 1.1, fats: 11.0, isSupplement: false, isPortable: true, isStockRaw: false),
       const Product(id: 10008, name: "Fresh Spinach", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 2.9, carbsAvailable: 3.6, fats: 0.4, isSupplement: false, isPortable: false, isStockRaw: false),
       const Product(id: 10009, name: "Grilled Salmon", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 25.0, carbsAvailable: 0.0, fats: 13.0, isSupplement: false, isPortable: false, isStockRaw: false),
     ];

@@ -153,7 +153,7 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
                           final p = filtered[index];
                           return ListTile(
                             title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text("Unit: ${p.units} • P ${p.proteins}g | C ${p.carbs}g | F ${p.fats}g"),
+                            subtitle: Text("Unit: ${p.units}${p.unitWeight != null && p.unitWeight! > 0 ? ' (${p.unitWeight}g)' : ''} • P ${p.proteins}g | C ${p.carbs}g | F ${p.fats}g"),
                             onTap: () {
                               Navigator.pop(context, p);
                             },

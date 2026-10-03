@@ -96,6 +96,7 @@ class DatasetRepository {
           fats: (map['fats'] as num?)?.toDouble() ?? 0.0,
           isSupplement: map['isSupplement'] as bool? ?? false,
           isPortable: map['isPortable'] as bool? ?? true,
+          unitWeight: map['unitWeight'] as int?,
           isStockRaw: map['isStockRaw'] as bool? ?? false,
         );
       }).toList();

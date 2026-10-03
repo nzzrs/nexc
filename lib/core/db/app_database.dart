@@ -623,6 +623,30 @@ extension ProductExtension on Product {
   int get quantity => 0;
   double get ediblePercent => edibleQtyPerUnit != null ? (edibleQtyPerUnit! * 100.0) : 100.0;
   double get weight => 0.0;
+
+  bool get canMeasureInMl =>
+      (mlToGFactor != null && mlToGFactor! > 0) ||
+      (defaultUnits != null && defaultUnits!.toLowerCase() == 'ml');
+
+  bool get canMeasureInUnits =>
+      (unitWeight != null && unitWeight! > 0) ||
+      (defaultUnits != null &&
+          (defaultUnits!.toLowerCase() == 'unit' ||
+              defaultUnits!.toLowerCase() == 'units'));
+
+  List<AmountUnit> get availableAmountUnits {
+    final list = <AmountUnit>[AmountUnit.GRAMS];
+    if (canMeasureInMl) list.add(AmountUnit.ML);
+    if (canMeasureInUnits) list.add(AmountUnit.UNITS);
+    return list;
+  }
+
+  List<String> get availableStringUnits {
+    final list = <String>['g', 'kg'];
+    if (canMeasureInMl) list.addAll(['ml', 'l']);
+    if (canMeasureInUnits) list.add('units');
+    return list;
+  }
 }
 
 List<String> getSearchStems(String query) {

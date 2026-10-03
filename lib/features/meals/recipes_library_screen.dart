@@ -459,8 +459,8 @@ class _AddEditRecipeDialogState extends ConsumerState<AddEditRecipeDialog> {
                   Builder(
                     builder: (context) {
                       final prod = widget.products.firstWhereOrNull((p) => p.id == _selectedProductId);
-                      final showMl = prod == null || (prod.mlToGFactor != null && prod.mlToGFactor! > 0);
-                      final showUnits = prod == null || (prod.unitWeight != null && prod.unitWeight! > 0);
+                      final showMl = prod == null || prod.canMeasureInMl;
+                      final showUnits = prod == null || prod.canMeasureInUnits;
                       if (_selectedIngredientUnit == "ml" && !showMl) {
                         _selectedIngredientUnit = "g";
                       }

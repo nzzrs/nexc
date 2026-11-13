@@ -104,6 +104,17 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
+  String _getRoutineUpdateModeLabel(RoutineUpdateMode mode) {
+    switch (mode) {
+      case RoutineUpdateMode.never:
+        return 'Never';
+      case RoutineUpdateMode.always:
+        return 'Always';
+      case RoutineUpdateMode.ask:
+        return 'Ask';
+    }
+  }
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settings = ref.watch(settingsProvider);
@@ -223,6 +234,22 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                   ],
                 ),
+              );
+            },
+          ),
+
+          _SettingItem(
+            settingName: 'Update routine after workout',
+            settingDesc: _getRoutineUpdateModeLabel(settings.routineUpdateMode),
+            icon: Icons.refresh,
+            onClick: () {
+              _showSingleChoiceDialog<RoutineUpdateMode>(
+                context: context,
+                title: 'Update routine after workout',
+                options: RoutineUpdateMode.values,
+                selectedValue: settings.routineUpdateMode,
+                labelBuilder: _getRoutineUpdateModeLabel,
+                onSelected: notifier.setRoutineUpdateMode,
               );
             },
           ),

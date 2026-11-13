@@ -265,6 +265,10 @@ enum Language {
   const Language(this.code);
 }
 
+/// Whether completing a workout updates the linked routine with the values of
+/// the completed sets.
+enum RoutineUpdateMode { never, always, ask }
+
 /// Whether a meal item amount is expressed in grams or discrete units (e.g. 1 banana).
 enum AmountUnit { GRAMS, UNITS, ML }
 

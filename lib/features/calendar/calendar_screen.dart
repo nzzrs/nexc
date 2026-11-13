@@ -13,6 +13,7 @@ import 'package:table_calendar/table_calendar.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/workout_repository.dart';
+import '../../core/l10n/l10n.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -38,14 +39,16 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   Future<void> _loadWorkouts() async {
     final repo = ref.read(workoutRepositoryProvider);
     // Watch completed workouts stream
-    repo.watchWorkoutsWithExercisesAndSetsByState(WorkoutState.COMPLETED).listen((workouts) {
-      if (mounted) {
-        setState(() {
-          _allWorkouts = workouts;
-          _isLoading = false;
+    repo
+        .watchWorkoutsWithExercisesAndSetsByState(WorkoutState.COMPLETED)
+        .listen((workouts) {
+          if (mounted) {
+            setState(() {
+              _allWorkouts = workouts;
+              _isLoading = false;
+            });
+          }
         });
-      }
-    });
   }
 
   List<WorkoutWithExercisesAndSets> _getWorkoutsForDay(DateTime day) {
@@ -58,7 +61,10 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
-    final selectedWorkouts = _selectedDay != null ? _getWorkoutsForDay(_selectedDay!) : [];
+    final l10n = context.l10n;
+    final selectedWorkouts = _selectedDay != null
+        ? _getWorkoutsForDay(_selectedDay!)
+        : [];
     final todayWorkouts = _getWorkoutsForDay(DateTime.now());
 
     // Build a set of days that have workouts
@@ -69,9 +75,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Calendar'),
-      ),
+      appBar: AppBar(title: Text(l10n.calendarTitle)),
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : CustomScrollView(
@@ -84,7 +88,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       lastDay: DateTime.utc(2030, 12, 31),
                       focusedDay: _focusedDay,
                       calendarFormat: _calendarFormat,
-                      selectedDayPredicate: (day) => isSameDay(_selectedDay, day),
+                      selectedDayPredicate: (day) =>
+                          isSameDay(_selectedDay, day),
                       eventLoader: _getWorkoutsForDay,
                       onDaySelected: (selectedDay, focusedDay) {
                         setState(() {
@@ -137,8 +142,8 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                       children: [
                         Text(
                           _selectedDay != null
-                              ? _formatDate(_selectedDay!)
-                              : 'Select a day to view workouts',
+                              ? _formatDate(context, _selectedDay!)
+                              : l10n.selectDayHint,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -146,7 +151,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                         if (_selectedDay != null) ...[
                           const Spacer(),
                           Text(
-                            '${selectedWorkouts.length} workout${selectedWorkouts.length == 1 ? '' : 's'}',
+                            '${selectedWorkouts.length} ${selectedWorkouts.length == 1 ? l10n.workoutNoun : l10n.workoutsNoun}',
                             style: theme.textTheme.bodySmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
@@ -169,11 +174,12 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             Icon(
                               Icons.fitness_center,
                               size: 48,
-                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
+                              color: theme.colorScheme.onSurfaceVariant
+                                  .withValues(alpha: 0.4),
                             ),
                             const SizedBox(height: 12),
                             Text(
-                              'Rest day — no workouts logged',
+                              l10n.restDayNoWorkouts,
                               style: theme.textTheme.bodyMedium?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -211,14 +217,33 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     );
   }
 
-  String _formatDate(DateTime d) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+  String _formatDate(BuildContext context, DateTime d) {
+    final l10n = context.l10n;
+    final months = [
+      l10n.monthJan,
+      l10n.monthFeb,
+      l10n.monthMar,
+      l10n.monthApr,
+      l10n.monthMay,
+      l10n.monthJun,
+      l10n.monthJul,
+      l10n.monthAug,
+      l10n.monthSep,
+      l10n.monthOct,
+      l10n.monthNov,
+      l10n.monthDec,
     ];
-    const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+    final days = [
+      l10n.weekdayMon,
+      l10n.weekdayTue,
+      l10n.weekdayWed,
+      l10n.weekdayThu,
+      l10n.weekdayFri,
+      l10n.weekdaySat,
+      l10n.weekdaySun,
+    ];
     final wd = d.weekday - 1; // 0=Mon
-    return '${days[wd]}, ${months[d.month - 1]} ${d.day}';
+    return l10n.calendarDate(days[wd], months[d.month - 1], d.day);
   }
 }
 
@@ -237,11 +262,14 @@ class _WorkoutSummaryCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final w = workout.workout;
     final exercises = workout.exercisesWithSets;
     final totalSets = exercises.fold(0, (sum, e) => sum + e.sets.length);
     final completedSets = exercises.fold(
-        0, (sum, e) => sum + e.sets.where((s) => s.completed).length);
+      0,
+      (sum, e) => sum + e.sets.where((s) => s.completed).length,
+    );
 
     return Card(
       margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
@@ -282,7 +310,7 @@ class _WorkoutSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '$completedSets/$totalSets sets completed',
+                  l10n.setsCompletedRatio(completedSets, totalSets),
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -295,7 +323,7 @@ class _WorkoutSummaryCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 4),
                 Text(
-                  '${exercises.length} exercise${exercises.length == 1 ? '' : 's'}',
+                  '${exercises.length} ${exercises.length == 1 ? l10n.exerciseNoun : l10n.exercisesNoun}',
                   style: theme.textTheme.bodySmall?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -307,32 +335,35 @@ class _WorkoutSummaryCard extends StatelessWidget {
               Wrap(
                 spacing: 6,
                 runSpacing: 4,
-                children: exercises.take(5).map((e) {
-                  return Chip(
-                    label: Text(
-                      e.exerciseDC.name,
-                      style: theme.textTheme.labelSmall,
-                    ),
-                    padding: EdgeInsets.zero,
-                    materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                  );
-                }).toList()
-                  ..addAll(
-                    exercises.length > 5
-                        ? [
-                            Chip(
-                              label: Text(
-                                '+${exercises.length - 5} more',
-                                style: theme.textTheme.labelSmall,
+                children:
+                    exercises.take(5).map((e) {
+                      return Chip(
+                        label: Text(
+                          e.exerciseDC.name,
+                          style: theme.textTheme.labelSmall,
+                        ),
+                        padding: EdgeInsets.zero,
+                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        backgroundColor:
+                            theme.colorScheme.surfaceContainerHighest,
+                      );
+                    }).toList()..addAll(
+                      exercises.length > 5
+                          ? [
+                              Chip(
+                                label: Text(
+                                  l10n.moreCount(exercises.length - 5),
+                                  style: theme.textTheme.labelSmall,
+                                ),
+                                padding: EdgeInsets.zero,
+                                materialTapTargetSize:
+                                    MaterialTapTargetSize.shrinkWrap,
+                                backgroundColor:
+                                    theme.colorScheme.surfaceContainerHighest,
                               ),
-                              padding: EdgeInsets.zero,
-                              materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              backgroundColor: theme.colorScheme.surfaceContainerHighest,
-                            )
-                          ]
-                        : [],
-                  ),
+                            ]
+                          : [],
+                    ),
               ),
             ],
             if (w.notes.isNotEmpty) ...[

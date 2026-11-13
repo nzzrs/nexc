@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
 import '../../core/integrations/ai_service.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/settings_provider.dart';
 
 class EditProductScreen extends ConsumerStatefulWidget {
@@ -111,16 +112,12 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     // Units and millilitres are only usable when their equivalence is known.
     if (_selectedDefaultUnit == 'ml' &&
         (mlToGFactor == null || mlToGFactor <= 0)) {
-      _showValidationMessage(
-        'Add a positive "ml to g factor" so portions measured in ml can be converted to grams.',
-      );
+      _showValidationMessage(context.l10n.validationMlFactor);
       return;
     }
     if (_selectedDefaultUnit == 'unit' &&
         (unitWeight == null || unitWeight <= 0)) {
-      _showValidationMessage(
-        'Add a positive "Unit weight (g)" so portions measured in units can be converted to grams.',
-      );
+      _showValidationMessage(context.l10n.validationUnitWeight);
       return;
     }
 
@@ -159,9 +156,12 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.product.id == 0 ? "Add Product" : "Edit Product"),
+        title: Text(
+          widget.product.id == 0 ? l10n.addProduct : l10n.editProduct,
+        ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -180,9 +180,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 Expanded(
                   child: TextField(
                     controller: _nameController,
-                    decoration: const InputDecoration(
-                      labelText: "Name",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.nameLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -196,13 +196,13 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                         )
                       : IconButton.filledTonal(
                           icon: const Icon(Icons.auto_awesome),
-                          tooltip: "Autofill with AI",
+                          tooltip: l10n.autofillWithAi,
                           onPressed: () async {
                             final name = _nameController.text.trim();
                             if (name.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text("Enter a product name first"),
+                                SnackBar(
+                                  content: Text(l10n.enterProductNameFirst),
                                 ),
                               );
                               return;
@@ -293,9 +293,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                               });
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
+                                  SnackBar(
                                     content: Text(
-                                      "Autofilled product details!",
+                                      l10n.autofilledProductDetails,
                                     ),
                                   ),
                                 );
@@ -303,7 +303,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text("AI Error: $e")),
+                                  SnackBar(content: Text(l10n.aiError('$e'))),
                                 );
                               }
                             } finally {
@@ -324,9 +324,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 Expanded(
                   child: DropdownButtonFormField<String>(
                     initialValue: _selectedDefaultUnit,
-                    decoration: const InputDecoration(
-                      labelText: "Default Units",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.defaultUnitsLabel,
+                      border: const OutlineInputBorder(),
                     ),
                     items: const [
                       DropdownMenuItem(value: 'ml', child: Text('ml')),
@@ -353,10 +353,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: _selectedDefaultUnit == 'ml'
-                          ? "ml to g factor *"
-                          : "ml to g factor",
+                          ? l10n.mlToGFactorRequired
+                          : l10n.mlToGFactorLabel,
                       helperText: _selectedDefaultUnit == 'ml'
-                          ? 'Required for ml-based products'
+                          ? l10n.requiredForMlProducts
                           : null,
                       border: const OutlineInputBorder(),
                     ),
@@ -369,10 +369,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     keyboardType: TextInputType.number,
                     decoration: InputDecoration(
                       labelText: _selectedDefaultUnit == 'unit'
-                          ? "Unit weight (g) *"
-                          : "Unit weight (g)",
+                          ? l10n.unitWeightGRequired
+                          : l10n.unitWeightGLabel,
                       helperText: _selectedDefaultUnit == 'unit'
-                          ? 'Required for products measured in units'
+                          ? l10n.requiredForUnitsProducts
                           : null,
                       border: const OutlineInputBorder(),
                     ),
@@ -389,9 +389,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: "Edible %",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.ediblePercentLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -400,9 +400,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            const Text(
-              "Macros & Energy (per 100g)",
-              style: TextStyle(fontWeight: FontWeight.bold),
+            Text(
+              l10n.macrosEnergyPer100g,
+              style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             Row(
@@ -413,9 +413,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: "Calories (kcal)",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.caloriesKcal,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -426,9 +426,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: "Proteins (g)",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.proteinsG,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -443,9 +443,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: "Carbs Available (g)",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.carbsAvailableG,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -456,9 +456,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: "Carbs By Diff (g)",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.carbsByDiffG,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -473,9 +473,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: "Fats (g)",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.fatsG,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -486,9 +486,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: "Dietary Fiber (g)",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.dietaryFiberG,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -499,9 +499,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               children: [
                 Expanded(
                   child: CheckboxListTile(
-                    title: const Text(
-                      "Is Supplement",
-                      style: TextStyle(fontSize: 12),
+                    title: Text(
+                      l10n.isSupplementLabel,
+                      style: const TextStyle(fontSize: 12),
                     ),
                     value: _isSupplement,
                     dense: true,
@@ -516,9 +516,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 ),
                 Expanded(
                   child: CheckboxListTile(
-                    title: const Text(
-                      "Is Portable",
-                      style: TextStyle(fontSize: 12),
+                    title: Text(
+                      l10n.isPortableLabel,
+                      style: const TextStyle(fontSize: 12),
                     ),
                     value: _isPortable,
                     dense: true,
@@ -537,9 +537,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               children: [
                 Expanded(
                   child: CheckboxListTile(
-                    title: const Text(
-                      "Is Stock Raw",
-                      style: TextStyle(fontSize: 12),
+                    title: Text(
+                      l10n.isStockRawLabel,
+                      style: const TextStyle(fontSize: 12),
                     ),
                     value: _isStockRaw,
                     dense: true,
@@ -562,7 +562,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               child: FilledButton.icon(
                 icon: const Icon(Icons.check),
                 label: Text(
-                  widget.product.id == 0 ? "Add Product" : "Save Changes",
+                  widget.product.id == 0 ? l10n.addProduct : l10n.saveChanges,
                 ),
                 onPressed: _submit,
               ),

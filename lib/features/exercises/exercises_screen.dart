@@ -13,6 +13,7 @@ import '../../core/db/app_database.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/dataset_repository.dart';
 import '../../core/integrations/ai_service.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/components/clearable_search_field.dart';
 
@@ -190,6 +191,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final showImages = ref.watch(
       settingsProvider.select((s) => s.showExerciseImages),
     );
@@ -200,8 +202,8 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
       appBar: AppBar(
         title: Text(
           widget.addExercises
-              ? 'Add Exercises'
-              : (isReplacing ? 'Replace Exercise' : 'Select Exercise'),
+              ? l10n.addExercisesTitle
+              : (isReplacing ? l10n.replaceExerciseTitle : l10n.selectExercise),
         ),
         actions: [
           IconButton(
@@ -220,7 +222,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                 Navigator.pop(context, _selectedExercises.toList());
               },
               child: Text(
-                'ADD (${_selectedExercises.length})',
+                l10n.addCount(_selectedExercises.length),
                 style: const TextStyle(fontWeight: FontWeight.bold),
               ),
             ),
@@ -233,7 +235,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
             padding: const EdgeInsets.all(12.0),
             child: ClearableSearchField(
               controller: _searchController,
-              hintText: 'Search exercise...',
+              hintText: l10n.searchExercise,
               onChanged: (val) {
                 setState(() {
                   _query = val;
@@ -256,13 +258,13 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     FilterChip(
                       label: Text(
                         _selectedLevel == null
-                            ? 'Level'
-                            : 'Level: ${_selectedLevel!.name}',
+                            ? l10n.levelLabel
+                            : l10n.levelWithValue(_selectedLevel!.name),
                       ),
                       selected: _selectedLevel != null,
                       onSelected: (selected) {
                         _showFilterSelector<Level>(
-                          title: 'Select Level',
+                          title: l10n.selectLevel,
                           values: Level.values,
                           current: _selectedLevel,
                           onSelected: (val) =>
@@ -274,13 +276,13 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     FilterChip(
                       label: Text(
                         _selectedForce == null
-                            ? 'Force'
-                            : 'Force: ${_selectedForce!.name}',
+                            ? l10n.forceLabel
+                            : l10n.forceWithValue(_selectedForce!.name),
                       ),
                       selected: _selectedForce != null,
                       onSelected: (selected) {
                         _showFilterSelector<Force>(
-                          title: 'Select Force',
+                          title: l10n.selectForce,
                           values: Force.values,
                           current: _selectedForce,
                           onSelected: (val) =>
@@ -292,13 +294,13 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     FilterChip(
                       label: Text(
                         _selectedMechanic == null
-                            ? 'Mechanic'
-                            : 'Mechanic: ${_selectedMechanic!.name}',
+                            ? l10n.mechanicLabel
+                            : l10n.mechanicWithValue(_selectedMechanic!.name),
                       ),
                       selected: _selectedMechanic != null,
                       onSelected: (selected) {
                         _showFilterSelector<Mechanic>(
-                          title: 'Select Mechanic',
+                          title: l10n.selectMechanic,
                           values: Mechanic.values,
                           current: _selectedMechanic,
                           onSelected: (val) =>
@@ -310,13 +312,13 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     FilterChip(
                       label: Text(
                         _selectedEquipment == null
-                            ? 'Equipment'
-                            : 'Equipment: ${_selectedEquipment!.name}',
+                            ? l10n.equipmentLabel
+                            : l10n.equipmentWithValue(_selectedEquipment!.name),
                       ),
                       selected: _selectedEquipment != null,
                       onSelected: (selected) {
                         _showFilterSelector<Equipment>(
-                          title: 'Select Equipment',
+                          title: l10n.selectEquipment,
                           values: Equipment.values,
                           current: _selectedEquipment,
                           onSelected: (val) =>
@@ -328,13 +330,13 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     FilterChip(
                       label: Text(
                         _selectedMuscle == null
-                            ? 'Muscle'
-                            : 'Muscle: ${_selectedMuscle!.name}',
+                            ? l10n.muscleLabel
+                            : l10n.muscleWithValue(_selectedMuscle!.name),
                       ),
                       selected: _selectedMuscle != null,
                       onSelected: (selected) {
                         _showFilterSelector<Muscle>(
-                          title: 'Select Muscle',
+                          title: l10n.selectMuscle,
                           values: Muscle.values,
                           current: _selectedMuscle,
                           onSelected: (val) =>
@@ -346,13 +348,13 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     FilterChip(
                       label: Text(
                         _selectedCategory == null
-                            ? 'Category'
-                            : 'Category: ${_selectedCategory!.name}',
+                            ? l10n.categoryLabel
+                            : l10n.categoryWithValue(_selectedCategory!.name),
                       ),
                       selected: _selectedCategory != null,
                       onSelected: (selected) {
                         _showFilterSelector<Category>(
-                          title: 'Select Category',
+                          title: l10n.selectCategory,
                           values: Category.values,
                           current: _selectedCategory,
                           onSelected: (val) =>
@@ -362,7 +364,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                     ),
                     const SizedBox(width: 8),
                     FilterChip(
-                      label: const Text('Custom Only'),
+                      label: Text(l10n.customOnly),
                       selected: _onlyCustom,
                       onSelected: (selected) {
                         setState(() {
@@ -390,7 +392,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                             _onlyCustom = false;
                           });
                         },
-                        child: const Text('Reset'),
+                        child: Text(l10n.reset),
                       ),
                     ],
                   ],
@@ -407,7 +409,9 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   return const Center(child: CircularProgressIndicator());
                 }
                 if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
+                  return Center(
+                    child: Text(l10n.errorWithMessage('${snapshot.error}')),
+                  );
                 }
                 final list = snapshot.data ?? [];
 
@@ -499,20 +503,20 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                           ),
                           const SizedBox(height: 12),
                           Text(
-                            'No exercises found',
+                            l10n.noExercisesFound,
                             style: theme.textTheme.titleMedium,
                           ),
                           const SizedBox(height: 16),
                           FilledButton.icon(
                             icon: const Icon(Icons.add),
-                            label: const Text('Create Exercise'),
+                            label: Text(l10n.createExercise),
                             onPressed: () =>
                                 _openCreateExerciseDialog(initialName: _query),
                           ),
                           const SizedBox(height: 8),
                           OutlinedButton.icon(
                             icon: const Icon(Icons.auto_awesome),
-                            label: const Text('Create with AI'),
+                            label: Text(l10n.createWithAi),
                             onPressed: () => _createWithAi(initialName: _query),
                           ),
                         ],
@@ -602,7 +606,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    'AI MATCH',
+                                    l10n.aiMatch,
                                     style: TextStyle(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
@@ -615,7 +619,11 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                         ],
                       ),
                       subtitle: Text(
-                        '${ex.category.name} • ${ex.equipment?.name ?? "No Equipment"} • ${ex.primaryMuscles.map((m) => m.name).join(', ')}',
+                        l10n.exerciseSubtitle(
+                          ex.category.name,
+                          ex.equipment?.name ?? l10n.noEquipment,
+                          ex.primaryMuscles.map((m) => m.name).join(', '),
+                        ),
                         style: theme.textTheme.bodySmall,
                       ),
                       trailing: widget.isSelectionMode
@@ -666,7 +674,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                             ),
                             const SizedBox(width: 8),
                             Text(
-                              'AI SUGGESTIONS (SIMILAR MUSCLES)',
+                              l10n.aiSuggestions,
                               style: theme.textTheme.labelMedium?.copyWith(
                                 color: theme.colorScheme.primary,
                                 fontWeight: FontWeight.bold,
@@ -693,7 +701,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                       Padding(
                         padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
                         child: Text(
-                          'ALL EXERCISES',
+                          l10n.allExercises,
                           style: theme.textTheme.labelMedium?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                             fontWeight: FontWeight.bold,
@@ -752,7 +760,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                 child: ListView(
                   children: [
                     ListTile(
-                      title: const Text('All'),
+                      title: Text(context.l10n.all),
                       trailing: current == null
                           ? const Icon(Icons.check)
                           : null,
@@ -783,6 +791,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
   }
 
   Future<void> _openCreateExerciseDialog({String initialName = ''}) async {
+    final l10n = context.l10n;
     final nameController = TextEditingController(text: initialName);
     final categoryNotifier = ValueNotifier<Category>(Category.STRENGTH);
     final muscleNotifier = ValueNotifier<Muscle>(
@@ -793,16 +802,16 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     final created = await showDialog<ExerciseDataDC>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Create Custom Exercise'),
+        title: Text(l10n.createCustomExercise),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Exercise Name',
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.exerciseName,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -810,9 +819,9 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                 valueListenable: categoryNotifier,
                 builder: (context, cat, _) => DropdownButtonFormField<Category>(
                   initialValue: cat,
-                  decoration: const InputDecoration(
-                    labelText: 'Category',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.categoryLabel,
+                    border: const OutlineInputBorder(),
                   ),
                   items: Category.values
                       .map(
@@ -829,9 +838,9 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                 valueListenable: muscleNotifier,
                 builder: (context, mus, _) => DropdownButtonFormField<Muscle>(
                   initialValue: mus,
-                  decoration: const InputDecoration(
-                    labelText: 'Primary Muscle',
-                    border: OutlineInputBorder(),
+                  decoration: InputDecoration(
+                    labelText: l10n.primaryMuscleField,
+                    border: const OutlineInputBorder(),
                   ),
                   items: Muscle.values
                       .map(
@@ -849,7 +858,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCEL'),
+            child: Text(context.l10n.cancelAction),
           ),
           FilledButton(
             onPressed: () async {
@@ -870,7 +879,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
               await ref.read(datasetRepositoryProvider).upsertExercise(ex);
               if (ctx.mounted) Navigator.pop(ctx, ex);
             },
-            child: const Text('SAVE'),
+            child: Text(l10n.saveAction),
           ),
         ],
       ),
@@ -889,30 +898,29 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     final confirmed = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Row(
+        title: Row(
           children: [
-            Icon(Icons.auto_awesome, color: Colors.amber),
-            SizedBox(width: 8),
-            Text('Create with AI'),
+            const Icon(Icons.auto_awesome, color: Colors.amber),
+            const SizedBox(width: 8),
+            Text(context.l10n.createWithAi),
           ],
         ),
         content: TextField(
           controller: promptController,
-          decoration: const InputDecoration(
-            hintText:
-                'Describe exercise (e.g. Dumbbell rear delt fly on incline bench)',
-            border: OutlineInputBorder(),
+          decoration: InputDecoration(
+            hintText: context.l10n.describeExerciseHint,
+            border: const OutlineInputBorder(),
           ),
           maxLines: 3,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text('CANCEL'),
+            child: Text(context.l10n.cancelAction),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(ctx, promptController.text.trim()),
-            child: const Text('GENERATE'),
+            child: Text(context.l10n.generateAction),
           ),
         ],
       ),
@@ -921,7 +929,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     if (confirmed == null || confirmed.isEmpty || !mounted) return;
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Generating exercise with AI...')),
+      SnackBar(content: Text(context.l10n.generatingExerciseWithAi)),
     );
 
     final settings = ref.read(settingsProvider);

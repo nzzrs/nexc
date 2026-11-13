@@ -15,6 +15,7 @@ import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/workout_repository.dart';
 import '../../core/components/exercise_card.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/util/exercise_set_mode_helper.dart';
 
 class EditWorkoutScreen extends ConsumerStatefulWidget {
@@ -135,22 +136,21 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
       barrierDismissible: true,
       builder: (context) {
         final theme = Theme.of(context);
+        final l10n = context.l10n;
         return AlertDialog(
-          title: const Text('Discard Changes?'),
-          content: const Text(
-            'Do you want to discard your changes or save them?',
-          ),
+          title: Text(l10n.discardChangesTitle),
+          content: Text(l10n.discardChangesMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, 'discard'),
               child: Text(
-                'DISCARD',
+                l10n.discardAction,
                 style: TextStyle(color: theme.colorScheme.error),
               ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, 'save'),
-              child: const Text('SAVE'),
+              child: Text(l10n.saveAction),
             ),
           ],
         );
@@ -175,9 +175,9 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
 
   Future<void> _save() async {
     if (_titleController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a routine title')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.enterRoutineTitle)));
       return;
     }
 
@@ -244,6 +244,7 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -258,7 +259,9 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
       child: Scaffold(
         appBar: AppBar(
           title: Text(
-            widget.workoutId == 0 ? 'Create Routine' : 'Edit Routine',
+            widget.workoutId == 0
+                ? l10n.createRoutineTitle
+                : l10n.editRoutineTitle,
           ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
@@ -269,8 +272,8 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
               IconButton(
                 icon: Icon(_isReordering ? Icons.check : Icons.swap_vert),
                 tooltip: _isReordering
-                    ? "Done Reordering"
-                    : "Reorder Exercises",
+                    ? l10n.doneReordering
+                    : l10n.reorderExercises,
                 onPressed: () {
                   setState(() {
                     _isReordering = !_isReordering;
@@ -294,17 +297,17 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
                   children: [
                     TextField(
                       controller: _titleController,
-                      decoration: const InputDecoration(
-                        labelText: 'Routine title',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.routineTitleField,
+                        border: const OutlineInputBorder(),
                       ),
                     ),
                     const SizedBox(height: 12),
                     TextField(
                       controller: _notesController,
-                      decoration: const InputDecoration(
-                        labelText: 'Routine notes',
-                        border: OutlineInputBorder(),
+                      decoration: InputDecoration(
+                        labelText: l10n.routineNotesField,
+                        border: const OutlineInputBorder(),
                       ),
                       maxLines: 2,
                     ),
@@ -316,7 +319,7 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
 
             // Routine Exercises Header
             Text(
-              'Exercises',
+              l10n.exercisesLabel,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -324,12 +327,9 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
             const SizedBox(height: 12),
 
             if (_exercises.isEmpty)
-              const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40.0),
-                child: Text(
-                  'No exercises added yet. Tap Add Exercise below.',
-                  textAlign: TextAlign.center,
-                ),
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40.0),
+                child: Text(l10n.noExercisesAdded, textAlign: TextAlign.center),
               )
             else
               ReorderableListView.builder(
@@ -544,7 +544,7 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
                 }
               },
               icon: const Icon(Icons.add),
-              label: const Text('Add Exercise'),
+              label: Text(l10n.addExerciseTitle),
             ),
           ],
         ),

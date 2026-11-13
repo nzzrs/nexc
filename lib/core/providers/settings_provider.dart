@@ -38,7 +38,7 @@ class SettingsState {
 
   /// Last barbell weight chosen in the plate calculator, in kilograms.
   final double? defaultBarWeightKg;
-  
+
   // New Global Targets
   final double targetProtein;
   final double targetCarbs;
@@ -179,11 +179,13 @@ class SettingsState {
       themeMode: themeMode ?? this.themeMode,
       materialMode: materialMode ?? this.materialMode,
       workoutScreenOn: workoutScreenOn ?? this.workoutScreenOn,
-      requestPermissionsNextTime: requestPermissionsNextTime ?? this.requestPermissionsNextTime,
+      requestPermissionsNextTime:
+          requestPermissionsNextTime ?? this.requestPermissionsNextTime,
       restTimerSoundOn: restTimerSoundOn ?? this.restTimerSoundOn,
       showWelcomeScreen: showWelcomeScreen ?? this.showWelcomeScreen,
       pastVersionCode: pastVersionCode ?? this.pastVersionCode,
-      isWorkoutHeaderSticky: isWorkoutHeaderSticky ?? this.isWorkoutHeaderSticky,
+      isWorkoutHeaderSticky:
+          isWorkoutHeaderSticky ?? this.isWorkoutHeaderSticky,
       showKeepAndroidOpen: showKeepAndroidOpen ?? this.showKeepAndroidOpen,
       showExerciseImages: showExerciseImages ?? this.showExerciseImages,
       intensityScale: intensityScale ?? this.intensityScale,
@@ -191,9 +193,11 @@ class SettingsState {
       language: language ?? this.language,
       routineUpdateMode: routineUpdateMode ?? this.routineUpdateMode,
       unitSystem: unitSystem ?? this.unitSystem,
-      useScrollWheelForInput: useScrollWheelForInput ?? this.useScrollWheelForInput,
+      useScrollWheelForInput:
+          useScrollWheelForInput ?? this.useScrollWheelForInput,
       dismissScrollWheelInputAutomatically:
-          dismissScrollWheelInputAutomatically ?? this.dismissScrollWheelInputAutomatically,
+          dismissScrollWheelInputAutomatically ??
+          this.dismissScrollWheelInputAutomatically,
       defaultBarWeightKg: defaultBarWeightKg ?? this.defaultBarWeightKg,
       targetProtein: targetProtein ?? this.targetProtein,
       targetCarbs: targetCarbs ?? this.targetCarbs,
@@ -205,20 +209,28 @@ class SettingsState {
       enableMealTracking: enableMealTracking ?? this.enableMealTracking,
       enableStockTracking: enableStockTracking ?? this.enableStockTracking,
       enableAiStockLogging: enableAiStockLogging ?? this.enableAiStockLogging,
-      enableAiProductCreation: enableAiProductCreation ?? this.enableAiProductCreation,
+      enableAiProductCreation:
+          enableAiProductCreation ?? this.enableAiProductCreation,
       aiProvider: aiProvider ?? this.aiProvider,
       aiToken: aiToken ?? this.aiToken,
       aiModel: aiModel ?? this.aiModel,
       dayStartHour: dayStartHour ?? this.dayStartHour,
-      defaultMacrosOverrideMealPlan: defaultMacrosOverrideMealPlan ?? this.defaultMacrosOverrideMealPlan,
-      savedCustomTargetProtein: savedCustomTargetProtein ?? this.savedCustomTargetProtein,
-      savedCustomTargetCarbs: savedCustomTargetCarbs ?? this.savedCustomTargetCarbs,
-      savedCustomTargetFats: savedCustomTargetFats ?? this.savedCustomTargetFats,
+      defaultMacrosOverrideMealPlan:
+          defaultMacrosOverrideMealPlan ?? this.defaultMacrosOverrideMealPlan,
+      savedCustomTargetProtein:
+          savedCustomTargetProtein ?? this.savedCustomTargetProtein,
+      savedCustomTargetCarbs:
+          savedCustomTargetCarbs ?? this.savedCustomTargetCarbs,
+      savedCustomTargetFats:
+          savedCustomTargetFats ?? this.savedCustomTargetFats,
       userPreferences: userPreferences ?? this.userPreferences,
-      enableUserPreferences: enableUserPreferences ?? this.enableUserPreferences,
-      enableAiWorkoutAssistant: enableAiWorkoutAssistant ?? this.enableAiWorkoutAssistant,
+      enableUserPreferences:
+          enableUserPreferences ?? this.enableUserPreferences,
+      enableAiWorkoutAssistant:
+          enableAiWorkoutAssistant ?? this.enableAiWorkoutAssistant,
       aiAllowMealHistory: aiAllowMealHistory ?? this.aiAllowMealHistory,
-      aiAllowWorkoutHistory: aiAllowWorkoutHistory ?? this.aiAllowWorkoutHistory,
+      aiAllowWorkoutHistory:
+          aiAllowWorkoutHistory ?? this.aiAllowWorkoutHistory,
       aiAllowStatistics: aiAllowStatistics ?? this.aiAllowStatistics,
       aiAllowMeasurements: aiAllowMeasurements ?? this.aiAllowMeasurements,
     );
@@ -232,25 +244,28 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
   static SettingsState _loadInitialSettings(SharedPreferences prefs) {
     final themeModeVal = prefs.getInt('theme_mode') ?? 0;
-    final themeMode = ThemeMode.values[themeModeVal.clamp(0, ThemeMode.values.length - 1)];
+    final themeMode =
+        ThemeMode.values[themeModeVal.clamp(0, ThemeMode.values.length - 1)];
 
     final materialMode = prefs.getBool('material_mode') ?? true;
     final workoutScreenOn = prefs.getBool('workout_screen_on') ?? false;
-    final requestPermissionsNextTime = prefs.getBool('ask_permission_again') ?? false;
+    final requestPermissionsNextTime =
+        prefs.getBool('ask_permission_again') ?? false;
     final restTimerSoundOn = prefs.getBool('alert_sound') ?? true;
     final showWelcomeScreen = prefs.getBool('show_welcome_screen') ?? false;
     final pastVersionCode = prefs.getInt('pastVersionCode') ?? -1;
-    final isWorkoutHeaderSticky = prefs.getBool('is_workout_header_sticky') ?? true;
+    final isWorkoutHeaderSticky =
+        prefs.getBool('is_workout_header_sticky') ?? true;
     final showKeepAndroidOpen = prefs.getBool('showKeepAndroidOpenKey') ?? true;
     final showExerciseImages = prefs.getBool('show_exercise_images') ?? false;
 
     final intensityScaleVal = prefs.getInt('intensity_scale') ?? 0;
-    final intensityScale = IntensityScale.values[intensityScaleVal.clamp(0, IntensityScale.values.length - 1)];
+    final intensityScale = IntensityScale
+        .values[intensityScaleVal.clamp(0, IntensityScale.values.length - 1)];
 
     final restTimerVibrationOn = prefs.getBool('rest_timer_vibration') ?? true;
 
-    final langCode = prefs.getString('language') ?? '';
-    final language = Language.values.firstWhere((l) => l.code == langCode, orElse: () => Language.system);
+    final language = Language.fromCode(prefs.getString('language'));
 
     final routineUpdateModeName = prefs.getString('routine_update_mode');
     final routineUpdateMode = RoutineUpdateMode.values.firstWhere(
@@ -264,7 +279,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       orElse: resolveDefaultUnitSystemFromPlatform,
     );
 
-    final useScrollWheelForInput = prefs.getBool('use_scroll_wheel_for_input') ?? true;
+    final useScrollWheelForInput =
+        prefs.getBool('use_scroll_wheel_for_input') ?? true;
     final dismissScrollWheelInputAutomatically =
         prefs.getBool('dismiss_scroll_wheel_input_automatically') ?? true;
 
@@ -281,25 +297,33 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
 
     final enableMealTracking = prefs.getBool('enable_meal_tracking') ?? true;
     final enableStockTracking = prefs.getBool('enable_stock_tracking') ?? true;
-    final enableAiStockLogging = prefs.getBool('enable_ai_stock_logging') ?? false;
-    final enableAiProductCreation = prefs.getBool('enable_ai_product_creation') ?? false;
+    final enableAiStockLogging =
+        prefs.getBool('enable_ai_stock_logging') ?? false;
+    final enableAiProductCreation =
+        prefs.getBool('enable_ai_product_creation') ?? false;
     final aiProvider = prefs.getString('ai_provider') ?? 'gemini';
     final aiToken = prefs.getString('ai_token') ?? '';
     final aiModel = prefs.getString('ai_model') ?? '';
 
     final dayStartHour = prefs.getInt('day_start_hour') ?? 5;
-    final defaultMacrosOverrideMealPlan = prefs.getBool('default_macros_override_meal_plan') ?? false;
+    final defaultMacrosOverrideMealPlan =
+        prefs.getBool('default_macros_override_meal_plan') ?? false;
 
-    final savedCustomTargetProtein = prefs.getDouble('saved_custom_target_protein');
+    final savedCustomTargetProtein = prefs.getDouble(
+      'saved_custom_target_protein',
+    );
     final savedCustomTargetCarbs = prefs.getDouble('saved_custom_target_carbs');
     final savedCustomTargetFats = prefs.getDouble('saved_custom_target_fats');
 
     final userPreferences = prefs.getString('user_preferences') ?? '';
-    final enableUserPreferences = prefs.getBool('enable_user_preferences') ?? false;
+    final enableUserPreferences =
+        prefs.getBool('enable_user_preferences') ?? false;
 
-    final enableAiWorkoutAssistant = prefs.getBool('enable_ai_workout_assistant') ?? true;
+    final enableAiWorkoutAssistant =
+        prefs.getBool('enable_ai_workout_assistant') ?? true;
     final aiAllowMealHistory = prefs.getBool('ai_allow_meal_history') ?? true;
-    final aiAllowWorkoutHistory = prefs.getBool('ai_allow_workout_history') ?? true;
+    final aiAllowWorkoutHistory =
+        prefs.getBool('ai_allow_workout_history') ?? true;
     final aiAllowStatistics = prefs.getBool('ai_allow_statistics') ?? true;
     final aiAllowMeasurements = prefs.getBool('ai_allow_measurements') ?? true;
 
@@ -320,7 +344,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       routineUpdateMode: routineUpdateMode,
       unitSystem: unitSystem,
       useScrollWheelForInput: useScrollWheelForInput,
-      dismissScrollWheelInputAutomatically: dismissScrollWheelInputAutomatically,
+      dismissScrollWheelInputAutomatically:
+          dismissScrollWheelInputAutomatically,
       defaultBarWeightKg: defaultBarWeightKg,
       targetProtein: targetProtein,
       targetCarbs: targetCarbs,
@@ -412,7 +437,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   }
 
   Future<void> setLanguage(Language lang) async {
-    await _prefs.setString('language', lang.code);
+    await _prefs.setString('language', lang.code ?? '');
     state = state.copyWith(language: lang);
   }
 
@@ -449,10 +474,17 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     state = state.copyWith(targetProtein: p, targetCarbs: c, targetFats: f);
   }
 
-  Future<void> overwriteTargetMacrosWithPlan(double p, double c, double f) async {
+  Future<void> overwriteTargetMacrosWithPlan(
+    double p,
+    double c,
+    double f,
+  ) async {
     final hasSaved = _prefs.getBool('has_saved_pre_meal_plan_macros') ?? false;
     if (!hasSaved) {
-      await _prefs.setDouble('pre_meal_plan_target_protein', state.targetProtein);
+      await _prefs.setDouble(
+        'pre_meal_plan_target_protein',
+        state.targetProtein,
+      );
       await _prefs.setDouble('pre_meal_plan_target_carbs', state.targetCarbs);
       await _prefs.setDouble('pre_meal_plan_target_fats', state.targetFats);
       await _prefs.setBool('has_saved_pre_meal_plan_macros', true);
@@ -607,12 +639,16 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   }
 
   // Aliases for workout assistant settings
-  Future<void> setAiWorkoutGenerationEnabled(bool val) => setEnableAiWorkoutAssistant(val);
+  Future<void> setAiWorkoutGenerationEnabled(bool val) =>
+      setEnableAiWorkoutAssistant(val);
   Future<void> setAiAllowUserStats(bool val) => setAiAllowStatistics(val);
-  Future<void> setAiAllowUserPreferences(bool val) => setEnableUserPreferences(val);
+  Future<void> setAiAllowUserPreferences(bool val) =>
+      setEnableUserPreferences(val);
 }
 
-final settingsProvider = StateNotifierProvider<SettingsNotifier, SettingsState>((ref) {
-  final prefs = ref.watch(sharedPreferencesProvider);
-  return SettingsNotifier(prefs);
-});
+final settingsProvider = StateNotifierProvider<SettingsNotifier, SettingsState>(
+  (ref) {
+    final prefs = ref.watch(sharedPreferencesProvider);
+    return SettingsNotifier(prefs);
+  },
+);

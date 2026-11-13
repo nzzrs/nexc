@@ -10,6 +10,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
 import '../util/input_sheet_state.dart';
 
 /// Opens the scroll-wheel input sheet and returns the selected value.
@@ -127,6 +128,7 @@ class _InputModalBottomSheetState extends State<InputModalBottomSheet> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final l10n = context.l10n;
     final String suffix = _state.suffix;
     final String valueText = suffix.isEmpty
         ? _state.formattedValue
@@ -195,28 +197,28 @@ class _InputModalBottomSheetState extends State<InputModalBottomSheet> {
               children: [
                 IconButton(
                   key: const ValueKey<String>('input-sheet-decrement'),
-                  tooltip: 'Decrease by ${_amountLabel(_state.quickStep)}',
+                  tooltip: l10n.decreaseBy(_amountLabel(_state.quickStep)),
                   icon: const Icon(Icons.remove_circle_outline),
                   onPressed: () => _apply(_state.quickDecrement()),
                 ),
                 const SizedBox(width: 16),
                 IconButton(
                   key: const ValueKey<String>('input-sheet-increment'),
-                  tooltip: 'Increase by ${_amountLabel(_state.quickStep)}',
+                  tooltip: l10n.increaseBy(_amountLabel(_state.quickStep)),
                   icon: const Icon(Icons.add_circle_outline),
                   onPressed: () => _apply(_state.quickIncrement()),
                 ),
                 const SizedBox(width: 32),
                 IconButton(
                   key: const ValueKey<String>('input-sheet-quick-decrement'),
-                  tooltip: 'Decrease by ${_amountLabel(_state.majorStep)}',
+                  tooltip: l10n.decreaseBy(_amountLabel(_state.majorStep)),
                   icon: const Icon(Icons.keyboard_double_arrow_left),
                   onPressed: () => _apply(_state.majorDecrement()),
                 ),
                 const SizedBox(width: 16),
                 IconButton(
                   key: const ValueKey<String>('input-sheet-quick-increment'),
-                  tooltip: 'Increase by ${_amountLabel(_state.majorStep)}',
+                  tooltip: l10n.increaseBy(_amountLabel(_state.majorStep)),
                   icon: const Icon(Icons.keyboard_double_arrow_right),
                   onPressed: () => _apply(_state.majorIncrement()),
                 ),
@@ -229,13 +231,13 @@ class _InputModalBottomSheetState extends State<InputModalBottomSheet> {
                 TextButton(
                   key: const ValueKey<String>('input-sheet-cancel'),
                   onPressed: _cancel,
-                  child: const Text('Cancel'),
+                  child: Text(l10n.cancel),
                 ),
                 const SizedBox(width: 8),
                 FilledButton(
                   key: const ValueKey<String>('input-sheet-confirm'),
                   onPressed: _confirm,
-                  child: const Text('Done'),
+                  child: Text(l10n.done),
                 ),
               ],
             ),

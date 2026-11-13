@@ -9,6 +9,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/util/plate_calculator.dart';
 import '../../core/util/unit_system.dart';
@@ -101,6 +102,7 @@ class _BarbellCalculatorSheetState
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
+    final l10n = context.l10n;
     final UnitSystem system = ref.watch(
       settingsProvider.select((settings) => settings.unitSystem),
     );
@@ -127,13 +129,13 @@ class _BarbellCalculatorSheetState
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               Text(
-                'Plate calculator',
+                l10n.plateCalculator,
                 style: theme.textTheme.headlineSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
               ),
               const SizedBox(height: 16),
-              Text('Bar', style: theme.textTheme.titleSmall),
+              Text(l10n.bar, style: theme.textTheme.titleSmall),
               const SizedBox(height: 8),
               Wrap(
                 spacing: 8,
@@ -156,7 +158,7 @@ class _BarbellCalculatorSheetState
                   decimal: true,
                 ),
                 decoration: InputDecoration(
-                  labelText: 'Target weight',
+                  labelText: l10n.targetWeight,
                   suffixText: system.suffix,
                   border: const OutlineInputBorder(),
                 ),
@@ -169,7 +171,7 @@ class _BarbellCalculatorSheetState
               const SizedBox(height: 8),
               SwitchListTile(
                 contentPadding: EdgeInsets.zero,
-                title: const Text('Include small plates'),
+                title: Text(l10n.includeSmallPlates),
                 value: _includeSmallPlates,
                 onChanged: (bool value) {
                   setState(() => _includeSmallPlates = value);
@@ -178,7 +180,7 @@ class _BarbellCalculatorSheetState
               const Divider(),
               const SizedBox(height: 8),
               Text(
-                'Per side',
+                l10n.perSide,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -186,7 +188,7 @@ class _BarbellCalculatorSheetState
               const SizedBox(height: 8),
               if (breakdown.platesPerSideKg.isEmpty)
                 Text(
-                  'No plates needed',
+                  l10n.noPlatesNeeded,
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
                   ),
@@ -221,9 +223,13 @@ class _BarbellCalculatorSheetState
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
-                          'Cannot hit exactly — '
-                          '${formatWeight(breakdown.remainderKg, system, suffix: system.suffix)} '
-                          'left over per side',
+                          l10n.cannotHitExactly(
+                            formatWeight(
+                              breakdown.remainderKg,
+                              system,
+                              suffix: system.suffix,
+                            ),
+                          ),
                           style: theme.textTheme.bodyMedium?.copyWith(
                             color: theme.colorScheme.onErrorContainer,
                           ),
@@ -233,12 +239,17 @@ class _BarbellCalculatorSheetState
                   ),
                 ),
               Text(
-                'Closest achievable: '
-                '${formatWeight(breakdown.closestAchievableKg, system, suffix: system.suffix)}',
+                l10n.closestAchievable(
+                  formatWeight(
+                    breakdown.closestAchievableKg,
+                    system,
+                    suffix: system.suffix,
+                  ),
+                ),
                 style: theme.textTheme.bodyMedium,
               ),
               const SizedBox(height: 16),
-              FilledButton(onPressed: _confirm, child: const Text('Done')),
+              FilledButton(onPressed: _confirm, child: Text(l10n.done)),
             ],
           ),
         ),
@@ -274,7 +285,7 @@ class _PlateRow extends StatelessWidget {
             ),
           ),
           Text(
-            '× $count',
+            context.l10n.plateCount(count),
             style: theme.textTheme.titleMedium?.copyWith(
               color: theme.colorScheme.primary,
               fontWeight: FontWeight.bold,

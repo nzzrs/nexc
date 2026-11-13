@@ -11,6 +11,8 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/l10n/l10n.dart';
+
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
 
@@ -39,7 +41,7 @@ class _AboutScreenState extends State<AboutScreen> {
     if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Could not open $url')),
+          SnackBar(content: Text(context.l10n.couldNotOpenUrl(url))),
         );
       }
     }
@@ -48,13 +50,17 @@ class _AboutScreenState extends State<AboutScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final version = _packageInfo != null
-        ? 'Version ${_packageInfo!.version} (${_packageInfo!.buildNumber})'
-        : 'Loading version…';
+        ? l10n.versionWithBuild(
+            _packageInfo!.version,
+            _packageInfo!.buildNumber,
+          )
+        : l10n.loadingVersion;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('About'),
+        title: Text(l10n.aboutTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -90,7 +96,7 @@ class _AboutScreenState extends State<AboutScreen> {
           const SizedBox(height: 24),
           Center(
             child: Text(
-              'Nexc',
+              l10n.appName,
               style: theme.textTheme.displaySmall?.copyWith(
                 fontWeight: FontWeight.w900,
                 letterSpacing: -1.0,
@@ -108,30 +114,24 @@ class _AboutScreenState extends State<AboutScreen> {
           ),
           const SizedBox(height: 32),
 
-          _buildSectionHeader(context, 'Info'),
+          _buildSectionHeader(context, l10n.info),
           const SizedBox(height: 8),
           _AboutItem(
-            text: 'Privacy Policy',
-            description: 'No data leaves your device. Ever.',
+            text: l10n.privacyPolicy,
+            description: l10n.privacyPolicyDescription,
             icon: Icons.privacy_tip_outlined,
             onClick: () {
               showDialog(
                 context: context,
                 builder: (ctx) => AlertDialog(
-                  title: const Text('Privacy Policy'),
-                  content: const SingleChildScrollView(
-                    child: Text(
-                      'Nexc does not collect, store, or transmit any personal data. '
-                      'All workout and nutrition data is stored exclusively on your device '
-                      'in a local database. No analytics, no crash reporting services, '
-                      'no third-party SDKs that phone home.\n\n'
-                      'Your data is your data.',
-                    ),
+                  title: Text(l10n.privacyPolicy),
+                  content: SingleChildScrollView(
+                    child: Text(l10n.privacyPolicyBody),
                   ),
                   actions: [
                     TextButton(
                       onPressed: () => Navigator.pop(ctx),
-                      child: const Text('Got it'),
+                      child: Text(l10n.gotIt),
                     ),
                   ],
                 ),
@@ -139,58 +139,60 @@ class _AboutScreenState extends State<AboutScreen> {
             },
           ),
           _AboutItem(
-            text: 'License',
-            description: 'GNU General Public License v3.0',
+            text: l10n.license,
+            description: l10n.licenseDescription,
             icon: Icons.gavel_outlined,
             onClick: () {
               showLicensePage(
                 context: context,
-                applicationName: 'Nexc',
+                applicationName: l10n.appName,
                 applicationVersion: _packageInfo?.version ?? '',
-                applicationLegalese:
-                    '© 2026 Nexc Contributors\n'
-                    'Based on LibreFit © IamDg and the LibreFit Contributors\n'
-                    'Licensed under the GNU General Public License v3.0',
+                // The upstream attribution clause requires this exact credit.
+                // English text: "Based on LibreFit © IamDg and the LibreFit Contributors".
+                applicationLegalese: l10n.licenseLegalese,
               );
             },
           ),
           _AboutItem(
-            text: 'GitHub',
-            description: 'View source code on GitHub',
+            text: l10n.github,
+            description: l10n.githubDescription,
             icon: Icons.code,
             onClick: () => _launchUrl('https://github.com/nzzrs/nexc'),
           ),
 
           const SizedBox(height: 16),
-          _buildSectionHeader(context, 'Attribution'),
+          _buildSectionHeader(context, l10n.attribution),
           const SizedBox(height: 8),
           _AboutItem(
-            text: 'LibreFit',
-            description: 'The open-source project Nexc is based on — by IamDg and contributors',
+            text: l10n.libreFitName,
+            description: l10n.libreFitDescription,
             icon: Icons.favorite_outline,
-            onClick: () => _launchUrl('https://github.com/LibreFitOrg/LibreFit'),
+            onClick: () =>
+                _launchUrl('https://github.com/LibreFitOrg/LibreFit'),
           ),
 
           const SizedBox(height: 16),
-          _buildSectionHeader(context, 'Contact'),
+          _buildSectionHeader(context, l10n.contact),
           const SizedBox(height: 8),
           _AboutItem(
-            text: 'Report a bug',
-            description: 'Open an issue on GitHub',
+            text: l10n.reportBug,
+            description: l10n.reportBugDescription,
             icon: Icons.bug_report_outlined,
-            onClick: () => _launchUrl('https://github.com/nzzrs/nexc/issues/new'),
+            onClick: () =>
+                _launchUrl('https://github.com/nzzrs/nexc/issues/new'),
           ),
           _AboutItem(
-            text: 'Suggest a feature',
-            description: 'Open a discussion on GitHub',
+            text: l10n.suggestFeature,
+            description: l10n.suggestFeatureDescription,
             icon: Icons.lightbulb_outline,
-            onClick: () => _launchUrl('https://github.com/nzzrs/nexc/discussions'),
+            onClick: () =>
+                _launchUrl('https://github.com/nzzrs/nexc/discussions'),
           ),
 
           const SizedBox(height: 32),
           Center(
             child: Text(
-              'Made with ❤️ — built on the shoulders of giants.',
+              l10n.madeWithLove,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -246,7 +248,10 @@ class _AboutItem extends StatelessWidget {
           borderRadius: BorderRadius.circular(16.0),
           onTap: onClick,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16.0,
+              vertical: 12.0,
+            ),
             child: Row(
               children: [
                 Icon(icon, color: theme.colorScheme.onSurfaceVariant),
@@ -273,7 +278,9 @@ class _AboutItem extends StatelessWidget {
                 ),
                 Icon(
                   Icons.chevron_right,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(
+                    alpha: 0.5,
+                  ),
                 ),
               ],
             ),

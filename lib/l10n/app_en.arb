@@ -1,0 +1,1671 @@
+{
+  "@@locale": "en",
+  "appName": "Nexc",
+  "cancel": "Cancel",
+  "done": "Done",
+  "close": "Close",
+  "delete": "Delete",
+  "settingsTitle": "Settings",
+  "aboutTitle": "About",
+  "tabWorkout": "Workout",
+  "tabMeals": "Meals",
+  "tabProfile": "Profile",
+  "createRoutine": "Create routine",
+  "discardRunningWorkoutTitle": "Discard running workout?",
+  "discardWorkoutMessage": "Are you sure you want to discard this unsaved, ongoing workout? This action cannot be undone.",
+  "discard": "Discard",
+  "discardWorkoutAndStartRoutineMessage": "Are you sure you want to discard this unsaved, ongoing workout and start this routine instead? This action cannot be undone.",
+  "discardAndStart": "Discard & Start",
+  "startEmptyWorkout": "Start empty workout",
+  "resumeWorkout": "Resume workout",
+  "elapsedTime": "Elapsed time: {time}",
+  "@elapsedTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingActiveWorkout": "Error loading active workout: {error}",
+  "@errorLoadingActiveWorkout": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "yourRoutines": "Your routines",
+  "aiWorkoutCreator": "AI Workout Creator",
+  "aiWorkoutCreatorDisabled": "AI Workout Creator (Disabled in Settings)",
+  "aiWorkoutGenerationDisabled": "AI workout generation is disabled in Settings.",
+  "startByCreatingRoutine": "Start by creating a new routine",
+  "dragToReorder": "Drag to reorder",
+  "startRoutine": "Start routine",
+  "errorLoadingRoutines": "Error loading routines: {error}",
+  "@errorLoadingRoutines": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "appearance": "Appearance",
+  "theme": "Theme",
+  "selectTheme": "Select theme",
+  "themeModeSystem": "System",
+  "themeModeLight": "Light",
+  "themeModeDark": "Dark",
+  "materialYou": "Material You",
+  "dynamicColorEnabled": "Dynamic color enabled",
+  "dynamicColorDisabled": "Dynamic color disabled",
+  "showExerciseImages": "Show exercise images",
+  "imagesShown": "Images shown",
+  "imagesHidden": "Images hidden",
+  "generalSettings": "General settings",
+  "language": "Language",
+  "selectLanguage": "Select language",
+  "unitSystem": "Unit system",
+  "selectUnitSystem": "Select unit system",
+  "keepScreenOn": "Keep screen on",
+  "screenWillStayOn": "Screen will stay on",
+  "screenWillTurnOffNormally": "Screen will turn off normally",
+  "restTimerSound": "Rest timer sound",
+  "soundEnabled": "Sound enabled",
+  "soundDisabled": "Sound disabled",
+  "restTimerVibration": "Rest timer vibration",
+  "vibrationEnabled": "Vibration enabled",
+  "vibrationDisabled": "Vibration disabled",
+  "stickyWorkoutStatusBar": "Sticky workout status bar",
+  "statusBarIsSticky": "Status bar is sticky",
+  "statusBarIsNotSticky": "Status bar is not sticky",
+  "intensityScale": "Intensity scale",
+  "selectIntensityScale": "Select intensity scale",
+  "intensityScalesTitle": "Intensity Scales (RPE & RIR)",
+  "intensityScalesDescription": "• RPE (Rate of Perceived Exertion): A 1-10 scale measuring how hard a set felt. 10 is maximum effort (no more reps possible), 9 means you could do 1 more rep, 8 means 2 more, etc.\n\n• RIR (Reps in Reserve): The number of reps you could have performed before hitting failure. 0 RIR is equivalent to 10 RPE.\n\nUse them to monitor and adjust intensity dynamically without always going to absolute muscle failure.",
+  "intensityScaleNone": "None (disabled)",
+  "intensityScaleRpe": "RPE",
+  "intensityScaleRir": "RIR",
+  "intensityScaleBoth": "Both",
+  "updateRoutineAfterWorkout": "Update routine after workout",
+  "routineUpdateNever": "Never",
+  "routineUpdateAlways": "Always",
+  "routineUpdateAsk": "Ask",
+  "scrollWheelInput": "Scroll wheel input",
+  "tapValueToOpenPicker": "Tap a value to open the picker",
+  "inlineTextFields": "Inline text fields",
+  "dismissScrollWheelAutomatically": "Dismiss scroll wheel automatically",
+  "closesAfterShortPause": "Closes after a short pause",
+  "confirmWithDone": "Confirm with Done",
+  "dataAndConfiguration": "Data & Configuration",
+  "measurementsSettings": "Measurements Settings",
+  "configureMeasurementsDesc": "Configure which measurements to track",
+  "backupAndRestore": "Backup & Restore",
+  "backupAndRestoreDesc": "Backup and restore your data",
+  "featuresConfiguration": "Features Configuration",
+  "mealTracking": "Meal Tracking",
+  "mealTrackingEnabled": "Meal tracking enabled",
+  "mealTrackingDisabled": "Meal tracking disabled",
+  "dayStartHour": "Day start hour",
+  "newDayStartsAt": "New day starts at {time}:00",
+  "@newDayStartsAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultMacrosOverridePlans": "Default macros override plans",
+  "defaultMacrosOverrideEnabledDesc": "Default target macros always override meal plan targets",
+  "defaultMacrosOverrideDisabledDesc": "Meal plan targets take precedence when available",
+  "stockTracking": "Stock Tracking",
+  "requiresMealTracking": "Requires Meal Tracking",
+  "stockTrackingEnabled": "Stock tracking enabled",
+  "stockTrackingDisabled": "Stock tracking disabled",
+  "aiIntegrations": "AI Integrations",
+  "aiStockLogging": "AI Stock Logging",
+  "aiStockLoggingDesc": "Log stock via receipt photo uploads",
+  "aiProductCreation": "AI Product Creation",
+  "aiProductCreationDesc": "Autofill nutrition details using AI predictions",
+  "aiFeaturesAndPrivacy": "AI Features & Privacy",
+  "aiWorkoutGenerationEnabledDesc": "AI assisted workout generation enabled",
+  "aiWorkoutGenerationDisabledDesc": "AI assisted workout generation disabled",
+  "includeUserStatistics": "Include User Statistics",
+  "includeUserStatisticsEnabledDesc": "Workout volume, streak & metrics shared",
+  "includeUserStatisticsDisabledDesc": "User statistics hidden from AI",
+  "includeMealHistory": "Include Meal History",
+  "includeMealHistoryEnabledDesc": "Recent nutrition & logged meals shared",
+  "includeMealHistoryDisabledDesc": "Meal history hidden from AI",
+  "includeWorkoutHistory": "Include Workout History",
+  "includeWorkoutHistoryEnabledDesc": "Completed workouts & routine records shared",
+  "includeWorkoutHistoryDisabledDesc": "Workout history hidden from AI",
+  "includeUserPreferences": "Include User Preferences",
+  "includeUserPreferencesEnabledDesc": "Equipment & personal training notes shared",
+  "includeUserPreferencesDisabledDesc": "User preferences hidden from AI",
+  "includeMeasurements": "Include Measurements",
+  "includeMeasurementsEnabledDesc": "Weight & body measurements shared",
+  "includeMeasurementsDisabledDesc": "Measurements hidden from AI",
+  "aiApiConfiguration": "AI API Configuration",
+  "apiProvider": "API Provider",
+  "geminiApi": "Gemini API (AI Studio)",
+  "openRouter": "OpenRouter",
+  "apiTokenKey": "API Token / Key",
+  "modelName": "Model Name",
+  "languageSystem": "System",
+  "languageArabic": "Arabic",
+  "languageCatalan": "Catalan",
+  "languageCzech": "Czech",
+  "languageGerman": "German",
+  "languageEnglish": "English",
+  "languageSpanish": "Spanish",
+  "languageFrench": "French",
+  "languageGalician": "Galician",
+  "languageHindi": "Hindi",
+  "languageIndonesian": "Indonesian",
+  "languageItalian": "Italian",
+  "languageKorean": "Korean",
+  "languageDutch": "Dutch",
+  "languagePolish": "Polish",
+  "languagePortuguese": "Portuguese",
+  "languagePortugueseBrazil": "Portuguese (Brazil)",
+  "languageRussian": "Russian",
+  "languageSwedish": "Swedish",
+  "languageUkrainian": "Ukrainian",
+  "languageUrdu": "Urdu",
+  "languageSimplifiedChinese": "Simplified Chinese",
+  "unitSystemMetric": "Metric",
+  "unitSystemImperial": "Imperial",
+  "couldNotOpenUrl": "Could not open {url}",
+  "@couldNotOpenUrl": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "versionWithBuild": "Version {version} ({build})",
+  "@versionWithBuild": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "loadingVersion": "Loading version…",
+  "info": "Info",
+  "privacyPolicy": "Privacy Policy",
+  "privacyPolicyDescription": "No data leaves your device. Ever.",
+  "privacyPolicyBody": "Nexc does not collect, store, or transmit any personal data. All workout and nutrition data is stored exclusively on your device in a local database. No analytics, no crash reporting services, no third-party SDKs that phone home.\n\nYour data is your data.",
+  "gotIt": "Got it",
+  "license": "License",
+  "licenseDescription": "GNU General Public License v3.0",
+  "licenseLegalese": "© 2026 Nexc Contributors\nBased on LibreFit © IamDg and the LibreFit Contributors\nLicensed under the GNU General Public License v3.0",
+  "github": "GitHub",
+  "githubDescription": "View source code on GitHub",
+  "attribution": "Attribution",
+  "libreFitName": "LibreFit",
+  "libreFitDescription": "The open-source project Nexc is based on — by IamDg and contributors",
+  "contact": "Contact",
+  "reportBug": "Report a bug",
+  "reportBugDescription": "Open an issue on GitHub",
+  "suggestFeature": "Suggest a feature",
+  "suggestFeatureDescription": "Open a discussion on GitHub",
+  "madeWithLove": "Made with ❤️ — built on the shoulders of giants.",
+  "plateCalculator": "Plate calculator",
+  "unlinkSuperset": "Unlink superset",
+  "linkSuperset": "Link superset",
+  "replaceExercise": "Replace exercise",
+  "machineBusy": "Machine busy",
+  "notes": "Notes",
+  "restTimeLabel": "Rest time: ",
+  "type": "Type",
+  "setColumn": "Set",
+  "previousColumn": "Previous",
+  "timeColumn": "Time",
+  "weightColumn": "Weight",
+  "repsColumn": "Reps",
+  "rpe": "RPE",
+  "rir": "RIR",
+  "addSet": "Add set",
+  "decreaseBy": "Decrease by {amount}",
+  "@decreaseBy": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "increaseBy": "Increase by {amount}",
+  "@increaseBy": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "bar": "Bar",
+  "targetWeight": "Target weight",
+  "includeSmallPlates": "Include small plates",
+  "perSide": "Per side",
+  "noPlatesNeeded": "No plates needed",
+  "cannotHitExactly": "Cannot hit exactly — {remainder} left over per side",
+  "@cannotHitExactly": {
+    "placeholders": {
+      "remainder": {
+        "type": "String"
+      }
+    }
+  },
+  "closestAchievable": "Closest achievable: {weight}",
+  "@closestAchievable": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "plateCount": "× {count}",
+  "@plateCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "updateRoutineTitle": "Update routine?",
+  "updateRoutineMessage": "Copy the values of the completed sets into your routine?",
+  "dontUpdate": "Don't update",
+  "update": "Update",
+  "activeWorkoutChannel": "Active Workout",
+  "activeWorkoutChannelDesc": "Keeps workout stopwatch running in background",
+  "workoutInProgress": "Workout in Progress",
+  "durationWithTime": "Duration: {time}",
+  "@durationWithTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "restTimerChannel": "Rest Timer",
+  "restTimerChannelDesc": "Notifications for active rest timer",
+  "resting": "Resting...",
+  "secondsRemaining": "{count} seconds remaining",
+  "@secondsRemaining": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "restTimerFinishedChannel": "Rest Timer Finished",
+  "restTimerFinishedChannelDesc": "Notifications when rest timer is done",
+  "restFinished": "Rest Finished",
+  "restFinishedBody": "Time to start your next set!",
+  "finishWorkoutTitle": "Finish Workout?",
+  "completedSetsRatio": "Completed: {completed}/{total} sets",
+  "@completedSetsRatio": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "saveAction": "SAVE",
+  "setsRatio": "Sets: {completed}/{total}",
+  "@setsRatio": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "doneAction": "DONE",
+  "emptyWorkoutHint": "Your workout is empty. Tap Add Exercise below.",
+  "doneReordering": "Done Reordering",
+  "reorderExercises": "Reorder Exercises",
+  "pushedExerciseForLater": "Pushed \"{name}\" for later",
+  "@pushedExerciseForLater": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "timerCanceled": "Timer canceled",
+  "addExercise": "Add exercise",
+  "restTimerBadge": "REST",
+  "workoutSummaryTitle": "Workout Summary",
+  "workoutCompleted": "Workout Completed!",
+  "volumeLabel": "Volume",
+  "durationLabel": "Duration",
+  "setsCompletedLabel": "Sets Completed",
+  "hardSetsSummaryLabel": "Hard Sets",
+  "exercisesLabel": "Exercises",
+  "densityWithValue": "Density: {value}",
+  "@densityWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "focusWithValue": "Focus: {value}",
+  "@focusWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "exerciseBreakdown": "Exercise Breakdown",
+  "e1rmWithValue": "e1RM: {value}",
+  "@e1rmWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "volumeWithValue": "Volume: {value}",
+  "@volumeWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "detailedSummaryCopied": "Detailed summary copied to clipboard",
+  "copyToClipboard": "Copy to Clipboard",
+  "deleteRoutineTitle": "Delete Routine?",
+  "deleteWorkoutTitle": "Delete Workout?",
+  "deleteRoutineMessage": "Are you sure you want to delete this routine? This action cannot be undone.",
+  "deleteWorkoutMessage": "Are you sure you want to delete this workout? This action cannot be undone.",
+  "unlinkRoutineTitle": "Unlink Routine?",
+  "unlinkRoutineMessage": "Are you sure you want to unlink this workout from its routine?",
+  "unlink": "Unlink",
+  "routineLabel": "Routine",
+  "durationMinutes": "Duration: {minutes} min",
+  "@durationMinutes": {
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "createdWithDate": "Created: {date}",
+  "@createdWithDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "completedWithDate": "Completed: {date}",
+  "@completedWithDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "exercisesWithCount": "Exercises: {count}",
+  "@exercisesWithCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "totalSetsCount": "Total sets: {count}",
+  "@totalSetsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "completedSetsCount": "Completed sets: {count}",
+  "@completedSetsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "linkedRoutine": "Linked routine",
+  "openThisRoutine": "Open this routine",
+  "performance": "Performance",
+  "tonnageLabel": "Tonnage",
+  "densityLabel": "Density",
+  "hardSetsMetricLabel": "Hard sets",
+  "primaryMuscleLabel": "Primary muscle",
+  "bestE1rmLabel": "Best e1RM",
+  "setNumber": "Set {number}",
+  "@setNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "repsCount": "{count} reps",
+  "@repsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "rpeWithValue": "  (RPE {value})",
+  "@rpeWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "rirWithValue": "  (RIR {value})",
+  "@rirWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "routineSavedToRoutines": "Routine \"{title}\" saved to your routines!",
+  "@routineSavedToRoutines": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "view": "View",
+  "failedToSaveRoutine": "Failed to save routine: {error}",
+  "@failedToSaveRoutine": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "aiPreferences": "AI Preferences",
+  "aiGenerationTurnedOff": "AI assisted workout generation is turned off in Settings.",
+  "enableAction": "ENABLE",
+  "exercisesWithList": "{count} Exercises: {list}",
+  "@exercisesWithList": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "list": {
+        "type": "String"
+      }
+    }
+  },
+  "routineSaved": "Routine Saved",
+  "saveAsRoutine": "Save as Routine",
+  "aiCoachThinking": "AI coach is thinking...",
+  "askOrCreateWorkout": "Ask or create a workout...",
+  "aiGenerationDisabledHint": "AI generation disabled in Settings",
+  "addExercisesTitle": "Add Exercises",
+  "replaceExerciseTitle": "Replace Exercise",
+  "selectExercise": "Select Exercise",
+  "addCount": "ADD ({count})",
+  "@addCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchExercise": "Search exercise...",
+  "levelLabel": "Level",
+  "levelWithValue": "Level: {value}",
+  "@levelWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "selectLevel": "Select Level",
+  "forceLabel": "Force",
+  "forceWithValue": "Force: {value}",
+  "@forceWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "selectForce": "Select Force",
+  "mechanicLabel": "Mechanic",
+  "mechanicWithValue": "Mechanic: {value}",
+  "@mechanicWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "selectMechanic": "Select Mechanic",
+  "equipmentLabel": "Equipment",
+  "equipmentWithValue": "Equipment: {value}",
+  "@equipmentWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "selectEquipment": "Select Equipment",
+  "muscleLabel": "Muscle",
+  "muscleWithValue": "Muscle: {value}",
+  "@muscleWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "selectMuscle": "Select Muscle",
+  "categoryLabel": "Category",
+  "categoryWithValue": "Category: {value}",
+  "@categoryWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "selectCategory": "Select Category",
+  "customOnly": "Custom Only",
+  "reset": "Reset",
+  "errorWithMessage": "Error: {error}",
+  "@errorWithMessage": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "noExercisesFound": "No exercises found",
+  "createExercise": "Create Exercise",
+  "createWithAi": "Create with AI",
+  "aiMatch": "AI MATCH",
+  "exerciseSubtitle": "{category} • {equipment} • {muscles}",
+  "@exerciseSubtitle": {
+    "placeholders": {
+      "category": {
+        "type": "String"
+      },
+      "equipment": {
+        "type": "String"
+      },
+      "muscles": {
+        "type": "String"
+      }
+    }
+  },
+  "noEquipment": "No Equipment",
+  "aiSuggestions": "AI SUGGESTIONS (SIMILAR MUSCLES)",
+  "allExercises": "ALL EXERCISES",
+  "all": "All",
+  "createCustomExercise": "Create Custom Exercise",
+  "exerciseName": "Exercise Name",
+  "primaryMuscleField": "Primary Muscle",
+  "cancelAction": "CANCEL",
+  "describeExerciseHint": "Describe exercise (e.g. Dumbbell rear delt fly on incline bench)",
+  "generateAction": "GENERATE",
+  "generatingExerciseWithAi": "Generating exercise with AI...",
+  "exerciseDetails": "Exercise Details",
+  "detailsTab": "Details",
+  "instructionsTab": "Instructions",
+  "primaryMusclesWorked": "Primary Muscles Worked",
+  "secondaryMusclesWorked": "Secondary Muscles Worked",
+  "discardChangesTitle": "Discard Changes?",
+  "discardChangesMessage": "Do you want to discard your changes or save them?",
+  "enterRoutineTitle": "Please enter a routine title",
+  "createRoutineTitle": "Create Routine",
+  "editRoutineTitle": "Edit Routine",
+  "routineTitleField": "Routine title",
+  "routineNotesField": "Routine notes",
+  "noExercisesAdded": "No exercises added yet. Tap Add Exercise below.",
+  "addExerciseTitle": "Add Exercise",
+  "discardAction": "DISCARD",
+  "notificationPermissionTitle": "Stay on Track",
+  "notificationPermissionMessage": "Nexc needs notification permission to alert you when your rest timer finishes, keeping your workouts focused and efficient.",
+  "notNow": "Not now",
+  "allow": "Allow",
+  "clearSearch": "Clear search",
+  "calendarTitle": "Calendar",
+  "selectDayHint": "Select a day to view workouts",
+  "workoutNoun": "workout",
+  "workoutsNoun": "workouts",
+  "restDayNoWorkouts": "Rest day — no workouts logged",
+  "monthJan": "Jan",
+  "monthFeb": "Feb",
+  "monthMar": "Mar",
+  "monthApr": "Apr",
+  "monthMay": "May",
+  "monthJun": "Jun",
+  "monthJul": "Jul",
+  "monthAug": "Aug",
+  "monthSep": "Sep",
+  "monthOct": "Oct",
+  "monthNov": "Nov",
+  "monthDec": "Dec",
+  "weekdayMon": "Mon",
+  "weekdayTue": "Tue",
+  "weekdayWed": "Wed",
+  "weekdayThu": "Thu",
+  "weekdayFri": "Fri",
+  "weekdaySat": "Sat",
+  "weekdaySun": "Sun",
+  "calendarDate": "{weekday}, {month} {day}",
+  "@calendarDate": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      },
+      "month": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "setsCompletedRatio": "{completed}/{total} sets completed",
+  "@setsCompletedRatio": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "exerciseNoun": "exercise",
+  "exercisesNoun": "exercises",
+  "moreCount": "+{count} more",
+  "@moreCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "replaceMealItem": "Replace Meal Item",
+  "addItemToMeal": "Add Item to Meal",
+  "addItemsSelected": "Add Items ({count} selected)",
+  "@addItemsSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productsTab": "Products",
+  "recipesTab": "Recipes",
+  "createProduct": "Create Product",
+  "createRecipe": "Create Recipe",
+  "searchFoodOrProduct": "Search food or product...",
+  "searchRecipes": "Search recipes...",
+  "noProductsFound": "No products found",
+  "inStock": "In Stock",
+  "editProduct": "Edit Product",
+  "noRecipesFound": "No recipes found",
+  "ingredientsCount": "{count} ingredients",
+  "@ingredientsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "editRecipe": "Edit Recipe",
+  "gramsLabel": "Grams",
+  "unitsLabel": "Units",
+  "portionAmount": "Portion Amount",
+  "replaceAction": "Replace",
+  "addAllCount": "Add All ({count})",
+  "@addAllCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addToMeal": "Add to Meal",
+  "macrosCompact": "{protein}g P | {carbs}g C | {fats}g F",
+  "@macrosCompact": {
+    "placeholders": {
+      "protein": {
+        "type": "String"
+      },
+      "carbs": {
+        "type": "String"
+      },
+      "fats": {
+        "type": "String"
+      }
+    }
+  },
+  "addProduct": "Add Product",
+  "nameLabel": "Name",
+  "autofillWithAi": "Autofill with AI",
+  "enterProductNameFirst": "Enter a product name first",
+  "autofilledProductDetails": "Autofilled product details!",
+  "aiError": "AI Error: {error}",
+  "@aiError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultUnitsLabel": "Default Units",
+  "mlToGFactorRequired": "ml to g factor *",
+  "mlToGFactorLabel": "ml to g factor",
+  "requiredForMlProducts": "Required for ml-based products",
+  "unitWeightGRequired": "Unit weight (g) *",
+  "unitWeightGLabel": "Unit weight (g)",
+  "requiredForUnitsProducts": "Required for products measured in units",
+  "ediblePercentLabel": "Edible %",
+  "macrosEnergyPer100g": "Macros & Energy (per 100g)",
+  "caloriesKcal": "Calories (kcal)",
+  "proteinsG": "Proteins (g)",
+  "carbsAvailableG": "Carbs Available (g)",
+  "carbsByDiffG": "Carbs By Diff (g)",
+  "fatsG": "Fats (g)",
+  "dietaryFiberG": "Dietary Fiber (g)",
+  "isSupplementLabel": "Is Supplement",
+  "isPortableLabel": "Is Portable",
+  "isStockRawLabel": "Is Stock Raw",
+  "saveChanges": "Save Changes",
+  "validationMlFactor": "Add a positive \"ml to g factor\" so portions measured in ml can be converted to grams.",
+  "validationUnitWeight": "Add a positive \"Unit weight (g)\" so portions measured in units can be converted to grams.",
+  "addRecipe": "Add Recipe",
+  "save": "Save",
+  "instructionsProcess": "Instructions/Process",
+  "isPortableNonPortable": "Is Portable (Contains non-portable ingredients)",
+  "composition": "Composition",
+  "clearSelection": "Clear selection",
+  "searchIngredient": "Search Ingredient...",
+  "amountLabel": "Amount",
+  "addAction": "Add",
+  "ingredientLine": "{name}: {amount}",
+  "@ingredientLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "removeIngredient": "Remove ingredient",
+  "enterRecipeName": "Enter a recipe name",
+  "titleCannotBeEmpty": "Title cannot be empty",
+  "mealPlanSaved": "Meal plan saved",
+  "createMealPlan": "Create Meal Plan",
+  "editMealPlan": "Edit Meal Plan",
+  "planTitle": "Plan Title",
+  "notesGoal": "Notes/Goal",
+  "targetMacros": "Target Macros",
+  "proteinG": "Protein (g)",
+  "carbsG": "Carbs (g)",
+  "sumGrams": "Sum: {value}g",
+  "@sumGrams": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "mealsLabel": "Meals",
+  "mealNumber": "Meal {number}",
+  "@mealNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "addMeal": "Add Meal",
+  "deleteMeal": "Delete Meal",
+  "deleteMealConfirm": "Are you sure you want to delete '{name}'?",
+  "@deleteMealConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unknownProduct": "Unknown Product",
+  "unknownRecipe": "Unknown Recipe",
+  "editItem": "Edit Item",
+  "selectActionForItem": "Select an action for this item.",
+  "addItem": "Add Item",
+  "mealItemFallback": "Meal Item",
+  "chooseActionForItem": "Choose an action for this item in today's meal log:",
+  "addSnack": "Add Snack",
+  "todayPlanTab": "Today's plan",
+  "mealPlansTab": "Meal plans",
+  "selectMealPlanForToday": "Select a meal plan for today",
+  "goToMealPlans": "Go to Meal Plans",
+  "startLogging": "Start Logging",
+  "discardTodayMeals": "Discard Today's Meals",
+  "discardTodayMealsMessage": "Are you sure you want to discard today's meals log? This cannot be undone.",
+  "saveTodayMeals": "Save Today's Meals",
+  "saveTodayMealsMessage": "This will save all items marked as eaten to your logs and remove any uneaten items. Proceed?",
+  "todayMealsLogged": "Today's meals logged successfully!",
+  "noMealPlansYet": "No meal plans yet",
+  "deleteMealPlan": "Delete Meal Plan",
+  "deleteMealPlanConfirm": "Are you sure you want to delete '{title}'?",
+  "@deleteMealPlanConfirm": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "changeMealPlan": "Change Meal Plan?",
+  "changeMealPlanMessage": "Changing today's plan will discard all food currently logged for today. Proceed?",
+  "proceed": "Proceed",
+  "todaysMacros": "Today's Macros",
+  "proteinLabel": "Protein",
+  "carbsLabel": "Carbs",
+  "fatsLabel": "Fats",
+  "portable": "Portable",
+  "homeOnly": "Home only",
+  "atHome": "At Home",
+  "outside": "Outside",
+  "edibleEquivalent": "≈ {amount}g edible",
+  "@edibleEquivalent": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "editDailyMacroGoals": "Edit Daily Macro Goals",
+  "scheduledMeals": "{count} scheduled meals ({names})",
+  "@scheduledMeals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "selectedLabel": "Selected",
+  "selectLabel": "Select",
+  "macroChip": "{label}: {value}",
+  "@macroChip": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "addNoteHint": "Add note...",
+  "addItemToMealLower": "Add item to meal",
+  "deleteProduct": "Delete Product",
+  "deleteProductConfirm": "Are you sure you want to delete '{name}'?",
+  "@deleteProductConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "supplement": "Supplement",
+  "protGrams": "Prot: {value}g",
+  "@protGrams": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "carbGrams": "Carb: {value}g",
+  "@carbGrams": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "fatGrams": "Fat: {value}g",
+  "@fatGrams": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultWithValue": "Default: {value}",
+  "@defaultWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteRecipe": "Delete Recipe",
+  "deleteRecipeConfirm": "Are you sure you want to delete '{name}'?",
+  "@deleteRecipeConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "macrosPrefixLine": "Macros: P {protein}g | C {carbs}g | F {fats}g",
+  "@macrosPrefixLine": {
+    "placeholders": {
+      "protein": {
+        "type": "String"
+      },
+      "carbs": {
+        "type": "String"
+      },
+      "fats": {
+        "type": "String"
+      }
+    }
+  },
+  "ingredientWithAmount": "{name} ({amount})",
+  "@ingredientWithAmount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "selectProduct": "Select Product",
+  "usedCount": "Used {count}x",
+  "@usedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unitWithValue": "Unit: {value}",
+  "@unitWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "macrosShort": "P {protein}g | C {carbs}g | F {fats}g",
+  "@macrosShort": {
+    "placeholders": {
+      "protein": {
+        "type": "String"
+      },
+      "carbs": {
+        "type": "String"
+      },
+      "fats": {
+        "type": "String"
+      }
+    }
+  },
+  "inStockBadge": "In stock",
+  "mealPlanDetails": "Meal Plan Details",
+  "edit": "Edit",
+  "mealPlanNotFound": "Meal plan not found",
+  "measurementsMenu": "Measurements",
+  "personalInfo": "Personal Info",
+  "statisticsMenu": "Statistics",
+  "stockTitle": "Stock",
+  "overview": "Overview",
+  "errorLoadingChart": "Error loading chart: {error}",
+  "@errorLoadingChart": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "yourWorkouts": "Your workouts",
+  "viewAll": "View all",
+  "startCompletingWorkouts": "Start completing workouts to see your history here.",
+  "finishedOnDuration": "Finished on: {date}\nDuration: {duration}",
+  "@finishedOnDuration": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "yourMeals": "Your meals",
+  "noMealLogHistory": "No meal log history yet",
+  "eatenOn": "Eaten on: {date}",
+  "@eatenOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "progressItemsEaten": "Progress: {consumed} / {total} items eaten",
+  "@progressItemsEaten": {
+    "placeholders": {
+      "consumed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteMealLog": "Delete Meal Log",
+  "deleteMealLogConfirm": "Are you sure you want to delete this meal log?",
+  "weekStreak": "Week Streak: {count}",
+  "@weekStreak": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "superActive": "🔥 Super Active!",
+  "keepMoving": "Keep moving!",
+  "workoutPerformance": "Workout Performance",
+  "repsLabel": "Reps",
+  "noDataYet": "No data yet",
+  "statisticsTitle": "Statistics",
+  "errorLoadingWorkouts": "Error loading workouts: {error}",
+  "@errorLoadingWorkouts": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workoutMetrics": "Workout Metrics",
+  "totalWorkouts": "Total Workouts",
+  "totalActiveTime": "Total Active Time",
+  "minutesValue": "{minutes} mins",
+  "@minutesValue": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "averageSession": "Average Session",
+  "targetedMusclesHeatmap": "Targeted Muscles Heatmap",
+  "topTargetMuscles": "Top Target Muscles",
+  "noMuscleData": "No muscle targeting data yet. Start tracking sets!",
+  "timesCount": "{count} times",
+  "@timesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorLoadingNutrition": "Error loading nutrition: {error}",
+  "@errorLoadingNutrition": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "nutritionInsights": "Nutrition Insights (Last {days} logs)",
+  "@nutritionInsights": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "avgCalories": "Avg. Calories",
+  "avgProtein": "Avg. Protein",
+  "avgCarbs": "Avg. Carbs",
+  "avgFats": "Avg. Fats",
+  "macrosDistribution": "Macros Distribution",
+  "noMacroData": "No macro data available",
+  "gramsPercent": "{grams} ({percent})",
+  "@gramsPercent": {
+    "placeholders": {
+      "grams": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "logMeasurement": "Log Measurement",
+  "bodyWeightWithUnit": "Body Weight ({unit})",
+  "@bodyWeightWithUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedBodyMetrics": "Advanced Body Metrics",
+  "bodyFatPercent": "Body Fat %",
+  "muscleMassPercent": "Muscle Mass %",
+  "waistCm": "Waist (cm)",
+  "sleepMetrics": "Sleep Metrics",
+  "sleepDuration": "Sleep Duration",
+  "sleepingRhr": "Sleeping RHR",
+  "sleepingHrvMs": "Sleeping HRV (ms)",
+  "advancedSleepMetrics": "Advanced Sleep Metrics",
+  "timeInBed": "Time in Bed",
+  "totalAwakeTime": "Total Awake Time",
+  "longestAwakePeriod": "Longest Awake Period",
+  "numberOfAwakenings": "Number of Awakenings",
+  "activityMetrics": "Activity Metrics",
+  "dailySteps": "Daily Steps",
+  "vo2Max": "VO2 Max",
+  "wakingRhr": "Waking RHR",
+  "wakingHrvMs": "Waking HRV (ms)",
+  "saveMeasurement": "Save Measurement",
+  "hrsShort": "Hrs",
+  "minShort": "Min",
+  "weightProgress": "Weight Progress",
+  "waistCircumference": "Waist Circumference",
+  "bodyHistory": "Body History",
+  "noBodyMeasurements": "No body measurements recorded yet.",
+  "weightWithValue": "Weight: {value}",
+  "@weightWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "dateWithValue": "Date: {date}",
+  "@dateWithValue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteLog": "Delete log?",
+  "deleteWeightConfirm": "Are you sure you want to delete this weight measurement?",
+  "deleteAdvancedBodyConfirm": "Are you sure you want to delete this advanced body log?",
+  "deleteSleepConfirm": "Are you sure you want to delete this sleep log?",
+  "deleteAdvancedSleepConfirm": "Are you sure you want to delete this advanced sleep log?",
+  "deleteActivityConfirm": "Are you sure you want to delete this activity log?",
+  "advancedEntry": "Advanced Entry",
+  "sleepHistory": "Sleep History",
+  "noSleepLogs": "No sleep logs recorded yet.",
+  "sleepEntry": "Sleep Entry",
+  "advSleepEntry": "Adv Sleep Entry",
+  "noActivityLogs": "No activity logs recorded yet.",
+  "caloriesActive": "Calories Active",
+  "activityHistory": "Activity History",
+  "activityEntry": "Activity Entry",
+  "latestLabel": "Latest",
+  "averageLabel": "Average",
+  "minMaxLabel": "Min/Max",
+  "measurementsTitle": "Measurements",
+  "addLog": "Add Log",
+  "sleepMetricBed": "{value} Bed",
+  "@sleepMetricBed": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sleepMetricAwake": "{value} Awake",
+  "@sleepMetricAwake": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sleepMetricLongestAwake": "{value} Longest Awake",
+  "@sleepMetricLongestAwake": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "awakeningsCount": "{count} awakenings",
+  "@awakeningsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stepsCount": "{count} steps",
+  "@stepsCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "kcalValue": "{value} kcal",
+  "@kcalValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoSaved": "Personal information saved successfully",
+  "preferencesSaved": "Preferences saved successfully",
+  "personalInformation": "Personal Information",
+  "yourProfileMetrics": "Your Profile Metrics",
+  "heightCm": "Height (cm)",
+  "birthdayWithDate": "Birthday: {date}",
+  "@birthdayWithDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "selectBirthday": "Select Birthday",
+  "calculatedAge": "Calculated Age: {age} years old",
+  "@calculatedAge": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "saveDetails": "Save Details",
+  "userPreferencesTitle": "User Preferences",
+  "aiPreferencesContext": "AI uses this context to tailor workouts and meal plans",
+  "preferencesHint": "Paste or write your detailed preferences, schedule constraints, fitness goals, or dietary requirements here...",
+  "savePreferences": "Save Preferences",
+  "allMealsTitle": "All Meals",
+  "allWorkoutsTitle": "All Workouts",
+  "noWorkoutsCompleted": "No workouts completed yet",
+  "measurementsSettingsDesc": "Choose which measurement categories to track. Disabled categories won't appear in the Measurements view.",
+  "sleepMeasurements": "Sleep Measurements",
+  "sleepMeasurementsDesc": "Sleep duration, sleeping RHR & HRV",
+  "advancedSleepMeasurements": "Advanced Sleep Measurements",
+  "advancedSleepMeasurementsDesc": "Time in bed, awake time, number of awakenings",
+  "activityMeasurements": "Activity Measurements",
+  "activityMeasurementsDesc": "Steps, active energy, VO2 max, waking RHR/HRV",
+  "advancedBodyMeasurements": "Advanced Body Measurements",
+  "advancedBodyMeasurementsDesc": "Body fat %, muscle mass %, circumferences",
+  "searchProducts": "Search products...",
+  "bodyFatValue": "{value}% BF",
+  "@bodyFatValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "muscleMassValue": "{value}% Muscle",
+  "@muscleMassValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "waistValue": "{value}cm Waist",
+  "@waistValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sleepingRhrValue": "{value} bpm RHR",
+  "@sleepingRhrValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sleepingHrvValue": "{value} ms HRV",
+  "@sleepingHrvValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "wakingRhrValue": "{value} bpm RHR",
+  "@wakingRhrValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "wakingHrvValue": "{value} ms HRV",
+  "@wakingHrvValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "vo2WithValue": "VO2: {value}",
+  "@vo2WithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "timeAwake": "Time Awake",
+  "wakingHrv": "Waking HRV",
+  "sleepingHrv": "Sleeping HRV",
+  "addHouse": "Add House",
+  "houseName": "House Name",
+  "renameHouse": "Rename House",
+  "deleteHouse": "Delete House",
+  "deleteHouseConfirm": "Are you sure you want to delete '{name}'? This deletes all associated stock records.",
+  "@deleteHouseConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "addProductToStockTitle": "Add Product to Stock",
+  "mapToTitle": "Map '{name}' to...",
+  "@mapToTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "manageHouses": "Manage Houses",
+  "noHousesDefined": "No houses defined",
+  "operationError": "An error occurred during operation:",
+  "copyError": "Copy Error",
+  "errorCopied": "Error copied to clipboard",
+  "aiTokenNotConfigured": "AI API Token not configured. Set it in Settings.",
+  "takePhotoCamera": "Take Photo (Camera)",
+  "chooseFromGallery": "Choose from Gallery",
+  "noItemsParsed": "No items parsed from receipt.",
+  "receiptImportError": "Receipt Import Error",
+  "aiLogConfirmation": "AI Log Confirmation",
+  "notFound": "Not found",
+  "perfectMatch": "Perfect Match",
+  "fuzzyMatch": "Fuzzy Match",
+  "quantityLabel": "Quantity",
+  "unitLabel": "Unit",
+  "productEditError": "Product Edit Error",
+  "productCreationError": "Product Creation Error",
+  "createAction": "Create",
+  "confirmAction": "Confirm",
+  "loggedReceiptItems": "Logged receipt items to stock!",
+  "stockLoggingError": "Stock Logging Error",
+  "addStock": "Add Stock",
+  "restockItems": "Restock Items",
+  "restockedItems": "Restocked {count} items successfully!",
+  "@restockedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "housePrefix": "House: ",
+  "aiImportReceipt": "AI Import Receipt",
+  "currentStockTab": "Current Stock",
+  "shoppingListTab": "Shopping List",
+  "selectOrAddHouse": "Select or add a house",
+  "searchStock": "Search stock...",
+  "noProductsInStock": "No products in stock",
+  "edibleEquivalentValue": "≈ {value} {unit} edible equivalent",
+  "@edibleEquivalentValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "unitPrefix": "Unit: ",
+  "noMinimum": "No minimum",
+  "minimumWithValue": "Minimum: {value} {unit}",
+  "@minimumWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "setTriggerFor": "Set Trigger for {name}",
+  "@setTriggerFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "minimumThresholdWithUnit": "Minimum Threshold ({unit})",
+  "@minimumThresholdWithUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "leaveEmptyToDisableTrigger": "Leave empty to disable trigger",
+  "noItemsNeedRestocking": "No items need restocking",
+  "stockWithValue": "Stock: {value}",
+  "@stockWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "stockEdibleSuffix": " (≈ {value} edible)",
+  "@stockEdibleSuffix": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "minimumSuffix": " / Minimum: {value} {unit}",
+  "@minimumSuffix": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "optionsForItem": "Options for {name}",
+  "@optionsForItem": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "whatToDoWithItem": "What would you like to do with this stock item?",
+  "replaceWith": "Replace with...",
+  "importFailed": "Import Failed",
+  "ok": "OK",
+  "importedSuccessfully": "{entity} imported successfully",
+  "@importedSuccessfully": {
+    "placeholders": {
+      "entity": {
+        "type": "String"
+      }
+    }
+  },
+  "unknownError": "Unknown error",
+  "backupRestoreTitle": "Backup & Restore",
+  "importFormatDocumentation": "Import Format Documentation",
+  "importFormatDocumentationDesc": "Download Markdown import specifications (fields, types, JSON templates) or the active exercise ID list.",
+  "formatShareSubject": "Nexc Import Format Specifications",
+  "formatDownloadFailed": "Failed to download format file: {error}",
+  "@formatDownloadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "formatMarkdown": "Format (.md)",
+  "exerciseListGenerated": "Exercise list generated",
+  "exerciseListExportFailed": "Failed to export exercises list: {error}",
+  "@exerciseListExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "exercisesMarkdown": "Exercises (.md)",
+  "databaseTitle": "Database",
+  "databaseDesc": "Export or import the full SQLite database containing all workouts, routines, measurements, and foods.",
+  "databaseExported": "Database exported successfully",
+  "databaseExportFailed": "Database export failed: {error}",
+  "@databaseExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "importSuccessful": "Import Successful",
+  "importSuccessBody": "The database was imported. Please restart Nexc to load the new data.",
+  "databaseImportCancelled": "Database import cancelled",
+  "workoutPlansTitle": "Workout plans",
+  "workoutPlansDesc": "Import or export your workout plan templates as portable JSON files.",
+  "workoutPlansExported": "Workout plans exported",
+  "workoutPlansExportFailed": "Workout plans export failed: {error}",
+  "@workoutPlansExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workoutHistoryTitle": "Workout history",
+  "workoutHistoryDesc": "Import or export your completed workouts history including exercises, weights, reps, and timestamps.",
+  "workoutHistoryExported": "Workout history exported",
+  "workoutHistoryExportFailed": "Workout history export failed: {error}",
+  "@workoutHistoryExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "exercisesBackupDesc": "Import or export your exercises database as portable JSON files.",
+  "exercisesExported": "Exercises exported",
+  "exercisesExportFailed": "Exercises export failed: {error}",
+  "@exercisesExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mealPlansTitle": "Meal plans",
+  "mealPlansDesc": "Import or export your meal plan templates as portable JSON files.",
+  "mealPlansExported": "Meal plans exported",
+  "mealPlansExportFailed": "Meal plans export failed: {error}",
+  "@mealPlansExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mealHistoryTitle": "Meal history",
+  "mealHistoryDesc": "Import or export your logged meal history and consumed food items.",
+  "mealHistoryExported": "Meal history exported",
+  "mealHistoryExportFailed": "Meal history export failed: {error}",
+  "@mealHistoryExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "productsBackupDesc": "Import or export your products/foods database.",
+  "productsExported": "Products exported",
+  "productsExportFailed": "Products export failed: {error}",
+  "@productsExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "recipesBackupDesc": "Import or export your custom recipes database.",
+  "recipesExported": "Recipes exported",
+  "recipesExportFailed": "Recipes export failed: {error}",
+  "@recipesExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "stockBackupDesc": "Import or export your stock inventory and house data. Products must already exist in the database before importing stock.",
+  "stockExported": "Stock exported successfully",
+  "stockExportFailed": "Stock export failed: {error}",
+  "@stockExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "importAction": "Import",
+  "exportAction": "Export",
+  "frontView": "Front View",
+  "backView": "Back View"
+}

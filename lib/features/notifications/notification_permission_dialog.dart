@@ -11,6 +11,8 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../core/l10n/l10n.dart';
+
 class NotificationPermissionDialog extends StatelessWidget {
   const NotificationPermissionDialog({super.key});
 
@@ -31,6 +33,7 @@ class NotificationPermissionDialog extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
       child: Padding(
@@ -52,7 +55,7 @@ class NotificationPermissionDialog extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             Text(
-              'Stay on Track',
+              l10n.notificationPermissionTitle,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -60,7 +63,7 @@ class NotificationPermissionDialog extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'Nexc needs notification permission to alert you when your rest timer finishes, keeping your workouts focused and efficient.',
+              l10n.notificationPermissionMessage,
               style: theme.textTheme.bodyMedium?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
@@ -72,7 +75,7 @@ class NotificationPermissionDialog extends StatelessWidget {
                 Expanded(
                   child: TextButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Not now'),
+                    child: Text(l10n.notNow),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -87,7 +90,7 @@ class NotificationPermissionDialog extends StatelessWidget {
                         Navigator.pop(context);
                       }
                     },
-                    child: const Text('Allow'),
+                    child: Text(l10n.allow),
                   ),
                 ),
               ],

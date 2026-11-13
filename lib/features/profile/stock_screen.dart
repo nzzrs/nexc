@@ -17,6 +17,7 @@ import 'package:drift/drift.dart' show Value;
 import '../../core/db/app_database.dart';
 import '../../core/db/stock_repository.dart';
 import '../../core/db/meal_repository.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/integrations/ai_service.dart';
@@ -89,16 +90,16 @@ class _StockScreenState extends ConsumerState<StockScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Add House"),
+        title: Text(context.l10n.addHouse),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(labelText: "House Name"),
+          decoration: InputDecoration(labelText: context.l10n.houseName),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -110,7 +111,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                 if (context.mounted) Navigator.pop(context);
               }
             },
-            child: const Text("Save"),
+            child: Text(context.l10n.save),
           ),
         ],
       ),
@@ -122,16 +123,16 @@ class _StockScreenState extends ConsumerState<StockScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Rename House"),
+        title: Text(context.l10n.renameHouse),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(labelText: "House Name"),
+          decoration: InputDecoration(labelText: context.l10n.houseName),
           autofocus: true,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -142,7 +143,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                 if (context.mounted) Navigator.pop(context);
               }
             },
-            child: const Text("Save"),
+            child: Text(context.l10n.save),
           ),
         ],
       ),
@@ -153,14 +154,12 @@ class _StockScreenState extends ConsumerState<StockScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Delete House"),
-        content: Text(
-          "Are you sure you want to delete '${house.name}'? This deletes all associated stock records.",
-        ),
+        title: Text(context.l10n.deleteHouse),
+        content: Text(context.l10n.deleteHouseConfirm(house.name)),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () async {
@@ -186,7 +185,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
       context,
       MaterialPageRoute(
         builder: (context) =>
-            const ProductSelectorScreen(title: "Add Product to Stock"),
+            ProductSelectorScreen(title: context.l10n.addProductToStockTitle),
       ),
     );
 
@@ -211,7 +210,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
       context,
       MaterialPageRoute(
         builder: (context) => ProductSelectorScreen(
-          title: "Map '${item.receiptName}' to...",
+          title: context.l10n.mapToTitle(item.receiptName),
           initialQuery: item.receiptName,
         ),
       ),
@@ -236,7 +235,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
       builder: (context) {
         final repo = ref.read(stockRepositoryProvider);
         return AlertDialog(
-          title: const Text("Manage Houses"),
+          title: Text(context.l10n.manageHouses),
           content: SizedBox(
             width: 350,
             height: 300,
@@ -248,7 +247,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                   children: [
                     Expanded(
                       child: list.isEmpty
-                          ? const Center(child: Text("No houses defined"))
+                          ? Center(child: Text(context.l10n.noHousesDefined))
                           : ListView.builder(
                               itemCount: list.length,
                               itemBuilder: (context, index) {
@@ -281,7 +280,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                     ElevatedButton.icon(
                       onPressed: () => _showAddHouseDialog(),
                       icon: const Icon(Icons.add),
-                      label: const Text("Add House"),
+                      label: Text(context.l10n.addHouse),
                     ),
                   ],
                 );
@@ -291,7 +290,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text("Close"),
+              child: Text(context.l10n.close),
             ),
           ],
         );
@@ -314,7 +313,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text("An error occurred during operation:"),
+            Text(context.l10n.operationError),
             const SizedBox(height: 8),
             ConstrainedBox(
               constraints: const BoxConstraints(maxHeight: 200),
@@ -341,17 +340,17 @@ class _StockScreenState extends ConsumerState<StockScreen>
         actions: [
           TextButton.icon(
             icon: const Icon(Icons.copy),
-            label: const Text("Copy Error"),
+            label: Text(context.l10n.copyError),
             onPressed: () {
               Clipboard.setData(ClipboardData(text: error));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text("Error copied to clipboard")),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(context.l10n.errorCopied)));
             },
           ),
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Close"),
+            child: Text(context.l10n.close),
           ),
         ],
       ),
@@ -359,13 +358,12 @@ class _StockScreenState extends ConsumerState<StockScreen>
   }
 
   Future<void> _handleReceiptImport(int houseId, List<Product> products) async {
+    final l10n = context.l10n;
     final settings = ref.read(settingsProvider);
     if (settings.aiToken.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("AI API Token not configured. Set it in Settings."),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(l10n.aiTokenNotConfigured)));
       return;
     }
 
@@ -376,12 +374,12 @@ class _StockScreenState extends ConsumerState<StockScreen>
           children: [
             ListTile(
               leading: const Icon(Icons.camera_alt),
-              title: const Text("Take Photo (Camera)"),
+              title: Text(ctx.l10n.takePhotoCamera),
               onTap: () => Navigator.pop(ctx, ImageSource.camera),
             ),
             ListTile(
               leading: const Icon(Icons.photo_library),
-              title: const Text("Choose from Gallery"),
+              title: Text(ctx.l10n.chooseFromGallery),
               onTap: () => Navigator.pop(ctx, ImageSource.gallery),
             ),
           ],
@@ -413,7 +411,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
       );
 
       if (parsedItems.isEmpty) {
-        throw Exception("No items parsed from receipt.");
+        throw Exception(l10n.noItemsParsed);
       }
 
       final repo = ref.read(stockRepositoryProvider);
@@ -473,7 +471,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
       }
     } catch (e, stackTrace) {
       if (mounted) {
-        _showCopyableErrorDialog("Receipt Import Error", "$e\n\n$stackTrace");
+        _showCopyableErrorDialog(l10n.receiptImportError, "$e\n\n$stackTrace");
       }
     } finally {
       if (mounted) {
@@ -491,6 +489,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
     List<ReceiptMapping> mappings,
     Map<String, int?> aiDisambiguated,
   ) {
+    final l10n = context.l10n;
     final usageCounts = ref.read(productUsageCountsProvider).value;
     final inStockProductIds = ref.read(inStockProductIdsProvider).value;
     final resolvedList = parsedItems.map((parsed) {
@@ -560,7 +559,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
 
             return Scaffold(
               appBar: AppBar(
-                title: const Text("AI Log Confirmation"),
+                title: Text(context.l10n.aiLogConfirmation),
                 leading: IconButton(
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () => Navigator.pop(context),
@@ -575,16 +574,16 @@ class _StockScreenState extends ConsumerState<StockScreen>
                       itemBuilder: (context, index) {
                         final item = resolvedList[index];
                         Color stateColor = Colors.red;
-                        String matchText = "Not found";
+                        String matchText = context.l10n.notFound;
                         IconData icon = Icons.cancel;
 
                         if (item.matchState == 0) {
                           stateColor = Colors.green;
-                          matchText = "Perfect Match";
+                          matchText = context.l10n.perfectMatch;
                           icon = Icons.check_circle;
                         } else if (item.matchState == 1) {
                           stateColor = Colors.orange;
-                          matchText = "Fuzzy Match";
+                          matchText = context.l10n.fuzzyMatch;
                           icon = Icons.warning_amber;
                         }
 
@@ -677,8 +676,9 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                                   const TextInputType.numberWithOptions(
                                                     decimal: true,
                                                   ),
-                                              decoration: const InputDecoration(
-                                                labelText: "Quantity",
+                                              decoration: InputDecoration(
+                                                labelText:
+                                                    context.l10n.quantityLabel,
                                                 isDense: true,
                                                 border: OutlineInputBorder(),
                                               ),
@@ -721,13 +721,13 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                                     >(
                                                       initialValue:
                                                           selectedUnit,
-                                                      decoration:
-                                                          const InputDecoration(
-                                                            labelText: "Unit",
-                                                            isDense: true,
-                                                            border:
-                                                                OutlineInputBorder(),
-                                                          ),
+                                                      decoration: InputDecoration(
+                                                        labelText:
+                                                            l10n.unitLabel,
+                                                        isDense: true,
+                                                        border:
+                                                            OutlineInputBorder(),
+                                                      ),
                                                       items: availableUnits
                                                           .map(
                                                             (u) =>
@@ -762,7 +762,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                               Icons.edit,
                                               size: 16,
                                             ),
-                                            tooltip: "Edit Product",
+                                            tooltip: context.l10n.editProduct,
                                             onPressed: () async {
                                               final updatedProd = await Navigator.push<Product>(
                                                 context,
@@ -780,7 +780,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                                         );
                                                       } catch (e, st) {
                                                         _showCopyableErrorDialog(
-                                                          "Product Edit Error",
+                                                          l10n.productEditError,
                                                           "$e\n\n$st",
                                                         );
                                                       }
@@ -805,7 +805,9 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                             Icons.swap_horiz,
                                             size: 14,
                                           ),
-                                          label: const Text("Replace"),
+                                          label: Text(
+                                            context.l10n.replaceAction,
+                                          ),
                                           onPressed: () {
                                             _showReplaceProductDialog(
                                               context,
@@ -889,7 +891,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                                         }
                                                       } catch (e, st) {
                                                         _showCopyableErrorDialog(
-                                                          "Product Creation Error",
+                                                          l10n.productCreationError,
                                                           "$e\n\n$st",
                                                         );
                                                       }
@@ -911,7 +913,9 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                               Icons.add,
                                               size: 14,
                                             ),
-                                            label: const Text("Create"),
+                                            label: Text(
+                                              context.l10n.createAction,
+                                            ),
                                             style: ElevatedButton.styleFrom(
                                               visualDensity:
                                                   VisualDensity.compact,
@@ -936,7 +940,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                       children: [
                         OutlinedButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text("Cancel"),
+                          child: Text(context.l10n.cancel),
                         ),
                         const SizedBox(width: 12),
                         ElevatedButton(
@@ -975,21 +979,19 @@ class _StockScreenState extends ConsumerState<StockScreen>
                               if (context.mounted) {
                                 Navigator.pop(context);
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text(
-                                      "Logged receipt items to stock!",
-                                    ),
+                                  SnackBar(
+                                    content: Text(l10n.loggedReceiptItems),
                                   ),
                                 );
                               }
                             } catch (e, st) {
                               _showCopyableErrorDialog(
-                                "Stock Logging Error",
+                                l10n.stockLoggingError,
                                 "$e\n\n$st",
                               );
                             }
                           },
-                          child: const Text("Confirm"),
+                          child: Text(context.l10n.confirmAction),
                         ),
                       ],
                     ),
@@ -1016,7 +1018,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
         final houses = snapshot.data ?? [];
 
         return NexcScaffold(
-          title: const Text("Stock"),
+          title: Text(context.l10n.stockTitle),
           navigateBack: () => Navigator.pop(context),
           actions: const [],
           actionsIcons: const [],
@@ -1093,7 +1095,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                           content: Text(
-                            "Restocked $restockedCount items successfully!",
+                            context.l10n.restockedItems(restockedCount),
                           ),
                         ),
                       );
@@ -1104,7 +1106,9 @@ class _StockScreenState extends ConsumerState<StockScreen>
           fabIcon: _tabController.index == 0
               ? const Icon(Icons.add)
               : const Icon(Icons.check),
-          fabText: _tabController.index == 0 ? "Add Stock" : "Restock Items",
+          fabText: _tabController.index == 0
+              ? context.l10n.addStock
+              : context.l10n.restockItems,
           content: (context, padding) {
             if (houses.isEmpty) {
               return const Center(child: CircularProgressIndicator());
@@ -1120,9 +1124,9 @@ class _StockScreenState extends ConsumerState<StockScreen>
                   ),
                   child: Row(
                     children: [
-                      const Text(
-                        "House: ",
-                        style: TextStyle(fontWeight: FontWeight.bold),
+                      Text(
+                        context.l10n.housePrefix,
+                        style: const TextStyle(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
@@ -1142,9 +1146,9 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                 child: Text(h.name),
                               );
                             }),
-                            const DropdownMenuItem<int>(
+                            DropdownMenuItem<int>(
                               value: -999,
-                              child: Text("Manage Houses"),
+                              child: Text(context.l10n.manageHouses),
                             ),
                           ],
                           onChanged: (val) {
@@ -1171,7 +1175,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                               )
                             : IconButton.filledTonal(
                                 icon: const Icon(Icons.receipt_long_outlined),
-                                tooltip: "AI Import Receipt",
+                                tooltip: context.l10n.aiImportReceipt,
                                 onPressed: () => _handleReceiptImport(
                                   activeHouseId,
                                   products,
@@ -1183,14 +1187,14 @@ class _StockScreenState extends ConsumerState<StockScreen>
                 ),
                 TabBar(
                   controller: _tabController,
-                  tabs: const [
-                    Tab(text: "Current Stock"),
-                    Tab(text: "Shopping List"),
+                  tabs: [
+                    Tab(text: context.l10n.currentStockTab),
+                    Tab(text: context.l10n.shoppingListTab),
                   ],
                 ),
                 Expanded(
                   child: activeHouseId == null
-                      ? const Center(child: Text("Select or add a house"))
+                      ? Center(child: Text(context.l10n.selectOrAddHouse))
                       : StreamBuilder<List<StockWithProduct>>(
                           stream: repo.watchStocksWithProductForHouse(
                             activeHouseId,
@@ -1202,9 +1206,17 @@ class _StockScreenState extends ConsumerState<StockScreen>
                               controller: _tabController,
                               children: [
                                 // Tab 1: Current Stock
-                                _buildCurrentStockTab(activeHouseId, stocks),
+                                _buildCurrentStockTab(
+                                  context,
+                                  activeHouseId,
+                                  stocks,
+                                ),
                                 // Tab 2: Shopping List
-                                _buildShoppingListTab(activeHouseId, stocks),
+                                _buildShoppingListTab(
+                                  context,
+                                  activeHouseId,
+                                  stocks,
+                                ),
                               ],
                             );
                           },
@@ -1218,7 +1230,12 @@ class _StockScreenState extends ConsumerState<StockScreen>
     );
   }
 
-  Widget _buildCurrentStockTab(int houseId, List<StockWithProduct> stocks) {
+  Widget _buildCurrentStockTab(
+    BuildContext context,
+    int houseId,
+    List<StockWithProduct> stocks,
+  ) {
+    final l10n = context.l10n;
     final filtered = _searchQuery.isEmpty
         ? stocks
         : stocks
@@ -1235,13 +1252,13 @@ class _StockScreenState extends ConsumerState<StockScreen>
           padding: const EdgeInsets.all(16.0),
           child: ClearableSearchField(
             controller: _stockSearchController,
-            labelText: "Search stock...",
+            labelText: context.l10n.searchStock,
             onChanged: (val) => setState(() => _searchQuery = val),
           ),
         ),
         Expanded(
           child: filtered.isEmpty
-              ? const Center(child: Text("No products in stock"))
+              ? Center(child: Text(l10n.noProductsInStock))
               : ListView.builder(
                   padding: const EdgeInsets.only(
                     left: 16.0,
@@ -1288,7 +1305,13 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                             top: 2,
                                           ),
                                           child: Text(
-                                            "≈ ${_formatDouble(s.stock.quantity * s.product.edibleQtyPerUnit!)} ${s.product.units} edible equivalent",
+                                            l10n.edibleEquivalentValue(
+                                              _formatDouble(
+                                                s.stock.quantity *
+                                                    s.product.edibleQtyPerUnit!,
+                                              ),
+                                              s.product.units,
+                                            ),
                                             style: TextStyle(
                                               fontSize: 12,
                                               color: Theme.of(
@@ -1300,7 +1323,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                         ),
                                       Row(
                                         children: [
-                                          const Text("Unit: "),
+                                          Text(l10n.unitPrefix),
                                           Builder(
                                             builder: (context) {
                                               final currentUnit =
@@ -1409,8 +1432,13 @@ class _StockScreenState extends ConsumerState<StockScreen>
                               children: [
                                 Text(
                                   s.stock.minTriggerQuantity == null
-                                      ? "No minimum"
-                                      : "Minimum: ${_formatDouble(s.stock.minTriggerQuantity!)} ${s.product.units}",
+                                      ? l10n.noMinimum
+                                      : l10n.minimumWithValue(
+                                          _formatDouble(
+                                            s.stock.minTriggerQuantity!,
+                                          ),
+                                          s.product.units,
+                                        ),
                                   style: TextStyle(
                                     fontSize: 12,
                                     color: Theme.of(
@@ -1432,7 +1460,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                       context: context,
                                       builder: (context) => AlertDialog(
                                         title: Text(
-                                          "Set Trigger for ${s.product.name}",
+                                          l10n.setTriggerFor(s.product.name),
                                         ),
                                         content: TextField(
                                           controller: controller,
@@ -1441,10 +1469,12 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                                 decimal: true,
                                               ),
                                           decoration: InputDecoration(
-                                            labelText:
-                                                "Minimum Threshold (${s.product.units})",
+                                            labelText: l10n
+                                                .minimumThresholdWithUnit(
+                                                  s.product.units,
+                                                ),
                                             helperText:
-                                                "Leave empty to disable trigger",
+                                                l10n.leaveEmptyToDisableTrigger,
                                           ),
                                           autofocus: true,
                                         ),
@@ -1452,7 +1482,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                           TextButton(
                                             onPressed: () =>
                                                 Navigator.pop(context),
-                                            child: const Text("Cancel"),
+                                            child: Text(context.l10n.cancel),
                                           ),
                                           TextButton(
                                             onPressed: () async {
@@ -1477,7 +1507,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
                                                 Navigator.pop(context);
                                               }
                                             },
-                                            child: const Text("Save"),
+                                            child: Text(context.l10n.save),
                                           ),
                                         ],
                                       ),
@@ -1497,7 +1527,12 @@ class _StockScreenState extends ConsumerState<StockScreen>
     );
   }
 
-  Widget _buildShoppingListTab(int houseId, List<StockWithProduct> stocks) {
+  Widget _buildShoppingListTab(
+    BuildContext context,
+    int houseId,
+    List<StockWithProduct> stocks,
+  ) {
+    final l10n = context.l10n;
     final needed = stocks
         .where(
           (s) =>
@@ -1507,7 +1542,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
         .toList();
 
     if (needed.isEmpty) {
-      return const Center(child: Text("No items need restocking"));
+      return Center(child: Text(l10n.noItemsNeedRestocking));
     }
 
     // Self-initialize helper states for shopping list
@@ -1558,9 +1593,22 @@ class _StockScreenState extends ConsumerState<StockScreen>
               style: const TextStyle(fontWeight: FontWeight.bold),
             ),
             subtitle: Text(
-              "Stock: ${_formatDouble(s.stock.quantity)}"
-              "${s.product.isStockRaw && s.product.edibleQtyPerUnit != null && s.product.edibleQtyPerUnit! < 1.0 ? ' (≈ ${_formatDouble(s.stock.quantity * s.product.edibleQtyPerUnit!)} edible)' : ''}"
-              "${s.stock.minTriggerQuantity == null ? '' : ' / Minimum: ${_formatDouble(s.stock.minTriggerQuantity!)} ${s.product.units}'}",
+              l10n.stockWithValue(_formatDouble(s.stock.quantity)) +
+                  (s.product.isStockRaw &&
+                          s.product.edibleQtyPerUnit != null &&
+                          s.product.edibleQtyPerUnit! < 1.0
+                      ? l10n.stockEdibleSuffix(
+                          _formatDouble(
+                            s.stock.quantity * s.product.edibleQtyPerUnit!,
+                          ),
+                        )
+                      : '') +
+                  (s.stock.minTriggerQuantity == null
+                      ? ''
+                      : l10n.minimumSuffix(
+                          _formatDouble(s.stock.minTriggerQuantity!),
+                          s.product.units,
+                        )),
             ),
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
@@ -1637,19 +1685,19 @@ class _StockScreenState extends ConsumerState<StockScreen>
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text("Options for ${s.product.name}"),
-        content: const Text("What would you like to do with this stock item?"),
+        title: Text(context.l10n.optionsForItem(s.product.name)),
+        content: Text(context.l10n.whatToDoWithItem),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: Text(context.l10n.cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(context);
               _showReplaceProductSelector(s, houseId);
             },
-            child: const Text("Replace"),
+            child: Text(context.l10n.replaceAction),
           ),
           TextButton(
             onPressed: () async {
@@ -1675,7 +1723,7 @@ class _StockScreenState extends ConsumerState<StockScreen>
       context,
       MaterialPageRoute(
         builder: (context) =>
-            const ProductSelectorScreen(title: "Replace with..."),
+            ProductSelectorScreen(title: context.l10n.replaceWith),
       ),
     );
 

@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../db/enums.dart';
 import '../db/relations.dart';
+import '../l10n/l10n.dart';
 import '../providers/settings_provider.dart';
 import '../util/input_sheet_state.dart';
 import '../util/unit_system.dart';
@@ -57,7 +58,8 @@ class ExerciseCard extends ConsumerStatefulWidget {
 
   final int index;
   final ExerciseWithSets exerciseWithSets;
-  final List<dynamic>? previousPerformances; // Matches Compose previous performances
+  final List<dynamic>?
+  previousPerformances; // Matches Compose previous performances
   final int? idSetWithRunningStopwatch;
   final bool workout;
   final Function(int) addSet;
@@ -101,18 +103,25 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
   @override
   void initState() {
     super.initState();
-    _notesController = TextEditingController(text: widget.exerciseWithSets.exercise.notes);
-    _restTimeController = TextEditingController(text: widget.exerciseWithSets.exercise.restTime.toString());
+    _notesController = TextEditingController(
+      text: widget.exerciseWithSets.exercise.notes,
+    );
+    _restTimeController = TextEditingController(
+      text: widget.exerciseWithSets.exercise.restTime.toString(),
+    );
   }
 
   @override
   void didUpdateWidget(covariant ExerciseCard oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (oldWidget.exerciseWithSets.exercise.notes != widget.exerciseWithSets.exercise.notes) {
+    if (oldWidget.exerciseWithSets.exercise.notes !=
+        widget.exerciseWithSets.exercise.notes) {
       _notesController.text = widget.exerciseWithSets.exercise.notes;
     }
-    if (oldWidget.exerciseWithSets.exercise.restTime != widget.exerciseWithSets.exercise.restTime) {
-      _restTimeController.text = widget.exerciseWithSets.exercise.restTime.toString();
+    if (oldWidget.exerciseWithSets.exercise.restTime !=
+        widget.exerciseWithSets.exercise.restTime) {
+      _restTimeController.text = widget.exerciseWithSets.exercise.restTime
+          .toString();
     }
   }
 
@@ -137,19 +146,17 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
     return sets.last.load;
   }
 
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final ex = widget.exerciseWithSets.exercise;
     final dc = widget.exerciseWithSets.exerciseDC;
     final sets = widget.exerciseWithSets.sets;
     final showImages = ref.watch(
       settingsProvider.select((s) => s.showExerciseImages),
     );
-    final unitSystem = ref.watch(
-      settingsProvider.select((s) => s.unitSystem),
-    );
+    final unitSystem = ref.watch(settingsProvider.select((s) => s.unitSystem));
     final useScrollWheelForInput = ref.watch(
       settingsProvider.select((s) => s.useScrollWheelForInput),
     );
@@ -163,7 +170,10 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(24),
         side: ex.supersetId != null
-            ? BorderSide(color: widget.supersetColor ?? theme.colorScheme.primary, width: 2)
+            ? BorderSide(
+                color: widget.supersetColor ?? theme.colorScheme.primary,
+                width: 2,
+              )
             : BorderSide.none,
       ),
       elevation: 2,
@@ -191,7 +201,9 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                   index: widget.index,
                   child: Icon(
                     Icons.drag_handle,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                    color: theme.colorScheme.onSurfaceVariant.withValues(
+                      alpha: 0.5,
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -213,10 +225,13 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                                   child: Image.asset(
                                     'assets/exercise_images/${dc.images.first.replaceAll('/', '_')}',
                                     fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Icon(
-                                      Icons.fitness_center,
-                                      color: theme.colorScheme.onSurfaceVariant,
-                                    ),
+                                    errorBuilder:
+                                        (context, error, stackTrace) => Icon(
+                                          Icons.fitness_center,
+                                          color: theme
+                                              .colorScheme
+                                              .onSurfaceVariant,
+                                        ),
                                   ),
                                 )
                               : Icon(
@@ -242,7 +257,7 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                 // Plate calculator is only meaningful for sets that carry load.
                 if (_setModeCarriesLoad(ex.setMode))
                   IconButton(
-                    tooltip: 'Plate calculator',
+                    tooltip: l10n.plateCalculator,
                     icon: const Icon(Icons.calculate),
                     onPressed: () => showBarbellCalculatorSheet(
                       context,
@@ -250,7 +265,7 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                     ),
                   ),
                 // Options menu button
-                 PopupMenuButton<String>(
+                PopupMenuButton<String>(
                   icon: const Icon(Icons.more_vert),
                   onSelected: (value) {
                     switch (value) {
@@ -274,29 +289,37 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                         value: 'superset',
                         child: Row(
                           children: [
-                            Icon(ex.supersetId != null ? Icons.link_off : Icons.link),
+                            Icon(
+                              ex.supersetId != null
+                                  ? Icons.link_off
+                                  : Icons.link,
+                            ),
                             const SizedBox(width: 8),
-                            Text(ex.supersetId != null ? 'Unlink superset' : 'Link superset'),
+                            Text(
+                              ex.supersetId != null
+                                  ? l10n.unlinkSuperset
+                                  : l10n.linkSuperset,
+                            ),
                           ],
                         ),
                       ),
                     PopupMenuItem(
                       value: 'replace',
                       child: Row(
-                        children: const [
-                          Icon(Icons.swap_horiz),
-                          SizedBox(width: 8),
-                          Text('Replace exercise'),
+                        children: [
+                          const Icon(Icons.swap_horiz),
+                          const SizedBox(width: 8),
+                          Text(l10n.replaceExercise),
                         ],
                       ),
                     ),
                     PopupMenuItem(
                       value: 'machine_busy',
                       child: Row(
-                        children: const [
-                          Icon(Icons.access_time),
-                          SizedBox(width: 8),
-                          Text('Machine busy'),
+                        children: [
+                          const Icon(Icons.access_time),
+                          const SizedBox(width: 8),
+                          Text(l10n.machineBusy),
                         ],
                       ),
                     ),
@@ -308,7 +331,7 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                           Icon(Icons.delete, color: theme.colorScheme.error),
                           const SizedBox(width: 8),
                           Text(
-                            'Delete',
+                            l10n.delete,
                             style: TextStyle(color: theme.colorScheme.error),
                           ),
                         ],
@@ -329,10 +352,12 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
               maxLines: _isNotesExpanded ? null : 1,
               minLines: _isNotesExpanded ? 3 : 1,
               decoration: InputDecoration(
-                labelText: 'Notes',
+                labelText: l10n.notes,
                 border: const OutlineInputBorder(),
                 suffixIcon: IconButton(
-                  icon: Icon(_isNotesExpanded ? Icons.expand_less : Icons.expand_more),
+                  icon: Icon(
+                    _isNotesExpanded ? Icons.expand_less : Icons.expand_more,
+                  ),
                   onPressed: () {
                     setState(() {
                       _isNotesExpanded = !_isNotesExpanded;
@@ -359,7 +384,7 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                         child: Row(
                           children: [
                             Text(
-                              'Rest time: ',
+                              l10n.restTimeLabel,
                               style: theme.textTheme.bodyMedium,
                             ),
                             SizedBox(
@@ -368,18 +393,30 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                                 controller: _restTimeController,
                                 keyboardType: TextInputType.number,
                                 textAlign: TextAlign.center,
-                                style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                                style: theme.textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                ),
                                 decoration: const InputDecoration(
                                   isDense: true,
-                                  contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.all(Radius.circular(8))),
+                                  contentPadding: EdgeInsets.symmetric(
+                                    horizontal: 4,
+                                    vertical: 8,
+                                  ),
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.all(
+                                      Radius.circular(8),
+                                    ),
+                                  ),
                                 ),
                                 onFieldSubmitted: (val) {
-                                  final parsed = int.tryParse(val) ?? ex.restTime;
+                                  final parsed =
+                                      int.tryParse(val) ?? ex.restTime;
                                   widget.updateExerciseRestTime(parsed, ex.id);
                                 },
                                 onTapOutside: (_) {
-                                  final parsed = int.tryParse(_restTimeController.text) ?? ex.restTime;
+                                  final parsed =
+                                      int.tryParse(_restTimeController.text) ??
+                                      ex.restTime;
                                   widget.updateExerciseRestTime(parsed, ex.id);
                                   FocusManager.instance.primaryFocus?.unfocus();
                                 },
@@ -388,7 +425,9 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                             const SizedBox(width: 6),
                             Text(
                               's',
-                              style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
@@ -406,11 +445,14 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                                 children: [
                                   Flexible(
                                     child: Text(
-                                      'Type',
-                                      style: theme.textTheme.labelMedium?.copyWith(
-                                        color: theme.colorScheme.onSurfaceVariant,
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                                      l10n.type,
+                                      style: theme.textTheme.labelMedium
+                                          ?.copyWith(
+                                            color: theme
+                                                .colorScheme
+                                                .onSurfaceVariant,
+                                            fontWeight: FontWeight.w500,
+                                          ),
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                   ),
@@ -433,7 +475,9 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                                 return DropdownMenuItem(
                                   value: mode,
                                   child: Text(
-                                    mode.name.replaceAll('_', ' ').toUpperCase(),
+                                    mode.name
+                                        .replaceAll('_', ' ')
+                                        .toUpperCase(),
                                     style: theme.textTheme.labelSmall?.copyWith(
                                       fontWeight: FontWeight.w600,
                                     ),
@@ -453,68 +497,150 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                           color: theme.colorScheme.surfaceContainerLow,
                           elevation: 0,
                           clipBehavior: Clip.antiAlias,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                           margin: EdgeInsets.zero,
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Container(
-                                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 8,
+                                  horizontal: 16,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.surfaceContainerHighest,
+                                  color:
+                                      theme.colorScheme.surfaceContainerHighest,
                                 ),
                                 child: Row(
                                   children: [
                                     if (!widget.workout)
-                                      const SizedBox(
+                                      SizedBox(
                                         width: 30,
-                                        child: Text('Set', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                        child: Text(
+                                          l10n.setColumn,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
                                     if (widget.previousPerformances != null)
-                                      const SizedBox(
+                                      SizedBox(
                                         width: 70,
-                                        child: Text('Previous', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                        child: Text(
+                                          l10n.previousColumn,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
                                     if (ex.setMode == SetMode.DURATION)
-                                      const Expanded(
-                                        child: Text('Time', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                      Expanded(
+                                        child: Text(
+                                          l10n.timeColumn,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       )
-                                    else if (ex.setMode == SetMode.DURATION_WITH_LOAD) ...[
-                                      const Expanded(
-                                        child: Text('Weight', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                    else if (ex.setMode ==
+                                        SetMode.DURATION_WITH_LOAD) ...[
+                                      Expanded(
+                                        child: Text(
+                                          l10n.weightColumn,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
                                       const SizedBox(width: 8),
-                                      const Expanded(
-                                        child: Text('Time', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                      Expanded(
+                                        child: Text(
+                                          l10n.timeColumn,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
                                     ] else ...[
-                                      if (ex.setMode == SetMode.LOAD || ex.setMode == SetMode.BODYWEIGHT_WITH_LOAD)
-                                        const Expanded(
-                                          child: Text('Weight', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                      if (ex.setMode == SetMode.LOAD ||
+                                          ex.setMode ==
+                                              SetMode.BODYWEIGHT_WITH_LOAD)
+                                        Expanded(
+                                          child: Text(
+                                            l10n.weightColumn,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
                                         ),
                                       const SizedBox(width: 8),
-                                      const Expanded(
-                                        child: Text('Reps', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold)),
+                                      Expanded(
+                                        child: Text(
+                                          l10n.repsColumn,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
                                       ),
                                     ],
                                     if (widget.showRpe) ...[
                                       const SizedBox(width: 8),
-                                      if (widget.intensityScale == IntensityScale.both) ...[
-                                        const Expanded(child: Text('RPE', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                                      if (widget.intensityScale ==
+                                          IntensityScale.both) ...[
+                                        Expanded(
+                                          child: Text(
+                                            l10n.rpe,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
                                         const SizedBox(width: 8),
-                                        const Expanded(child: Text('RIR', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                                        Expanded(
+                                          child: Text(
+                                            l10n.rir,
+                                            textAlign: TextAlign.center,
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
+                                          ),
+                                        ),
                                       ] else
                                         Expanded(
                                           child: Text(
-                                            widget.intensityScale == IntensityScale.rir ? 'RIR' : 'RPE',
+                                            widget.intensityScale ==
+                                                    IntensityScale.rir
+                                                ? l10n.rir
+                                                : l10n.rpe,
                                             textAlign: TextAlign.center,
-                                            style: const TextStyle(fontWeight: FontWeight.bold),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                            ),
                                           ),
                                         ),
                                     ],
                                     if (widget.workout) ...[
                                       const SizedBox(width: 8),
-                                      const SizedBox(width: 45, child: Text('Done', textAlign: TextAlign.center, style: TextStyle(fontWeight: FontWeight.bold))),
+                                      SizedBox(
+                                        width: 45,
+                                        child: Text(
+                                          l10n.done,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
                                     ],
                                   ],
                                 ),
@@ -522,7 +648,8 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                               const SizedBox(height: 4),
                               ...List.generate(sets.length, (idx) {
                                 final set = sets[idx];
-                                final isThisRunning = widget.idSetWithRunningStopwatch == set.id;
+                                final isThisRunning =
+                                    widget.idSetWithRunningStopwatch == set.id;
 
                                 return _SetRow(
                                   key: ValueKey(set.id),
@@ -530,11 +657,13 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                                   index: idx,
                                   setMode: ex.setMode,
                                   unitSystem: unitSystem,
-                                  useScrollWheelForInput: useScrollWheelForInput,
+                                  useScrollWheelForInput:
+                                      useScrollWheelForInput,
                                   dismissScrollWheelInputAutomatically:
                                       dismissScrollWheelInputAutomatically,
                                   workout: widget.workout,
-                                  previousPerformances: widget.previousPerformances,
+                                  previousPerformances:
+                                      widget.previousPerformances,
                                   showRpe: widget.showRpe,
                                   intensityScale: widget.intensityScale,
                                   isThisRunning: isThisRunning,
@@ -545,8 +674,10 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                                   updateSetRir: widget.updateSetRir,
                                   updateSetCompleted: widget.updateSetCompleted,
                                   deleteSet: widget.deleteSet,
-                                  updateIdSetWithRunningStopwatch: widget.updateIdSetWithRunningStopwatch,
-                                  applyPreviousSetPerformance: widget.applyPreviousSetPerformance,
+                                  updateIdSetWithRunningStopwatch:
+                                      widget.updateIdSetWithRunningStopwatch,
+                                  applyPreviousSetPerformance:
+                                      widget.applyPreviousSetPerformance,
                                 );
                               }),
                             ],
@@ -560,13 +691,15 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                         padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.secondaryContainer,
-                            foregroundColor: theme.colorScheme.onSecondaryContainer,
+                            backgroundColor:
+                                theme.colorScheme.secondaryContainer,
+                            foregroundColor:
+                                theme.colorScheme.onSecondaryContainer,
                             elevation: 0,
                           ),
                           onPressed: () => widget.addSet(ex.id),
                           icon: const Icon(Icons.add_circle_outline),
-                          label: const Text('Add set'),
+                          label: Text(l10n.addSet),
                         ),
                       ),
                     ],
@@ -644,10 +777,22 @@ class _SetRowState extends State<_SetRow> {
   void initState() {
     super.initState();
     _loadController = TextEditingController(text: _formatLoad(widget.set.load));
-    _repsController = TextEditingController(text: widget.set.reps == 0 ? '' : widget.set.reps.toString());
-    _timeController = TextEditingController(text: _formatDuration(widget.set.elapsedTime));
-    _rpeController = TextEditingController(text: widget.set.rpe == null ? '' : widget.set.rpe.toString().replaceAll(RegExp(r'\.0$'), ''));
-    _rirController = TextEditingController(text: widget.set.rir == null ? '' : widget.set.rir.toString().replaceAll(RegExp(r'\.0$'), ''));
+    _repsController = TextEditingController(
+      text: widget.set.reps == 0 ? '' : widget.set.reps.toString(),
+    );
+    _timeController = TextEditingController(
+      text: _formatDuration(widget.set.elapsedTime),
+    );
+    _rpeController = TextEditingController(
+      text: widget.set.rpe == null
+          ? ''
+          : widget.set.rpe.toString().replaceAll(RegExp(r'\.0$'), ''),
+    );
+    _rirController = TextEditingController(
+      text: widget.set.rir == null
+          ? ''
+          : widget.set.rir.toString().replaceAll(RegExp(r'\.0$'), ''),
+    );
   }
 
   @override
@@ -657,26 +802,35 @@ class _SetRowState extends State<_SetRow> {
     // kilograms. Compare in kilograms with a tolerance of one hundredth of
     // the displayed unit so rounding does not rewrite text while typing.
     final bool unitChanged = oldWidget.unitSystem != widget.unitSystem;
-    final double? currentLoad =
-        parseWeight(_loadController.text, widget.unitSystem);
+    final double? currentLoad = parseWeight(
+      _loadController.text,
+      widget.unitSystem,
+    );
     final double toleranceKg = toKilograms(0.01, widget.unitSystem);
-    final bool loadInSync = currentLoad != null &&
+    final bool loadInSync =
+        currentLoad != null &&
         (currentLoad - widget.set.load).abs() <= toleranceKg;
     if (unitChanged || !loadInSync) {
       _loadController.text = _formatLoad(widget.set.load);
     }
     final int? currentReps = int.tryParse(_repsController.text);
     if (widget.set.reps != currentReps) {
-      _repsController.text = widget.set.reps == 0 ? '' : widget.set.reps.toString();
+      _repsController.text = widget.set.reps == 0
+          ? ''
+          : widget.set.reps.toString();
     }
     if (oldWidget.set.elapsedTime != widget.set.elapsedTime) {
       _timeController.text = _formatDuration(widget.set.elapsedTime);
     }
     if (oldWidget.set.rpe != widget.set.rpe) {
-      _rpeController.text = widget.set.rpe == null ? '' : widget.set.rpe.toString().replaceAll(RegExp(r'\.0$'), '');
+      _rpeController.text = widget.set.rpe == null
+          ? ''
+          : widget.set.rpe.toString().replaceAll(RegExp(r'\.0$'), '');
     }
     if (oldWidget.set.rir != widget.set.rir) {
-      _rirController.text = widget.set.rir == null ? '' : widget.set.rir.toString().replaceAll(RegExp(r'\.0$'), '');
+      _rirController.text = widget.set.rir == null
+          ? ''
+          : widget.set.rir.toString().replaceAll(RegExp(r'\.0$'), '');
     }
   }
 
@@ -768,9 +922,7 @@ class _SetRowState extends State<_SetRow> {
     return Dismissible(
       key: ValueKey(set.id),
       direction: DismissDirection.endToStart,
-      dismissThresholds: const {
-        DismissDirection.endToStart: 0.75,
-      },
+      dismissThresholds: const {DismissDirection.endToStart: 0.75},
       background: Container(
         alignment: Alignment.centerLeft,
         padding: const EdgeInsets.only(left: 20),
@@ -790,7 +942,11 @@ class _SetRowState extends State<_SetRow> {
           color: set.completed
               ? theme.colorScheme.primaryContainer
               : Colors.transparent,
-          border: Border(bottom: BorderSide(color: theme.dividerColor.withValues(alpha: 0.1))),
+          border: Border(
+            bottom: BorderSide(
+              color: theme.dividerColor.withValues(alpha: 0.1),
+            ),
+          ),
         ),
         child: Builder(
           builder: (context) {
@@ -806,7 +962,11 @@ class _SetRowState extends State<_SetRow> {
               focusedBorder: InputBorder.none,
               isDense: true,
             );
-            final inputStyle = TextStyle(color: contentColor, fontSize: 14, fontWeight: FontWeight.w600);
+            final inputStyle = TextStyle(
+              color: contentColor,
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            );
             // Weight cells show the unit next to the value without adding
             // another column to the compact row.
             final loadInputDeco = inputDeco.copyWith(
@@ -825,7 +985,9 @@ class _SetRowState extends State<_SetRow> {
                   alignment: Alignment.center,
                   decoration: BoxDecoration(
                     color: set.completed
-                        ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
+                        ? theme.colorScheme.primaryContainer.withValues(
+                            alpha: 0.5,
+                          )
                         : theme.colorScheme.surface,
                     borderRadius: BorderRadius.circular(8),
                     border: Border.all(
@@ -845,9 +1007,17 @@ class _SetRowState extends State<_SetRow> {
                 if (!widget.workout)
                   SizedBox(
                     width: 30,
-                    child: Text('${widget.index + 1}', textAlign: TextAlign.center, style: TextStyle(color: contentColor, fontWeight: FontWeight.bold)),
+                    child: Text(
+                      '${widget.index + 1}',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        color: contentColor,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                if (widget.previousPerformances != null && widget.previousPerformances!.isNotEmpty) ...[
+                if (widget.previousPerformances != null &&
+                    widget.previousPerformances!.isNotEmpty) ...[
                   Builder(
                     builder: (context) {
                       final prevSets = widget.previousPerformances!;
@@ -856,10 +1026,13 @@ class _SetRowState extends State<_SetRow> {
                         final String displayVal;
                         if (widget.setMode == SetMode.DURATION) {
                           displayVal = "${prevSet.elapsedTime}s";
-                        } else if (widget.setMode == SetMode.DURATION_WITH_LOAD) {
-                          displayVal = "${formatWeight(prevSet.load, widget.unitSystem)} - ${prevSet.elapsedTime}s";
+                        } else if (widget.setMode ==
+                            SetMode.DURATION_WITH_LOAD) {
+                          displayVal =
+                              "${formatWeight(prevSet.load, widget.unitSystem)} - ${prevSet.elapsedTime}s";
                         } else {
-                          displayVal = "${formatWeight(prevSet.load, widget.unitSystem)}x${prevSet.reps}";
+                          displayVal =
+                              "${formatWeight(prevSet.load, widget.unitSystem)}x${prevSet.reps}";
                         }
                         return SizedBox(
                           width: 70,
@@ -869,27 +1042,54 @@ class _SetRowState extends State<_SetRow> {
                               minimumSize: Size.zero,
                               tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                             ),
-                            onPressed: () => widget.applyPreviousSetPerformance?.call(set.id),
+                            onPressed: () => widget.applyPreviousSetPerformance
+                                ?.call(set.id),
                             child: Text(
                               displayVal,
-                              style: TextStyle(fontSize: 11, color: set.completed ? theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.8) : theme.colorScheme.tertiary, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 11,
+                                color: set.completed
+                                    ? theme.colorScheme.onPrimaryContainer
+                                          .withValues(alpha: 0.8)
+                                    : theme.colorScheme.tertiary,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         );
                       } else {
-                        return SizedBox(width: 70, child: Text('-', textAlign: TextAlign.center, style: TextStyle(color: contentColor)));
+                        return SizedBox(
+                          width: 70,
+                          child: Text(
+                            '-',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(color: contentColor),
+                          ),
+                        );
                       }
                     },
                   ),
                 ] else if (widget.previousPerformances != null) ...[
-                  SizedBox(width: 70, child: Text('-', textAlign: TextAlign.center, style: TextStyle(color: contentColor))),
+                  SizedBox(
+                    width: 70,
+                    child: Text(
+                      '-',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(color: contentColor),
+                    ),
+                  ),
                 ],
                 if (widget.setMode == SetMode.DURATION) ...[
                   if (widget.workout)
                     IconButton(
-                      icon: Icon(widget.isThisRunning ? Icons.pause : Icons.play_arrow, color: contentColor),
+                      icon: Icon(
+                        widget.isThisRunning ? Icons.pause : Icons.play_arrow,
+                        color: contentColor,
+                      ),
                       onPressed: () {
-                        widget.updateIdSetWithRunningStopwatch?.call(widget.isThisRunning ? 0 : set.id);
+                        widget.updateIdSetWithRunningStopwatch?.call(
+                          widget.isThisRunning ? 0 : set.id,
+                        );
                       },
                     ),
                   buildCell(
@@ -915,14 +1115,17 @@ class _SetRowState extends State<_SetRow> {
                       keySuffix: 'load-cell',
                       onTap: _editLoad,
                       child: TextField(
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         textAlign: TextAlign.center,
                         controller: _loadController,
                         style: inputStyle,
                         decoration: loadInputDeco,
                         onChanged: (val) {
                           // Store kilograms regardless of the unit shown.
-                          final load = parseWeight(val, widget.unitSystem) ?? 0.0;
+                          final load =
+                              parseWeight(val, widget.unitSystem) ?? 0.0;
                           widget.updateSetLoad(load, set.id);
                         },
                       ),
@@ -931,9 +1134,14 @@ class _SetRowState extends State<_SetRow> {
                   const SizedBox(width: 8),
                   if (widget.workout)
                     IconButton(
-                      icon: Icon(widget.isThisRunning ? Icons.pause : Icons.play_arrow, color: contentColor),
+                      icon: Icon(
+                        widget.isThisRunning ? Icons.pause : Icons.play_arrow,
+                        color: contentColor,
+                      ),
                       onPressed: () {
-                        widget.updateIdSetWithRunningStopwatch?.call(widget.isThisRunning ? 0 : set.id);
+                        widget.updateIdSetWithRunningStopwatch?.call(
+                          widget.isThisRunning ? 0 : set.id,
+                        );
                       },
                     ),
                   buildCell(
@@ -954,20 +1162,24 @@ class _SetRowState extends State<_SetRow> {
                     ),
                   ),
                 ] else ...[
-                  if (widget.setMode == SetMode.LOAD || widget.setMode == SetMode.BODYWEIGHT_WITH_LOAD)
+                  if (widget.setMode == SetMode.LOAD ||
+                      widget.setMode == SetMode.BODYWEIGHT_WITH_LOAD)
                     buildCell(
                       _wheelCell(
                         keySuffix: 'load-cell',
                         onTap: _editLoad,
                         child: TextField(
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           textAlign: TextAlign.center,
                           controller: _loadController,
                           style: inputStyle,
                           decoration: loadInputDeco,
                           onChanged: (val) {
                             // Store kilograms regardless of the unit shown.
-                            final load = parseWeight(val, widget.unitSystem) ?? 0.0;
+                            final load =
+                                parseWeight(val, widget.unitSystem) ?? 0.0;
                             widget.updateSetLoad(load, set.id);
                           },
                         ),
@@ -997,12 +1209,15 @@ class _SetRowState extends State<_SetRow> {
                   if (widget.intensityScale == IntensityScale.both) ...[
                     buildCell(
                       TextField(
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         textAlign: TextAlign.center,
                         controller: _rpeController,
                         style: inputStyle,
                         decoration: inputDeco,
-                        onChanged: (val) => widget.updateSetRpe?.call(val, set.id),
+                        onChanged: (val) =>
+                            widget.updateSetRpe?.call(val, set.id),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -1013,15 +1228,20 @@ class _SetRowState extends State<_SetRow> {
                         controller: _rirController,
                         style: inputStyle,
                         decoration: inputDeco,
-                        onChanged: (val) => widget.updateSetRir?.call(val, set.id),
+                        onChanged: (val) =>
+                            widget.updateSetRir?.call(val, set.id),
                       ),
                     ),
                   ] else
                     buildCell(
                       TextField(
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                        keyboardType: const TextInputType.numberWithOptions(
+                          decimal: true,
+                        ),
                         textAlign: TextAlign.center,
-                        controller: widget.intensityScale == IntensityScale.rir ? _rirController : _rpeController,
+                        controller: widget.intensityScale == IntensityScale.rir
+                            ? _rirController
+                            : _rpeController,
                         style: inputStyle,
                         decoration: inputDeco,
                         onChanged: (val) {

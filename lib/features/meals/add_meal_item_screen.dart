@@ -13,6 +13,7 @@ import 'package:collection/collection.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/components/clearable_search_field.dart';
 import 'edit_product_screen.dart';
@@ -209,15 +210,16 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
               .toList();
 
     final isAnySelected = _selectedItems.isNotEmpty;
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
         title: Text(
           widget.isReplace
-              ? "Replace Meal Item"
+              ? l10n.replaceMealItem
               : _selectedItems.isEmpty
-              ? "Add Item to Meal"
-              : "Add Items (${_selectedItems.length} selected)",
+              ? l10n.addItemToMeal
+              : l10n.addItemsSelected(_selectedItems.length),
         ),
       ),
       body: SafeArea(
@@ -228,7 +230,7 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
               child: Row(
                 children: [
                   ChoiceChip(
-                    label: const Text("Products"),
+                    label: Text(l10n.productsTab),
                     selected: _type == MealItemType.PRODUCT,
                     onSelected: (selected) {
                       if (selected) {
@@ -240,7 +242,7 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                   ),
                   const SizedBox(width: 8),
                   ChoiceChip(
-                    label: const Text("Recipes"),
+                    label: Text(l10n.recipesTab),
                     selected: _type == MealItemType.RECIPE,
                     onSelected: (selected) {
                       if (selected) {
@@ -254,8 +256,8 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                   IconButton.filledTonal(
                     icon: const Icon(Icons.add),
                     tooltip: _type == MealItemType.PRODUCT
-                        ? "Create Product"
-                        : "Create Recipe",
+                        ? l10n.createProduct
+                        : l10n.createRecipe,
                     onPressed: () {
                       if (_type == MealItemType.PRODUCT) {
                         _showAddEditProduct(
@@ -299,8 +301,8 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
               child: ClearableSearchField(
                 controller: _searchController,
                 labelText: _type == MealItemType.PRODUCT
-                    ? "Search food or product..."
-                    : "Search recipes...",
+                    ? l10n.searchFoodOrProduct
+                    : l10n.searchRecipes,
                 onChanged: (val) => setState(() => _searchQuery = val),
               ),
             ),
@@ -333,7 +335,7 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
             Expanded(
               child: _type == MealItemType.PRODUCT
                   ? filteredProducts.isEmpty
-                        ? const Center(child: Text("No products found"))
+                        ? Center(child: Text(l10n.noProductsFound))
                         : ListView.builder(
                             padding: const EdgeInsets.symmetric(
                               horizontal: 16.0,
@@ -361,9 +363,9 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                                 ),
                                 child: ListTile(
                                   leading: inStock
-                                      ? const Tooltip(
-                                          message: "In Stock",
-                                          child: Icon(
+                                      ? Tooltip(
+                                          message: l10n.inStock,
+                                          child: const Icon(
                                             Icons.inventory_2,
                                             color: Colors.green,
                                             size: 20,
@@ -377,7 +379,11 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                                     ),
                                   ),
                                   subtitle: Text(
-                                    "${p.proteins}g P | ${p.carbs}g C | ${p.fats}g F",
+                                    l10n.macrosCompact(
+                                      '${p.proteins}',
+                                      '${p.carbs}',
+                                      '${p.fats}',
+                                    ),
                                   ),
                                   trailing: Row(
                                     mainAxisSize: MainAxisSize.min,
@@ -387,7 +393,7 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                                           Icons.edit_outlined,
                                           size: 20,
                                         ),
-                                        tooltip: "Edit Product",
+                                        tooltip: l10n.editProduct,
                                         onPressed: () => _showAddEditProduct(p),
                                       ),
                                       if (isSelected)
@@ -408,7 +414,7 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                             },
                           )
                   : filteredRecipes.isEmpty
-                  ? const Center(child: Text("No recipes found"))
+                  ? Center(child: Text(l10n.noRecipesFound))
                   : ListView.builder(
                       padding: const EdgeInsets.symmetric(
                         horizontal: 16.0,
@@ -437,7 +443,7 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                               ),
                             ),
                             subtitle: Text(
-                              "${r.ingredients.length} ingredients",
+                              l10n.ingredientsCount(r.ingredients.length),
                             ),
                             trailing: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -447,7 +453,7 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                                     Icons.edit_outlined,
                                     size: 20,
                                   ),
-                                  tooltip: "Edit Recipe",
+                                  tooltip: l10n.editRecipe,
                                   onPressed: () => _showAddEditRecipe(r),
                                 ),
                                 if (isSelected)
@@ -530,7 +536,7 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                         return Row(
                           children: [
                             ChoiceChip(
-                              label: const Text("Grams"),
+                              label: Text(l10n.gramsLabel),
                               selected: _amountUnit == AmountUnit.GRAMS,
                               onSelected: (selected) {
                                 if (selected) {
@@ -555,7 +561,7 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                             if (showUnits) ...[
                               const SizedBox(width: 8),
                               ChoiceChip(
-                                label: const Text("Units"),
+                                label: Text(l10n.unitsLabel),
                                 selected: _amountUnit == AmountUnit.UNITS,
                                 onSelected: (selected) {
                                   if (selected) {
@@ -579,9 +585,9 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                             keyboardType: const TextInputType.numberWithOptions(
                               decimal: true,
                             ),
-                            decoration: const InputDecoration(
-                              labelText: "Portion Amount",
-                              border: OutlineInputBorder(),
+                            decoration: InputDecoration(
+                              labelText: l10n.portionAmount,
+                              border: const OutlineInputBorder(),
                             ),
                           ),
                         ),
@@ -633,10 +639,10 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                           icon: const Icon(Icons.check),
                           label: Text(
                             widget.isReplace
-                                ? "Replace"
+                                ? l10n.replaceAction
                                 : _selectedItems.length > 1
-                                ? "Add All (${_selectedItems.length})"
-                                : "Add to Meal",
+                                ? l10n.addAllCount(_selectedItems.length)
+                                : l10n.addToMeal,
                           ),
                         ),
                       ],

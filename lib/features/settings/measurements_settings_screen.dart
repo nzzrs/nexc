@@ -5,6 +5,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/settings_provider.dart';
 
 class MeasurementsSettingsScreen extends ConsumerWidget {
@@ -15,10 +16,11 @@ class MeasurementsSettingsScreen extends ConsumerWidget {
     final settings = ref.watch(settingsProvider);
     final notifier = ref.read(settingsProvider.notifier);
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Measurements Settings'),
+        title: Text(l10n.measurementsSettings),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -28,7 +30,7 @@ class MeasurementsSettingsScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16.0),
         children: [
           Text(
-            'Choose which measurement categories to track. Disabled categories won\'t appear in the Measurements view.',
+            l10n.measurementsSettingsDesc,
             style: theme.textTheme.bodyMedium?.copyWith(
               color: theme.colorScheme.onSurfaceVariant,
             ),
@@ -38,8 +40,8 @@ class MeasurementsSettingsScreen extends ConsumerWidget {
           _buildToggleCard(
             context,
             icon: Icons.hotel_outlined,
-            title: 'Sleep Measurements',
-            subtitle: 'Sleep duration, sleeping RHR & HRV',
+            title: l10n.sleepMeasurements,
+            subtitle: l10n.sleepMeasurementsDesc,
             value: settings.enableSleep,
             onChanged: (v) => notifier.setEnableSleep(v),
           ),
@@ -48,8 +50,8 @@ class MeasurementsSettingsScreen extends ConsumerWidget {
           _buildToggleCard(
             context,
             icon: Icons.nights_stay_outlined,
-            title: 'Advanced Sleep Measurements',
-            subtitle: 'Time in bed, awake time, number of awakenings',
+            title: l10n.advancedSleepMeasurements,
+            subtitle: l10n.advancedSleepMeasurementsDesc,
             value: settings.enableAdvancedSleep,
             onChanged: (v) => notifier.setEnableAdvancedSleep(v),
           ),
@@ -58,8 +60,8 @@ class MeasurementsSettingsScreen extends ConsumerWidget {
           _buildToggleCard(
             context,
             icon: Icons.directions_run_outlined,
-            title: 'Activity Measurements',
-            subtitle: 'Steps, active energy, VO2 max, waking RHR/HRV',
+            title: l10n.activityMeasurements,
+            subtitle: l10n.activityMeasurementsDesc,
             value: settings.enableActivity,
             onChanged: (v) => notifier.setEnableActivity(v),
           ),
@@ -68,8 +70,8 @@ class MeasurementsSettingsScreen extends ConsumerWidget {
           _buildToggleCard(
             context,
             icon: Icons.accessibility_new_outlined,
-            title: 'Advanced Body Measurements',
-            subtitle: 'Body fat %, muscle mass %, circumferences',
+            title: l10n.advancedBodyMeasurements,
+            subtitle: l10n.advancedBodyMeasurementsDesc,
             value: settings.enableAdvancedBody,
             onChanged: (v) => notifier.setEnableAdvancedBody(v),
           ),
@@ -94,8 +96,18 @@ class MeasurementsSettingsScreen extends ConsumerWidget {
       child: SwitchListTile(
         contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
         secondary: Icon(icon, color: theme.colorScheme.primary),
-        title: Text(title, style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold)),
-        subtitle: Text(subtitle, style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant)),
+        title: Text(
+          title,
+          style: theme.textTheme.titleSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: theme.textTheme.bodySmall?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
+        ),
         value: value,
         onChanged: (v) => onChanged(v),
       ),

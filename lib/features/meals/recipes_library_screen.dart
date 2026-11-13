@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/components/nexc_scaffold.dart';
 import '../../core/components/clearable_search_field.dart';
@@ -70,9 +71,10 @@ class _RecipesLibraryScreenState extends ConsumerState<RecipesLibraryScreen> {
     final recipesAsync = ref.watch(allRecipesProvider);
     final products = ref.watch(allProductsProvider).value ?? [];
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return NexcScaffold(
-      title: const Text("Recipes"),
+      title: Text(l10n.recipesTab),
       navigateBack: () => Navigator.pop(context),
       fabAction: () {
         _showAddEditRecipe(
@@ -90,11 +92,12 @@ class _RecipesLibraryScreenState extends ConsumerState<RecipesLibraryScreen> {
         );
       },
       fabIcon: const Icon(Icons.add),
-      fabText: "Add Recipe",
+      fabText: l10n.addRecipe,
       content: (context, padding) {
         return recipesAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text("Error: $err")),
+          error: (err, stack) =>
+              Center(child: Text(l10n.errorWithMessage('$err'))),
           data: (recipes) {
             final filteredRecipes = _searchQuery.isEmpty
                 ? recipes
@@ -116,7 +119,7 @@ class _RecipesLibraryScreenState extends ConsumerState<RecipesLibraryScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: ClearableSearchField(
                     controller: _searchController,
-                    labelText: "Search recipes...",
+                    labelText: l10n.searchRecipes,
                     onChanged: (val) {
                       setState(() {
                         _searchQuery = val;
@@ -126,7 +129,7 @@ class _RecipesLibraryScreenState extends ConsumerState<RecipesLibraryScreen> {
                 ),
                 Expanded(
                   child: filteredRecipes.isEmpty
-                      ? const Center(child: Text("No recipes found"))
+                      ? Center(child: Text(l10n.noRecipesFound))
                       : ListView.builder(
                           padding: const EdgeInsets.only(
                             left: 16.0,
@@ -148,21 +151,23 @@ class _RecipesLibraryScreenState extends ConsumerState<RecipesLibraryScreen> {
                                   final confirm = await showDialog<bool>(
                                     context: context,
                                     builder: (context) => AlertDialog(
-                                      title: const Text("Delete Recipe"),
+                                      title: Text(l10n.deleteRecipe),
                                       content: Text(
-                                        "Are you sure you want to delete '${recipe.recipe.name}'?",
+                                        l10n.deleteRecipeConfirm(
+                                          recipe.recipe.name,
+                                        ),
                                       ),
                                       actions: [
                                         TextButton(
                                           onPressed: () =>
                                               Navigator.pop(context, false),
-                                          child: const Text("Cancel"),
+                                          child: Text(l10n.cancel),
                                         ),
                                         TextButton(
                                           onPressed: () =>
                                               Navigator.pop(context, true),
                                           child: Text(
-                                            "Delete",
+                                            l10n.delete,
                                             style: TextStyle(
                                               color: theme.colorScheme.error,
                                             ),
@@ -206,6 +211,7 @@ class RecipeCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final recipe = recipeWithIngredients.recipe;
     final ingredients = recipeWithIngredients.ingredients;
 
@@ -259,7 +265,7 @@ class RecipeCard extends StatelessWidget {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            recipe.isPortable ? "Portable" : "Home only",
+                            recipe.isPortable ? l10n.portable : l10n.homeOnly,
                             style: TextStyle(
                               fontSize: 10,
                               color: recipe.isPortable
@@ -286,8 +292,10 @@ class RecipeCard extends StatelessWidget {
                 Text(
                   ingredients
                       .map(
-                        (i) =>
-                            "${i.product.name} (${i.ingredient.amount.toStringAsFixed(0)}${i.ingredient.amountUnits ?? 'g'})",
+                        (i) => l10n.ingredientWithAmount(
+                          i.product.name,
+                          '${i.ingredient.amount.toStringAsFixed(0)}${i.ingredient.amountUnits ?? 'g'}',
+                        ),
                       )
                       .join(", "),
                   style: theme.textTheme.bodySmall?.copyWith(
@@ -309,7 +317,11 @@ class RecipeCard extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Macros: P ${totalProt.toStringAsFixed(1)}g | C ${totalCarb.toStringAsFixed(1)}g | F ${totalFat.toStringAsFixed(1)}g",
+                    l10n.macrosPrefixLine(
+                      totalProt.toStringAsFixed(1),
+                      totalCarb.toStringAsFixed(1),
+                      totalFat.toStringAsFixed(1),
+                    ),
                     style: theme.textTheme.bodySmall?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),

@@ -287,11 +287,6 @@ class EditMealPlanNotifier extends StateNotifier<MealPlanWithMealsAndItems?> {
   }
 }
 
-/// Legacy helper kept for callers outside the meals feature.
-void showFloatingToast(BuildContext context, String message) {
-  NexcSnack.show(context, message);
-}
-
 final editMealPlanProvider = StateNotifierProvider.autoDispose
     .family<EditMealPlanNotifier, MealPlanWithMealsAndItems?, int>((ref, id) {
       return EditMealPlanNotifier(ref, id);

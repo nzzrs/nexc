@@ -8,6 +8,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
+- Material 3 Expressive design system: spacing, shape, motion and icon tokens; component themes for app bar, cards, dialogs, sheets, snackbars, chips, lists, segmented buttons, tabs, switches, menus, pickers, inputs and navigation.
+- Shared UI kit (`NexcPage`, `NexcSection`, `NexcTile`, choice/confirm/input sheets, empty/async/error views, action grid, stat tile, macro ring/bar/chips, chart card, segmented control, badge, history tile, quantity field, food tile, snack service).
+- Grouped profile hub (Progress, Body, Library, Inventory) and a sectioned settings tree with Workout, Nutrition, Health, AI and Data sub-pages.
+- Locale-aware date, duration and quantity formatting helpers plus a single macro aggregation and product factory.
 - Exercise dataset synced with LibreFit v0.5.0: 912 exercises (39 new) and 95 new images.
 - Option to update the linked routine with the values of the completed sets after a workout (never / always / ask).
 - Reorder routines on the home screen; the order survives restarts.
@@ -18,6 +22,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Localization infrastructure with 20 locales; translations imported from upstream LibreFit where available, English fallback elsewhere.
 
 ### Changed
+- Every screen, popup and navigation surface now follows the shared Material 3 Expressive system: one primary action per surface, tonal sections instead of card stacks, consistent icons and labels, reduced-motion-safe animations, and no overflow at 360dp.
+- Stock and Measurements each have a single entry point; the duplicate `/pantry` and `/biometrics` aliases were removed. About moved into Settings.
+- Settings were regrouped into Appearance, General, Workout, Nutrition, Health, AI, Data and About; AI consent lives in one section and the API key is saved on submit instead of per keystroke.
+- Meal logging uses one contextual action sheet instead of stacked FABs; meal cards collapse to a summary row and item amounts are edited per selection.
+- Workout, summary, exercise and AI chat screens use measured layout insets, labeled set rows, one finish action and shared confirmation sheets.
+- Backup exports are listed before imports, imports are confirmed, and the format specification moved to a bundled document.
 - Dataset updates are now driven by an explicit dataset revision instead of a hardcoded value.
 - CI and exercise JSON validation workflows migrated to Flutter.
 - Reproducible builds documented as best effort instead of byte-identical.

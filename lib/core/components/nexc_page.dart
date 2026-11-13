@@ -44,6 +44,9 @@ class NexcPage extends StatelessWidget {
   /// Padding applied around the body before the safe area.
   final EdgeInsetsGeometry padding;
 
+  /// Renders without an app bar for screens hosted inside the tab shell.
+  final bool embedded;
+
   const NexcPage({
     super.key,
     required this.title,
@@ -56,6 +59,7 @@ class NexcPage extends StatelessWidget {
     this.maxWidth = NexcSpacing.readableWidth,
     this.background,
     this.padding = EdgeInsets.zero,
+    this.embedded = false,
   });
 
   /// Route with the shared enter/exit transition.
@@ -103,34 +107,36 @@ class NexcPage extends StatelessWidget {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        titleSpacing: 0,
-        title: subtitle == null
-            ? Text(title, maxLines: 1, overflow: TextOverflow.ellipsis)
-            : Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    title,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.appBarTheme.titleTextStyle,
-                  ),
-                  Text(
-                    subtitle!,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      color: theme.colorScheme.onSurfaceVariant,
+      appBar: embedded
+          ? null
+          : AppBar(
+              titleSpacing: 0,
+              title: subtitle == null
+                  ? Text(title, maxLines: 1, overflow: TextOverflow.ellipsis)
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.appBarTheme.titleTextStyle,
+                        ),
+                        Text(
+                          subtitle!,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
-                  ),
-                ],
-              ),
-        actions: actions.isEmpty
-            ? null
-            : [...actions, const SizedBox(width: NexcSpacing.sm)],
-      ),
+              actions: actions.isEmpty
+                  ? null
+                  : [...actions, const SizedBox(width: NexcSpacing.sm)],
+            ),
       body: SafeArea(
         top: false,
         child: background == null

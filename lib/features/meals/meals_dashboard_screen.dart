@@ -381,6 +381,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
 
     return NexcPage(
       title: l10n.tabMeals,
+      embedded: true,
       floatingActionButton: FloatingActionButton.extended(
         heroTag: 'meals_contextual_fab',
         onPressed: () => _openActionSheet(todayPlan),

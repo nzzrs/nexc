@@ -175,9 +175,7 @@ class NexcTile extends StatelessWidget {
                 IconButton(
                   tooltip: MaterialLocalizations.of(context).showMenuTooltip,
                   icon: Icon(NexcIcons.about, size: 20, color: supportColor),
-                  onPressed: enabled
-                      ? () => _showInfo(context, supportColor)
-                      : null,
+                  onPressed: enabled ? () => _showInfo(context) : null,
                 ),
               if (trailing != null) ...[
                 const SizedBox(width: NexcSpacing.sm),
@@ -200,7 +198,7 @@ class NexcTile extends StatelessWidget {
     );
   }
 
-  void _showInfo(BuildContext context, Color iconColor) {
+  void _showInfo(BuildContext context) {
     showDialog<void>(
       context: context,
       builder: (BuildContext dialogContext) => AlertDialog(

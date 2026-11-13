@@ -54,6 +54,15 @@ C4Context
 2. **Repository Pattern**: Domain logic is separated from Drift database queries. Repository classes (`WorkoutRepository`, `MealRepository`, `DatasetRepository`) act as single sources of truth.
 3. **Strict Validation layer**: Importers check structural correctness of incoming products, routines, and recipes, generating meaningful warnings instead of populating missing components with empty/dummy values.
 
+### UI Architecture
+
+All UI is built from the shared Material 3 Expressive system documented in
+[`docs/ui-system.md`](ui-system.md): theme tokens (`lib/core/theme`), shared
+components (`lib/core/components/nexc_*`), formatting and aggregation helpers
+(`lib/core/util`), one 3-tab shell, and a single settings tree. Screens own
+their layout and data wiring but never define colors, spacing, radii or
+one-off dialogs.
+
 ---
 
 ## 5. Building Block View

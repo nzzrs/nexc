@@ -24,10 +24,10 @@ class AppLocalizationsCa extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => 'Configuració';
 
   @override
-  String get aboutTitle => 'About';
+  String get aboutTitle => 'Quant a';
 
   @override
   String get tabWorkout => 'Workout';
@@ -36,7 +36,7 @@ class AppLocalizationsCa extends AppLocalizations {
   String get tabMeals => 'Meals';
 
   @override
-  String get tabProfile => 'Profile';
+  String get tabProfile => 'Perfil';
 
   @override
   String get createRoutine => 'Create routine';
@@ -488,10 +488,10 @@ class AppLocalizationsCa extends AppLocalizations {
   String get loadingVersion => 'Loading version…';
 
   @override
-  String get info => 'Info';
+  String get info => 'Informació';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => 'Política de privacitat';
 
   @override
   String get privacyPolicyDescription => 'No data leaves your device. Ever.';
@@ -504,7 +504,7 @@ class AppLocalizationsCa extends AppLocalizations {
   String get gotIt => 'Got it';
 
   @override
-  String get license => 'License';
+  String get license => 'Llicència';
 
   @override
   String get licenseDescription => 'GNU General Public License v3.0';
@@ -728,7 +728,7 @@ class AppLocalizationsCa extends AppLocalizations {
   String get timerCanceled => 'Timer canceled';
 
   @override
-  String get addExercise => 'Add exercise';
+  String get addExercise => 'Afegir exercici';
 
   @override
   String get restTimerBadge => 'REST';
@@ -740,7 +740,7 @@ class AppLocalizationsCa extends AppLocalizations {
   String get workoutCompleted => 'Workout Completed!';
 
   @override
-  String get volumeLabel => 'Volume';
+  String get volumeLabel => 'Volum';
 
   @override
   String get durationLabel => 'Duration';
@@ -752,7 +752,7 @@ class AppLocalizationsCa extends AppLocalizations {
   String get hardSetsSummaryLabel => 'Hard Sets';
 
   @override
-  String get exercisesLabel => 'Exercises';
+  String get exercisesLabel => 'Exercicis';
 
   @override
   String densityWithValue(String value) {
@@ -798,7 +798,7 @@ class AppLocalizationsCa extends AppLocalizations {
       'Are you sure you want to delete this workout? This action cannot be undone.';
 
   @override
-  String get unlinkRoutineTitle => 'Unlink Routine?';
+  String get unlinkRoutineTitle => 'Desenllaçar rutina?';
 
   @override
   String get unlinkRoutineMessage =>
@@ -808,7 +808,7 @@ class AppLocalizationsCa extends AppLocalizations {
   String get unlink => 'Unlink';
 
   @override
-  String get routineLabel => 'Routine';
+  String get routineLabel => 'Rutina';
 
   @override
   String durationMinutes(int minutes) {
@@ -1025,7 +1025,7 @@ class AppLocalizationsCa extends AppLocalizations {
   String get noExercisesFound => 'No exercises found';
 
   @override
-  String get createExercise => 'Create Exercise';
+  String get createExercise => 'Crear exercici';
 
   @override
   String get createWithAi => 'Create with AI';
@@ -1114,7 +1114,7 @@ class AppLocalizationsCa extends AppLocalizations {
       'No exercises added yet. Tap Add Exercise below.';
 
   @override
-  String get addExerciseTitle => 'Add Exercise';
+  String get addExerciseTitle => 'Afegir exercici';
 
   @override
   String get discardAction => 'DISCARD';
@@ -1221,7 +1221,7 @@ class AppLocalizationsCa extends AppLocalizations {
   String get exerciseNoun => 'exercise';
 
   @override
-  String get exercisesNoun => 'exercises';
+  String get exercisesNoun => 'Exercicis';
 
   @override
   String moreCount(int count) {
@@ -1696,13 +1696,13 @@ class AppLocalizationsCa extends AppLocalizations {
   String get personalInfo => 'Personal Info';
 
   @override
-  String get statisticsMenu => 'Statistics';
+  String get statisticsMenu => 'Estadístiques';
 
   @override
   String get stockTitle => 'Stock';
 
   @override
-  String get overview => 'Overview';
+  String get overview => 'Resum';
 
   @override
   String errorLoadingChart(String error) {
@@ -1768,7 +1768,7 @@ class AppLocalizationsCa extends AppLocalizations {
   String get noDataYet => 'No data yet';
 
   @override
-  String get statisticsTitle => 'Statistics';
+  String get statisticsTitle => 'Estadístiques';
 
   @override
   String errorLoadingWorkouts(String error) {

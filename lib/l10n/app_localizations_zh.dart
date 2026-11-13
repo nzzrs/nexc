@@ -15,19 +15,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get cancel => 'Cancel';
 
   @override
-  String get done => 'Done';
+  String get done => '完成';
 
   @override
   String get close => 'Close';
 
   @override
-  String get delete => 'Delete';
+  String get delete => '删除';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => '设置';
 
   @override
-  String get aboutTitle => 'About';
+  String get aboutTitle => '关于';
 
   @override
   String get tabWorkout => 'Workout';
@@ -36,7 +36,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get tabMeals => 'Meals';
 
   @override
-  String get tabProfile => 'Profile';
+  String get tabProfile => '我的';
 
   @override
   String get createRoutine => 'Create routine';
@@ -488,10 +488,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get loadingVersion => 'Loading version…';
 
   @override
-  String get info => 'Info';
+  String get info => '信息';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => '隐私政策';
 
   @override
   String get privacyPolicyDescription => 'No data leaves your device. Ever.';
@@ -504,7 +504,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get gotIt => 'Got it';
 
   @override
-  String get license => 'License';
+  String get license => '授权协议';
 
   @override
   String get licenseDescription => 'GNU General Public License v3.0';
@@ -523,7 +523,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get attribution => 'Attribution';
 
   @override
-  String get libreFitName => 'LibreFit';
+  String get libreFitName => 'LibrFit';
 
   @override
   String get libreFitDescription =>
@@ -563,7 +563,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get machineBusy => 'Machine busy';
 
   @override
-  String get notes => 'Notes';
+  String get notes => '备注';
 
   @override
   String get restTimeLabel => 'Rest time: ';
@@ -572,19 +572,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get type => 'Type';
 
   @override
-  String get setColumn => 'Set';
+  String get setColumn => '组';
 
   @override
   String get previousColumn => 'Previous';
 
   @override
-  String get timeColumn => 'Time';
+  String get timeColumn => '时间';
 
   @override
   String get weightColumn => 'Weight';
 
   @override
-  String get repsColumn => 'Reps';
+  String get repsColumn => '次';
 
   @override
   String get rpe => 'RPE';
@@ -593,7 +593,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get rir => 'RIR';
 
   @override
-  String get addSet => 'Add set';
+  String get addSet => '添加组数';
 
   @override
   String decreaseBy(String amount) {
@@ -707,7 +707,7 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get doneAction => 'DONE';
+  String get doneAction => '完成';
 
   @override
   String get emptyWorkoutHint =>
@@ -728,10 +728,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get timerCanceled => 'Timer canceled';
 
   @override
-  String get addExercise => 'Add exercise';
+  String get addExercise => '添加训练';
 
   @override
-  String get restTimerBadge => 'REST';
+  String get restTimerBadge => '休息';
 
   @override
   String get workoutSummaryTitle => 'Workout Summary';
@@ -740,7 +740,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutCompleted => 'Workout Completed!';
 
   @override
-  String get volumeLabel => 'Volume';
+  String get volumeLabel => '训练量';
 
   @override
   String get durationLabel => 'Duration';
@@ -752,7 +752,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get hardSetsSummaryLabel => 'Hard Sets';
 
   @override
-  String get exercisesLabel => 'Exercises';
+  String get exercisesLabel => '训练动作';
 
   @override
   String densityWithValue(String value) {
@@ -808,7 +808,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get unlink => 'Unlink';
 
   @override
-  String get routineLabel => 'Routine';
+  String get routineLabel => '训练计划';
 
   @override
   String durationMinutes(int minutes) {
@@ -967,7 +967,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectForce => 'Select Force';
 
   @override
-  String get mechanicLabel => 'Mechanic';
+  String get mechanicLabel => '动作机制';
 
   @override
   String mechanicWithValue(String value) {
@@ -978,7 +978,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectMechanic => 'Select Mechanic';
 
   @override
-  String get equipmentLabel => 'Equipment';
+  String get equipmentLabel => '器械';
 
   @override
   String equipmentWithValue(String value) {
@@ -1000,7 +1000,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get selectMuscle => 'Select Muscle';
 
   @override
-  String get categoryLabel => 'Category';
+  String get categoryLabel => '分类';
 
   @override
   String categoryWithValue(String value) {
@@ -1025,7 +1025,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get noExercisesFound => 'No exercises found';
 
   @override
-  String get createExercise => 'Create Exercise';
+  String get createExercise => '创建训练动作';
 
   @override
   String get createWithAi => 'Create with AI';
@@ -1101,7 +1101,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get createRoutineTitle => 'Create Routine';
 
   @override
-  String get editRoutineTitle => 'Edit Routine';
+  String get editRoutineTitle => '编辑训练计划';
 
   @override
   String get routineTitleField => 'Routine title';
@@ -1114,7 +1114,7 @@ class AppLocalizationsZh extends AppLocalizations {
       'No exercises added yet. Tap Add Exercise below.';
 
   @override
-  String get addExerciseTitle => 'Add Exercise';
+  String get addExerciseTitle => '添加训练';
 
   @override
   String get discardAction => 'DISCARD';
@@ -1221,7 +1221,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get exerciseNoun => 'exercise';
 
   @override
-  String get exercisesNoun => 'exercises';
+  String get exercisesNoun => '训练动作';
 
   @override
   String moreCount(int count) {
@@ -1414,7 +1414,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get amountLabel => 'Amount';
 
   @override
-  String get addAction => 'Add';
+  String get addAction => '添加';
 
   @override
   String ingredientLine(String name, String amount) {
@@ -1428,7 +1428,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get enterRecipeName => 'Enter a recipe name';
 
   @override
-  String get titleCannotBeEmpty => 'Title cannot be empty';
+  String get titleCannotBeEmpty => '标题不能为空';
 
   @override
   String get mealPlanSaved => 'Meal plan saved';
@@ -1762,7 +1762,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get workoutPerformance => 'Workout Performance';
 
   @override
-  String get repsLabel => 'Reps';
+  String get repsLabel => '次';
 
   @override
   String get noDataYet => 'No data yet';
@@ -1909,7 +1909,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get hrsShort => 'Hrs';
 
   @override
-  String get minShort => 'Min';
+  String get minShort => '分';
 
   @override
   String get weightProgress => 'Weight Progress';
@@ -2551,19 +2551,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get cancel => 'Cancel';
 
   @override
-  String get done => 'Done';
+  String get done => '完成';
 
   @override
   String get close => 'Close';
 
   @override
-  String get delete => 'Delete';
+  String get delete => '删除';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => '设置';
 
   @override
-  String get aboutTitle => 'About';
+  String get aboutTitle => '关于';
 
   @override
   String get tabWorkout => 'Workout';
@@ -2572,7 +2572,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get tabMeals => 'Meals';
 
   @override
-  String get tabProfile => 'Profile';
+  String get tabProfile => '我的';
 
   @override
   String get createRoutine => 'Create routine';
@@ -3024,10 +3024,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get loadingVersion => 'Loading version…';
 
   @override
-  String get info => 'Info';
+  String get info => '信息';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => '隐私政策';
 
   @override
   String get privacyPolicyDescription => 'No data leaves your device. Ever.';
@@ -3040,7 +3040,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get gotIt => 'Got it';
 
   @override
-  String get license => 'License';
+  String get license => '授权协议';
 
   @override
   String get licenseDescription => 'GNU General Public License v3.0';
@@ -3059,7 +3059,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get attribution => 'Attribution';
 
   @override
-  String get libreFitName => 'LibreFit';
+  String get libreFitName => 'LibrFit';
 
   @override
   String get libreFitDescription =>
@@ -3099,7 +3099,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get machineBusy => 'Machine busy';
 
   @override
-  String get notes => 'Notes';
+  String get notes => '备注';
 
   @override
   String get restTimeLabel => 'Rest time: ';
@@ -3108,19 +3108,19 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get type => 'Type';
 
   @override
-  String get setColumn => 'Set';
+  String get setColumn => '组';
 
   @override
   String get previousColumn => 'Previous';
 
   @override
-  String get timeColumn => 'Time';
+  String get timeColumn => '时间';
 
   @override
   String get weightColumn => 'Weight';
 
   @override
-  String get repsColumn => 'Reps';
+  String get repsColumn => '次';
 
   @override
   String get rpe => 'RPE';
@@ -3129,7 +3129,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get rir => 'RIR';
 
   @override
-  String get addSet => 'Add set';
+  String get addSet => '添加组数';
 
   @override
   String decreaseBy(String amount) {
@@ -3243,7 +3243,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   }
 
   @override
-  String get doneAction => 'DONE';
+  String get doneAction => '完成';
 
   @override
   String get emptyWorkoutHint =>
@@ -3264,10 +3264,10 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get timerCanceled => 'Timer canceled';
 
   @override
-  String get addExercise => 'Add exercise';
+  String get addExercise => '添加训练';
 
   @override
-  String get restTimerBadge => 'REST';
+  String get restTimerBadge => '休息';
 
   @override
   String get workoutSummaryTitle => 'Workout Summary';
@@ -3276,7 +3276,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get workoutCompleted => 'Workout Completed!';
 
   @override
-  String get volumeLabel => 'Volume';
+  String get volumeLabel => '训练量';
 
   @override
   String get durationLabel => 'Duration';
@@ -3288,7 +3288,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get hardSetsSummaryLabel => 'Hard Sets';
 
   @override
-  String get exercisesLabel => 'Exercises';
+  String get exercisesLabel => '训练动作';
 
   @override
   String densityWithValue(String value) {
@@ -3344,7 +3344,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get unlink => 'Unlink';
 
   @override
-  String get routineLabel => 'Routine';
+  String get routineLabel => '训练计划';
 
   @override
   String durationMinutes(int minutes) {
@@ -3503,7 +3503,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get selectForce => 'Select Force';
 
   @override
-  String get mechanicLabel => 'Mechanic';
+  String get mechanicLabel => '动作机制';
 
   @override
   String mechanicWithValue(String value) {
@@ -3514,7 +3514,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get selectMechanic => 'Select Mechanic';
 
   @override
-  String get equipmentLabel => 'Equipment';
+  String get equipmentLabel => '器械';
 
   @override
   String equipmentWithValue(String value) {
@@ -3536,7 +3536,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get selectMuscle => 'Select Muscle';
 
   @override
-  String get categoryLabel => 'Category';
+  String get categoryLabel => '分类';
 
   @override
   String categoryWithValue(String value) {
@@ -3561,7 +3561,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get noExercisesFound => 'No exercises found';
 
   @override
-  String get createExercise => 'Create Exercise';
+  String get createExercise => '创建训练动作';
 
   @override
   String get createWithAi => 'Create with AI';
@@ -3637,7 +3637,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get createRoutineTitle => 'Create Routine';
 
   @override
-  String get editRoutineTitle => 'Edit Routine';
+  String get editRoutineTitle => '编辑训练计划';
 
   @override
   String get routineTitleField => 'Routine title';
@@ -3650,7 +3650,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
       'No exercises added yet. Tap Add Exercise below.';
 
   @override
-  String get addExerciseTitle => 'Add Exercise';
+  String get addExerciseTitle => '添加训练';
 
   @override
   String get discardAction => 'DISCARD';
@@ -3757,7 +3757,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get exerciseNoun => 'exercise';
 
   @override
-  String get exercisesNoun => 'exercises';
+  String get exercisesNoun => '训练动作';
 
   @override
   String moreCount(int count) {
@@ -3950,7 +3950,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get amountLabel => 'Amount';
 
   @override
-  String get addAction => 'Add';
+  String get addAction => '添加';
 
   @override
   String ingredientLine(String name, String amount) {
@@ -3964,7 +3964,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get enterRecipeName => 'Enter a recipe name';
 
   @override
-  String get titleCannotBeEmpty => 'Title cannot be empty';
+  String get titleCannotBeEmpty => '标题不能为空';
 
   @override
   String get mealPlanSaved => 'Meal plan saved';
@@ -4298,7 +4298,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get workoutPerformance => 'Workout Performance';
 
   @override
-  String get repsLabel => 'Reps';
+  String get repsLabel => '次';
 
   @override
   String get noDataYet => 'No data yet';
@@ -4445,7 +4445,7 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
   String get hrsShort => 'Hrs';
 
   @override
-  String get minShort => 'Min';
+  String get minShort => '分';
 
   @override
   String get weightProgress => 'Weight Progress';

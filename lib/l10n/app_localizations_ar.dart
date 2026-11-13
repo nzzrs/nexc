@@ -24,10 +24,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => 'الإعدادات';
 
   @override
-  String get aboutTitle => 'About';
+  String get aboutTitle => 'عن';
 
   @override
   String get tabWorkout => 'Workout';
@@ -36,7 +36,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get tabMeals => 'Meals';
 
   @override
-  String get tabProfile => 'Profile';
+  String get tabProfile => 'الملف الشخصي';
 
   @override
   String get createRoutine => 'Create routine';
@@ -488,10 +488,10 @@ class AppLocalizationsAr extends AppLocalizations {
   String get loadingVersion => 'Loading version…';
 
   @override
-  String get info => 'Info';
+  String get info => 'معلومات';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => 'سياسة الخصوصية';
 
   @override
   String get privacyPolicyDescription => 'No data leaves your device. Ever.';
@@ -504,7 +504,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get gotIt => 'Got it';
 
   @override
-  String get license => 'License';
+  String get license => 'التراخيص';
 
   @override
   String get licenseDescription => 'GNU General Public License v3.0';

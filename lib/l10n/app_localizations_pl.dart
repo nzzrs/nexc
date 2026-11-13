@@ -24,7 +24,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => 'Ustawienia';
 
   @override
   String get aboutTitle => 'About';
@@ -36,7 +36,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get tabMeals => 'Meals';
 
   @override
-  String get tabProfile => 'Profile';
+  String get tabProfile => 'Profil';
 
   @override
   String get createRoutine => 'Create routine';
@@ -728,7 +728,7 @@ class AppLocalizationsPl extends AppLocalizations {
   String get timerCanceled => 'Timer canceled';
 
   @override
-  String get addExercise => 'Add exercise';
+  String get addExercise => 'Dodaj ćwiczenie';
 
   @override
   String get restTimerBadge => 'REST';
@@ -1114,7 +1114,7 @@ class AppLocalizationsPl extends AppLocalizations {
       'No exercises added yet. Tap Add Exercise below.';
 
   @override
-  String get addExerciseTitle => 'Add Exercise';
+  String get addExerciseTitle => 'Dodaj ćwiczenie';
 
   @override
   String get discardAction => 'DISCARD';

@@ -24,10 +24,10 @@ class AppLocalizationsSv extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => 'Inställningar';
 
   @override
-  String get aboutTitle => 'About';
+  String get aboutTitle => 'Om';
 
   @override
   String get tabWorkout => 'Workout';
@@ -36,7 +36,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String get tabMeals => 'Meals';
 
   @override
-  String get tabProfile => 'Profile';
+  String get tabProfile => 'Profil';
 
   @override
   String get createRoutine => 'Create routine';
@@ -504,7 +504,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String get gotIt => 'Got it';
 
   @override
-  String get license => 'License';
+  String get license => 'Licens';
 
   @override
   String get licenseDescription => 'GNU General Public License v3.0';
@@ -728,7 +728,7 @@ class AppLocalizationsSv extends AppLocalizations {
   String get timerCanceled => 'Timer canceled';
 
   @override
-  String get addExercise => 'Add exercise';
+  String get addExercise => 'Lägg till övning';
 
   @override
   String get restTimerBadge => 'REST';
@@ -1114,7 +1114,7 @@ class AppLocalizationsSv extends AppLocalizations {
       'No exercises added yet. Tap Add Exercise below.';
 
   @override
-  String get addExerciseTitle => 'Add Exercise';
+  String get addExerciseTitle => 'Lägg till övning';
 
   @override
   String get discardAction => 'DISCARD';

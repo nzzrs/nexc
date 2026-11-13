@@ -24,10 +24,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => 'सेटिंग्स';
 
   @override
-  String get aboutTitle => 'About';
+  String get aboutTitle => 'परिचय';
 
   @override
   String get tabWorkout => 'Workout';
@@ -36,7 +36,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get tabMeals => 'Meals';
 
   @override
-  String get tabProfile => 'Profile';
+  String get tabProfile => 'प्रोफ़ाइल';
 
   @override
   String get createRoutine => 'Create routine';
@@ -488,10 +488,10 @@ class AppLocalizationsHi extends AppLocalizations {
   String get loadingVersion => 'Loading version…';
 
   @override
-  String get info => 'Info';
+  String get info => 'जानकारी';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => 'गोपनीयता नीति';
 
   @override
   String get privacyPolicyDescription => 'No data leaves your device. Ever.';
@@ -504,7 +504,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get gotIt => 'Got it';
 
   @override
-  String get license => 'License';
+  String get license => 'लाइसेंस';
 
   @override
   String get licenseDescription => 'GNU General Public License v3.0';
@@ -523,7 +523,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get attribution => 'Attribution';
 
   @override
-  String get libreFitName => 'LibreFit';
+  String get libreFitName => 'लिब्रे फ़िट';
 
   @override
   String get libreFitDescription =>
@@ -563,7 +563,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get machineBusy => 'Machine busy';
 
   @override
-  String get notes => 'Notes';
+  String get notes => 'नोट्स';
 
   @override
   String get restTimeLabel => 'Rest time: ';
@@ -572,7 +572,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get type => 'Type';
 
   @override
-  String get setColumn => 'Set';
+  String get setColumn => 'सेट';
 
   @override
   String get previousColumn => 'Previous';
@@ -584,7 +584,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get weightColumn => 'Weight';
 
   @override
-  String get repsColumn => 'Reps';
+  String get repsColumn => 'रेप्स';
 
   @override
   String get rpe => 'RPE';
@@ -593,7 +593,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get rir => 'RIR';
 
   @override
-  String get addSet => 'Add set';
+  String get addSet => 'वर्कआउट सेट जोड़ें';
 
   @override
   String decreaseBy(String amount) {
@@ -728,7 +728,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get timerCanceled => 'Timer canceled';
 
   @override
-  String get addExercise => 'Add exercise';
+  String get addExercise => 'व्यायाम जोड़ें';
 
   @override
   String get restTimerBadge => 'REST';
@@ -740,7 +740,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get workoutCompleted => 'Workout Completed!';
 
   @override
-  String get volumeLabel => 'Volume';
+  String get volumeLabel => 'वॉल्यूम';
 
   @override
   String get durationLabel => 'Duration';
@@ -752,7 +752,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get hardSetsSummaryLabel => 'Hard Sets';
 
   @override
-  String get exercisesLabel => 'Exercises';
+  String get exercisesLabel => 'व्यायाम';
 
   @override
   String densityWithValue(String value) {
@@ -798,7 +798,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'Are you sure you want to delete this workout? This action cannot be undone.';
 
   @override
-  String get unlinkRoutineTitle => 'Unlink Routine?';
+  String get unlinkRoutineTitle => 'रूटीन अनलिंक करें?';
 
   @override
   String get unlinkRoutineMessage =>
@@ -808,7 +808,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get unlink => 'Unlink';
 
   @override
-  String get routineLabel => 'Routine';
+  String get routineLabel => 'रूटीन';
 
   @override
   String durationMinutes(int minutes) {
@@ -1025,7 +1025,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get noExercisesFound => 'No exercises found';
 
   @override
-  String get createExercise => 'Create Exercise';
+  String get createExercise => 'व्यायाम बनाएं';
 
   @override
   String get createWithAi => 'Create with AI';
@@ -1101,7 +1101,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get createRoutineTitle => 'Create Routine';
 
   @override
-  String get editRoutineTitle => 'Edit Routine';
+  String get editRoutineTitle => 'संपादित करें';
 
   @override
   String get routineTitleField => 'Routine title';
@@ -1114,7 +1114,7 @@ class AppLocalizationsHi extends AppLocalizations {
       'No exercises added yet. Tap Add Exercise below.';
 
   @override
-  String get addExerciseTitle => 'Add Exercise';
+  String get addExerciseTitle => 'व्यायाम जोड़ें';
 
   @override
   String get discardAction => 'DISCARD';
@@ -1221,7 +1221,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get exerciseNoun => 'exercise';
 
   @override
-  String get exercisesNoun => 'exercises';
+  String get exercisesNoun => 'व्यायाम';
 
   @override
   String moreCount(int count) {
@@ -1428,7 +1428,7 @@ class AppLocalizationsHi extends AppLocalizations {
   String get enterRecipeName => 'Enter a recipe name';
 
   @override
-  String get titleCannotBeEmpty => 'Title cannot be empty';
+  String get titleCannotBeEmpty => 'शीर्षक खाली नहीं हो सकता';
 
   @override
   String get mealPlanSaved => 'Meal plan saved';
@@ -1696,13 +1696,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get personalInfo => 'Personal Info';
 
   @override
-  String get statisticsMenu => 'Statistics';
+  String get statisticsMenu => 'आंकड़े';
 
   @override
   String get stockTitle => 'Stock';
 
   @override
-  String get overview => 'Overview';
+  String get overview => 'ओवरव्यू';
 
   @override
   String errorLoadingChart(String error) {
@@ -1762,13 +1762,13 @@ class AppLocalizationsHi extends AppLocalizations {
   String get workoutPerformance => 'Workout Performance';
 
   @override
-  String get repsLabel => 'Reps';
+  String get repsLabel => 'रेप्स';
 
   @override
   String get noDataYet => 'No data yet';
 
   @override
-  String get statisticsTitle => 'Statistics';
+  String get statisticsTitle => 'आंकड़े';
 
   @override
   String errorLoadingWorkouts(String error) {

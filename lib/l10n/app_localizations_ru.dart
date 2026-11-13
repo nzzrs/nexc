@@ -12,44 +12,44 @@ class AppLocalizationsRu extends AppLocalizations {
   String get appName => 'Nexc';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Отмена';
 
   @override
-  String get done => 'Done';
+  String get done => 'Готово';
 
   @override
   String get close => 'Close';
 
   @override
-  String get delete => 'Delete';
+  String get delete => 'Удалить';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => 'Настройки';
 
   @override
   String get aboutTitle => 'About';
 
   @override
-  String get tabWorkout => 'Workout';
+  String get tabWorkout => 'Тренировка';
 
   @override
   String get tabMeals => 'Meals';
 
   @override
-  String get tabProfile => 'Profile';
+  String get tabProfile => 'Профиль';
 
   @override
   String get createRoutine => 'Create routine';
 
   @override
-  String get discardRunningWorkoutTitle => 'Discard running workout?';
+  String get discardRunningWorkoutTitle => 'Отменить текущую тренировку?';
 
   @override
   String get discardWorkoutMessage =>
       'Are you sure you want to discard this unsaved, ongoing workout? This action cannot be undone.';
 
   @override
-  String get discard => 'Discard';
+  String get discard => 'Не сохранять';
 
   @override
   String get discardWorkoutAndStartRoutineMessage =>
@@ -59,10 +59,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get discardAndStart => 'Discard & Start';
 
   @override
-  String get startEmptyWorkout => 'Start empty workout';
+  String get startEmptyWorkout => 'Начать пустую тренировку';
 
   @override
-  String get resumeWorkout => 'Resume workout';
+  String get resumeWorkout => 'Продолжить тренировку';
 
   @override
   String elapsedTime(String time) {
@@ -103,10 +103,10 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get appearance => 'Appearance';
+  String get appearance => 'Внешний вид';
 
   @override
-  String get theme => 'Theme';
+  String get theme => 'Тема';
 
   @override
   String get selectTheme => 'Select theme';
@@ -115,10 +115,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get themeModeSystem => 'System';
 
   @override
-  String get themeModeLight => 'Light';
+  String get themeModeLight => 'Светлая';
 
   @override
-  String get themeModeDark => 'Dark';
+  String get themeModeDark => 'Тёмная';
 
   @override
   String get materialYou => 'Material You';
@@ -142,7 +142,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get generalSettings => 'General settings';
 
   @override
-  String get language => 'Language';
+  String get language => 'Языки';
 
   @override
   String get selectLanguage => 'Select language';
@@ -406,43 +406,43 @@ class AppLocalizationsRu extends AppLocalizations {
   String get languageSystem => 'System';
 
   @override
-  String get languageArabic => 'Arabic';
+  String get languageArabic => 'Арабский';
 
   @override
-  String get languageCatalan => 'Catalan';
+  String get languageCatalan => 'Каталонский';
 
   @override
-  String get languageCzech => 'Czech';
+  String get languageCzech => 'Чешский';
 
   @override
-  String get languageGerman => 'German';
+  String get languageGerman => 'Немецкий';
 
   @override
-  String get languageEnglish => 'English';
+  String get languageEnglish => 'Английский';
 
   @override
-  String get languageSpanish => 'Spanish';
+  String get languageSpanish => 'Испанский';
 
   @override
-  String get languageFrench => 'French';
+  String get languageFrench => 'Французский';
 
   @override
   String get languageGalician => 'Galician';
 
   @override
-  String get languageHindi => 'Hindi';
+  String get languageHindi => 'Хинди';
 
   @override
-  String get languageIndonesian => 'Indonesian';
+  String get languageIndonesian => 'Индонезийский';
 
   @override
-  String get languageItalian => 'Italian';
+  String get languageItalian => 'Итальянский';
 
   @override
   String get languageKorean => 'Korean';
 
   @override
-  String get languageDutch => 'Dutch';
+  String get languageDutch => 'Датский';
 
   @override
   String get languagePolish => 'Polish';
@@ -460,7 +460,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get languageSwedish => 'Swedish';
 
   @override
-  String get languageUkrainian => 'Ukrainian';
+  String get languageUkrainian => 'Украинский';
 
   @override
   String get languageUrdu => 'Urdu';
@@ -488,10 +488,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get loadingVersion => 'Loading version…';
 
   @override
-  String get info => 'Info';
+  String get info => 'Информация';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => 'Политика конфиденциальности';
 
   @override
   String get privacyPolicyDescription => 'No data leaves your device. Ever.';
@@ -504,7 +504,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get gotIt => 'Got it';
 
   @override
-  String get license => 'License';
+  String get license => 'Лицензия';
 
   @override
   String get licenseDescription => 'GNU General Public License v3.0';
@@ -563,28 +563,28 @@ class AppLocalizationsRu extends AppLocalizations {
   String get machineBusy => 'Machine busy';
 
   @override
-  String get notes => 'Notes';
+  String get notes => 'Заметки';
 
   @override
-  String get restTimeLabel => 'Rest time: ';
+  String get restTimeLabel => 'Время отдыха';
 
   @override
   String get type => 'Type';
 
   @override
-  String get setColumn => 'Set';
+  String get setColumn => 'Подход';
 
   @override
-  String get previousColumn => 'Previous';
+  String get previousColumn => 'Предыдущий';
 
   @override
-  String get timeColumn => 'Time';
+  String get timeColumn => 'Время';
 
   @override
-  String get weightColumn => 'Weight';
+  String get weightColumn => 'Вес';
 
   @override
-  String get repsColumn => 'Reps';
+  String get repsColumn => 'Повторения';
 
   @override
   String get rpe => 'RPE';
@@ -593,7 +593,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get rir => 'RIR';
 
   @override
-  String get addSet => 'Add set';
+  String get addSet => 'Добавить подход';
 
   @override
   String decreaseBy(String amount) {
@@ -699,7 +699,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get saveAction => 'SAVE';
+  String get saveAction => 'Сохранить';
 
   @override
   String setsRatio(int completed, int total) {
@@ -707,7 +707,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get doneAction => 'DONE';
+  String get doneAction => 'Готово';
 
   @override
   String get emptyWorkoutHint =>
@@ -731,7 +731,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get addExercise => 'Add exercise';
 
   @override
-  String get restTimerBadge => 'REST';
+  String get restTimerBadge => 'Отдых';
 
   @override
   String get workoutSummaryTitle => 'Workout Summary';
@@ -740,10 +740,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutCompleted => 'Workout Completed!';
 
   @override
-  String get volumeLabel => 'Volume';
+  String get volumeLabel => 'Объем';
 
   @override
-  String get durationLabel => 'Duration';
+  String get durationLabel => 'Длительность';
 
   @override
   String get setsCompletedLabel => 'Sets Completed';
@@ -752,7 +752,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hardSetsSummaryLabel => 'Hard Sets';
 
   @override
-  String get exercisesLabel => 'Exercises';
+  String get exercisesLabel => 'Упражнения';
 
   @override
   String densityWithValue(String value) {
@@ -787,7 +787,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get deleteRoutineTitle => 'Delete Routine?';
 
   @override
-  String get deleteWorkoutTitle => 'Delete Workout?';
+  String get deleteWorkoutTitle => 'Удалить тренировку?';
 
   @override
   String get deleteRoutineMessage =>
@@ -795,7 +795,7 @@ class AppLocalizationsRu extends AppLocalizations {
 
   @override
   String get deleteWorkoutMessage =>
-      'Are you sure you want to delete this workout? This action cannot be undone.';
+      'Вы уверены, что хотите удалить эту тренировку? Это действие нельзя отменить';
 
   @override
   String get unlinkRoutineTitle => 'Unlink Routine?';
@@ -805,7 +805,7 @@ class AppLocalizationsRu extends AppLocalizations {
       'Are you sure you want to unlink this workout from its routine?';
 
   @override
-  String get unlink => 'Unlink';
+  String get unlink => 'Отвязать';
 
   @override
   String get routineLabel => 'Routine';
@@ -945,7 +945,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get searchExercise => 'Search exercise...';
 
   @override
-  String get levelLabel => 'Level';
+  String get levelLabel => 'Уровень';
 
   @override
   String levelWithValue(String value) {
@@ -956,7 +956,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get selectLevel => 'Select Level';
 
   @override
-  String get forceLabel => 'Force';
+  String get forceLabel => 'Сила';
 
   @override
   String forceWithValue(String value) {
@@ -967,7 +967,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get selectForce => 'Select Force';
 
   @override
-  String get mechanicLabel => 'Mechanic';
+  String get mechanicLabel => 'Механика';
 
   @override
   String mechanicWithValue(String value) {
@@ -1000,7 +1000,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get selectMuscle => 'Select Muscle';
 
   @override
-  String get categoryLabel => 'Category';
+  String get categoryLabel => 'Категория';
 
   @override
   String categoryWithValue(String value) {
@@ -1025,7 +1025,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get noExercisesFound => 'No exercises found';
 
   @override
-  String get createExercise => 'Create Exercise';
+  String get createExercise => 'Создать упражнение';
 
   @override
   String get createWithAi => 'Create with AI';
@@ -1060,7 +1060,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get primaryMuscleField => 'Primary Muscle';
 
   @override
-  String get cancelAction => 'CANCEL';
+  String get cancelAction => 'Отмена';
 
   @override
   String get describeExerciseHint =>
@@ -1076,10 +1076,10 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseDetails => 'Exercise Details';
 
   @override
-  String get detailsTab => 'Details';
+  String get detailsTab => 'Детали';
 
   @override
-  String get instructionsTab => 'Instructions';
+  String get instructionsTab => 'Инструкции';
 
   @override
   String get primaryMusclesWorked => 'Primary Muscles Worked';
@@ -1088,7 +1088,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get secondaryMusclesWorked => 'Secondary Muscles Worked';
 
   @override
-  String get discardChangesTitle => 'Discard Changes?';
+  String get discardChangesTitle => 'Отказаться от изменений?';
 
   @override
   String get discardChangesMessage =>
@@ -1101,7 +1101,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get createRoutineTitle => 'Create Routine';
 
   @override
-  String get editRoutineTitle => 'Edit Routine';
+  String get editRoutineTitle => 'Редактировать программу';
 
   @override
   String get routineTitleField => 'Routine title';
@@ -1117,7 +1117,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get addExerciseTitle => 'Add Exercise';
 
   @override
-  String get discardAction => 'DISCARD';
+  String get discardAction => 'Не сохранять';
 
   @override
   String get notificationPermissionTitle => 'Stay on Track';
@@ -1136,13 +1136,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get clearSearch => 'Clear search';
 
   @override
-  String get calendarTitle => 'Calendar';
+  String get calendarTitle => 'Календарь';
 
   @override
   String get selectDayHint => 'Select a day to view workouts';
 
   @override
-  String get workoutNoun => 'workout';
+  String get workoutNoun => 'Тренировка';
 
   @override
   String get workoutsNoun => 'workouts';
@@ -1221,7 +1221,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get exerciseNoun => 'exercise';
 
   @override
-  String get exercisesNoun => 'exercises';
+  String get exercisesNoun => 'Упражнения';
 
   @override
   String moreCount(int count) {
@@ -1306,7 +1306,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get addProduct => 'Add Product';
 
   @override
-  String get nameLabel => 'Name';
+  String get nameLabel => 'Имя';
 
   @override
   String get autofillWithAi => 'Autofill with AI';
@@ -1392,7 +1392,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get addRecipe => 'Add Recipe';
 
   @override
-  String get save => 'Save';
+  String get save => 'Сохранить';
 
   @override
   String get instructionsProcess => 'Instructions/Process';
@@ -1414,7 +1414,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get amountLabel => 'Amount';
 
   @override
-  String get addAction => 'Add';
+  String get addAction => 'Добавить';
 
   @override
   String ingredientLine(String name, String amount) {
@@ -1428,7 +1428,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get enterRecipeName => 'Enter a recipe name';
 
   @override
-  String get titleCannotBeEmpty => 'Title cannot be empty';
+  String get titleCannotBeEmpty => 'Название не может быть пустым';
 
   @override
   String get mealPlanSaved => 'Meal plan saved';
@@ -1684,25 +1684,25 @@ class AppLocalizationsRu extends AppLocalizations {
   String get mealPlanDetails => 'Meal Plan Details';
 
   @override
-  String get edit => 'Edit';
+  String get edit => 'Редактировать';
 
   @override
   String get mealPlanNotFound => 'Meal plan not found';
 
   @override
-  String get measurementsMenu => 'Measurements';
+  String get measurementsMenu => 'Измерения';
 
   @override
   String get personalInfo => 'Personal Info';
 
   @override
-  String get statisticsMenu => 'Statistics';
+  String get statisticsMenu => 'Статистика';
 
   @override
   String get stockTitle => 'Stock';
 
   @override
-  String get overview => 'Overview';
+  String get overview => 'Обзор';
 
   @override
   String errorLoadingChart(String error) {
@@ -1710,7 +1710,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get yourWorkouts => 'Your workouts';
+  String get yourWorkouts => 'Ваши тренировки';
 
   @override
   String get viewAll => 'View all';
@@ -1762,13 +1762,13 @@ class AppLocalizationsRu extends AppLocalizations {
   String get workoutPerformance => 'Workout Performance';
 
   @override
-  String get repsLabel => 'Reps';
+  String get repsLabel => 'Повторения';
 
   @override
   String get noDataYet => 'No data yet';
 
   @override
-  String get statisticsTitle => 'Statistics';
+  String get statisticsTitle => 'Статистика';
 
   @override
   String errorLoadingWorkouts(String error) {
@@ -1909,7 +1909,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get hrsShort => 'Hrs';
 
   @override
-  String get minShort => 'Min';
+  String get minShort => 'минут';
 
   @override
   String get weightProgress => 'Weight Progress';
@@ -1993,7 +1993,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get minMaxLabel => 'Min/Max';
 
   @override
-  String get measurementsTitle => 'Measurements';
+  String get measurementsTitle => 'Измерения';
 
   @override
   String get addLog => 'Add Log';
@@ -2352,7 +2352,7 @@ class AppLocalizationsRu extends AppLocalizations {
   String get importFailed => 'Import Failed';
 
   @override
-  String get ok => 'OK';
+  String get ok => 'ОК';
 
   @override
   String importedSuccessfully(String entity) {
@@ -2360,7 +2360,7 @@ class AppLocalizationsRu extends AppLocalizations {
   }
 
   @override
-  String get unknownError => 'Unknown error';
+  String get unknownError => 'Неизвестная ошибка';
 
   @override
   String get backupRestoreTitle => 'Backup & Restore';

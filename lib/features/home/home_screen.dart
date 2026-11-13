@@ -9,7 +9,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/db/app_database.dart';
+import '../../core/db/relations.dart';
 import '../../core/db/workout_repository.dart';
 import '../../core/providers/workout_providers.dart';
 import '../../core/providers/settings_provider.dart';
@@ -24,6 +24,52 @@ class HomeScreen extends ConsumerStatefulWidget {
 class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<Color?> _borderColorAnimation;
+
+  /// Routine ids in the order last dropped by the user.
+  ///
+  /// The database stream stays the source of truth for routine contents; this
+  /// only keeps the visual order stable between the drop and the database
+  /// emitting the persisted positions, which avoids a flicker.
+  List<int> _localOrderIds = const [];
+
+  List<WorkoutWithExercisesAndSets> _applyLocalOrder(
+    List<WorkoutWithExercisesAndSets> routines,
+  ) {
+    if (_localOrderIds.isEmpty) return routines;
+
+    final byId = {for (final item in routines) item.workout.id: item};
+    final ordered = <WorkoutWithExercisesAndSets>[];
+    for (final id in _localOrderIds) {
+      final item = byId.remove(id);
+      if (item != null) ordered.add(item);
+    }
+    ordered.addAll(byId.values);
+    return ordered;
+  }
+
+  Future<void> _reorderRoutines(
+    List<WorkoutWithExercisesAndSets> routines,
+    int oldIndex,
+    int newIndex,
+  ) async {
+    if (routines.length < 2) return;
+
+    var targetIndex = newIndex;
+    if (targetIndex > oldIndex) targetIndex -= 1;
+    if (targetIndex == oldIndex) return;
+
+    final reordered = List<WorkoutWithExercisesAndSets>.of(routines);
+    final moved = reordered.removeAt(oldIndex);
+    reordered.insert(targetIndex, moved);
+
+    setState(() {
+      _localOrderIds = reordered.map((item) => item.workout.id).toList();
+    });
+
+    await ref.read(workoutRepositoryProvider).updateRoutinePositions(
+      reordered.map((item) => item.workout).toList(),
+    );
+  }
 
   @override
   void initState() {
@@ -280,11 +326,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
               );
             }
 
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: routines.map((item) {
-                final routine = item.workout;
+            final orderedRoutines = _applyLocalOrder(routines);
+
+            return ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              itemCount: orderedRoutines.length,
+              onReorder: (oldIndex, newIndex) =>
+                  _reorderRoutines(orderedRoutines, oldIndex, newIndex),
+              itemBuilder: (context, index) {
+                final routine = orderedRoutines[index].workout;
                 return Padding(
+                  key: ValueKey(routine.id),
                   padding: const EdgeInsets.only(bottom: 12.0),
                   child: Card(
                     clipBehavior: Clip.antiAlias,
@@ -320,6 +374,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                                     color: theme.colorScheme.secondary,
                                   ),
                                 ],
+                                ReorderableDragStartListener(
+                                  index: index,
+                                  child: Tooltip(
+                                    message: 'Drag to reorder',
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 8.0),
+                                      child: Icon(
+                                        Icons.drag_handle,
+                                        color: theme.colorScheme.onSurfaceVariant,
+                                      ),
+                                    ),
+                                  ),
+                                ),
                               ],
                             ),
                             const SizedBox(height: 12),
@@ -349,7 +416,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                     ),
                   ),
                 );
-              }).toList(),
+              },
             );
           },
           loading: () => const Center(child: CircularProgressIndicator()),

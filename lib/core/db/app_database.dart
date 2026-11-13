@@ -132,6 +132,7 @@ class Workouts extends Table {
   TextColumn get state =>
       text().map(const EnumNameConverter<WorkoutState>(WorkoutState.values))();
   IntColumn get timeElapsed => integer().named('timeElapsed')();
+  IntColumn get position => integer().withDefault(const Constant(0))();
   TextColumn get created => text().map(const IsoDateTimeConverter())();
   TextColumn get completed => text().map(const IsoDateTimeConverter())();
   BoolColumn get isTemporal =>
@@ -548,7 +549,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.executor(super.executor);
 
   @override
-  int get schemaVersion => 22;
+  int get schemaVersion => 23;
 
   Future<bool> _tableExists(String table) async {
     final rows = await customSelect(
@@ -820,6 +821,15 @@ class AppDatabase extends _$AppDatabase {
           'recipe_ingredients',
           'amountUnits',
           'amountUnits TEXT',
+        );
+      }
+      if (from < 23) {
+        // Routines are ordered by their position on the home screen. Existing
+        // routines keep position 0, so they fall back to creation order.
+        await _ensureColumn(
+          'workouts',
+          'position',
+          'position INTEGER NOT NULL DEFAULT 0',
         );
       }
     },

@@ -270,6 +270,7 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
         title: proposal.title,
         state: WorkoutState.ROUTINE,
         timeElapsed: 0,
+        position: 0,
         created: now,
         completed: now,
         isTemporal: false,

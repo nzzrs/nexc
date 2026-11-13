@@ -78,6 +78,7 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
       title: '',
       state: WorkoutState.ROUTINE,
       timeElapsed: 0,
+      position: 0,
       created: DateTime.now(),
       completed: DateTime.now(),
       isTemporal: false,

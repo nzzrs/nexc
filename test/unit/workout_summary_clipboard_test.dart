@@ -24,6 +24,7 @@ void main() {
     title: 'Leg Day Push',
     state: WorkoutState.COMPLETED,
     timeElapsed: 3665, // 61m 05s
+    position: 0,
     created: now,
     completed: now,
     isTemporal: false,

@@ -18,25 +18,52 @@ class WorkoutRepository {
 
   WorkoutRepository(this.db);
 
+  List<OrderingTerm Function($WorkoutsTable)> _orderByForState(WorkoutState state) {
+    if (state == WorkoutState.COMPLETED) {
+      return [
+        (w) => OrderingTerm(expression: w.completed, mode: OrderingMode.desc),
+      ];
+    }
+    if (state == WorkoutState.ROUTINE) {
+      return [
+        (w) => OrderingTerm(expression: w.position, mode: OrderingMode.asc),
+        (w) => OrderingTerm(expression: w.created, mode: OrderingMode.asc),
+      ];
+    }
+    return [
+      (w) => OrderingTerm(expression: w.created, mode: OrderingMode.asc),
+    ];
+  }
+
+  Future<int> _nextRoutinePosition() async {
+    final maxPosition = db.workouts.position.max();
+    final query = db.selectOnly(db.workouts)
+      ..addColumns([maxPosition])
+      ..where(db.workouts.state.equalsValue(WorkoutState.ROUTINE));
+    final row = await query.getSingle();
+    return (row.read(maxPosition) ?? -1) + 1;
+  }
+
+  /// Returns the position for a new workout. New routines are appended after
+  /// the current last routine; other states keep the given position.
+  Future<int> _positionForNewWorkout(Workout workout) {
+    if (workout.state != WorkoutState.ROUTINE) {
+      return Future.value(workout.position);
+    }
+    return _nextRoutinePosition();
+  }
+
   Stream<List<Workout>> watchWorkoutsByState(WorkoutState state) {
     return (db.select(db.workouts)
           ..where((w) => w.state.equalsValue(state))
-          ..orderBy([
-            (w) => OrderingTerm(
-                expression: state == WorkoutState.COMPLETED ? w.completed : w.created,
-                mode: state == WorkoutState.COMPLETED ? OrderingMode.desc : OrderingMode.asc)
-          ]))
+          ..orderBy(_orderByForState(state)))
         .watch();
   }
 
   Stream<List<WorkoutWithExercisesAndSets>> watchWorkoutsWithExercisesAndSetsByState(WorkoutState state) {
     final query = db.select(db.workouts)
       ..where((w) => w.state.equalsValue(state))
-      ..orderBy([
-        (w) => OrderingTerm(
-            expression: state == WorkoutState.COMPLETED ? w.completed : w.created,
-            mode: state == WorkoutState.COMPLETED ? OrderingMode.desc : OrderingMode.asc)
-      ]);
+      ..orderBy(_orderByForState(state));
 
     return query
         .join([
@@ -80,8 +107,9 @@ class WorkoutRepository {
     return _groupRowsToWorkouts(rows);
   }
 
-  Future<int> addWorkout(Workout workout) {
+  Future<int> addWorkout(Workout workout) async {
     if (workout.id == 0) {
+      final position = await _positionForNewWorkout(workout);
       return db.into(db.workouts).insert(
             WorkoutsCompanion.insert(
               routineId: workout.routineId,
@@ -89,6 +117,7 @@ class WorkoutRepository {
               title: workout.title,
               state: workout.state,
               timeElapsed: workout.timeElapsed,
+              position: Value(position),
               created: workout.created,
               completed: workout.completed,
               isTemporal: Value(workout.isTemporal),
@@ -101,6 +130,21 @@ class WorkoutRepository {
 
   Future<void> updateWorkout(Workout workout) {
     return db.update(db.workouts).replace(workout);
+  }
+
+  /// Persists the home screen order of [routines] in a single transaction.
+  ///
+  /// Positions are normalized to their index in [routines], so the stored
+  /// order matches the order the user dropped them in.
+  Future<void> updateRoutinePositions(List<Workout> routines) async {
+    if (routines.isEmpty) return;
+    await db.transaction(() async {
+      for (var index = 0; index < routines.length; index++) {
+        await db
+            .update(db.workouts)
+            .replace(routines[index].copyWith(position: index));
+      }
+    });
   }
 
   Future<void> deleteWorkout(Workout workout) {
@@ -189,6 +233,7 @@ class WorkoutRepository {
       int workoutId;
 
       if (workout.id == 0) {
+        final position = await _positionForNewWorkout(workout);
         workoutId = await db.into(db.workouts).insert(
               WorkoutsCompanion.insert(
                 routineId: workout.routineId,
@@ -196,6 +241,7 @@ class WorkoutRepository {
                 title: workout.title,
                 state: workout.state,
                 timeElapsed: workout.timeElapsed,
+                position: Value(position),
                 created: workout.created,
                 completed: workout.completed,
               ),

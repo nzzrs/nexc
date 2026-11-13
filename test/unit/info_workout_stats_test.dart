@@ -69,6 +69,7 @@ WorkoutWithExercisesAndSets _workout(List<ExerciseWithSets> exercises) {
       title: 'Test Workout',
       state: WorkoutState.COMPLETED,
       timeElapsed: 1800,
+      position: 0,
       created: DateTime(2026, 1, 1),
       completed: DateTime(2026, 1, 1),
       isTemporal: false,

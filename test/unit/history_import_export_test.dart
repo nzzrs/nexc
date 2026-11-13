@@ -198,6 +198,7 @@ void main() {
           notes: item['notes'] ?? '',
           state: WorkoutState.values.firstWhere((s) => s.name == item['state'], orElse: () => WorkoutState.COMPLETED),
           timeElapsed: item['timeElapsed'] ?? 0,
+          position: 0,
           created: DateTime.parse(item['created']),
           completed: DateTime.parse(item['completed']),
           isTemporal: false,

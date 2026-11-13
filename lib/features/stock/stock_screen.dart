@@ -8,27 +8,107 @@
  */
 
 import 'dart:convert';
-import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:collection/collection.dart';
-import 'package:drift/drift.dart' show Value;
 
-import '../../core/db/app_database.dart';
-import '../../core/db/stock_repository.dart';
-import '../../core/db/meal_repository.dart';
-import '../../core/l10n/l10n.dart';
-import '../../core/providers/settings_provider.dart';
-import '../../core/providers/meals_providers.dart';
-import '../../core/integrations/ai_service.dart';
-import '../../core/components/clearable_search_field.dart';
-import '../../core/components/nexc_scaffold.dart';
-import '../meals/product_selector_screen.dart';
-import '../meals/edit_product_screen.dart';
+import 'package:collection/collection.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 
-// Providers for Stock Screen State
+import '../../core/components/clearable_search_field.dart';
+import '../../core/components/nexc_async_view.dart';
+import '../../core/components/nexc_choice_sheet.dart';
+import '../../core/components/nexc_empty_state.dart';
+import '../../core/components/nexc_page.dart';
+import '../../core/components/nexc_section.dart';
+import '../../core/components/nexc_snack.dart';
+import '../../core/components/nexc_stepper_field.dart';
+import '../../core/components/nexc_tile.dart';
+import '../../core/db/app_database.dart';
+import '../../core/db/stock_repository.dart';
+import '../../core/integrations/ai_service.dart';
+import '../../core/l10n/l10n.dart';
+import '../../core/providers/meals_providers.dart';
+import '../../core/providers/settings_provider.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/spacing.dart';
+import '../../core/util/format.dart';
+import '../meals/product_selector_screen.dart';
+import 'receipt_review_screen.dart';
+import 'stock_dialogs.dart';
+
+/// Currently selected house across the stock screen.
 final activeHouseIdProvider = StateProvider<int?>((ref) => null);
+
+/// Canonical spelling for stock units (`unit` and `units` are the same unit).
+String normalizeStockUnit(String? raw) {
+  final String value = raw?.trim().toLowerCase() ?? 'g';
+  if (value == 'unit') return 'units';
+  if (value == 'ml' || value == 'units') return value;
+  return 'g';
+}
+
+/// Units a stock row may be displayed in.
+List<String> stockDisplayUnits(Product product) {
+  return <String>[
+    'g',
+    if (product.canMeasureInMl) 'ml',
+    if (product.canMeasureInUnits) 'units',
+  ];
+}
+
+/// Whether the stock is below its configured trigger.
+bool isLowStock(StockWithProduct item) {
+  final double? trigger = item.stock.minTriggerQuantity;
+  return trigger != null && item.stock.quantity < trigger;
+}
+
+/// Quantity converted to [unit] for display or editing.
+double stockQuantityInUnit(StockWithProduct item, String unit) {
+  final String normalized = normalizeStockUnit(unit);
+  if (normalized == normalizeStockUnit(item.product.units)) {
+    return item.stock.quantity;
+  }
+  switch (normalized) {
+    case 'ml':
+      return item.stock.quantityMl;
+    case 'units':
+      return item.stock.quantityUnits;
+    default:
+      return item.stock.quantityGrams;
+  }
+}
+
+/// Step size for the quantity stepper, by unit.
+double stockStepForUnit(String unit) {
+  switch (normalizeStockUnit(unit)) {
+    case 'ml':
+      return 200.0;
+    case 'units':
+      return 5.0;
+    default:
+      return 250.0;
+  }
+}
+
+/// Low stock first (most urgent first), then everything else by name.
+List<StockWithProduct> sortStocksLowStockFirst(
+  Iterable<StockWithProduct> stocks,
+) {
+  final List<StockWithProduct> list = stocks.toList();
+  list.sort((StockWithProduct a, StockWithProduct b) {
+    final bool aLow = isLowStock(a);
+    final bool bLow = isLowStock(b);
+    if (aLow != bLow) return aLow ? -1 : 1;
+    if (aLow && bLow) {
+      final double aRatio = a.stock.quantity / a.stock.minTriggerQuantity!;
+      final double bRatio = b.stock.quantity / b.stock.minTriggerQuantity!;
+      final int ratioOrder = aRatio.compareTo(bRatio);
+      if (ratioOrder != 0) return ratioOrder;
+    }
+    return a.product.name.toLowerCase().compareTo(b.product.name.toLowerCase());
+  });
+  return list;
+}
 
 class StockScreen extends ConsumerStatefulWidget {
   const StockScreen({super.key});
@@ -39,39 +119,28 @@ class StockScreen extends ConsumerStatefulWidget {
 
 class _StockScreenState extends ConsumerState<StockScreen>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
-  String _searchQuery = "";
+  late final TabController _tabController;
   final TextEditingController _stockSearchController = TextEditingController();
+  String _searchQuery = '';
   bool _isImporting = false;
 
-  final Set<int> _shoppingChecked = {};
-  final Set<int> _shoppingListInitialized = {};
-  final Map<int, double> _shoppingQuantities = {};
-  final Map<int, String> _shoppingUnits = {};
-
-  String _formatDouble(double val) {
-    final str = val.toStringAsFixed(2);
-    if (str.endsWith('.00')) {
-      return str.substring(0, str.length - 3);
-    }
-    if (str.endsWith('0')) {
-      return str.substring(0, str.length - 1);
-    }
-    return str;
-  }
+  /// Per-product display unit; it never writes `product.defaultUnits`.
+  final Map<int, String> _displayUnits = <int, String>{};
+  final Set<int> _shoppingChecked = <int>{};
+  final Map<int, double> _shoppingQuantities = <int, double>{};
+  final Map<int, String> _shoppingUnits = <int, String>{};
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
-      setState(() {});
+      if (mounted) setState(() {});
     });
-    // Ensure default house exists on launch
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      final repo = ref.read(stockRepositoryProvider);
+      final StockRepository repo = ref.read(stockRepositoryProvider);
       await repo.ensureDefaultHouse();
-      final houses = await repo.getHouses();
+      final List<House> houses = await repo.getHouses();
       if (houses.isNotEmpty && ref.read(activeHouseIdProvider) == null) {
         ref.read(activeHouseIdProvider.notifier).state = houses.first.id;
       }
@@ -85,369 +154,260 @@ class _StockScreenState extends ConsumerState<StockScreen>
     super.dispose();
   }
 
-  void _showAddHouseDialog() {
-    final controller = TextEditingController();
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.addHouse),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(labelText: context.l10n.houseName),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () async {
-              final name = controller.text.trim();
-              if (name.isNotEmpty) {
-                final repo = ref.read(stockRepositoryProvider);
-                final newId = await repo.saveHouse(House(id: 0, name: name));
-                ref.read(activeHouseIdProvider.notifier).state = newId;
-                if (context.mounted) Navigator.pop(context);
-              }
-            },
-            child: Text(context.l10n.save),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showRenameHouseDialog(House house) {
-    final controller = TextEditingController(text: house.name);
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.renameHouse),
-        content: TextField(
-          controller: controller,
-          decoration: InputDecoration(labelText: context.l10n.houseName),
-          autofocus: true,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () async {
-              final name = controller.text.trim();
-              if (name.isNotEmpty) {
-                final repo = ref.read(stockRepositoryProvider);
-                await repo.saveHouse(house.copyWith(name: name));
-                if (context.mounted) Navigator.pop(context);
-              }
-            },
-            child: Text(context.l10n.save),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showDeleteHouseDialog(House house) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.deleteHouse),
-        content: Text(context.l10n.deleteHouseConfirm(house.name)),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () async {
-              final repo = ref.read(stockRepositoryProvider);
-              await repo.deleteHouse(house);
-              final remaining = await repo.getHouses();
-              ref.read(activeHouseIdProvider.notifier).state =
-                  remaining.isNotEmpty ? remaining.first.id : null;
-              if (context.mounted) Navigator.pop(context);
-            },
-            child: Text(
-              "Delete",
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showAddProductToStockDialog(int houseId, List<Product> products) async {
-    final selectedProduct = await Navigator.push<Product>(
+  Future<void> _addHouse() async {
+    final l10n = context.l10n;
+    final String? name = await showHouseNameSheet(
       context,
-      MaterialPageRoute(
-        builder: (context) =>
+      title: l10n.addHouse,
+    );
+    if (name == null) return;
+    final StockRepository repo = ref.read(stockRepositoryProvider);
+    final int id = await repo.saveHouse(House(id: 0, name: name.trim()));
+    if (mounted) ref.read(activeHouseIdProvider.notifier).state = id;
+  }
+
+  Future<void> _renameHouse(House house) async {
+    final l10n = context.l10n;
+    final String? name = await showHouseNameSheet(
+      context,
+      title: l10n.renameHouse,
+      initialValue: house.name,
+    );
+    if (name == null) return;
+    await ref
+        .read(stockRepositoryProvider)
+        .saveHouse(house.copyWith(name: name.trim()));
+  }
+
+  Future<void> _deleteHouse(House house) async {
+    if (!await confirmDeleteHouse(context, house)) return;
+    if (!mounted) return;
+    final StockRepository repo = ref.read(stockRepositoryProvider);
+    await repo.deleteHouse(house);
+    final List<House> remaining = await repo.getHouses();
+    if (mounted) {
+      ref.read(activeHouseIdProvider.notifier).state = remaining.isNotEmpty
+          ? remaining.first.id
+          : null;
+    }
+  }
+
+  Future<void> _addProductToStock(int houseId) async {
+    final Product? selected = await Navigator.push<Product>(
+      context,
+      NexcPage.route(
+        title: context.l10n.addProductToStockTitle,
+        builder: (BuildContext context) =>
             ProductSelectorScreen(title: context.l10n.addProductToStockTitle),
       ),
     );
-
-    if (selectedProduct != null) {
-      final repo = ref.read(stockRepositoryProvider);
-      await repo.saveStock(
-        productId: selectedProduct.id,
-        houseId: houseId,
-        quantity: 0.0,
-        minTriggerQuantity: null,
-      );
-    }
-  }
-
-  void _showReplaceProductDialog(
-    BuildContext context,
-    _ReceiptConfirmItem item,
-    List<Product> products,
-    void Function(void Function()) setDialogState,
-  ) async {
-    final selectedProduct = await Navigator.push<Product>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => ProductSelectorScreen(
-          title: context.l10n.mapToTitle(item.receiptName),
-          initialQuery: item.receiptName,
-        ),
-      ),
-    );
-
-    if (selectedProduct != null) {
-      final stockRepo = ref.read(stockRepositoryProvider);
-      await stockRepo.saveReceiptMapping(
-        receiptName: item.receiptName,
-        productId: selectedProduct.id,
-      );
-      setDialogState(() {
-        item.matchedProduct = selectedProduct;
-        item.matchState = 0; // mapped
-      });
-    }
-  }
-
-  void _showManageHousesDialog() {
-    showDialog(
-      context: context,
-      builder: (context) {
-        final repo = ref.read(stockRepositoryProvider);
-        return AlertDialog(
-          title: Text(context.l10n.manageHouses),
-          content: SizedBox(
-            width: 350,
-            height: 300,
-            child: StreamBuilder<List<House>>(
-              stream: repo.watchHouses(),
-              builder: (context, snapshot) {
-                final list = snapshot.data ?? [];
-                return Column(
-                  children: [
-                    Expanded(
-                      child: list.isEmpty
-                          ? Center(child: Text(context.l10n.noHousesDefined))
-                          : ListView.builder(
-                              itemCount: list.length,
-                              itemBuilder: (context, index) {
-                                final h = list[index];
-                                return ListTile(
-                                  title: Text(h.name),
-                                  trailing: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      IconButton(
-                                        icon: const Icon(Icons.edit_outlined),
-                                        onPressed: () =>
-                                            _showRenameHouseDialog(h),
-                                      ),
-                                      IconButton(
-                                        icon: const Icon(
-                                          Icons.delete_outline,
-                                          color: Colors.red,
-                                        ),
-                                        onPressed: () =>
-                                            _showDeleteHouseDialog(h),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                              },
-                            ),
-                    ),
-                    const Divider(),
-                    ElevatedButton.icon(
-                      onPressed: () => _showAddHouseDialog(),
-                      icon: const Icon(Icons.add),
-                      label: Text(context.l10n.addHouse),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(context.l10n.close),
-            ),
-          ],
+    if (selected == null) return;
+    await ref
+        .read(stockRepositoryProvider)
+        .saveStock(
+          productId: selected.id,
+          houseId: houseId,
+          quantity: 0.0,
+          minTriggerQuantity: null,
         );
-      },
-    );
   }
 
-  void _showCopyableErrorDialog(String title, String error) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Row(
-          children: [
-            const Icon(Icons.error_outline, color: Colors.red),
-            const SizedBox(width: 8),
-            Text(title),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(context.l10n.operationError),
-            const SizedBox(height: 8),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxHeight: 200),
-              child: Container(
-                width: double.maxFinite,
-                padding: const EdgeInsets.all(8),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: SingleChildScrollView(
-                  child: SelectableText(
-                    error,
-                    style: const TextStyle(
-                      fontFamily: 'monospace',
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton.icon(
-            icon: const Icon(Icons.copy),
-            label: Text(context.l10n.copyError),
-            onPressed: () {
-              Clipboard.setData(ClipboardData(text: error));
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(context.l10n.errorCopied)));
-            },
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.close),
-          ),
-        ],
+  Future<void> _replaceStockItem(StockWithProduct item, int houseId) async {
+    final Product? selected = await Navigator.push<Product>(
+      context,
+      NexcPage.route(
+        title: context.l10n.replaceWith,
+        builder: (BuildContext context) =>
+            ProductSelectorScreen(title: context.l10n.replaceWith),
       ),
     );
+    if (selected == null) return;
+    final StockRepository repo = ref.read(stockRepositoryProvider);
+    await repo.deleteStock(item.stock);
+    await repo.saveStock(
+      productId: selected.id,
+      houseId: houseId,
+      quantity: item.stock.quantity,
+      minTriggerQuantity: item.stock.minTriggerQuantity,
+      inputUnit: normalizeStockUnit(item.product.units),
+    );
   }
 
-  Future<void> _handleReceiptImport(int houseId, List<Product> products) async {
+  Future<void> _showItemOptions(StockWithProduct item, int houseId) async {
+    final StockItemAction? action = await showStockItemOptionsSheet(
+      context,
+      item,
+    );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case StockItemAction.replace:
+        await _replaceStockItem(item, houseId);
+      case StockItemAction.delete:
+        if (!await confirmDeleteStock(context, item)) return;
+        if (!mounted) return;
+        await ref.read(stockRepositoryProvider).deleteStock(item.stock);
+    }
+  }
+
+  Future<void> _editTrigger(StockWithProduct item, int houseId) async {
+    final TriggerThresholdResult? result = await showTriggerThresholdSheet(
+      context,
+      item: item,
+    );
+    if (result == null || !result.saved || !mounted) return;
+    await ref
+        .read(stockRepositoryProvider)
+        .saveStock(
+          productId: item.product.id,
+          houseId: houseId,
+          quantity: item.stock.quantity,
+          minTriggerQuantity: result.value,
+          inputUnit: normalizeStockUnit(item.product.units),
+        );
+  }
+
+  Future<void> _saveQuantity(
+    StockWithProduct item,
+    int houseId,
+    String unit,
+    double quantity,
+  ) {
+    return ref
+        .read(stockRepositoryProvider)
+        .saveStock(
+          productId: item.product.id,
+          houseId: houseId,
+          quantity: quantity,
+          minTriggerQuantity: item.stock.minTriggerQuantity,
+          inputUnit: unit,
+        );
+  }
+
+  Future<void> _restock(int houseId) async {
     final l10n = context.l10n;
-    final settings = ref.read(settingsProvider);
+    final StockRepository repo = ref.read(stockRepositoryProvider);
+    final List<StockWithProduct> stocks = await repo
+        .getStocksWithProductForHouse(houseId);
+    final List<StockWithProduct> needed = stocks.where(isLowStock).toList();
+
+    int restockedCount = 0;
+    for (final StockWithProduct item in needed) {
+      if (!_shoppingChecked.contains(item.product.id)) continue;
+      final String unit =
+          _shoppingUnits[item.product.id] ??
+          normalizeStockUnit(item.product.units);
+      final double gap = item.stock.minTriggerQuantity! - item.stock.quantity;
+      final double addedQuantity =
+          _shoppingQuantities[item.product.id] ?? (gap > 0 ? gap : 0.0);
+      if (addedQuantity <= 0.0) continue;
+      await repo.saveStock(
+        productId: item.product.id,
+        houseId: houseId,
+        quantity: stockQuantityInUnit(item, unit) + addedQuantity,
+        minTriggerQuantity: item.stock.minTriggerQuantity,
+        inputUnit: unit,
+      );
+      restockedCount++;
+    }
+
+    if (!mounted) return;
+    setState(() {
+      _shoppingChecked.clear();
+      _shoppingQuantities.clear();
+      _shoppingUnits.clear();
+    });
+    if (restockedCount > 0) {
+      NexcSnack.show(context, l10n.restockedItems(restockedCount));
+    }
+  }
+
+  Future<void> _handleReceiptImport(int houseId) async {
+    final l10n = context.l10n;
+    final SettingsState settings = ref.read(settingsProvider);
     if (settings.aiToken.trim().isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(l10n.aiTokenNotConfigured)));
+      NexcSnack.show(context, l10n.aiTokenNotConfigured);
       return;
     }
 
-    final source = await showModalBottomSheet<ImageSource>(
+    final ImageSource? source = await NexcChoiceSheet.show<ImageSource>(
       context: context,
-      builder: (ctx) => SafeArea(
-        child: Wrap(
-          children: [
-            ListTile(
-              leading: const Icon(Icons.camera_alt),
-              title: Text(ctx.l10n.takePhotoCamera),
-              onTap: () => Navigator.pop(ctx, ImageSource.camera),
-            ),
-            ListTile(
-              leading: const Icon(Icons.photo_library),
-              title: Text(ctx.l10n.chooseFromGallery),
-              onTap: () => Navigator.pop(ctx, ImageSource.gallery),
-            ),
-          ],
+      title: l10n.aiImportReceipt,
+      options: <NexcChoiceOption<ImageSource>>[
+        NexcChoiceOption(
+          value: ImageSource.camera,
+          label: l10n.takePhotoCamera,
+          icon: NexcIcons.add,
         ),
-      ),
+        NexcChoiceOption(
+          value: ImageSource.gallery,
+          label: l10n.chooseFromGallery,
+          icon: NexcIcons.images,
+        ),
+      ],
     );
-    if (source == null) return;
+    if (source == null || !mounted) return;
 
-    final picker = ImagePicker();
-    final pickedFile = await picker.pickImage(source: source);
-    if (pickedFile == null) return;
-
-    setState(() {
-      _isImporting = true;
-    });
+    final XFile? pickedFile = await ImagePicker().pickImage(source: source);
+    if (pickedFile == null || !mounted) return;
+    setState(() => _isImporting = true);
 
     try {
-      final bytes = await pickedFile.readAsBytes();
-      final base64Image = base64Encode(bytes);
-      final extension = pickedFile.name.split('.').last.toLowerCase();
-      final mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
+      final List<Product> products = ref.read(allProductsProvider).value ?? [];
+      final List<int> bytes = await pickedFile.readAsBytes();
+      final String base64Image = base64Encode(bytes);
+      final String extension = pickedFile.name.split('.').last.toLowerCase();
+      final String mimeType = extension == 'png' ? 'image/png' : 'image/jpeg';
 
-      final parsedItems = await AIService.parseReceipt(
+      final List<AIReceiptItem> parsedItems = await AIService.parseReceipt(
         provider: settings.aiProvider,
         apiKey: settings.aiToken,
         model: settings.aiModel,
         imageBase64: base64Image,
         mimeType: mimeType,
       );
+      if (parsedItems.isEmpty) throw Exception(l10n.noItemsParsed);
 
-      if (parsedItems.isEmpty) {
-        throw Exception(l10n.noItemsParsed);
-      }
+      final StockRepository repo = ref.read(stockRepositoryProvider);
+      final List<ReceiptMapping> mappings = await repo.getReceiptMappings();
+      final Map<int, int>? usageCounts = ref
+          .read(productUsageCountsProvider)
+          .value;
+      final Set<int>? inStockProductIds = ref
+          .read(inStockProductIdsProvider)
+          .value;
 
-      final repo = ref.read(stockRepositoryProvider);
-      final mappings = await repo.getReceiptMappings();
-
-      // Multi-stage matching: identify unmapped items and collect close candidate products
-      final usageCounts = ref.read(productUsageCountsProvider).value;
-      final inStockProductIds = ref.read(inStockProductIdsProvider).value;
-
-      final itemsWithCandidates = <Map<String, dynamic>>[];
-      for (final parsed in parsedItems) {
-        final hasExactMapping = mappings.any(
-          (m) =>
-              m.receiptName.toLowerCase() == parsed.name.toLowerCase().trim(),
+      final List<Map<String, dynamic>> itemsWithCandidates =
+          <Map<String, dynamic>>[];
+      for (final AIReceiptItem parsed in parsedItems) {
+        final bool hasExactMapping = mappings.any(
+          (ReceiptMapping mapping) =>
+              mapping.receiptName.toLowerCase() ==
+              parsed.name.toLowerCase().trim(),
         );
-        if (!hasExactMapping) {
-          final candidates = products
-              .searchAndSort(
-                parsed.name,
-                usageCounts: usageCounts,
-                inStockProductIds: inStockProductIds,
-              )
-              .take(5)
-              .map((p) => {"id": p.id, "name": p.name})
-              .toList();
-
-          if (candidates.isNotEmpty) {
-            itemsWithCandidates.add({
-              "receiptName": parsed.name,
-              "candidates": candidates,
-            });
-          }
+        if (hasExactMapping) continue;
+        final List<Map<String, Object>> candidates = products
+            .searchAndSort(
+              parsed.name,
+              usageCounts: usageCounts,
+              inStockProductIds: inStockProductIds,
+            )
+            .take(5)
+            .map(
+              (Product product) => <String, Object>{
+                'id': product.id,
+                'name': product.name,
+              },
+            )
+            .toList();
+        if (candidates.isNotEmpty) {
+          itemsWithCandidates.add(<String, dynamic>{
+            'receiptName': parsed.name,
+            'candidates': candidates,
+          });
         }
       }
 
-      Map<String, int?> aiDisambiguated = {};
+      Map<String, int?> aiDisambiguated = <String, int?>{};
       if (itemsWithCandidates.isNotEmpty &&
           settings.aiToken.trim().isNotEmpty) {
         try {
@@ -457,90 +417,95 @@ class _StockScreenState extends ConsumerState<StockScreen>
             model: settings.aiModel,
             itemsWithCandidates: itemsWithCandidates,
           );
-        } catch (_) {}
+        } catch (_) {
+          // Disambiguation is best-effort; the fuzzy matcher still runs.
+        }
       }
 
+      final List<ReceiptReviewItem> resolved = _resolveReceiptItems(
+        parsedItems,
+        products,
+        mappings,
+        aiDisambiguated,
+        usageCounts,
+        inStockProductIds,
+      );
       if (mounted) {
-        _showConfirmationDialog(
-          houseId,
-          parsedItems,
-          products,
-          mappings,
-          aiDisambiguated,
+        await Navigator.push<void>(
+          context,
+          NexcPage.route(
+            title: l10n.aiLogConfirmation,
+            builder: (BuildContext context) =>
+                ReceiptReviewScreen(houseId: houseId, items: resolved),
+          ),
         );
       }
-    } catch (e, stackTrace) {
+    } catch (error, stackTrace) {
       if (mounted) {
-        _showCopyableErrorDialog(l10n.receiptImportError, "$e\n\n$stackTrace");
+        await showCopyableErrorDialog(
+          context,
+          l10n.receiptImportError,
+          '$error\n\n$stackTrace',
+        );
       }
     } finally {
-      if (mounted) {
-        setState(() {
-          _isImporting = false;
-        });
-      }
+      if (mounted) setState(() => _isImporting = false);
     }
   }
 
-  void _showConfirmationDialog(
-    int houseId,
+  List<ReceiptReviewItem> _resolveReceiptItems(
     List<AIReceiptItem> parsedItems,
     List<Product> products,
     List<ReceiptMapping> mappings,
     Map<String, int?> aiDisambiguated,
+    Map<int, int>? usageCounts,
+    Set<int>? inStockProductIds,
   ) {
-    final l10n = context.l10n;
-    final usageCounts = ref.read(productUsageCountsProvider).value;
-    final inStockProductIds = ref.read(inStockProductIdsProvider).value;
-    final resolvedList = parsedItems.map((parsed) {
+    return parsedItems.map((AIReceiptItem parsed) {
       Product? matchedProduct;
-      int matchState = 2; // Default: 🔴 Not Found
+      ReceiptMatchState matchState = ReceiptMatchState.missing;
 
-      final mapping = mappings.firstWhereOrNull(
-        (m) => m.receiptName.toLowerCase() == parsed.name.toLowerCase().trim(),
+      final ReceiptMapping? mapping = mappings.firstWhereOrNull(
+        (ReceiptMapping entry) =>
+            entry.receiptName.toLowerCase() == parsed.name.toLowerCase().trim(),
       );
       if (mapping != null) {
         matchedProduct = products.firstWhereOrNull(
-          (p) => p.id == mapping.productId,
+          (Product product) => product.id == mapping.productId,
         );
-        if (matchedProduct != null) {
-          matchState = 0; // 🟢 Perfect Match
-        }
+        if (matchedProduct != null) matchState = ReceiptMatchState.perfect;
       }
 
       if (matchedProduct == null && aiDisambiguated.isNotEmpty) {
-        final disambiguatedId =
+        final int? disambiguatedId =
             aiDisambiguated[parsed.name.toLowerCase().trim()];
         if (disambiguatedId != null) {
-          final found = products.firstWhereOrNull(
-            (p) => p.id == disambiguatedId,
+          final Product? found = products.firstWhereOrNull(
+            (Product product) => product.id == disambiguatedId,
           );
           if (found != null) {
             matchedProduct = found;
-            matchState = 0; // 🟢 AI Disambiguated Match
+            matchState = ReceiptMatchState.perfect;
           }
         }
       }
 
       if (matchedProduct == null) {
-        final matches = products.searchAndSort(
+        final List<Product> matches = products.searchAndSort(
           parsed.name,
           usageCounts: usageCounts,
           inStockProductIds: inStockProductIds,
         );
         if (matches.isNotEmpty) {
-          final firstMatch = matches.first;
-          if (firstMatch.name.toLowerCase() == parsed.name.toLowerCase()) {
-            matchedProduct = firstMatch;
-            matchState = 0; // 🟢 Perfect Match
-          } else {
-            matchedProduct = firstMatch;
-            matchState = 1; // 🟡 Fuzzy Match
-          }
+          matchedProduct = matches.first;
+          matchState =
+              matchedProduct.name.toLowerCase() == parsed.name.toLowerCase()
+              ? ReceiptMatchState.perfect
+              : ReceiptMatchState.fuzzy;
         }
       }
 
-      return _ReceiptConfirmItem(
+      return ReceiptReviewItem(
         receiptName: parsed.name,
         inputQuantity: parsed.quantity,
         parsedUnit: parsed.unit,
@@ -549,675 +514,275 @@ class _StockScreenState extends ConsumerState<StockScreen>
         isSelected: true,
       );
     }).toList();
+  }
 
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => StatefulBuilder(
-          builder: (context, setDialogState) {
-            final theme = Theme.of(context);
-
-            return Scaffold(
-              appBar: AppBar(
-                title: Text(context.l10n.aiLogConfirmation),
-                leading: IconButton(
-                  icon: const Icon(Icons.arrow_back),
-                  onPressed: () => Navigator.pop(context),
-                ),
-              ),
-              body: Column(
-                children: [
-                  Expanded(
-                    child: ListView.builder(
-                      padding: const EdgeInsets.all(16),
-                      itemCount: resolvedList.length,
-                      itemBuilder: (context, index) {
-                        final item = resolvedList[index];
-                        Color stateColor = Colors.red;
-                        String matchText = context.l10n.notFound;
-                        IconData icon = Icons.cancel;
-
-                        if (item.matchState == 0) {
-                          stateColor = Colors.green;
-                          matchText = context.l10n.perfectMatch;
-                          icon = Icons.check_circle;
-                        } else if (item.matchState == 1) {
-                          stateColor = Colors.orange;
-                          matchText = context.l10n.fuzzyMatch;
-                          icon = Icons.warning_amber;
-                        }
-
-                        return Card(
-                          margin: const EdgeInsets.symmetric(vertical: 6),
-                          child: Padding(
-                            padding: const EdgeInsets.all(12.0),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    Checkbox(
-                                      value: item.isSelected,
-                                      onChanged: (val) {
-                                        setDialogState(() {
-                                          item.isSelected = val ?? false;
-                                        });
-                                      },
-                                    ),
-                                    Expanded(
-                                      child: Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
-                                        children: [
-                                          Text(
-                                            item.receiptName,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                              fontSize: 16,
-                                            ),
-                                          ),
-                                          const SizedBox(height: 2),
-                                          Row(
-                                            children: [
-                                              Icon(
-                                                icon,
-                                                color: stateColor,
-                                                size: 14,
-                                              ),
-                                              const SizedBox(width: 4),
-                                              Text(
-                                                matchText,
-                                                style: TextStyle(
-                                                  color: stateColor,
-                                                  fontSize: 11,
-                                                  fontWeight: FontWeight.bold,
-                                                ),
-                                              ),
-                                              if (item.matchedProduct !=
-                                                  null) ...[
-                                                const SizedBox(width: 6),
-                                                Expanded(
-                                                  child: Text(
-                                                    "→ ${item.matchedProduct!.name}",
-                                                    style: theme
-                                                        .textTheme
-                                                        .bodySmall,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ),
-                                              ],
-                                            ],
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 12),
-                                Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Row(
-                                        children: [
-                                          SizedBox(
-                                            width: 100,
-                                            child: TextFormField(
-                                              initialValue:
-                                                  item.inputQuantity % 1 == 0
-                                                  ? item.inputQuantity
-                                                        .toInt()
-                                                        .toString()
-                                                  : item.inputQuantity
-                                                        .toString(),
-                                              keyboardType:
-                                                  const TextInputType.numberWithOptions(
-                                                    decimal: true,
-                                                  ),
-                                              decoration: InputDecoration(
-                                                labelText:
-                                                    context.l10n.quantityLabel,
-                                                isDense: true,
-                                                border: OutlineInputBorder(),
-                                              ),
-                                              onChanged: (val) {
-                                                item.inputQuantity =
-                                                    double.tryParse(val) ?? 0.0;
-                                              },
-                                            ),
-                                          ),
-                                          const SizedBox(width: 8),
-                                          Builder(
-                                            builder: (context) {
-                                              final p = item.matchedProduct;
-                                              final availableUnits = p != null
-                                                  ? p.availableStringUnits
-                                                  : <String>[
-                                                      'g',
-                                                      'kg',
-                                                      'ml',
-                                                      'l',
-                                                      'units',
-                                                    ];
-
-                                              String selectedUnit = item
-                                                  .parsedUnit
-                                                  .toLowerCase();
-                                              if (!availableUnits.contains(
-                                                selectedUnit,
-                                              )) {
-                                                selectedUnit =
-                                                    availableUnits.first;
-                                                item.parsedUnit = selectedUnit;
-                                              }
-
-                                              return SizedBox(
-                                                width: 100,
-                                                child:
-                                                    DropdownButtonFormField<
-                                                      String
-                                                    >(
-                                                      initialValue:
-                                                          selectedUnit,
-                                                      decoration: InputDecoration(
-                                                        labelText:
-                                                            l10n.unitLabel,
-                                                        isDense: true,
-                                                        border:
-                                                            OutlineInputBorder(),
-                                                      ),
-                                                      items: availableUnits
-                                                          .map(
-                                                            (u) =>
-                                                                DropdownMenuItem(
-                                                                  value: u,
-                                                                  child: Text(
-                                                                    u,
-                                                                  ),
-                                                                ),
-                                                          )
-                                                          .toList(),
-                                                      onChanged: (val) {
-                                                        if (val != null) {
-                                                          setDialogState(() {
-                                                            item.parsedUnit =
-                                                                val;
-                                                          });
-                                                        }
-                                                      },
-                                                    ),
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ),
-                                    Row(
-                                      children: [
-                                        if (item.matchedProduct != null) ...[
-                                          IconButton(
-                                            icon: const Icon(
-                                              Icons.edit,
-                                              size: 16,
-                                            ),
-                                            tooltip: context.l10n.editProduct,
-                                            onPressed: () async {
-                                              final updatedProd = await Navigator.push<Product>(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (ctx) => EditProductScreen(
-                                                    product:
-                                                        item.matchedProduct!,
-                                                    onConfirm: (prod) async {
-                                                      try {
-                                                        final repo = ref.read(
-                                                          mealRepositoryProvider,
-                                                        );
-                                                        await repo.saveProduct(
-                                                          prod,
-                                                        );
-                                                      } catch (e, st) {
-                                                        _showCopyableErrorDialog(
-                                                          l10n.productEditError,
-                                                          "$e\n\n$st",
-                                                        );
-                                                      }
-                                                    },
-                                                  ),
-                                                ),
-                                              );
-                                              if (updatedProd != null) {
-                                                setDialogState(() {
-                                                  item.matchedProduct =
-                                                      updatedProd;
-                                                });
-                                              }
-                                            },
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                          ),
-                                          const SizedBox(width: 2),
-                                        ],
-                                        TextButton.icon(
-                                          icon: const Icon(
-                                            Icons.swap_horiz,
-                                            size: 14,
-                                          ),
-                                          label: Text(
-                                            context.l10n.replaceAction,
-                                          ),
-                                          onPressed: () {
-                                            _showReplaceProductDialog(
-                                              context,
-                                              item,
-                                              products,
-                                              setDialogState,
-                                            );
-                                          },
-                                          style: TextButton.styleFrom(
-                                            visualDensity:
-                                                VisualDensity.compact,
-                                          ),
-                                        ),
-                                        if (item.matchedProduct == null) ...[
-                                          const SizedBox(width: 4),
-                                          ElevatedButton.icon(
-                                            onPressed: () async {
-                                              Product? createdProd;
-                                              final newProd = await Navigator.push<Product>(
-                                                context,
-                                                MaterialPageRoute(
-                                                  builder: (ctx) => EditProductScreen(
-                                                    product: Product(
-                                                      id: 0,
-                                                      name: item.receiptName,
-                                                      defaultUnits:
-                                                          item.parsedUnit
-                                                                      .toLowerCase() ==
-                                                                  'l' ||
-                                                              item.parsedUnit
-                                                                      .toLowerCase() ==
-                                                                  'ml'
-                                                          ? 'ml'
-                                                          : 'g',
-                                                      edibleQtyPerUnit: 1.0,
-                                                      proteins: 0.0,
-                                                      carbsAvailable: null,
-                                                      fats: 0.0,
-                                                      isSupplement: false,
-                                                      isPortable: true,
-                                                      isStockRaw: false,
-                                                    ),
-                                                    onConfirm: (prod) async {
-                                                      try {
-                                                        final repo = ref.read(
-                                                          mealRepositoryProvider,
-                                                        );
-                                                        final newId = await repo
-                                                            .saveProduct(prod);
-                                                        final freshProducts =
-                                                            ref
-                                                                .read(
-                                                                  allProductsProvider,
-                                                                )
-                                                                .value ??
-                                                            [];
-                                                        createdProd =
-                                                            freshProducts
-                                                                .firstWhereOrNull(
-                                                                  (p) =>
-                                                                      p.id ==
-                                                                      newId,
-                                                                ) ??
-                                                            prod.copyWith(
-                                                              id: newId,
-                                                            );
-                                                        if (createdProd !=
-                                                            null) {
-                                                          final stockRepo = ref
-                                                              .read(
-                                                                stockRepositoryProvider,
-                                                              );
-                                                          await stockRepo
-                                                              .saveReceiptMapping(
-                                                                receiptName: item
-                                                                    .receiptName,
-                                                                productId:
-                                                                    createdProd!
-                                                                        .id,
-                                                              );
-                                                        }
-                                                      } catch (e, st) {
-                                                        _showCopyableErrorDialog(
-                                                          l10n.productCreationError,
-                                                          "$e\n\n$st",
-                                                        );
-                                                      }
-                                                    },
-                                                  ),
-                                                ),
-                                              );
-                                              final finalProduct =
-                                                  createdProd ?? newProd;
-                                              if (finalProduct != null) {
-                                                setDialogState(() {
-                                                  item.matchedProduct =
-                                                      finalProduct;
-                                                  item.matchState = 0;
-                                                });
-                                              }
-                                            },
-                                            icon: const Icon(
-                                              Icons.add,
-                                              size: 14,
-                                            ),
-                                            label: Text(
-                                              context.l10n.createAction,
-                                            ),
-                                            style: ElevatedButton.styleFrom(
-                                              visualDensity:
-                                                  VisualDensity.compact,
-                                            ),
-                                          ),
-                                        ],
-                                      ],
-                                    ),
-                                  ],
-                                ),
-                              ],
-                            ),
-                          ),
-                        );
-                      },
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        OutlinedButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(context.l10n.cancel),
-                        ),
-                        const SizedBox(width: 12),
-                        ElevatedButton(
-                          onPressed: () async {
-                            try {
-                              final repo = ref.read(stockRepositoryProvider);
-                              final currentStocks = await repo
-                                  .getStocksWithProductForHouse(houseId);
-
-                              for (final item in resolvedList) {
-                                if (item.isSelected &&
-                                    item.matchedProduct != null &&
-                                    item.inputQuantity > 0.0) {
-                                  double qty = item.inputQuantity;
-                                  if (item.parsedUnit.toLowerCase() == 'kg' ||
-                                      item.parsedUnit.toLowerCase() == 'l') {
-                                    qty *= 1000;
-                                  }
-                                  final existing = currentStocks
-                                      .firstWhereOrNull(
-                                        (s) =>
-                                            s.product.id ==
-                                            item.matchedProduct!.id,
-                                      );
-                                  final double finalQty =
-                                      (existing?.stock.quantity ?? 0.0) + qty;
-                                  await repo.saveStock(
-                                    productId: item.matchedProduct!.id,
-                                    houseId: houseId,
-                                    quantity: finalQty,
-                                    minTriggerQuantity:
-                                        existing?.stock.minTriggerQuantity,
-                                  );
-                                }
-                              }
-                              if (context.mounted) {
-                                Navigator.pop(context);
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(l10n.loggedReceiptItems),
-                                  ),
-                                );
-                              }
-                            } catch (e, st) {
-                              _showCopyableErrorDialog(
-                                l10n.stockLoggingError,
-                                "$e\n\n$st",
-                              );
-                            }
-                          },
-                          child: Text(context.l10n.confirmAction),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-    );
+  Widget? _floatingAction(int? activeHouseId) {
+    final l10n = context.l10n;
+    switch (_tabController.index) {
+      case 0:
+        return activeHouseId == null
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: () => _addProductToStock(activeHouseId),
+                icon: const Icon(NexcIcons.add),
+                label: Text(l10n.addStock),
+              );
+      case 1:
+        return activeHouseId == null
+            ? null
+            : FloatingActionButton.extended(
+                onPressed: () => _restock(activeHouseId),
+                icon: const Icon(NexcIcons.check),
+                label: Text(l10n.restockItems),
+              );
+      default:
+        return FloatingActionButton.extended(
+          onPressed: _addHouse,
+          icon: const Icon(NexcIcons.add),
+          label: Text(l10n.addHouse),
+        );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    final activeHouseId = ref.watch(activeHouseIdProvider);
-    final repo = ref.watch(stockRepositoryProvider);
-    final products = ref.watch(allProductsProvider).value ?? [];
-    final settings = ref.watch(settingsProvider);
+    final l10n = context.l10n;
+    final int? activeHouseId = ref.watch(activeHouseIdProvider);
+    final StockRepository repo = ref.watch(stockRepositoryProvider);
+    final SettingsState settings = ref.watch(settingsProvider);
 
     return StreamBuilder<List<House>>(
       stream: repo.watchHouses(),
-      builder: (context, snapshot) {
-        final houses = snapshot.data ?? [];
+      builder: (BuildContext context, AsyncSnapshot<List<House>> snapshot) {
+        if (snapshot.hasError) {
+          return NexcPage(
+            title: l10n.stockTitle,
+            body: NexcErrorView(
+              title: l10n.stockTitle,
+              message: l10n.errorWithMessage('${snapshot.error}'),
+              onRetry: () => setState(() {}),
+            ),
+          );
+        }
+        if (!snapshot.hasData) {
+          return NexcPage(
+            title: l10n.stockTitle,
+            body: const Center(child: CircularProgressIndicator()),
+          );
+        }
 
-        return NexcScaffold(
-          title: Text(context.l10n.stockTitle),
-          navigateBack: () => Navigator.pop(context),
-          actions: const [],
-          actionsIcons: const [],
-          fabAction: activeHouseId != null
-              ? () async {
-                  if (_tabController.index == 0) {
-                    _showAddProductToStockDialog(activeHouseId, products);
-                  } else {
-                    final needed =
-                        (await repo.getStocksWithProductForHouse(activeHouseId))
-                            .where(
-                              (s) =>
-                                  s.stock.minTriggerQuantity != null &&
-                                  s.stock.quantity <
-                                      s.stock.minTriggerQuantity!,
-                            )
-                            .toList();
-                    int restockedCount = 0;
-                    for (final s in needed) {
-                      if (_shoppingChecked.contains(s.product.id)) {
-                        final addedQty =
-                            _shoppingQuantities[s.product.id] ?? 0.0;
-                        if (addedQty > 0.0) {
-                          final chosenUnit =
-                              _shoppingUnits[s.product.id] ?? s.product.units;
-                          double currentQtyInChosenUnit = s.stock.quantity;
-                          final stock = s.stock;
-                          if (chosenUnit == 'g') {
-                            currentQtyInChosenUnit = stock.quantityGrams;
-                          } else if (chosenUnit == 'ml') {
-                            currentQtyInChosenUnit = stock.quantityMl;
-                          } else if (chosenUnit == 'units') {
-                            currentQtyInChosenUnit = stock.quantityUnits;
-                          }
+        final List<House> houses = snapshot.data!;
+        final bool validActiveHouse = houses.any(
+          (House house) => house.id == activeHouseId,
+        );
 
-                          final nextQty = currentQtyInChosenUnit + addedQty;
-
-                          await repo.saveStock(
-                            productId: s.product.id,
-                            houseId: activeHouseId,
-                            quantity: nextQty,
-                            minTriggerQuantity: s.stock.minTriggerQuantity,
-                            inputUnit: chosenUnit,
-                          );
-                          restockedCount++;
-                        }
-                      }
-                    }
-                    // Remove items that now have enough stock from shopping state
-                    final updatedStocks = await repo
-                        .getStocksWithProductForHouse(activeHouseId);
-                    final fulfilledIds = <int>{};
-                    for (final us in updatedStocks) {
-                      if (us.stock.minTriggerQuantity != null &&
-                          us.stock.quantity > us.stock.minTriggerQuantity!) {
-                        fulfilledIds.add(us.product.id);
-                      }
-                    }
-                    setState(() {
-                      // Clear checked/quantity state for restocked items
-                      for (final id in fulfilledIds) {
-                        _shoppingChecked.remove(id);
-                        _shoppingListInitialized.remove(id);
-                        _shoppingQuantities.remove(id);
-                        _shoppingUnits.remove(id);
-                      }
-                      // Also clear checked state for non-fulfilled restocked items
-                      _shoppingChecked.clear();
-                      _shoppingListInitialized.clear();
-                      _shoppingQuantities.clear();
-                      _shoppingUnits.clear();
-                    });
-                    if (context.mounted && restockedCount > 0) {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(
-                            context.l10n.restockedItems(restockedCount),
+        return NexcPage(
+          title: l10n.stockTitle,
+          actions: <Widget>[
+            if (settings.enableAiStockLogging &&
+                validActiveHouse &&
+                activeHouseId != null)
+              _isImporting
+                  ? const Padding(
+                      padding: EdgeInsets.all(NexcSpacing.md),
+                      child: SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      ),
+                    )
+                  : IconButton(
+                      icon: const Icon(NexcIcons.aiReceipt),
+                      tooltip: l10n.aiImportReceipt,
+                      onPressed: () => _handleReceiptImport(activeHouseId),
+                    ),
+          ],
+          floatingActionButton: _floatingAction(
+            validActiveHouse ? activeHouseId : null,
+          ),
+          body: Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  NexcSpacing.lg,
+                  NexcSpacing.md,
+                  NexcSpacing.lg,
+                  0,
+                ),
+                child: Row(
+                  children: <Widget>[
+                    Text(
+                      l10n.housePrefix,
+                      style: Theme.of(context).textTheme.labelLarge,
+                    ),
+                    const SizedBox(width: NexcSpacing.sm),
+                    Expanded(
+                      child: DropdownButtonFormField<int>(
+                        initialValue: validActiveHouse ? activeHouseId : null,
+                        isExpanded: true,
+                        decoration: const InputDecoration(
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: NexcSpacing.md,
+                            vertical: NexcSpacing.sm,
                           ),
                         ),
-                      );
-                    }
-                  }
-                }
-              : null,
-          fabIcon: _tabController.index == 0
-              ? const Icon(Icons.add)
-              : const Icon(Icons.check),
-          fabText: _tabController.index == 0
-              ? context.l10n.addStock
-              : context.l10n.restockItems,
-          content: (context, padding) {
-            if (houses.isEmpty) {
-              return const Center(child: CircularProgressIndicator());
-            }
-
-            return Column(
-              children: [
-                // House Selection Row
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16.0,
-                    vertical: 8.0,
-                  ),
-                  child: Row(
-                    children: [
-                      Text(
-                        context.l10n.housePrefix,
-                        style: const TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: DropdownButtonFormField<int>(
-                          initialValue: activeHouseId,
-                          decoration: const InputDecoration(
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 12,
-                              vertical: 8,
-                            ),
-                          ),
-                          items: [
-                            ...houses.map((h) {
-                              return DropdownMenuItem(
-                                value: h.id,
-                                child: Text(h.name),
-                              );
-                            }),
-                            DropdownMenuItem<int>(
-                              value: -999,
-                              child: Text(context.l10n.manageHouses),
-                            ),
-                          ],
-                          onChanged: (val) {
-                            if (val == -999) {
-                              setState(() {});
-                              _showManageHousesDialog();
-                            } else if (val != null) {
-                              ref.read(activeHouseIdProvider.notifier).state =
-                                  val;
-                            }
-                          },
-                        ),
-                      ),
-                      if (settings.enableAiStockLogging &&
-                          activeHouseId != null) ...[
-                        const SizedBox(width: 8),
-                        _isImporting
-                            ? const SizedBox(
-                                width: 24,
-                                height: 24,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                ),
-                              )
-                            : IconButton.filledTonal(
-                                icon: const Icon(Icons.receipt_long_outlined),
-                                tooltip: context.l10n.aiImportReceipt,
-                                onPressed: () => _handleReceiptImport(
-                                  activeHouseId,
-                                  products,
+                        hint: Text(l10n.selectOrAddHouse),
+                        items: houses
+                            .map(
+                              (House house) => DropdownMenuItem<int>(
+                                value: house.id,
+                                child: Text(
+                                  house.name,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
                               ),
-                      ],
-                    ],
-                  ),
-                ),
-                TabBar(
-                  controller: _tabController,
-                  tabs: [
-                    Tab(text: context.l10n.currentStockTab),
-                    Tab(text: context.l10n.shoppingListTab),
+                            )
+                            .toList(),
+                        onChanged: (int? value) {
+                          if (value != null) {
+                            ref.read(activeHouseIdProvider.notifier).state =
+                                value;
+                          }
+                        },
+                      ),
+                    ),
                   ],
                 ),
-                Expanded(
-                  child: activeHouseId == null
-                      ? Center(child: Text(context.l10n.selectOrAddHouse))
-                      : StreamBuilder<List<StockWithProduct>>(
-                          stream: repo.watchStocksWithProductForHouse(
-                            activeHouseId,
-                          ),
-                          builder: (context, stockSnap) {
-                            final stocks = stockSnap.data ?? [];
+              ),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: NexcSpacing.md),
+                  child: TextButton.icon(
+                    onPressed: () => _tabController.animateTo(2),
+                    icon: const Icon(NexcIcons.stock),
+                    label: Text(l10n.manageHouses),
+                  ),
+                ),
+              ),
+              TabBar(
+                controller: _tabController,
+                isScrollable: true,
+                tabAlignment: TabAlignment.start,
+                tabs: <Widget>[
+                  Tab(text: l10n.currentStockTab),
+                  Tab(text: l10n.shoppingListTab),
+                  Tab(text: l10n.manageHouses),
+                ],
+              ),
+              Expanded(
+                child: TabBarView(
+                  controller: _tabController,
+                  children: <Widget>[
+                    _buildCurrentTab(
+                      context,
+                      validActiveHouse ? activeHouseId : null,
+                    ),
+                    _buildShoppingTab(
+                      context,
+                      validActiveHouse ? activeHouseId : null,
+                    ),
+                    _buildHousesTab(context, houses),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-                            return TabBarView(
-                              controller: _tabController,
-                              children: [
-                                // Tab 1: Current Stock
-                                _buildCurrentStockTab(
-                                  context,
-                                  activeHouseId,
-                                  stocks,
-                                ),
-                                // Tab 2: Shopping List
-                                _buildShoppingListTab(
-                                  context,
-                                  activeHouseId,
-                                  stocks,
-                                ),
-                              ],
+  Widget _buildCurrentTab(BuildContext context, int? houseId) {
+    final l10n = context.l10n;
+    if (houseId == null) {
+      return NexcEmptyState(
+        icon: NexcIcons.stock,
+        title: l10n.selectOrAddHouse,
+        actionLabel: l10n.manageHouses,
+        onAction: () => _tabController.animateTo(2),
+      );
+    }
+    final StockRepository repo = ref.read(stockRepositoryProvider);
+
+    return StreamBuilder<List<StockWithProduct>>(
+      stream: repo.watchStocksWithProductForHouse(houseId),
+      builder:
+          (
+            BuildContext context,
+            AsyncSnapshot<List<StockWithProduct>> snapshot,
+          ) {
+            if (snapshot.hasError) {
+              return NexcErrorView(
+                title: l10n.noProductsInStock,
+                message: l10n.errorWithMessage('${snapshot.error}'),
+                onRetry: () => setState(() {}),
+              );
+            }
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final String query = _searchQuery.trim().toLowerCase();
+            final List<StockWithProduct> filtered = sortStocksLowStockFirst(
+              snapshot.data!.where(
+                (StockWithProduct item) =>
+                    query.isEmpty ||
+                    item.product.name.toLowerCase().contains(query),
+              ),
+            );
+
+            return Column(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.all(NexcSpacing.lg),
+                  child: ClearableSearchField(
+                    controller: _stockSearchController,
+                    labelText: l10n.searchStock,
+                    onChanged: (String value) =>
+                        setState(() => _searchQuery = value),
+                  ),
+                ),
+                Expanded(
+                  child: filtered.isEmpty
+                      ? NexcEmptyState(
+                          icon: NexcIcons.stock,
+                          title: l10n.noProductsInStock,
+                          actionLabel: l10n.addStock,
+                          onAction: () => _addProductToStock(houseId),
+                        )
+                      : ListView.separated(
+                          padding: const EdgeInsets.fromLTRB(
+                            NexcSpacing.lg,
+                            0,
+                            NexcSpacing.lg,
+                            NexcSpacing.section,
+                          ),
+                          itemCount: filtered.length,
+                          separatorBuilder: (_, _) =>
+                              const SizedBox(height: NexcSpacing.sm),
+                          itemBuilder: (BuildContext context, int index) {
+                            final StockWithProduct item = filtered[index];
+                            final String displayUnit =
+                                _displayUnits[item.product.id] ??
+                                normalizeStockUnit(item.product.units);
+                            return _StockItemCard(
+                              key: ValueKey<int>(item.product.id),
+                              item: item,
+                              displayUnit: displayUnit,
+                              onOptions: () => _showItemOptions(item, houseId),
+                              onUnitChanged: (String unit) => setState(
+                                () => _displayUnits[item.product.id] = unit,
+                              ),
+                              onQuantitySaved: (double quantity) =>
+                                  _saveQuantity(
+                                    item,
+                                    houseId,
+                                    displayUnit,
+                                    quantity,
+                                  ),
+                              onEditTrigger: () => _editTrigger(item, houseId),
                             );
                           },
                         ),
@@ -1225,667 +790,441 @@ class _StockScreenState extends ConsumerState<StockScreen>
               ],
             );
           },
-        );
-      },
     );
   }
 
-  Widget _buildCurrentStockTab(
-    BuildContext context,
-    int houseId,
-    List<StockWithProduct> stocks,
-  ) {
+  Widget _buildShoppingTab(BuildContext context, int? houseId) {
     final l10n = context.l10n;
-    final filtered = _searchQuery.isEmpty
-        ? stocks
-        : stocks
-              .where(
-                (s) => s.product.name.toLowerCase().contains(
-                  _searchQuery.toLowerCase(),
-                ),
-              )
-              .toList();
+    if (houseId == null) {
+      return NexcEmptyState(
+        icon: NexcIcons.stock,
+        title: l10n.selectOrAddHouse,
+        actionLabel: l10n.manageHouses,
+        onAction: () => _tabController.animateTo(2),
+      );
+    }
+    final StockRepository repo = ref.read(stockRepositoryProvider);
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: ClearableSearchField(
-            controller: _stockSearchController,
-            labelText: context.l10n.searchStock,
-            onChanged: (val) => setState(() => _searchQuery = val),
-          ),
-        ),
-        Expanded(
-          child: filtered.isEmpty
-              ? Center(child: Text(l10n.noProductsInStock))
-              : ListView.builder(
-                  padding: const EdgeInsets.only(
-                    left: 16.0,
-                    right: 16.0,
-                    bottom: 80.0,
-                  ),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final s = filtered[index];
-                    final repo = ref.read(stockRepositoryProvider);
+    return StreamBuilder<List<StockWithProduct>>(
+      stream: repo.watchStocksWithProductForHouse(houseId),
+      builder:
+          (
+            BuildContext context,
+            AsyncSnapshot<List<StockWithProduct>> snapshot,
+          ) {
+            if (snapshot.hasError) {
+              return NexcErrorView(
+                title: l10n.shoppingListTab,
+                message: l10n.errorWithMessage('${snapshot.error}'),
+                onRetry: () => setState(() {}),
+              );
+            }
+            if (!snapshot.hasData) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final List<StockWithProduct> needed = sortStocksLowStockFirst(
+              snapshot.data!.where(isLowStock),
+            );
+            if (needed.isEmpty) {
+              return NexcEmptyState(
+                icon: NexcIcons.check,
+                title: l10n.noItemsNeedRestocking,
+              );
+            }
 
-                    return Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      InkWell(
-                                        onTap: () => _showProductOptionsDialog(
-                                          context,
-                                          s,
-                                          houseId,
-                                        ),
-                                        child: Text(
-                                          s.product.name,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                            fontSize: 16,
-                                          ),
-                                        ),
-                                      ),
-                                      if (s.product.isStockRaw &&
-                                          s.product.edibleQtyPerUnit != null &&
-                                          s.product.edibleQtyPerUnit! < 1.0)
-                                        Padding(
-                                          padding: const EdgeInsets.only(
-                                            top: 2,
-                                          ),
-                                          child: Text(
-                                            l10n.edibleEquivalentValue(
-                                              _formatDouble(
-                                                s.stock.quantity *
-                                                    s.product.edibleQtyPerUnit!,
-                                              ),
-                                              s.product.units,
-                                            ),
-                                            style: TextStyle(
-                                              fontSize: 12,
-                                              color: Theme.of(
-                                                context,
-                                              ).colorScheme.primary,
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      Row(
-                                        children: [
-                                          Text(l10n.unitPrefix),
-                                          Builder(
-                                            builder: (context) {
-                                              final currentUnit =
-                                                  (s.product.units)
-                                                      .toLowerCase();
-                                              String normalizedUnit =
-                                                  (currentUnit == 'unit' ||
-                                                      currentUnit == 'units')
-                                                  ? 'units'
-                                                  : currentUnit;
-                                              final showMl =
-                                                  s.product.canMeasureInMl;
-                                              final showUnits =
-                                                  s.product.canMeasureInUnits;
-                                              if (normalizedUnit == 'ml' &&
-                                                  !showMl) {
-                                                normalizedUnit = 'g';
-                                              }
-                                              if (normalizedUnit == 'units' &&
-                                                  !showUnits) {
-                                                normalizedUnit = 'g';
-                                              }
-
-                                              return DropdownButton<String>(
-                                                value: normalizedUnit,
-                                                isDense: true,
-                                                underline: const SizedBox(),
-                                                items: [
-                                                  const DropdownMenuItem(
-                                                    value: 'g',
-                                                    child: Text('g'),
-                                                  ),
-                                                  if (showMl)
-                                                    const DropdownMenuItem(
-                                                      value: 'ml',
-                                                      child: Text('ml'),
-                                                    ),
-                                                  if (showUnits)
-                                                    const DropdownMenuItem(
-                                                      value: 'units',
-                                                      child: Text('units'),
-                                                    ),
-                                                ],
-                                                onChanged: (newVal) async {
-                                                  if (newVal != null) {
-                                                    final mealRepo = ref.read(
-                                                      mealRepositoryProvider,
-                                                    );
-                                                    await mealRepo.saveProduct(
-                                                      s.product.copyWith(
-                                                        defaultUnits: Value(
-                                                          newVal,
-                                                        ),
-                                                      ),
-                                                    );
-                                                    double targetQty =
-                                                        s.stock.quantity;
-                                                    if (newVal == 'g') {
-                                                      targetQty =
-                                                          s.stock.quantityGrams;
-                                                    } else if (newVal == 'ml') {
-                                                      targetQty =
-                                                          s.stock.quantityMl;
-                                                    } else if (newVal ==
-                                                        'units') {
-                                                      targetQty =
-                                                          s.stock.quantityUnits;
-                                                    }
-                                                    await repo.saveStock(
-                                                      productId: s.product.id,
-                                                      houseId: houseId,
-                                                      quantity: targetQty,
-                                                      minTriggerQuantity: s
-                                                          .stock
-                                                          .minTriggerQuantity,
-                                                      inputUnit: newVal,
-                                                    );
-                                                  }
-                                                },
-                                              );
-                                            },
-                                          ),
-                                        ],
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                                StockQuantityEditor(
-                                  quantity: s.stock.quantity,
-                                  unit: s.product.units,
-                                  onSave: (next) {
-                                    repo.saveStock(
-                                      productId: s.product.id,
-                                      houseId: houseId,
-                                      quantity: next,
-                                      minTriggerQuantity:
-                                          s.stock.minTriggerQuantity,
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                            const Divider(),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Text(
-                                  s.stock.minTriggerQuantity == null
-                                      ? l10n.noMinimum
-                                      : l10n.minimumWithValue(
-                                          _formatDouble(
-                                            s.stock.minTriggerQuantity!,
-                                          ),
-                                          s.product.units,
-                                        ),
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Theme.of(
-                                      context,
-                                    ).colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.edit, size: 18),
-                                  onPressed: () {
-                                    final controller = TextEditingController(
-                                      text: s.stock.minTriggerQuantity != null
-                                          ? _formatDouble(
-                                              s.stock.minTriggerQuantity!,
-                                            )
-                                          : "",
-                                    );
-                                    showDialog(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: Text(
-                                          l10n.setTriggerFor(s.product.name),
-                                        ),
-                                        content: TextField(
-                                          controller: controller,
-                                          keyboardType:
-                                              const TextInputType.numberWithOptions(
-                                                decimal: true,
-                                              ),
-                                          decoration: InputDecoration(
-                                            labelText: l10n
-                                                .minimumThresholdWithUnit(
-                                                  s.product.units,
-                                                ),
-                                            helperText:
-                                                l10n.leaveEmptyToDisableTrigger,
-                                          ),
-                                          autofocus: true,
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context),
-                                            child: Text(context.l10n.cancel),
-                                          ),
-                                          TextButton(
-                                            onPressed: () async {
-                                              String raw = controller.text
-                                                  .trim()
-                                                  .replaceAll(',', '.');
-                                              raw = raw
-                                                  .replaceAll(
-                                                    RegExp(r'[a-zA-Z]+$'),
-                                                    '',
-                                                  )
-                                                  .trim();
-                                              final val = double.tryParse(raw);
-                                              await repo.saveStock(
-                                                productId: s.product.id,
-                                                houseId: houseId,
-                                                quantity: s.stock.quantity,
-                                                minTriggerQuantity: val,
-                                                inputUnit: s.product.units,
-                                              );
-                                              if (context.mounted) {
-                                                Navigator.pop(context);
-                                              }
-                                            },
-                                            child: Text(context.l10n.save),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
+            return ListView.separated(
+              padding: const EdgeInsets.fromLTRB(
+                NexcSpacing.lg,
+                NexcSpacing.lg,
+                NexcSpacing.lg,
+                NexcSpacing.section,
+              ),
+              itemCount: needed.length,
+              separatorBuilder: (_, _) =>
+                  const SizedBox(height: NexcSpacing.sm),
+              itemBuilder: (BuildContext context, int index) {
+                final StockWithProduct item = needed[index];
+                return _ShoppingRow(
+                  key: ValueKey<int>(item.product.id),
+                  item: item,
+                  checked: _shoppingChecked.contains(item.product.id),
+                  initialUnit:
+                      _shoppingUnits[item.product.id] ??
+                      normalizeStockUnit(item.product.units),
+                  onChecked: (bool value) {
+                    setState(() {
+                      if (value) {
+                        _shoppingChecked.add(item.product.id);
+                      } else {
+                        _shoppingChecked.remove(item.product.id);
+                      }
+                    });
                   },
+                  onQuantityChanged: (double value) {
+                    _shoppingQuantities[item.product.id] = value;
+                  },
+                  onUnitChanged: (String unit) {
+                    _shoppingUnits[item.product.id] = unit;
+                  },
+                );
+              },
+            );
+          },
+    );
+  }
+
+  Widget _buildHousesTab(BuildContext context, List<House> houses) {
+    final l10n = context.l10n;
+    final int? activeHouseId = ref.watch(activeHouseIdProvider);
+    if (houses.isEmpty) {
+      return NexcEmptyState(
+        icon: NexcIcons.stock,
+        title: l10n.noHousesDefined,
+        actionLabel: l10n.addHouse,
+        onAction: _addHouse,
+      );
+    }
+    return ListView(
+      padding: const EdgeInsets.only(top: NexcSpacing.md),
+      children: <Widget>[
+        NexcSection(
+          children: <Widget>[
+            for (final House house in houses)
+              NexcTile(
+                icon: NexcIcons.stock,
+                title: house.name,
+                selected: house.id == activeHouseId,
+                trailing: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    IconButton(
+                      icon: const Icon(NexcIcons.edit),
+                      tooltip: l10n.renameHouse,
+                      onPressed: () => _renameHouse(house),
+                    ),
+                    IconButton(
+                      icon: Icon(
+                        NexcIcons.delete,
+                        color: Theme.of(context).colorScheme.error,
+                      ),
+                      tooltip: l10n.deleteHouse,
+                      onPressed: () => _deleteHouse(house),
+                    ),
+                  ],
                 ),
+                onTap: () =>
+                    ref.read(activeHouseIdProvider.notifier).state = house.id,
+              ),
+          ],
         ),
       ],
     );
   }
-
-  Widget _buildShoppingListTab(
-    BuildContext context,
-    int houseId,
-    List<StockWithProduct> stocks,
-  ) {
-    final l10n = context.l10n;
-    final needed = stocks
-        .where(
-          (s) =>
-              s.stock.minTriggerQuantity != null &&
-              s.stock.quantity < s.stock.minTriggerQuantity!,
-        )
-        .toList();
-
-    if (needed.isEmpty) {
-      return Center(child: Text(l10n.noItemsNeedRestocking));
-    }
-
-    // Self-initialize helper states for shopping list
-    for (final s in needed) {
-      if (!_shoppingListInitialized.contains(s.product.id)) {
-        _shoppingListInitialized.add(s.product.id);
-        // Don't check by default — user must opt-in
-        final double gap = s.stock.minTriggerQuantity! - s.stock.quantity;
-        _shoppingQuantities[s.product.id] = double.parse(
-          (gap < 0.0 ? 0.0 : gap).toStringAsFixed(2),
-        );
-        _shoppingUnits[s.product.id] = s.product.units;
-      }
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      itemCount: needed.length,
-      itemBuilder: (context, index) {
-        final s = needed[index];
-        final checked = _shoppingChecked.contains(s.product.id);
-
-        return Card(
-          color: Theme.of(
-            context,
-          ).colorScheme.errorContainer.withValues(alpha: 0.1),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
-            side: BorderSide(
-              color: Theme.of(context).colorScheme.error.withValues(alpha: 0.2),
-            ),
-          ),
-          child: ListTile(
-            leading: Checkbox(
-              value: checked,
-              onChanged: (val) {
-                setState(() {
-                  if (val == true) {
-                    _shoppingChecked.add(s.product.id);
-                  } else {
-                    _shoppingChecked.remove(s.product.id);
-                  }
-                });
-              },
-            ),
-            title: Text(
-              s.product.name,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            subtitle: Text(
-              l10n.stockWithValue(_formatDouble(s.stock.quantity)) +
-                  (s.product.isStockRaw &&
-                          s.product.edibleQtyPerUnit != null &&
-                          s.product.edibleQtyPerUnit! < 1.0
-                      ? l10n.stockEdibleSuffix(
-                          _formatDouble(
-                            s.stock.quantity * s.product.edibleQtyPerUnit!,
-                          ),
-                        )
-                      : '') +
-                  (s.stock.minTriggerQuantity == null
-                      ? ''
-                      : l10n.minimumSuffix(
-                          _formatDouble(s.stock.minTriggerQuantity!),
-                          s.product.units,
-                        )),
-            ),
-            trailing: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                SizedBox(
-                  width: 70,
-                  child: TextFormField(
-                    initialValue:
-                        _shoppingQuantities[s.product.id]?.toString() ?? "",
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: const InputDecoration(
-                      contentPadding: EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
-                      ),
-                      border: OutlineInputBorder(),
-                    ),
-                    onChanged: (val) {
-                      final parsed = double.tryParse(val) ?? 0.0;
-                      _shoppingQuantities[s.product.id] = parsed;
-                    },
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Builder(
-                  builder: (context) {
-                    final currentUnit =
-                        _shoppingUnits[s.product.id] ?? s.product.units;
-                    final showMl = s.product.canMeasureInMl;
-                    final showUnits = s.product.canMeasureInUnits;
-
-                    return DropdownButton<String>(
-                      value: currentUnit,
-                      isDense: true,
-                      underline: const SizedBox(),
-                      items: [
-                        const DropdownMenuItem(value: 'g', child: Text('g')),
-                        if (showMl)
-                          const DropdownMenuItem(
-                            value: 'ml',
-                            child: Text('ml'),
-                          ),
-                        if (showUnits)
-                          const DropdownMenuItem(
-                            value: 'units',
-                            child: Text('units'),
-                          ),
-                      ],
-                      onChanged: (newVal) {
-                        if (newVal != null) {
-                          setState(() {
-                            _shoppingUnits[s.product.id] = newVal;
-                          });
-                        }
-                      },
-                    );
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
-
-  void _showProductOptionsDialog(
-    BuildContext context,
-    StockWithProduct s,
-    int houseId,
-  ) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(context.l10n.optionsForItem(s.product.name)),
-        content: Text(context.l10n.whatToDoWithItem),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(context.l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-              _showReplaceProductSelector(s, houseId);
-            },
-            child: Text(context.l10n.replaceAction),
-          ),
-          TextButton(
-            onPressed: () async {
-              final repo = ref.read(stockRepositoryProvider);
-              await repo.deleteStock(s.stock);
-              if (context.mounted) Navigator.pop(context);
-            },
-            child: Text(
-              "Delete",
-              style: TextStyle(color: Theme.of(context).colorScheme.error),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Future<void> _showReplaceProductSelector(
-    StockWithProduct oldStock,
-    int houseId,
-  ) async {
-    final selectedProduct = await Navigator.push<Product>(
-      context,
-      MaterialPageRoute(
-        builder: (context) =>
-            ProductSelectorScreen(title: context.l10n.replaceWith),
-      ),
-    );
-
-    if (selectedProduct == null || !mounted) return;
-
-    final repo = ref.read(stockRepositoryProvider);
-    // Delete old stock
-    await repo.deleteStock(oldStock.stock);
-    // Save new stock preserving quantity and trigger
-    await repo.saveStock(
-      productId: selectedProduct.id,
-      houseId: houseId,
-      quantity: oldStock.stock.quantity,
-      minTriggerQuantity: oldStock.stock.minTriggerQuantity,
-      inputUnit: oldStock.product.units,
-    );
-  }
 }
 
-class _ReceiptConfirmItem {
-  final String receiptName;
-  double inputQuantity;
-  String parsedUnit;
-  Product? matchedProduct;
-  int matchState; // 0 = Perfect, 1 = Fuzzy, 2 = Not Found
-  bool isSelected;
+class _StockItemCard extends StatelessWidget {
+  final StockWithProduct item;
+  final String displayUnit;
+  final VoidCallback onOptions;
+  final ValueChanged<String> onUnitChanged;
+  final ValueChanged<double> onQuantitySaved;
+  final VoidCallback onEditTrigger;
 
-  _ReceiptConfirmItem({
-    required this.receiptName,
-    required this.inputQuantity,
-    required this.parsedUnit,
-    this.matchedProduct,
-    required this.matchState,
-    required this.isSelected,
-  });
-}
-
-class StockQuantityEditor extends StatefulWidget {
-  final double quantity;
-  final String unit;
-  final void Function(double) onSave;
-
-  const StockQuantityEditor({
+  const _StockItemCard({
     super.key,
-    required this.quantity,
-    required this.unit,
-    required this.onSave,
+    required this.item,
+    required this.displayUnit,
+    required this.onOptions,
+    required this.onUnitChanged,
+    required this.onQuantitySaved,
+    required this.onEditTrigger,
   });
 
   @override
-  State<StockQuantityEditor> createState() => _StockQuantityEditorState();
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final l10n = context.l10n;
+    final double edibleQtyPerUnit = item.product.edibleQtyPerUnit ?? 1.0;
+
+    return Material(
+      color: theme.colorScheme.surfaceContainerLow,
+      borderRadius: const BorderRadius.all(Radius.circular(NexcSpacing.md)),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(NexcSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      InkWell(
+                        onTap: onOptions,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            vertical: NexcSpacing.xs,
+                          ),
+                          child: Row(
+                            children: <Widget>[
+                              Expanded(
+                                child: Text(
+                                  item.product.name,
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: theme.textTheme.titleSmall,
+                                ),
+                              ),
+                              const Icon(NexcIcons.more, size: 18),
+                            ],
+                          ),
+                        ),
+                      ),
+                      if (item.product.isStockRaw &&
+                          item.product.edibleQtyPerUnit != null &&
+                          edibleQtyPerUnit < 1.0)
+                        Text(
+                          l10n.edibleEquivalentValue(
+                            formatDecimal(
+                              item.stock.quantity * edibleQtyPerUnit,
+                            ),
+                            item.product.units,
+                          ),
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.primary,
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: NexcSpacing.sm),
+            Wrap(
+              spacing: NexcSpacing.md,
+              runSpacing: NexcSpacing.sm,
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: <Widget>[
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: <Widget>[
+                    Text(
+                      l10n.unitPrefix,
+                      style: theme.textTheme.labelMedium?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                    DropdownButton<String>(
+                      value: displayUnit,
+                      isDense: true,
+                      underline: const SizedBox.shrink(),
+                      items: stockDisplayUnits(item.product)
+                          .map(
+                            (String unit) => DropdownMenuItem<String>(
+                              value: unit,
+                              child: Text(unit),
+                            ),
+                          )
+                          .toList(),
+                      onChanged: (String? unit) {
+                        if (unit != null) onUnitChanged(unit);
+                      },
+                    ),
+                  ],
+                ),
+                NexcQuantityField(
+                  value: stockQuantityInUnit(item, displayUnit),
+                  unit: displayUnit,
+                  step: stockStepForUnit(displayUnit),
+                  compact: true,
+                  min: 0,
+                  onChanged: onQuantitySaved,
+                ),
+              ],
+            ),
+            const Divider(height: NexcSpacing.lg),
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    item.stock.minTriggerQuantity == null
+                        ? l10n.noMinimum
+                        : l10n.minimumWithValue(
+                            formatDecimal(item.stock.minTriggerQuantity!),
+                            item.product.units,
+                          ),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+                IconButton(
+                  icon: const Icon(NexcIcons.edit, size: 18),
+                  tooltip: l10n.setTriggerFor(item.product.name),
+                  onPressed: onEditTrigger,
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
-class _StockQuantityEditorState extends State<StockQuantityEditor> {
-  late TextEditingController _controller;
-  late FocusNode _focusNode;
+class _ShoppingRow extends StatefulWidget {
+  final StockWithProduct item;
+  final bool checked;
+  final String initialUnit;
+  final ValueChanged<bool> onChecked;
+  final ValueChanged<double> onQuantityChanged;
+  final ValueChanged<String> onUnitChanged;
+
+  const _ShoppingRow({
+    super.key,
+    required this.item,
+    required this.checked,
+    required this.initialUnit,
+    required this.onChecked,
+    required this.onQuantityChanged,
+    required this.onUnitChanged,
+  });
+
+  @override
+  State<_ShoppingRow> createState() => _ShoppingRowState();
+}
+
+class _ShoppingRowState extends State<_ShoppingRow> {
+  late final TextEditingController _quantityController;
+  late String _unit;
 
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: _formatQuantity(widget.quantity));
-    _focusNode = FocusNode();
-    _focusNode.addListener(_onFocusChange);
-  }
-
-  @override
-  void didUpdateWidget(covariant StockQuantityEditor oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (widget.quantity != oldWidget.quantity && !_focusNode.hasFocus) {
-      _controller.text = _formatQuantity(widget.quantity);
-    }
+    final double gap =
+        widget.item.stock.minTriggerQuantity! - widget.item.stock.quantity;
+    _quantityController = TextEditingController(
+      text: formatDecimal(gap > 0 ? gap : 0),
+    );
+    _unit = widget.initialUnit;
   }
 
   @override
   void dispose() {
-    _controller.dispose();
-    _focusNode.removeListener(_onFocusChange);
-    _focusNode.dispose();
+    _quantityController.dispose();
     super.dispose();
-  }
-
-  double get _stepSize {
-    final u = widget.unit.toLowerCase();
-    if (u == 'g' || u == 'kg') {
-      return 250.0;
-    } else if (u == 'ml' || u == 'l') {
-      return 200.0;
-    } else {
-      return 5.0; // units
-    }
-  }
-
-  String _formatQuantity(double val) {
-    if (val == val.toInt().toDouble()) {
-      return val.toInt().toString();
-    }
-    return val.toString();
-  }
-
-  void _onFocusChange() {
-    if (!_focusNode.hasFocus) {
-      _saveValue();
-    }
-  }
-
-  void _saveValue() {
-    final text = _controller.text.trim();
-    final double? parsed = double.tryParse(text);
-    if (parsed != null && parsed >= 0.0) {
-      widget.onSave(parsed);
-    } else {
-      _controller.text = _formatQuantity(widget.quantity);
-    }
   }
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        IconButton(
-          icon: const Icon(Icons.remove, size: 20),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          onPressed: () {
-            final double current =
-                double.tryParse(_controller.text) ?? widget.quantity;
-            final double next = (current - _stepSize).clamp(0, double.infinity);
-            _controller.text = _formatQuantity(next);
-            widget.onSave(next);
-          },
-        ),
-        const SizedBox(width: 4),
-        SizedBox(
-          width: 60,
-          child: TextFormField(
-            controller: _controller,
-            focusNode: _focusNode,
-            keyboardType: const TextInputType.numberWithOptions(decimal: true),
-            textAlign: TextAlign.center,
-            decoration: const InputDecoration(
-              isDense: true,
-              contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-              border: OutlineInputBorder(),
+    final ThemeData theme = Theme.of(context);
+    final l10n = context.l10n;
+    final StockWithProduct item = widget.item;
+    final double edibleQtyPerUnit = item.product.edibleQtyPerUnit ?? 1.0;
+
+    return Material(
+      color: theme.colorScheme.errorContainer.withValues(alpha: 0.35),
+      borderRadius: const BorderRadius.all(Radius.circular(NexcSpacing.md)),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(NexcSpacing.md),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Checkbox(
+              value: widget.checked,
+              onChanged: (bool? value) => widget.onChecked(value ?? false),
             ),
-            onFieldSubmitted: (_) => _saveValue(),
-          ),
+            const SizedBox(width: NexcSpacing.xs),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Text(
+                    item.product.name,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: theme.textTheme.titleSmall,
+                  ),
+                  const SizedBox(height: NexcSpacing.xs),
+                  Text(
+                    l10n.stockWithValue(formatDecimal(item.stock.quantity)) +
+                        (item.product.isStockRaw &&
+                                item.product.edibleQtyPerUnit != null &&
+                                edibleQtyPerUnit < 1.0
+                            ? l10n.stockEdibleSuffix(
+                                formatDecimal(
+                                  item.stock.quantity * edibleQtyPerUnit,
+                                ),
+                              )
+                            : '') +
+                        (item.stock.minTriggerQuantity == null
+                            ? ''
+                            : l10n.minimumSuffix(
+                                formatDecimal(item.stock.minTriggerQuantity!),
+                                item.product.units,
+                              )),
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: NexcSpacing.sm),
+            SizedBox(
+              width: 120,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  TextField(
+                    controller: _quantityController,
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
+                    decoration: const InputDecoration(
+                      isDense: true,
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: NexcSpacing.sm,
+                        vertical: NexcSpacing.sm,
+                      ),
+                    ),
+                    onChanged: (String value) {
+                      final double? parsed = double.tryParse(
+                        value.trim().replaceAll(',', '.'),
+                      );
+                      if (parsed != null) widget.onQuantityChanged(parsed);
+                    },
+                  ),
+                  const SizedBox(height: NexcSpacing.xs),
+                  DropdownButton<String>(
+                    value: _unit,
+                    isDense: true,
+                    isExpanded: true,
+                    underline: const SizedBox.shrink(),
+                    items: stockDisplayUnits(item.product)
+                        .map(
+                          (String unit) => DropdownMenuItem<String>(
+                            value: unit,
+                            child: Text(unit),
+                          ),
+                        )
+                        .toList(),
+                    onChanged: (String? unit) {
+                      if (unit == null) return;
+                      setState(() => _unit = unit);
+                      widget.onUnitChanged(unit);
+                    },
+                  ),
+                ],
+              ),
+            ),
+          ],
         ),
-        const SizedBox(width: 4),
-        IconButton(
-          icon: const Icon(Icons.add, size: 20),
-          padding: EdgeInsets.zero,
-          constraints: const BoxConstraints(),
-          onPressed: () {
-            final double current =
-                double.tryParse(_controller.text) ?? widget.quantity;
-            final double next = current + _stepSize;
-            _controller.text = _formatQuantity(next);
-            widget.onSave(next);
-          },
-        ),
-      ],
+      ),
     );
   }
 }

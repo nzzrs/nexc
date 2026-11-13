@@ -14,14 +14,23 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/components/clearable_search_field.dart';
+import '../../core/components/nexc_badge.dart';
+import '../../core/components/nexc_page.dart';
+import '../../core/components/nexc_section.dart';
+import '../../core/components/nexc_segmented.dart';
+import '../../core/components/nexc_tile.dart';
 import '../../core/db/relations.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/providers/meals_providers.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/spacing.dart';
+import '../../core/util/format.dart';
 
 /// Full-screen recipe editor used for both creating and updating recipes.
 ///
 /// On save the edited recipe is handed to [onConfirm] (when provided) and then
-/// returned to the caller through `Navigator.pop`.
+/// returned to the caller through `Navigator.pop`. There is exactly one save
+/// action, pinned to the bottom bar.
 class EditRecipeScreen extends ConsumerStatefulWidget {
   final RecipeWithIngredients recipeWithIngredients;
   final List<Product> products;
@@ -39,6 +48,8 @@ class EditRecipeScreen extends ConsumerStatefulWidget {
 }
 
 class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
   late final TextEditingController _nameController;
   late final TextEditingController _instructionsController;
   late bool _isPortable;
@@ -48,8 +59,8 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
   final TextEditingController _amountController = TextEditingController();
   final TextEditingController _ingredientSearchController =
       TextEditingController();
-  String _selectedIngredientUnit = "g";
-  String _searchQuery = "";
+  String _selectedIngredientUnit = 'g';
+  String _searchQuery = '';
 
   @override
   void initState() {
@@ -61,7 +72,9 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
       text: widget.recipeWithIngredients.recipe.instructions,
     );
     _isPortable = widget.recipeWithIngredients.recipe.isPortable;
-    _ingredients = List.from(widget.recipeWithIngredients.ingredients);
+    _ingredients = List<RecipeIngredientWithProduct>.from(
+      widget.recipeWithIngredients.ingredients,
+    );
   }
 
   @override
@@ -74,38 +87,39 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
   }
 
   Product? get _selectedProduct => widget.products.firstWhereOrNull(
-    (product) => product.id == _selectedProductId,
+    (Product product) => product.id == _selectedProductId,
   );
 
-  bool get _hasNonPortableIngredients =>
-      _ingredients.any((ingredient) => !ingredient.product.isPortable);
+  bool get _hasNonPortableIngredients => _ingredients.any(
+    (RecipeIngredientWithProduct ingredient) => !ingredient.product.isPortable,
+  );
 
-  /// Unit currently offered by the dropdown, limited to what the selected
+  List<String> get _ingredientUnits {
+    final Product? product = _selectedProduct;
+    final List<String> units = <String>['g'];
+    if (product == null || product.canMeasureInMl) units.add('ml');
+    if (product == null || product.canMeasureInUnits) units.add('units');
+    return units;
+  }
+
+  /// Unit currently offered by the picker, limited to what the selected
   /// product supports.
   String get _effectiveIngredientUnit {
-    final product = _selectedProduct;
-    final supportsMl = product == null || product.canMeasureInMl;
-    final supportsUnits = product == null || product.canMeasureInUnits;
-    if (_selectedIngredientUnit == "ml" && !supportsMl) return "g";
-    if (_selectedIngredientUnit == "units" && !supportsUnits) return "g";
-    return _selectedIngredientUnit;
+    final List<String> units = _ingredientUnits;
+    return units.contains(_selectedIngredientUnit)
+        ? _selectedIngredientUnit
+        : units.first;
   }
 
   Future<void> _submit() async {
-    final name = _nameController.text.trim();
-    if (name.isEmpty) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.enterRecipeName)));
-      return;
-    }
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final updated = RecipeWithIngredients(
+    final RecipeWithIngredients updated = RecipeWithIngredients(
       recipe: Recipe(
         id: widget.recipeWithIngredients.recipe.id,
-        name: name,
+        name: _nameController.text.trim(),
         instructions: _instructionsController.text.trim(),
-        isPortable: _isPortable,
+        isPortable: _hasNonPortableIngredients ? false : _isPortable,
       ),
       ingredients: _ingredients,
     );
@@ -118,9 +132,11 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
   }
 
   void _addIngredient() {
-    final product = _selectedProduct;
-    final amount = double.tryParse(_amountController.text) ?? 0.0;
-    if (product == null || amount <= 0.0) return;
+    final Product? product = _selectedProduct;
+    final double? amount = double.tryParse(
+      _amountController.text.trim().replaceAll(',', '.'),
+    );
+    if (product == null || amount == null || amount <= 0.0) return;
 
     setState(() {
       _ingredients.add(
@@ -137,267 +153,263 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
       );
       _amountController.clear();
       _selectedProductId = null;
-      _selectedIngredientUnit = "g";
+      _selectedIngredientUnit = 'g';
     });
+  }
+
+  String _unitLabel(String unit) {
+    final l10n = context.l10n;
+    switch (unit) {
+      case 'ml':
+        return l10n.unitMl;
+      case 'units':
+        return l10n.unitsLabel;
+      default:
+        return l10n.unitG;
+    }
   }
 
   void _selectProduct(Product product) {
     setState(() {
       _selectedProductId = product.id;
-      _selectedIngredientUnit = "g";
-      _searchQuery = "";
+      _selectedIngredientUnit = 'g';
+      _searchQuery = '';
       _ingredientSearchController.clear();
     });
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = context.l10n;
-    final usageCounts = ref.watch(productUsageCountsProvider).value;
-    final inStockProductIds = ref.watch(inStockProductIdsProvider).value;
+    final ThemeData theme = Theme.of(context);
+    final Map<int, int>? usageCounts = ref
+        .watch(productUsageCountsProvider)
+        .value;
+    final Set<int>? inStockProductIds = ref
+        .watch(inStockProductIdsProvider)
+        .value;
 
-    final filteredProducts = widget.products.searchAndSort(
+    final List<Product> filteredProducts = widget.products.searchAndSort(
       _searchQuery,
       usageCounts: usageCounts,
       inStockProductIds: inStockProductIds,
     );
-    final selectedProduct = _selectedProduct;
+    final Product? selectedProduct = _selectedProduct;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.recipeWithIngredients.recipe.id == 0
-              ? l10n.addRecipe
-              : l10n.editRecipe,
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          tooltip: l10n.cancel,
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            tooltip: l10n.save,
-            onPressed: _submit,
+    return NexcPage(
+      title: widget.recipeWithIngredients.recipe.id == 0
+          ? l10n.addRecipe
+          : l10n.editRecipe,
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(
+            top: NexcSpacing.sm,
+            bottom: NexcSpacing.xl,
           ),
-        ],
-      ),
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            TextField(
-              controller: _nameController,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                labelText: l10n.nameLabel,
-                border: const OutlineInputBorder(),
-              ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: _instructionsController,
-              textCapitalization: TextCapitalization.sentences,
-              decoration: InputDecoration(
-                labelText: l10n.instructionsProcess,
-                border: const OutlineInputBorder(),
-              ),
-              minLines: 2,
-              maxLines: 5,
-            ),
-            const SizedBox(height: 8),
-            CheckboxListTile(
-              title: Text(
-                _hasNonPortableIngredients
-                    ? l10n.isPortableNonPortable
-                    : l10n.isPortableLabel,
-                style: TextStyle(
-                  color: _hasNonPortableIngredients
-                      ? theme.disabledColor
-                      : null,
-                ),
-              ),
-              value: _hasNonPortableIngredients ? false : _isPortable,
-              dense: true,
-              contentPadding: EdgeInsets.zero,
-              controlAffinity: ListTileControlAffinity.leading,
-              onChanged: _hasNonPortableIngredients
-                  ? null
-                  : (value) {
-                      if (value != null) setState(() => _isPortable = value);
-                    },
-            ),
-            const Divider(),
-            Text(
-              l10n.composition,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            if (selectedProduct != null) ...[
-              Card(
-                margin: const EdgeInsets.symmetric(vertical: 8),
-                child: ListTile(
-                  leading: const Icon(Icons.check_circle, color: Colors.green),
-                  title: Text(selectedProduct.name),
-                  subtitle: Text(
-                    l10n.macrosCompact(
-                      '${selectedProduct.proteins}',
-                      '${selectedProduct.carbs}',
-                      '${selectedProduct.fats}',
-                    ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              NexcSection(
+                title: l10n.detailsTab,
+                padded: true,
+                children: <Widget>[
+                  TextFormField(
+                    controller: _nameController,
+                    textCapitalization: TextCapitalization.sentences,
+                    validator: (String? value) => (value ?? '').trim().isEmpty
+                        ? l10n.enterRecipeName
+                        : null,
+                    decoration: InputDecoration(labelText: l10n.nameLabel),
                   ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.clear),
-                    tooltip: l10n.clearSelection,
-                    onPressed: () => setState(() => _selectedProductId = null),
-                  ),
-                ),
-              ),
-            ] else ...[
-              ClearableSearchField(
-                controller: _ingredientSearchController,
-                labelText: l10n.searchIngredient,
-                onChanged: (value) => setState(() => _searchQuery = value),
-              ),
-              const SizedBox(height: 8),
-              ConstrainedBox(
-                constraints: const BoxConstraints(maxHeight: 240),
-                child: Card(
-                  elevation: 0,
-                  shape: RoundedRectangleBorder(
-                    side: BorderSide(color: theme.colorScheme.outlineVariant),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: filteredProducts.isEmpty
-                      ? Center(
-                          child: Padding(
-                            padding: const EdgeInsets.all(16.0),
-                            child: Text(l10n.noProductsFound),
-                          ),
-                        )
-                      : ListView.builder(
-                          shrinkWrap: true,
-                          itemCount: filteredProducts.length,
-                          itemBuilder: (context, index) {
-                            final product = filteredProducts[index];
-                            return ListTile(
-                              title: Text(product.name),
-                              subtitle: Text(
-                                l10n.macrosCompact(
-                                  '${product.proteins}',
-                                  '${product.carbs}',
-                                  '${product.fats}',
-                                ),
-                              ),
-                              onTap: () => _selectProduct(product),
-                            );
-                          },
-                        ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 8),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _amountController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
+                  const SizedBox(height: NexcSpacing.md),
+                  TextFormField(
+                    controller: _instructionsController,
+                    textCapitalization: TextCapitalization.sentences,
+                    minLines: 2,
+                    maxLines: 5,
                     decoration: InputDecoration(
-                      labelText: l10n.amountLabel,
-                      border: const OutlineInputBorder(),
+                      labelText: l10n.instructionsProcess,
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Builder(
-                  builder: (context) {
-                    final showMl =
-                        selectedProduct == null ||
-                        selectedProduct.canMeasureInMl;
-                    final showUnits =
-                        selectedProduct == null ||
-                        selectedProduct.canMeasureInUnits;
-                    return DropdownButton<String>(
-                      value: _effectiveIngredientUnit,
-                      items: [
-                        const DropdownMenuItem(value: "g", child: Text("g")),
-                        if (showMl)
-                          const DropdownMenuItem(
-                            value: "ml",
-                            child: Text("ml"),
-                          ),
-                        if (showUnits)
-                          const DropdownMenuItem(
-                            value: "units",
-                            child: Text("units"),
-                          ),
-                      ],
-                      onChanged: (value) {
-                        if (value != null) {
-                          setState(() => _selectedIngredientUnit = value);
-                        }
-                      },
-                    );
-                  },
-                ),
-                const SizedBox(width: 8),
-                FilledButton(
-                  onPressed: _addIngredient,
-                  child: Text(l10n.addAction),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ..._ingredients.map((ingredient) {
-              return Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Text(
-                      l10n.ingredientLine(
-                        ingredient.product.name,
-                        '${ingredient.ingredient.amount.toStringAsFixed(0)}${ingredient.ingredient.amountUnits ?? 'g'}',
-                      ),
+                  const SizedBox(height: NexcSpacing.sm),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(
+                      _hasNonPortableIngredients
+                          ? l10n.isPortableNonPortable
+                          : l10n.isPortableLabel,
                     ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.delete_outline,
-                      color: theme.colorScheme.error,
-                    ),
-                    tooltip: l10n.removeIngredient,
-                    onPressed: () {
-                      setState(() {
-                        _ingredients.remove(ingredient);
-                      });
-                    },
+                    value: _hasNonPortableIngredients ? false : _isPortable,
+                    onChanged: _hasNonPortableIngredients
+                        ? null
+                        : (bool value) => setState(() => _isPortable = value),
                   ),
                 ],
-              );
-            }),
-            const SizedBox(height: 24),
-            SizedBox(
-              height: 48,
-              width: double.infinity,
-              child: FilledButton.icon(
-                icon: const Icon(Icons.check),
-                label: Text(
-                  widget.recipeWithIngredients.recipe.id == 0
-                      ? l10n.addRecipe
-                      : l10n.saveChanges,
-                ),
-                onPressed: _submit,
               ),
-            ),
-          ],
+              NexcSection(
+                title: l10n.composition,
+                padded: true,
+                children: <Widget>[
+                  if (_ingredients.isNotEmpty) ...<Widget>[
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 280),
+                      child: ListView.builder(
+                        shrinkWrap: true,
+                        padding: EdgeInsets.zero,
+                        itemCount: _ingredients.length,
+                        itemBuilder: (BuildContext context, int index) {
+                          final RecipeIngredientWithProduct ingredient =
+                              _ingredients[index];
+                          return NexcTile(
+                            icon: NexcIcons.products,
+                            dense: true,
+                            title: ingredient.product.name,
+                            subtitle: l10n.ingredientWithAmount(
+                              ingredient.product.name,
+                              '${formatDecimal(ingredient.ingredient.amount)}'
+                              '${ingredient.ingredient.amountUnits ?? l10n.unitG}',
+                            ),
+                            trailing: IconButton(
+                              icon: Icon(
+                                NexcIcons.delete,
+                                color: theme.colorScheme.error,
+                              ),
+                              tooltip: l10n.removeIngredient,
+                              onPressed: () =>
+                                  setState(() => _ingredients.removeAt(index)),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: NexcSpacing.lg),
+                  ],
+                  if (selectedProduct != null)
+                    NexcTile(
+                      icon: NexcIcons.check,
+                      title: selectedProduct.name,
+                      subtitle: l10n.macrosCompact(
+                        formatDecimal(selectedProduct.proteins),
+                        formatDecimal(selectedProduct.carbs),
+                        formatDecimal(selectedProduct.fats),
+                      ),
+                      trailing: IconButton(
+                        icon: const Icon(NexcIcons.close),
+                        tooltip: l10n.clearSelection,
+                        onPressed: () =>
+                            setState(() => _selectedProductId = null),
+                      ),
+                    )
+                  else ...<Widget>[
+                    ClearableSearchField(
+                      controller: _ingredientSearchController,
+                      labelText: l10n.searchIngredient,
+                      onChanged: (String value) =>
+                          setState(() => _searchQuery = value),
+                    ),
+                    const SizedBox(height: NexcSpacing.sm),
+                    ConstrainedBox(
+                      constraints: const BoxConstraints(maxHeight: 220),
+                      child: filteredProducts.isEmpty
+                          ? Padding(
+                              padding: const EdgeInsets.all(NexcSpacing.lg),
+                              child: Text(l10n.noProductsFound),
+                            )
+                          : ListView.builder(
+                              shrinkWrap: true,
+                              padding: EdgeInsets.zero,
+                              itemCount: filteredProducts.length,
+                              itemBuilder: (BuildContext context, int index) {
+                                final Product product = filteredProducts[index];
+                                final bool inStock =
+                                    inStockProductIds?.contains(product.id) ??
+                                    false;
+                                return NexcTile(
+                                  dense: true,
+                                  title: product.name,
+                                  subtitle: l10n.macrosCompact(
+                                    formatDecimal(product.proteins),
+                                    formatDecimal(product.carbs),
+                                    formatDecimal(product.fats),
+                                  ),
+                                  trailing: inStock
+                                      ? NexcBadge(
+                                          l10n.inStockBadge,
+                                          tone: NexcBadgeTone.success,
+                                          icon: NexcIcons.check,
+                                        )
+                                      : null,
+                                  onTap: () => _selectProduct(product),
+                                );
+                              },
+                            ),
+                    ),
+                  ],
+                  const SizedBox(height: NexcSpacing.lg),
+                  Wrap(
+                    spacing: NexcSpacing.sm,
+                    runSpacing: NexcSpacing.sm,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: <Widget>[
+                      SizedBox(
+                        width: 140,
+                        child: TextField(
+                          controller: _amountController,
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
+                          decoration: InputDecoration(
+                            labelText: l10n.amountLabel,
+                          ),
+                        ),
+                      ),
+                      NexcSegmented<String>(
+                        selected: _effectiveIngredientUnit,
+                        segments:
+                            <({String value, String label, IconData? icon})>[
+                              for (final String unit in _ingredientUnits)
+                                (
+                                  value: unit,
+                                  label: _unitLabel(unit),
+                                  icon: null,
+                                ),
+                            ],
+                        onChanged: (String value) =>
+                            setState(() => _selectedIngredientUnit = value),
+                      ),
+                      ListenableBuilder(
+                        listenable: _amountController,
+                        builder: (BuildContext context, Widget? child) {
+                          final double? amount = double.tryParse(
+                            _amountController.text.trim().replaceAll(',', '.'),
+                          );
+                          final bool canAdd =
+                              selectedProduct != null &&
+                              amount != null &&
+                              amount > 0.0;
+                          return FilledButton.tonalIcon(
+                            onPressed: canAdd ? _addIngredient : null,
+                            icon: const Icon(NexcIcons.add),
+                            label: Text(l10n.addAction),
+                          );
+                        },
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomBar: FilledButton.icon(
+        onPressed: _submit,
+        icon: const Icon(NexcIcons.check),
+        label: Text(
+          widget.recipeWithIngredients.recipe.id == 0
+              ? l10n.addRecipe
+              : l10n.saveChanges,
         ),
       ),
     );

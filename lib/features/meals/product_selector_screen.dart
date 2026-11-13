@@ -9,17 +9,27 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../core/components/clearable_search_field.dart';
+import '../../core/components/nexc_async_view.dart';
+import '../../core/components/nexc_empty_state.dart';
+import '../../core/components/nexc_page.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/providers/meals_providers.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/spacing.dart';
+import '../../core/util/product_factory.dart';
+
 import 'edit_product_screen.dart';
+import 'products_library_screen.dart';
 
 /// Reusable product-selection view.
 ///
 /// Returns the selected [Product] through `Navigator.pop` and lets the caller
-/// create or edit products without leaving the flow.
+/// create or edit products without leaving the flow. Rows keep the library
+/// ordering and stock badges so both surfaces behave the same.
 class ProductSelectorScreen extends ConsumerStatefulWidget {
   final String? title;
   final String? initialQuery;
@@ -48,33 +58,23 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
 
   Future<void> _createProduct() async {
     Product? createdProduct;
-    final result = await Navigator.push<Product>(
+    final Product? result = await Navigator.push<Product>(
       context,
-      MaterialPageRoute(
-        builder: (ctx) => EditProductScreen(
-          product: Product(
-            id: 0,
-            name: _searchController.text.trim(),
-            defaultUnits: "g",
-            edibleQtyPerUnit: 1.0,
-            proteins: 0.0,
-            carbsAvailable: null,
-            fats: 0.0,
-            isSupplement: false,
-            isPortable: true,
-            isStockRaw: false,
-          ),
-          onConfirm: (prod) async {
-            final newId = await ref
+      NexcPage.route(
+        title: context.l10n.createProduct,
+        builder: (BuildContext context) => EditProductScreen(
+          product: emptyProduct(name: _searchController.text.trim()),
+          onConfirm: (Product product) async {
+            final int newId = await ref
                 .read(mealRepositoryProvider)
-                .saveProduct(prod);
-            createdProduct = prod.copyWith(id: newId);
+                .saveProduct(product);
+            createdProduct = product.copyWith(id: newId);
           },
         ),
       ),
     );
 
-    final product = createdProduct ?? result;
+    final Product? product = createdProduct ?? result;
     if (product != null && mounted) {
       Navigator.pop(context, product);
     }
@@ -83,88 +83,58 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
   Future<void> _editProduct(Product product) async {
     await Navigator.push<Product>(
       context,
-      MaterialPageRoute(
-        builder: (ctx) => EditProductScreen(
+      NexcPage.route(
+        title: context.l10n.editProduct,
+        builder: (BuildContext context) => EditProductScreen(
           product: product,
-          onConfirm: (prod) async {
-            await ref.read(mealRepositoryProvider).saveProduct(prod);
+          onConfirm: (Product edited) async {
+            await ref.read(mealRepositoryProvider).saveProduct(edited);
           },
         ),
       ),
     );
-    if (mounted) {
-      setState(() {});
-    }
-  }
-
-  String _subtitleFor(
-    BuildContext context,
-    Product product,
-    Map<int, int>? usageCounts,
-    Set<int>? inStockProductIds,
-  ) {
-    final l10n = context.l10n;
-    final parts = <String>[];
-    if (inStockProductIds?.contains(product.id) ?? false) {
-      parts.add(l10n.inStockBadge);
-    }
-    final usage = usageCounts?[product.id] ?? 0;
-    if (usage > 0) {
-      parts.add(l10n.usedCount(usage));
-    }
-    parts.add(
-      l10n.unitWithValue(
-        '${product.units}'
-        '${product.unitWeight != null && product.unitWeight! > 0 ? ' (${product.unitWeight}g)' : ''}',
-      ),
-    );
-    parts.add(
-      l10n.macrosShort(
-        '${product.proteins}',
-        '${product.carbs}',
-        '${product.fats}',
-      ),
-    );
-    return parts.join(" • ");
+    if (mounted) setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
-    final productsAsync = ref.watch(allProductsProvider);
-    final usageCounts = ref.watch(productUsageCountsProvider).value;
-    final inStockProductIds = ref.watch(inStockProductIdsProvider).value;
     final l10n = context.l10n;
+    final AsyncValue<List<Product>> productsAsync = ref.watch(
+      allProductsProvider,
+    );
+    final Map<int, int>? usageCounts = ref
+        .watch(productUsageCountsProvider)
+        .value;
+    final Set<int>? inStockProductIds = ref
+        .watch(inStockProductIdsProvider)
+        .value;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.title ?? l10n.selectProduct),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
+    return NexcPage(
+      title: widget.title ?? l10n.selectProduct,
+      actions: <Widget>[
+        IconButton(
+          icon: const Icon(NexcIcons.add),
+          tooltip: l10n.createProduct,
+          onPressed: _createProduct,
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            tooltip: l10n.createProduct,
-            onPressed: _createProduct,
-          ),
-        ],
-      ),
-      body: productsAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) =>
-            Center(child: Text(l10n.errorWithMessage('$err'))),
-        data: (products) {
-          final filtered = products.searchAndSort(
+      ],
+      body: NexcAsyncView<List<Product>>(
+        value: productsAsync,
+        errorTitle: (Object error) => l10n.errorWithMessage('$error'),
+        onRetry: () => ref.invalidate(allProductsProvider),
+        builder: (List<Product> products) {
+          final List<Product> filtered = filterAndSortProducts(
+            products,
             _searchController.text,
+            ProductSortOption.stock,
             usageCounts: usageCounts,
             inStockProductIds: inStockProductIds,
           );
 
           return Column(
-            children: [
+            children: <Widget>[
               Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(NexcSpacing.lg),
                 child: ClearableSearchField(
                   controller: _searchController,
                   labelText: l10n.searchProducts,
@@ -173,47 +143,37 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
               ),
               Expanded(
                 child: filtered.isEmpty
-                    ? Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(l10n.noProductsFound),
-                            const SizedBox(height: 12),
-                            ElevatedButton.icon(
-                              icon: const Icon(Icons.add),
-                              label: Text(l10n.createProduct),
-                              onPressed: _createProduct,
-                            ),
-                          ],
-                        ),
+                    ? NexcEmptyState(
+                        icon: NexcIcons.products,
+                        title: l10n.noProductsFound,
+                        actionLabel: l10n.createProduct,
+                        onAction: _createProduct,
                       )
-                    : ListView.builder(
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(
+                          NexcSpacing.lg,
+                          0,
+                          NexcSpacing.lg,
+                          NexcSpacing.section,
+                        ),
                         itemCount: filtered.length,
-                        itemBuilder: (context, index) {
-                          final p = filtered[index];
-                          return ListTile(
-                            title: Text(
-                              p.name,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            subtitle: Text(
-                              _subtitleFor(
-                                context,
-                                p,
-                                usageCounts,
-                                inStockProductIds,
-                              ),
-                            ),
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(height: NexcSpacing.sm),
+                        itemBuilder: (BuildContext context, int index) {
+                          final Product product = filtered[index];
+                          return ProductFoodTile(
+                            key: ValueKey<int>(product.id),
+                            product: product,
+                            inStock:
+                                inStockProductIds?.contains(product.id) ??
+                                false,
+                            usageCount: usageCounts?[product.id] ?? 0,
+                            onTap: () => Navigator.pop(context, product),
                             trailing: IconButton(
-                              icon: const Icon(Icons.edit),
+                              icon: const Icon(NexcIcons.edit),
                               tooltip: l10n.editProduct,
-                              onPressed: () => _editProduct(p),
+                              onPressed: () => _editProduct(product),
                             ),
-                            onTap: () {
-                              Navigator.pop(context, p);
-                            },
                           );
                         },
                       ),

@@ -8,12 +8,46 @@
  */
 
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/components/nexc_page.dart';
+import '../../core/components/nexc_section.dart';
+import '../../core/components/nexc_segmented.dart';
+import '../../core/components/nexc_snack.dart';
 import '../../core/db/app_database.dart';
 import '../../core/integrations/ai_service.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/providers/settings_provider.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/spacing.dart';
+
+/// Unit a product is normally measured in.
+///
+/// `unit` and `units` are the same concept; the editor always stores the
+/// canonical `units` spelling.
+enum ProductUnit {
+  grams('g'),
+  milliliters('ml'),
+  units('units');
+
+  const ProductUnit(this.storageValue);
+
+  final String storageValue;
+
+  static ProductUnit fromStorage(String? raw) {
+    switch (raw?.trim().toLowerCase()) {
+      case 'ml':
+        return ProductUnit.milliliters;
+      case 'unit':
+      case 'units':
+        return ProductUnit.units;
+      default:
+        return ProductUnit.grams;
+    }
+  }
+}
 
 class EditProductScreen extends ConsumerStatefulWidget {
   final Product product;
@@ -26,18 +60,20 @@ class EditProductScreen extends ConsumerStatefulWidget {
 }
 
 class _EditProductScreenState extends ConsumerState<EditProductScreen> {
-  late TextEditingController _nameController;
-  late TextEditingController _ediblePercentController;
-  late TextEditingController _proteinsController;
-  late TextEditingController _carbsController;
-  late TextEditingController _fatsController;
-  late TextEditingController _kcalController;
-  late TextEditingController _dietaryFiberController;
-  late TextEditingController _carbsByDifferenceController;
-  late TextEditingController _mlToGFactorController;
-  late TextEditingController _unitWeightController;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  late String _selectedDefaultUnit;
+  late final TextEditingController _nameController;
+  late final TextEditingController _ediblePercentController;
+  late final TextEditingController _proteinsController;
+  late final TextEditingController _carbsController;
+  late final TextEditingController _fatsController;
+  late final TextEditingController _kcalController;
+  late final TextEditingController _dietaryFiberController;
+  late final TextEditingController _carbsByDifferenceController;
+  late final TextEditingController _mlToGFactorController;
+  late final TextEditingController _unitWeightController;
+
+  late ProductUnit _unit;
   late bool _isSupplement;
   late bool _isPortable;
   late bool _isStockRaw;
@@ -47,7 +83,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
   void initState() {
     super.initState();
     _nameController = TextEditingController(text: widget.product.name);
-    _selectedDefaultUnit = widget.product.defaultUnits ?? "g";
+    _unit = ProductUnit.fromStorage(widget.product.defaultUnits);
     _ediblePercentController = TextEditingController(
       text: widget.product.edibleQtyPerUnit != null
           ? (widget.product.edibleQtyPerUnit! * 100.0).toStringAsFixed(0)
@@ -59,14 +95,11 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           : widget.product.proteins.toString(),
     );
     _carbsController = TextEditingController(
-      text: widget.product.carbsAvailable == null
-          ? ""
-          : widget.product.carbsAvailable.toString(),
+      text: widget.product.carbsAvailable?.toString() ?? "",
     );
     _fatsController = TextEditingController(
       text: widget.product.fats == 0.0 ? "" : widget.product.fats.toString(),
     );
-
     _kcalController = TextEditingController(
       text: widget.product.kcal?.toString() ?? "",
     );
@@ -102,30 +135,36 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     super.dispose();
   }
 
+  int? get _mlToGFactor => int.tryParse(_mlToGFactorController.text.trim());
+  int? get _unitWeight => int.tryParse(_unitWeightController.text.trim());
+
+  String? _validateMlFactor(String? value) {
+    if (_unit != ProductUnit.milliliters) return null;
+    final int? parsed = int.tryParse(value?.trim() ?? '');
+    if (parsed == null || parsed <= 0) {
+      return context.l10n.validationMlFactor;
+    }
+    return null;
+  }
+
+  String? _validateUnitWeight(String? value) {
+    if (_unit != ProductUnit.units) return null;
+    final int? parsed = int.tryParse(value?.trim() ?? '');
+    if (parsed == null || parsed <= 0) {
+      return context.l10n.validationUnitWeight;
+    }
+    return null;
+  }
+
   Future<void> _submit() async {
-    final name = _nameController.text.trim();
-    if (name.isEmpty) return;
+    if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final mlToGFactor = int.tryParse(_mlToGFactorController.text.trim());
-    final unitWeight = int.tryParse(_unitWeightController.text.trim());
-
-    // Units and millilitres are only usable when their equivalence is known.
-    if (_selectedDefaultUnit == 'ml' &&
-        (mlToGFactor == null || mlToGFactor <= 0)) {
-      _showValidationMessage(context.l10n.validationMlFactor);
-      return;
-    }
-    if (_selectedDefaultUnit == 'unit' &&
-        (unitWeight == null || unitWeight <= 0)) {
-      _showValidationMessage(context.l10n.validationUnitWeight);
-      return;
-    }
-
-    final ediblePct = double.tryParse(_ediblePercentController.text) ?? 100.0;
-    final newProduct = Product(
+    final double ediblePct =
+        double.tryParse(_ediblePercentController.text) ?? 100.0;
+    final Product newProduct = Product(
       id: widget.product.id,
-      name: name,
-      defaultUnits: _selectedDefaultUnit,
+      name: _nameController.text.trim(),
+      defaultUnits: _unit.storageValue,
       edibleQtyPerUnit: ediblePct / 100.0,
       kcal: double.tryParse(_kcalController.text),
       proteins: double.tryParse(_proteinsController.text) ?? 0.0,
@@ -133,8 +172,8 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
       carbsByDifference: double.tryParse(_carbsByDifferenceController.text),
       dietaryFiber: double.tryParse(_dietaryFiberController.text),
       fats: double.tryParse(_fatsController.text) ?? 0.0,
-      mlToGFactor: mlToGFactor,
-      unitWeight: unitWeight,
+      mlToGFactor: _mlToGFactor,
+      unitWeight: _unitWeight,
       isSupplement: _isSupplement,
       isPortable: _isPortable,
       isStockRaw: _isStockRaw,
@@ -147,427 +186,280 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     }
   }
 
-  void _showValidationMessage(String message) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
+  Widget _fieldGrid(BuildContext context, List<Widget> fields) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final bool twoColumns = constraints.maxWidth >= 420;
+        final double width = twoColumns
+            ? (constraints.maxWidth - NexcSpacing.md) / 2
+            : constraints.maxWidth;
+        return Wrap(
+          spacing: NexcSpacing.md,
+          runSpacing: NexcSpacing.md,
+          children: <Widget>[
+            for (final Widget field in fields)
+              SizedBox(width: width, child: field),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _numberField(
+    TextEditingController controller,
+    String label, {
+    String? helper,
+    String? Function(String?)? validator,
+    bool decimal = true,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: TextInputType.numberWithOptions(decimal: decimal),
+      validator: validator,
+      decoration: InputDecoration(labelText: label, helperText: helper),
+    );
+  }
+
+  Future<void> _autofill() async {
+    final l10n = context.l10n;
+    final String name = _nameController.text.trim();
+    if (name.isEmpty) {
+      NexcSnack.show(context, l10n.enterProductNameFirst);
+      return;
+    }
+    setState(() => _isAiLoading = true);
+    try {
+      final SettingsState settings = ref.read(settingsProvider);
+      final AIProductDetails details = await AIService.autofillProduct(
+        provider: settings.aiProvider,
+        apiKey: settings.aiToken,
+        model: settings.aiModel,
+        productName: name,
+      );
+      final bool isEdit = widget.product.id != 0;
+      if (!isEdit || _nameController.text.trim().isEmpty) {
+        _nameController.text = details.name;
+      }
+      if (!isEdit || _kcalController.text.trim().isEmpty) {
+        _kcalController.text = details.kcal.toStringAsFixed(0);
+      }
+      if (!isEdit || _proteinsController.text.trim().isEmpty) {
+        _proteinsController.text = details.proteins.toStringAsFixed(1);
+      }
+      if (!isEdit || _carbsController.text.trim().isEmpty) {
+        _carbsController.text = details.carbsAvailable.toStringAsFixed(1);
+      }
+      if (!isEdit || _carbsByDifferenceController.text.trim().isEmpty) {
+        _carbsByDifferenceController.text = details.carbsByDifference
+            .toStringAsFixed(1);
+      }
+      if (!isEdit || _dietaryFiberController.text.trim().isEmpty) {
+        _dietaryFiberController.text = details.dietaryFiber.toStringAsFixed(1);
+      }
+      if (!isEdit || _fatsController.text.trim().isEmpty) {
+        _fatsController.text = details.fats.toStringAsFixed(1);
+      }
+      if (!isEdit || _unitWeightController.text.trim().isEmpty) {
+        _unitWeightController.text = details.unitWeight?.toString() ?? "";
+      }
+      if (!isEdit || _mlToGFactorController.text.trim().isEmpty) {
+        _mlToGFactorController.text = details.mlToGFactor?.toString() ?? "";
+      }
+      if (!isEdit ||
+          _ediblePercentController.text.trim().isEmpty ||
+          _ediblePercentController.text == "100") {
+        if (details.edibleQtyPerUnit != null) {
+          _ediblePercentController.text = (details.edibleQtyPerUnit! * 100.0)
+              .toStringAsFixed(0);
+        }
+      }
+      setState(() {
+        _unit = ProductUnit.fromStorage(details.defaultUnits);
+        _isSupplement = details.isSupplement;
+        _isPortable = details.isPortable;
+        _isStockRaw = details.isStockRaw;
+      });
+      if (mounted) {
+        NexcSnack.show(context, l10n.autofilledProductDetails);
+      }
+    } catch (error) {
+      if (mounted) NexcSnack.show(context, l10n.aiError('$error'));
+    } finally {
+      if (mounted) setState(() => _isAiLoading = false);
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = context.l10n;
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(
-          widget.product.id == 0 ? l10n.addProduct : l10n.editProduct,
-        ),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-        actions: [
-          IconButton(icon: const Icon(Icons.check), onPressed: _submit),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
+    final bool aiEnabled = ref.watch(settingsProvider).enableAiProductCreation;
+
+    return NexcPage(
+      title: widget.product.id == 0 ? l10n.addProduct : l10n.editProduct,
+      body: Form(
+        key: _formKey,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.only(
+            top: NexcSpacing.sm,
+            bottom: NexcSpacing.xl,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              NexcSection(
+                title: l10n.detailsTab,
+                padded: true,
+                children: <Widget>[
+                  TextFormField(
                     controller: _nameController,
+                    textCapitalization: TextCapitalization.sentences,
+                    textInputAction: TextInputAction.next,
+                    validator: (String? value) => (value ?? '').trim().isEmpty
+                        ? l10n.enterProductNameFirst
+                        : null,
                     decoration: InputDecoration(
                       labelText: l10n.nameLabel,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                if (ref.watch(settingsProvider).enableAiProductCreation) ...[
-                  const SizedBox(width: 8),
-                  _isAiLoading
-                      ? const SizedBox(
-                          width: 24,
-                          height: 24,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : IconButton.filledTonal(
-                          icon: const Icon(Icons.auto_awesome),
-                          tooltip: l10n.autofillWithAi,
-                          onPressed: () async {
-                            final name = _nameController.text.trim();
-                            if (name.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(l10n.enterProductNameFirst),
-                                ),
-                              );
-                              return;
-                            }
-                            setState(() {
-                              _isAiLoading = true;
-                            });
-                            try {
-                              final settings = ref.read(settingsProvider);
-                              final details = await AIService.autofillProduct(
-                                provider: settings.aiProvider,
-                                apiKey: settings.aiToken,
-                                model: settings.aiModel,
-                                productName: name,
-                              );
-                              final isEdit = widget.product.id != 0;
-                              if (!isEdit ||
-                                  _nameController.text.trim().isEmpty) {
-                                _nameController.text = details.name;
-                              }
-                              if (!isEdit ||
-                                  _kcalController.text.trim().isEmpty) {
-                                _kcalController.text = details.kcal
-                                    .toStringAsFixed(0);
-                              }
-                              if (!isEdit ||
-                                  _proteinsController.text.trim().isEmpty) {
-                                _proteinsController.text = details.proteins
-                                    .toStringAsFixed(1);
-                              }
-                              if (!isEdit ||
-                                  _carbsController.text.trim().isEmpty) {
-                                _carbsController.text = details.carbsAvailable
-                                    .toStringAsFixed(1);
-                              }
-                              if (!isEdit ||
-                                  _carbsByDifferenceController.text
-                                      .trim()
-                                      .isEmpty) {
-                                _carbsByDifferenceController.text = details
-                                    .carbsByDifference
-                                    .toStringAsFixed(1);
-                              }
-                              if (!isEdit ||
-                                  _dietaryFiberController.text.trim().isEmpty) {
-                                _dietaryFiberController.text = details
-                                    .dietaryFiber
-                                    .toStringAsFixed(1);
-                              }
-                              if (!isEdit ||
-                                  _fatsController.text.trim().isEmpty) {
-                                _fatsController.text = details.fats
-                                    .toStringAsFixed(1);
-                              }
-                              if (!isEdit ||
-                                  _unitWeightController.text.trim().isEmpty) {
-                                _unitWeightController.text =
-                                    details.unitWeight?.toString() ?? "";
-                              }
-                              if (!isEdit ||
-                                  _mlToGFactorController.text.trim().isEmpty) {
-                                _mlToGFactorController.text =
-                                    details.mlToGFactor?.toString() ?? "";
-                              }
-                              if (!isEdit ||
-                                  _ediblePercentController.text
-                                      .trim()
-                                      .isEmpty ||
-                                  _ediblePercentController.text == "100") {
-                                if (details.edibleQtyPerUnit != null) {
-                                  _ediblePercentController.text =
-                                      (details.edibleQtyPerUnit! * 100.0)
-                                          .toStringAsFixed(0);
-                                }
-                              }
-                              setState(() {
-                                _selectedDefaultUnit =
-                                    [
-                                      'g',
-                                      'ml',
-                                      'unit',
-                                    ].contains(details.defaultUnits)
-                                    ? details.defaultUnits
-                                    : 'g';
-                                _isSupplement = details.isSupplement;
-                                _isPortable = details.isPortable;
-                                _isStockRaw = details.isStockRaw;
-                              });
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      l10n.autofilledProductDetails,
+                      suffixIcon: aiEnabled
+                          ? Padding(
+                              padding: const EdgeInsets.only(
+                                right: NexcSpacing.xs,
+                              ),
+                              child: _isAiLoading
+                                  ? const Center(
+                                      child: SizedBox(
+                                        width: 20,
+                                        height: 20,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                        ),
+                                      ),
+                                    )
+                                  : IconButton(
+                                      icon: const Icon(NexcIcons.ai),
+                                      tooltip: l10n.autofillWithAi,
+                                      onPressed: _autofill,
                                     ),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(l10n.aiError('$e'))),
-                                );
-                              }
-                            } finally {
-                              if (mounted) {
-                                setState(() {
-                                  _isAiLoading = false;
-                                });
-                              }
-                            }
-                          },
-                        ),
-                ],
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    initialValue: _selectedDefaultUnit,
-                    decoration: InputDecoration(
-                      labelText: l10n.defaultUnitsLabel,
-                      border: const OutlineInputBorder(),
+                            )
+                          : null,
                     ),
-                    items: const [
-                      DropdownMenuItem(value: 'ml', child: Text('ml')),
-                      DropdownMenuItem(value: 'g', child: Text('g')),
-                      DropdownMenuItem(value: 'unit', child: Text('unit')),
-                    ],
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() {
-                          _selectedDefaultUnit = val;
-                        });
-                      }
-                    },
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _mlToGFactorController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: _selectedDefaultUnit == 'ml'
+                  const SizedBox(height: NexcSpacing.sm),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.isSupplementLabel),
+                    value: _isSupplement,
+                    onChanged: (bool value) =>
+                        setState(() => _isSupplement = value),
+                  ),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.isPortableLabel),
+                    value: _isPortable,
+                    onChanged: (bool value) =>
+                        setState(() => _isPortable = value),
+                  ),
+                ],
+              ),
+              NexcSection(
+                title: l10n.defaultUnitsLabel,
+                padded: true,
+                children: <Widget>[
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: NexcSegmented<ProductUnit>(
+                      selected: _unit,
+                      segments:
+                          <({ProductUnit value, String label, IconData? icon})>[
+                            (
+                              value: ProductUnit.grams,
+                              label: l10n.unitG,
+                              icon: null,
+                            ),
+                            (
+                              value: ProductUnit.milliliters,
+                              label: l10n.unitMl,
+                              icon: null,
+                            ),
+                            (
+                              value: ProductUnit.units,
+                              label: l10n.unitsLabel,
+                              icon: null,
+                            ),
+                          ],
+                      onChanged: (ProductUnit value) =>
+                          setState(() => _unit = value),
+                    ),
+                  ),
+                  const SizedBox(height: NexcSpacing.lg),
+                  _fieldGrid(context, <Widget>[
+                    _numberField(
+                      _ediblePercentController,
+                      l10n.ediblePercentLabel,
+                    ),
+                    _numberField(
+                      _mlToGFactorController,
+                      _unit == ProductUnit.milliliters
                           ? l10n.mlToGFactorRequired
                           : l10n.mlToGFactorLabel,
-                      helperText: _selectedDefaultUnit == 'ml'
+                      helper: _unit == ProductUnit.milliliters
                           ? l10n.requiredForMlProducts
                           : null,
-                      border: const OutlineInputBorder(),
+                      validator: _validateMlFactor,
+                      decimal: false,
                     ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _unitWeightController,
-                    keyboardType: TextInputType.number,
-                    decoration: InputDecoration(
-                      labelText: _selectedDefaultUnit == 'unit'
+                    _numberField(
+                      _unitWeightController,
+                      _unit == ProductUnit.units
                           ? l10n.unitWeightGRequired
                           : l10n.unitWeightGLabel,
-                      helperText: _selectedDefaultUnit == 'unit'
+                      helper: _unit == ProductUnit.units
                           ? l10n.requiredForUnitsProducts
                           : null,
-                      border: const OutlineInputBorder(),
+                      validator: _validateUnitWeight,
+                      decimal: false,
                     ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _ediblePercentController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: l10n.ediblePercentLabel,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                const Expanded(child: SizedBox()),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              l10n.macrosEnergyPer100g,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _kcalController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: l10n.caloriesKcal,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _proteinsController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: l10n.proteinsG,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _carbsController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: l10n.carbsAvailableG,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _carbsByDifferenceController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: l10n.carbsByDiffG,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: TextField(
-                    controller: _fatsController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: l10n.fatsG,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextField(
-                    controller: _dietaryFiberController,
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                    ),
-                    decoration: InputDecoration(
-                      labelText: l10n.dietaryFiberG,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: CheckboxListTile(
-                    title: Text(
-                      l10n.isSupplementLabel,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    value: _isSupplement,
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() => _isSupplement = val);
-                      }
-                    },
-                  ),
-                ),
-                Expanded(
-                  child: CheckboxListTile(
-                    title: Text(
-                      l10n.isPortableLabel,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    value: _isPortable,
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() => _isPortable = val);
-                      }
-                    },
-                  ),
-                ),
-              ],
-            ),
-            Row(
-              children: [
-                Expanded(
-                  child: CheckboxListTile(
-                    title: Text(
-                      l10n.isStockRawLabel,
-                      style: const TextStyle(fontSize: 12),
-                    ),
-                    value: _isStockRaw,
-                    dense: true,
-                    contentPadding: EdgeInsets.zero,
-                    controlAffinity: ListTileControlAffinity.leading,
-                    onChanged: (val) {
-                      if (val != null) {
-                        setState(() => _isStockRaw = val);
-                      }
-                    },
-                  ),
-                ),
-                const Expanded(child: SizedBox()),
-              ],
-            ),
-            const SizedBox(height: 24),
-            SizedBox(
-              width: double.infinity,
-              height: 48,
-              child: FilledButton.icon(
-                icon: const Icon(Icons.check),
-                label: Text(
-                  widget.product.id == 0 ? l10n.addProduct : l10n.saveChanges,
-                ),
-                onPressed: _submit,
+                  ]),
+                ],
               ),
-            ),
-          ],
+              NexcSection(
+                title: l10n.macrosEnergyPer100g,
+                padded: true,
+                children: <Widget>[
+                  _fieldGrid(context, <Widget>[
+                    _numberField(_kcalController, l10n.caloriesKcal),
+                    _numberField(_proteinsController, l10n.proteinsG),
+                    _numberField(_carbsController, l10n.carbsAvailableG),
+                    _numberField(
+                      _carbsByDifferenceController,
+                      l10n.carbsByDiffG,
+                    ),
+                    _numberField(_fatsController, l10n.fatsG),
+                    _numberField(_dietaryFiberController, l10n.dietaryFiberG),
+                  ]),
+                ],
+              ),
+              NexcSection(
+                title: l10n.stockTitle,
+                padded: true,
+                children: <Widget>[
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    title: Text(l10n.isStockRawLabel),
+                    value: _isStockRaw,
+                    onChanged: (bool value) =>
+                        setState(() => _isStockRaw = value),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+      bottomBar: FilledButton.icon(
+        onPressed: _submit,
+        icon: const Icon(NexcIcons.check),
+        label: Text(
+          widget.product.id == 0 ? l10n.addProduct : l10n.saveChanges,
         ),
       ),
     );

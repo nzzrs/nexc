@@ -81,7 +81,9 @@ void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
 
   group('Measurements tabs', () {
-    testWidgets('render localized history labels', (tester) async {
+    testWidgets('render short localized tabs and a history heading', (
+      tester,
+    ) async {
       final prefs = await _prefsWith(<String, Object>{
         'unit_system': UnitSystem.metric.name,
         'enable_sleep': true,
@@ -96,15 +98,15 @@ void main() {
 
       final Finder tabBar = find.byType(TabBar);
       expect(
-        find.descendant(of: tabBar, matching: find.text('Body History')),
+        find.descendant(of: tabBar, matching: find.text('Body')),
         findsOneWidget,
       );
       expect(
-        find.descendant(of: tabBar, matching: find.text('Sleep History')),
+        find.descendant(of: tabBar, matching: find.text('Sleep')),
         findsOneWidget,
       );
       expect(
-        find.descendant(of: tabBar, matching: find.text('Activity History')),
+        find.descendant(of: tabBar, matching: find.text('Activity')),
         findsOneWidget,
       );
 

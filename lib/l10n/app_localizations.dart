@@ -4965,6 +4965,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Retry'**
   String get aiRetry;
+
+  /// No description provided for @measurementTabBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Body'**
+  String get measurementTabBody;
+
+  /// No description provided for @measurementTabSleep.
+  ///
+  /// In en, this message translates to:
+  /// **'Sleep'**
+  String get measurementTabSleep;
+
+  /// No description provided for @measurementTabActivity.
+  ///
+  /// In en, this message translates to:
+  /// **'Activity'**
+  String get measurementTabActivity;
 }
 
 class _AppLocalizationsDelegate

@@ -977,10 +977,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
           padding: padding,
           child: NexcEmptyState(
             icon: NexcIcons.workoutIdle,
-            title: l10n.tabWorkout,
-            message: l10n.emptyWorkoutHint,
-            actionLabel: l10n.addExercise,
-            onAction: _pickExercises,
+            title: l10n.noExercisesAdded,
           ),
         );
       }
@@ -1151,9 +1148,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       },
       child: NexcPage(
         title: _displayTitle(l10n),
-        subtitle:
-            '${l10n.exercisesWithCount(_exercises.length)} · '
-            '${_formatTime(_elapsedSeconds)}',
+        subtitle: l10n.exercisesWithCount(_exercises.length),
         actions: <Widget>[
           PopupMenuButton<String>(
             tooltip: l10n.moreOptions,
@@ -1519,9 +1514,19 @@ class _WorkoutProgressCard extends StatelessWidget {
     return Material(
       color: theme.colorScheme.primaryContainer,
       elevation: elevated ? 4 : 0,
-      borderRadius: NexcShapes.lgRadius,
+      shape: RoundedRectangleBorder(
+        borderRadius: NexcShapes.lgRadius,
+        side: BorderSide(
+          color: theme.colorScheme.onPrimaryContainer.withValues(alpha: 0.08),
+        ),
+      ),
       child: Padding(
-        padding: const EdgeInsets.all(NexcSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(
+          NexcSpacing.lg,
+          NexcSpacing.md,
+          NexcSpacing.lg,
+          NexcSpacing.md,
+        ),
         child: Column(
           children: <Widget>[
             Row(
@@ -1529,14 +1534,14 @@ class _WorkoutProgressCard extends StatelessWidget {
                 Expanded(
                   child: Text(
                     l10n.setsRatio(completedSets, totalSets),
-                    style: theme.textTheme.bodyMedium?.copyWith(
+                    style: theme.textTheme.titleSmall?.copyWith(
                       color: theme.colorScheme.onPrimaryContainer,
                     ),
                   ),
                 ),
                 Text(
                   elapsed,
-                  style: theme.textTheme.titleSmall?.copyWith(
+                  style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w700,
                     color: theme.colorScheme.onPrimaryContainer,
                     fontFeatures: const <FontFeature>[
@@ -1546,14 +1551,19 @@ class _WorkoutProgressCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: NexcSpacing.md),
-            LinearWavyProgressIndicator(
-              value: totalSets > 0 ? completedSets / totalSets : 0,
-              color: theme.colorScheme.onPrimaryContainer,
-              backgroundColor: theme.colorScheme.onPrimaryContainer.withValues(
-                alpha: 0.2,
+            if (totalSets > 0) ...[
+              const SizedBox(height: NexcSpacing.sm),
+              ClipRRect(
+                borderRadius: NexcShapes.fullRadius,
+                child: LinearProgressIndicator(
+                  value: completedSets / totalSets,
+                  minHeight: 4,
+                  color: theme.colorScheme.onPrimaryContainer,
+                  backgroundColor: theme.colorScheme.onPrimaryContainer
+                      .withValues(alpha: 0.2),
+                ),
               ),
-            ),
+            ],
           ],
         ),
       ),

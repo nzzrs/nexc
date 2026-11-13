@@ -2737,6 +2737,15 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get aiRetry => 'Retry';
+
+  @override
+  String get measurementTabBody => 'Body';
+
+  @override
+  String get measurementTabSleep => 'Sleep';
+
+  @override
+  String get measurementTabActivity => 'Activity';
 }
 
 /// The translations for Chinese, as used in China (`zh_CN`).
@@ -5472,4 +5481,13 @@ class AppLocalizationsZhCn extends AppLocalizationsZh {
 
   @override
   String get aiRetry => 'Retry';
+
+  @override
+  String get measurementTabBody => 'Body';
+
+  @override
+  String get measurementTabSleep => 'Sleep';
+
+  @override
+  String get measurementTabActivity => 'Activity';
 }

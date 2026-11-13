@@ -112,11 +112,11 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
     final l10n = context.l10n;
     switch (tab) {
       case _HealthTab.body:
-        return l10n.bodyHistory;
+        return l10n.measurementTabBody;
       case _HealthTab.sleep:
-        return l10n.sleepHistory;
+        return l10n.measurementTabSleep;
       case _HealthTab.activity:
-        return l10n.activityHistory;
+        return l10n.measurementTabActivity;
     }
   }
 
@@ -632,139 +632,142 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
             unit: series.unit,
           ),
           const SizedBox(height: NexcSpacing.lg),
-          SizedBox(
-            height: 200,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (double value) => FlLine(
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.1,
+          Padding(
+            padding: const EdgeInsets.only(right: NexcSpacing.xl),
+            child: SizedBox(
+              height: 200,
+              child: LineChart(
+                LineChartData(
+                  gridData: FlGridData(
+                    show: true,
+                    drawVerticalLine: false,
+                    getDrawingHorizontalLine: (double value) => FlLine(
+                      color: theme.colorScheme.onSurfaceVariant.withValues(
+                        alpha: 0.1,
+                      ),
+                      strokeWidth: 1,
+                      dashArray: <int>[4, 4],
                     ),
-                    strokeWidth: 1,
-                    dashArray: <int>[4, 4],
                   ),
-                ),
-                borderData: FlBorderData(show: false),
-                lineBarsData: <LineChartBarData>[
-                  LineChartBarData(
-                    spots: series.spots,
-                    isCurved: true,
-                    color: theme.colorScheme.primary,
-                    barWidth: 3,
-                    isStrokeCapRound: true,
-                    dotData: FlDotData(
-                      show: true,
-                      getDotPainter:
-                          (
-                            FlSpot spot,
-                            double percent,
-                            LineChartBarData barData,
-                            int index,
-                          ) {
-                            return FlDotCirclePainter(
-                              radius: 3,
-                              color: theme.colorScheme.primary,
-                              strokeWidth: 2,
-                              strokeColor: theme.colorScheme.onPrimary,
-                            );
-                          },
-                    ),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        colors: <Color>[
-                          theme.colorScheme.primary.withValues(alpha: 0.3),
-                          theme.colorScheme.primary.withValues(alpha: 0.0),
-                        ],
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
+                  borderData: FlBorderData(show: false),
+                  lineBarsData: <LineChartBarData>[
+                    LineChartBarData(
+                      spots: series.spots,
+                      isCurved: true,
+                      color: theme.colorScheme.primary,
+                      barWidth: 3,
+                      isStrokeCapRound: true,
+                      dotData: FlDotData(
+                        show: true,
+                        getDotPainter:
+                            (
+                              FlSpot spot,
+                              double percent,
+                              LineChartBarData barData,
+                              int index,
+                            ) {
+                              return FlDotCirclePainter(
+                                radius: 3,
+                                color: theme.colorScheme.primary,
+                                strokeWidth: 2,
+                                strokeColor: theme.colorScheme.onPrimary,
+                              );
+                            },
+                      ),
+                      belowBarData: BarAreaData(
+                        show: true,
+                        gradient: LinearGradient(
+                          colors: <Color>[
+                            theme.colorScheme.primary.withValues(alpha: 0.3),
+                            theme.colorScheme.primary.withValues(alpha: 0.0),
+                          ],
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                        ),
                       ),
                     ),
-                  ),
-                ],
-                titlesData: FlTitlesData(
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 44,
-                      getTitlesWidget: (double value, TitleMeta meta) {
-                        return SizedBox(
-                          width: 40,
-                          child: Text(
-                            formatDecimal(value, maxDecimals: 0),
-                            textAlign: TextAlign.end,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: theme.textTheme.labelSmall?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
-                          ),
-                        );
-                      },
+                  ],
+                  titlesData: FlTitlesData(
+                    topTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
                     ),
-                  ),
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 30,
-                      interval: 1,
-                      getTitlesWidget: (double value, TitleMeta meta) {
-                        final int index = value.round();
-                        if (index < 0 || index >= series.dates.length) {
-                          return const SizedBox.shrink();
-                        }
-                        final int step = math.max(
-                          1,
-                          (series.dates.length / 4).ceil(),
-                        );
-                        if (index % step != 0) return const SizedBox.shrink();
-                        return Padding(
-                          padding: const EdgeInsets.only(top: NexcSpacing.xs),
-                          child: SizedBox(
-                            width: 56,
+                    rightTitles: const AxisTitles(
+                      sideTitles: SideTitles(showTitles: false),
+                    ),
+                    leftTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 44,
+                        getTitlesWidget: (double value, TitleMeta meta) {
+                          return SizedBox(
+                            width: 40,
                             child: Text(
-                              MaterialLocalizations.of(
-                                context,
-                              ).formatShortMonthDay(series.dates[index]),
-                              textAlign: TextAlign.center,
+                              formatDecimal(value, maxDecimals: 1),
+                              textAlign: TextAlign.end,
                               maxLines: 1,
                               overflow: TextOverflow.ellipsis,
                               style: theme.textTheme.labelSmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
                             ),
-                          ),
-                        );
-                      },
+                          );
+                        },
+                      ),
+                    ),
+                    bottomTitles: AxisTitles(
+                      sideTitles: SideTitles(
+                        showTitles: true,
+                        reservedSize: 30,
+                        interval: 1,
+                        getTitlesWidget: (double value, TitleMeta meta) {
+                          final int index = value.round();
+                          if (index < 0 || index >= series.dates.length) {
+                            return const SizedBox.shrink();
+                          }
+                          final int step = math.max(
+                            1,
+                            (series.dates.length / 4).ceil(),
+                          );
+                          if (index % step != 0) return const SizedBox.shrink();
+                          return Padding(
+                            padding: const EdgeInsets.only(top: NexcSpacing.xs),
+                            child: SizedBox(
+                              width: 56,
+                              child: Text(
+                                MaterialLocalizations.of(
+                                  context,
+                                ).formatShortMonthDay(series.dates[index]),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.labelSmall?.copyWith(
+                                  color: theme.colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
                     ),
                   ),
-                ),
-                lineTouchData: LineTouchData(
-                  touchTooltipData: LineTouchTooltipData(
-                    getTooltipColor: (LineBarSpot touchedSpot) =>
-                        theme.colorScheme.secondaryContainer,
-                    getTooltipItems: (List<LineBarSpot> touchedSpots) {
-                      return touchedSpots.map((LineBarSpot spot) {
-                        final String unit = series.unit.isEmpty
-                            ? ''
-                            : ' ${series.unit}';
-                        return LineTooltipItem(
-                          '${formatDecimal(spot.y, maxDecimals: 1)}$unit',
-                          theme.textTheme.labelMedium!.copyWith(
-                            color: theme.colorScheme.onSecondaryContainer,
-                          ),
-                        );
-                      }).toList();
-                    },
+                  lineTouchData: LineTouchData(
+                    touchTooltipData: LineTouchTooltipData(
+                      getTooltipColor: (LineBarSpot touchedSpot) =>
+                          theme.colorScheme.secondaryContainer,
+                      getTooltipItems: (List<LineBarSpot> touchedSpots) {
+                        return touchedSpots.map((LineBarSpot spot) {
+                          final String unit = series.unit.isEmpty
+                              ? ''
+                              : ' ${series.unit}';
+                          return LineTooltipItem(
+                            '${formatDecimal(spot.y, maxDecimals: 1)}$unit',
+                            theme.textTheme.labelMedium!.copyWith(
+                              color: theme.colorScheme.onSecondaryContainer,
+                            ),
+                          );
+                        }).toList();
+                      },
+                    ),
                   ),
                 ),
               ),

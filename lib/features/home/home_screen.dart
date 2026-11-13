@@ -212,16 +212,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                 ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
               ),
             ),
-            Tooltip(
-              message: aiEnabled
+            IconButton.filledTonal(
+              tooltip: aiEnabled
                   ? l10n.aiWorkoutCreator
                   : l10n.aiWorkoutCreatorDisabled,
-              child: IconButton.filledTonal(
-                icon: const Icon(NexcIcons.ai),
-                onPressed: aiEnabled
-                    ? () => Navigator.pushNamed(context, '/workout/ai-chat')
-                    : null,
-              ),
+              icon: const Icon(NexcIcons.ai),
+              onPressed: aiEnabled
+                  ? () => Navigator.pushNamed(context, '/workout/ai-chat')
+                  : null,
             ),
           ],
         ),
@@ -410,8 +408,11 @@ class _RoutineCard extends StatelessWidget {
         : l10n.exercisesNoun;
 
     return Material(
-      color: theme.colorScheme.surfaceContainerLow,
-      shape: const RoundedRectangleBorder(borderRadius: NexcShapes.lgRadius),
+      color: theme.colorScheme.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(
+        borderRadius: NexcShapes.lgRadius,
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onOpen,

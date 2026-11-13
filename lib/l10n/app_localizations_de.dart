@@ -2738,4 +2738,13 @@ class AppLocalizationsDe extends AppLocalizations {
 
   @override
   String get aiRetry => 'Retry';
+
+  @override
+  String get measurementTabBody => 'Body';
+
+  @override
+  String get measurementTabSleep => 'Sleep';
+
+  @override
+  String get measurementTabActivity => 'Activity';
 }

@@ -83,8 +83,8 @@ final darkColorScheme = ColorScheme(
 ThemeData createNexcTheme(ColorScheme scheme) {
   final bool isLight = scheme.brightness == Brightness.light;
   final Color cardColor = isLight
-      ? surfaceContainerLowLight
-      : surfaceContainerLowDark;
+      ? surfaceContainerHighLight
+      : surfaceContainerHighDark;
   final Color groupColor = isLight
       ? surfaceContainerLight
       : surfaceContainerDark;
@@ -232,7 +232,10 @@ ThemeData createNexcTheme(ColorScheme scheme) {
         }
         return scheme.surfaceContainerHighest;
       }),
-      trackOutlineColor: const WidgetStatePropertyAll(Colors.transparent),
+      trackOutlineColor: WidgetStateProperty.resolveWith((states) {
+        if (states.contains(WidgetState.selected)) return Colors.transparent;
+        return scheme.outline;
+      }),
     ),
     expansionTileTheme: ExpansionTileThemeData(
       backgroundColor: Colors.transparent,

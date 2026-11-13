@@ -59,6 +59,18 @@ String formatDurationShort(int totalSeconds) {
   return '${totalSeconds}s';
 }
 
+/// Turns `BODY_ONLY` into `Body Only` for labels without a translation key.
+String humanizeEnumName(String raw) {
+  return raw
+      .split('_')
+      .where((String part) => part.isNotEmpty)
+      .map(
+        (String part) =>
+            part[0].toUpperCase() + part.substring(1).toLowerCase(),
+      )
+      .join(' ');
+}
+
 /// Thousands separator without pulling a locale-specific formatter.
 String formatCount(int value) {
   final String digits = value.abs().toString();

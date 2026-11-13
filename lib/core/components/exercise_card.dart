@@ -222,7 +222,7 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                 color: widget.supersetColor ?? theme.colorScheme.primary,
                 width: 2,
               )
-            : BorderSide.none,
+            : BorderSide(color: theme.colorScheme.outlineVariant),
       ),
       child: Padding(
         padding: const EdgeInsets.all(NexcSpacing.md),

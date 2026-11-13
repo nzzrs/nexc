@@ -26,6 +26,10 @@ class NexcSection extends StatelessWidget {
   /// Optional top margin.
   final bool spaced;
 
+  /// Drops the tonal container and border, for children that bring their own
+  /// cards (for example an action grid).
+  final bool flat;
+
   const NexcSection({
     super.key,
     required this.children,
@@ -34,6 +38,7 @@ class NexcSection extends StatelessWidget {
     this.description,
     this.padded = false,
     this.spaced = true,
+    this.flat = false,
   });
 
   @override
@@ -93,27 +98,34 @@ class NexcSection extends StatelessWidget {
                 ),
               ),
             ),
-          Material(
-            color: theme.colorScheme.surfaceContainerLow,
-            shape: const RoundedRectangleBorder(
-              borderRadius: NexcShapes.lgRadius,
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
+          if (flat)
+            Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: padded
-                  ? [
-                      Padding(
-                        padding: const EdgeInsets.all(NexcSpacing.lg),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: children,
+              children: children,
+            )
+          else
+            Material(
+              color: theme.colorScheme.surfaceContainerHigh,
+              shape: RoundedRectangleBorder(
+                borderRadius: NexcShapes.lgRadius,
+                side: BorderSide(color: theme.colorScheme.outlineVariant),
+              ),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: padded
+                    ? [
+                        Padding(
+                          padding: const EdgeInsets.all(NexcSpacing.lg),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: children,
+                          ),
                         ),
-                      ),
-                    ]
-                  : rows,
+                      ]
+                    : rows,
+              ),
             ),
-          ),
         ],
       ),
     );

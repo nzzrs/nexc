@@ -39,8 +39,11 @@ class NexcChartCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
     return Material(
-      color: theme.colorScheme.surfaceContainerLow,
-      shape: const RoundedRectangleBorder(borderRadius: NexcShapes.lgRadius),
+      color: theme.colorScheme.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(
+        borderRadius: NexcShapes.lgRadius,
+        side: BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Padding(
         padding: const EdgeInsets.all(NexcSpacing.lg),

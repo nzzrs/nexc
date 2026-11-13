@@ -2737,6 +2737,15 @@ class AppLocalizationsPt extends AppLocalizations {
 
   @override
   String get aiRetry => 'Retry';
+
+  @override
+  String get measurementTabBody => 'Body';
+
+  @override
+  String get measurementTabSleep => 'Sleep';
+
+  @override
+  String get measurementTabActivity => 'Activity';
 }
 
 /// The translations for Portuguese, as used in Brazil (`pt_BR`).
@@ -5472,4 +5481,13 @@ class AppLocalizationsPtBr extends AppLocalizationsPt {
 
   @override
   String get aiRetry => 'Retry';
+
+  @override
+  String get measurementTabBody => 'Body';
+
+  @override
+  String get measurementTabSleep => 'Sleep';
+
+  @override
+  String get measurementTabActivity => 'Activity';
 }

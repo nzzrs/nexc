@@ -88,7 +88,7 @@ class ProfileScreen extends ConsumerWidget {
         const SizedBox(height: NexcSpacing.xl),
         NexcSection(
           title: l10n.sectionProgress,
-          padded: true,
+          flat: true,
           children: [
             NexcActionGrid(
               items: [
@@ -118,7 +118,7 @@ class ProfileScreen extends ConsumerWidget {
         ),
         NexcSection(
           title: l10n.sectionBody,
-          padded: true,
+          flat: true,
           children: [
             NexcActionGrid(
               items: [
@@ -138,7 +138,7 @@ class ProfileScreen extends ConsumerWidget {
         ),
         NexcSection(
           title: l10n.sectionLibrary,
-          padded: true,
+          flat: true,
           children: [
             NexcActionGrid(
               items: [
@@ -164,7 +164,7 @@ class ProfileScreen extends ConsumerWidget {
         if (settings.enableStockTracking)
           NexcSection(
             title: l10n.sectionInventory,
-            padded: true,
+            flat: true,
             children: [
               NexcActionGrid(
                 items: [

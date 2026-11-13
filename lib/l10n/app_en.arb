@@ -1733,5 +1733,8 @@
   "backupExportFirst": "Export a backup before importing.",
   "aiTryAsking": "Try asking",
   "aiClearChat": "Clear chat",
-  "aiRetry": "Retry"
+  "aiRetry": "Retry",
+  "measurementTabBody": "Body",
+  "measurementTabSleep": "Sleep",
+  "measurementTabActivity": "Activity"
 }

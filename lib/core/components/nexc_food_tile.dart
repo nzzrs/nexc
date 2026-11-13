@@ -39,8 +39,13 @@ class NexcFoodTile extends StatelessWidget {
     return Material(
       color: selected
           ? theme.colorScheme.secondaryContainer
-          : theme.colorScheme.surfaceContainerLow,
-      shape: const RoundedRectangleBorder(borderRadius: NexcShapes.mdRadius),
+          : theme.colorScheme.surfaceContainerHigh,
+      shape: RoundedRectangleBorder(
+        borderRadius: NexcShapes.mdRadius,
+        side: selected
+            ? BorderSide.none
+            : BorderSide(color: theme.colorScheme.outlineVariant),
+      ),
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: enabled ? onTap : null,

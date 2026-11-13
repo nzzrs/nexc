@@ -14,6 +14,7 @@ import '../../core/db/enums.dart';
 import '../../core/db/dataset_repository.dart';
 import '../../core/integrations/ai_service.dart';
 import '../../core/l10n/l10n.dart';
+import '../../core/util/format.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/components/clearable_search_field.dart';
 import '../../core/theme/iconography.dart';
@@ -219,18 +220,28 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
               });
             },
           ),
-          if (widget.addExercises && _selectedExercises.isNotEmpty)
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context, _selectedExercises.toList());
-              },
-              child: Text(
-                l10n.addCount(_selectedExercises.length),
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-            ),
         ],
       ),
+      bottomNavigationBar: widget.addExercises && _selectedExercises.isNotEmpty
+          ? SafeArea(
+              top: false,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(
+                  NexcSpacing.lg,
+                  NexcSpacing.sm,
+                  NexcSpacing.lg,
+                  NexcSpacing.md,
+                ),
+                child: FilledButton.icon(
+                  onPressed: () {
+                    Navigator.pop(context, _selectedExercises.toList());
+                  },
+                  icon: const Icon(NexcIcons.check),
+                  label: Text(l10n.addCount(_selectedExercises.length)),
+                ),
+              ),
+            )
+          : null,
       body: Column(
         children: [
           // Search Box
@@ -585,7 +596,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: theme.colorScheme.primaryContainer,
+                          color: theme.colorScheme.secondaryContainer,
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: ClipRRect(
@@ -596,15 +607,15 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                                   fit: BoxFit.cover,
                                   errorBuilder: (context, error, stackTrace) =>
                                       Icon(
-                                        Icons.fitness_center,
+                                        _categoryIcon(ex.category),
                                         color: theme
                                             .colorScheme
-                                            .onPrimaryContainer,
+                                            .onSecondaryContainer,
                                       ),
                                 )
                               : Icon(
-                                  Icons.fitness_center,
-                                  color: theme.colorScheme.onPrimaryContainer,
+                                  _categoryIcon(ex.category),
+                                  color: theme.colorScheme.onSecondaryContainer,
                                 ),
                         ),
                       ),
@@ -655,11 +666,17 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                       ),
                       subtitle: Text(
                         l10n.exerciseSubtitle(
-                          ex.category.name,
-                          ex.equipment?.name ?? l10n.noEquipment,
-                          ex.primaryMuscles.map((m) => m.name).join(', '),
+                          humanizeEnumName(ex.category.name),
+                          ex.equipment == null
+                              ? l10n.noEquipment
+                              : humanizeEnumName(ex.equipment!.name),
+                          ex.primaryMuscles
+                              .map((m) => humanizeEnumName(m.name))
+                              .join(', '),
                         ),
-                        style: theme.textTheme.bodySmall,
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                       onTap: () {
                         if (!widget.isSelectionMode) {
@@ -759,6 +776,18 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
         ],
       ),
     );
+  }
+
+  IconData _categoryIcon(Category category) {
+    return switch (category) {
+      Category.POWERLIFTING => Icons.bolt,
+      Category.STRENGTH => Icons.fitness_center,
+      Category.STRETCHING => Icons.self_improvement,
+      Category.CARDIO => Icons.directions_run,
+      Category.OLYMPIC_WEIGHTLIFTING => Icons.sports_martial_arts,
+      Category.STRONGMAN => Icons.sports_mma,
+      Category.PLYOMETRICS => Icons.sports_gymnastics,
+    };
   }
 
   String _optionLabel<T>(BuildContext context, T value) {

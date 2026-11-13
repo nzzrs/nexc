@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'enums.dart';
 import 'relations.dart';
 import '../providers/db_provider.dart';
+import '../util/routine_update.dart';
 
 class WorkoutRepository {
   final AppDatabase db;
@@ -85,6 +86,28 @@ class WorkoutRepository {
 
     final list = _groupRowsToWorkouts(rows);
     return list.isNotEmpty ? list.first : null;
+  }
+
+  /// Loads the routine linked to a completed workout and copies the values of
+  /// the completed workout sets into it, keeping every routine id intact.
+  ///
+  /// Returns the updated routine, or null when the routine does not exist.
+  Future<WorkoutWithExercisesAndSets?> updateRoutineWithCompletedSetValues({
+    required int routineId,
+    required List<ExerciseWithSets> workoutExercises,
+  }) async {
+    final routine = await getWorkoutWithExercisesAndSets(routineId);
+    if (routine == null) return null;
+
+    final updated = WorkoutWithExercisesAndSets(
+      workout: routine.workout,
+      exercisesWithSets: withValuesOfCompletedSets(
+        routine: routine.exercisesWithSets,
+        workout: workoutExercises,
+      ),
+    );
+    await addWorkoutWithExercisesAndSets(updated);
+    return updated;
   }
 
   Future<Workout?> getWorkoutFromRoutineIDAndState(int routineId, WorkoutState state) async {

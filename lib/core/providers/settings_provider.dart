@@ -29,6 +29,7 @@ class SettingsState {
   final IntensityScale intensityScale;
   final bool restTimerVibrationOn;
   final Language language;
+  final RoutineUpdateMode routineUpdateMode;
   
   // New Global Targets
   final double targetProtein;
@@ -86,6 +87,7 @@ class SettingsState {
     required this.intensityScale,
     required this.restTimerVibrationOn,
     required this.language,
+    required this.routineUpdateMode,
     required this.targetProtein,
     required this.targetCarbs,
     required this.targetFats,
@@ -127,6 +129,7 @@ class SettingsState {
     IntensityScale? intensityScale,
     bool? restTimerVibrationOn,
     Language? language,
+    RoutineUpdateMode? routineUpdateMode,
     double? targetProtein,
     double? targetCarbs,
     double? targetFats,
@@ -167,6 +170,7 @@ class SettingsState {
       intensityScale: intensityScale ?? this.intensityScale,
       restTimerVibrationOn: restTimerVibrationOn ?? this.restTimerVibrationOn,
       language: language ?? this.language,
+      routineUpdateMode: routineUpdateMode ?? this.routineUpdateMode,
       targetProtein: targetProtein ?? this.targetProtein,
       targetCarbs: targetCarbs ?? this.targetCarbs,
       targetFats: targetFats ?? this.targetFats,
@@ -223,6 +227,12 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final langCode = prefs.getString('language') ?? '';
     final language = Language.values.firstWhere((l) => l.code == langCode, orElse: () => Language.system);
 
+    final routineUpdateModeName = prefs.getString('routine_update_mode');
+    final routineUpdateMode = RoutineUpdateMode.values.firstWhere(
+      (mode) => mode.name == routineUpdateModeName,
+      orElse: () => RoutineUpdateMode.never,
+    );
+
     final targetProtein = prefs.getDouble('target_protein') ?? 150.0;
     final targetCarbs = prefs.getDouble('target_carbs') ?? 200.0;
     final targetFats = prefs.getDouble('target_fats') ?? 70.0;
@@ -269,6 +279,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       intensityScale: intensityScale,
       restTimerVibrationOn: restTimerVibrationOn,
       language: language,
+      routineUpdateMode: routineUpdateMode,
       targetProtein: targetProtein,
       targetCarbs: targetCarbs,
       targetFats: targetFats,
@@ -356,6 +367,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setLanguage(Language lang) async {
     await _prefs.setString('language', lang.code);
     state = state.copyWith(language: lang);
+  }
+
+  Future<void> setRoutineUpdateMode(RoutineUpdateMode mode) async {
+    await _prefs.setString('routine_update_mode', mode.name);
+    state = state.copyWith(routineUpdateMode: mode);
   }
 
   Future<void> setTargetMacros(double p, double c, double f) async {

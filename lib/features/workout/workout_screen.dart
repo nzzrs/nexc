@@ -32,6 +32,35 @@ import '../../core/util/exercise_set_mode_helper.dart';
 import '../../core/util/rest_alert_audio.dart';
 import '../meals/edit_meal_plan_screen.dart';
 
+/// Asks whether the linked routine should copy the completed set values.
+///
+/// Returns true for "Update", false for "Don't update" or a dismissed dialog.
+Future<bool> showUpdateRoutineDialog(BuildContext context) async {
+  final result = await showDialog<bool>(
+    context: context,
+    barrierDismissible: true,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text('Update routine?'),
+        content: const Text(
+          'Copy the values of the completed sets into your routine?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text("Don't update"),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('Update'),
+          ),
+        ],
+      );
+    },
+  );
+  return result ?? false;
+}
+
 class WorkoutScreen extends ConsumerStatefulWidget {
   final int
   workoutId; // 0 if empty, routineId if starting routine, runningWorkoutId if resuming
@@ -687,6 +716,22 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
         exercisesWithSets: sanitizedExercises,
       );
       await repo.addWorkoutWithExercisesAndSets(workoutData);
+
+      if (_workout.routineId != 0) {
+        var updateRoutine =
+            settings.routineUpdateMode == RoutineUpdateMode.always;
+        if (settings.routineUpdateMode == RoutineUpdateMode.ask) {
+          if (!mounted) return;
+          updateRoutine = await showUpdateRoutineDialog(context);
+        }
+        if (updateRoutine) {
+          await repo.updateRoutineWithCompletedSetValues(
+            routineId: _workout.routineId,
+            workoutExercises: sanitizedExercises,
+          );
+        }
+      }
+
       ref.read(activeWorkoutScrollOffsetProvider.notifier).state = 0.0;
       if (mounted) {
         Navigator.pushReplacement(

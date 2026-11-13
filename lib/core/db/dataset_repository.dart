@@ -25,6 +25,10 @@ class DatasetRepository {
 
   DatasetRepository(this.db, [this.ref]);
 
+  /// Bump when `assets/exercises.json` or `assets/foods.json` change so that
+  /// existing installs re-import the bundled dataset on the next launch.
+  static const int datasetRevision = 2;
+
   Stream<List<ExerciseDataDC>> getDataset() {
     return (db.select(db.exerciseData)..orderBy([(d) => OrderingTerm(expression: d.name)]))
         .watch();

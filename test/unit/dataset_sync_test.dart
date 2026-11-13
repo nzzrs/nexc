@@ -149,7 +149,9 @@ void main() {
       await db.close();
     });
 
-    await container.read(datasetRepositoryProvider).updateDatasetOnAppUpdate(1);
+    await container
+        .read(datasetRepositoryProvider)
+        .updateDatasetOnAppUpdate(DatasetRepository.datasetRevision);
 
     final rows = await db.select(db.exerciseData).get();
     expect(rows, hasLength(912));
@@ -164,18 +166,18 @@ void main() {
         await db.close();
       });
 
-      // Populate the dataset at a newer version, then simulate a stale stored
-      // version while keeping a populated table (> 500 rows) so only the
-      // version comparison can trigger the reload.
+      // Populate the dataset at the current revision, then simulate a stale
+      // stored revision while keeping a populated table (> 500 rows) so only
+      // the revision comparison can trigger the reload.
       await container
           .read(datasetRepositoryProvider)
-          .updateDatasetOnAppUpdate(5);
+          .updateDatasetOnAppUpdate(DatasetRepository.datasetRevision);
       await container.read(settingsProvider.notifier).setPastVersionCode(1);
       await db.into(db.exerciseData).insertOnConflictUpdate(_customExercise());
 
       await container
           .read(datasetRepositoryProvider)
-          .updateDatasetOnAppUpdate(5);
+          .updateDatasetOnAppUpdate(DatasetRepository.datasetRevision);
 
       final rows = await db.select(db.exerciseData).get();
       expect(rows, hasLength(913));
@@ -183,18 +185,21 @@ void main() {
         rows.where((row) => row.id == 'custom_test_exercise'),
         hasLength(1),
       );
-      expect(container.read(settingsProvider).pastVersionCode, 5);
+      expect(container.read(settingsProvider).pastVersionCode,
+          DatasetRepository.datasetRevision);
     },
   );
 
-  test('newer stored version does not trigger a reload', () async {
+  test('same or newer stored revision does not trigger a reload', () async {
     final (db, container) = await _createContainer();
     addTearDown(() async {
       container.dispose();
       await db.close();
     });
 
-    await container.read(datasetRepositoryProvider).updateDatasetOnAppUpdate(5);
+    await container
+        .read(datasetRepositoryProvider)
+        .updateDatasetOnAppUpdate(DatasetRepository.datasetRevision);
 
     // Mark a dataset row with a sentinel so a re-import would overwrite it.
     await (db.update(
@@ -213,10 +218,26 @@ void main() {
       ),
     );
 
-    // Downgrade the current version code: stored 5 >= current 4, no reload.
-    await container.read(datasetRepositoryProvider).updateDatasetOnAppUpdate(4);
+    // Stored revision equals the current one: no reload.
+    await container.read(settingsProvider.notifier).setPastVersionCode(
+          DatasetRepository.datasetRevision,
+        );
+    await container
+        .read(datasetRepositoryProvider)
+        .updateDatasetOnAppUpdate(DatasetRepository.datasetRevision);
+    var row = await (db.select(
+      db.exerciseData,
+    )..where((row) => row.id.equals('3_4_Sit-Up'))).getSingle();
+    expect(row.name, 'Sentinel Name');
 
-    final row = await (db.select(
+    // Stored revision is newer than the current one: no reload either.
+    await container
+        .read(settingsProvider.notifier)
+        .setPastVersionCode(DatasetRepository.datasetRevision + 1);
+    await container
+        .read(datasetRepositoryProvider)
+        .updateDatasetOnAppUpdate(DatasetRepository.datasetRevision);
+    row = await (db.select(
       db.exerciseData,
     )..where((row) => row.id.equals('3_4_Sit-Up'))).getSingle();
     expect(row.name, 'Sentinel Name');

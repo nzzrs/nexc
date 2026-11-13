@@ -155,6 +155,13 @@ class SettingsScreen extends ConsumerWidget {
             isChecked: settings.materialMode,
             onClick: () => notifier.setMaterialMode(!settings.materialMode),
           ),
+          _SettingItem(
+            settingName: 'Show exercise images',
+            settingDesc: settings.showExerciseImages ? 'Images shown' : 'Images hidden',
+            icon: Icons.image_outlined,
+            isChecked: settings.showExerciseImages,
+            onClick: () => notifier.setShowExerciseImages(!settings.showExerciseImages),
+          ),
 
           const SizedBox(height: 16),
 

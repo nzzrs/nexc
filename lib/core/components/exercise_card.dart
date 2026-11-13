@@ -8,10 +8,12 @@
  */
 
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../db/enums.dart';
 import '../db/relations.dart';
+import '../providers/settings_provider.dart';
 
-class ExerciseCard extends StatefulWidget {
+class ExerciseCard extends ConsumerStatefulWidget {
   const ExerciseCard({
     super.key,
     required this.index,
@@ -84,10 +86,10 @@ class ExerciseCard extends StatefulWidget {
   final bool isReordering;
 
   @override
-  State<ExerciseCard> createState() => _ExerciseCardState();
+  ConsumerState<ExerciseCard> createState() => _ExerciseCardState();
 }
 
-class _ExerciseCardState extends State<ExerciseCard> {
+class _ExerciseCardState extends ConsumerState<ExerciseCard> {
   bool _isNotesExpanded = false;
   late TextEditingController _notesController;
   late TextEditingController _restTimeController;
@@ -124,6 +126,9 @@ class _ExerciseCardState extends State<ExerciseCard> {
     final ex = widget.exerciseWithSets.exercise;
     final dc = widget.exerciseWithSets.exerciseDC;
     final sets = widget.exerciseWithSets.sets;
+    final showImages = ref.watch(
+      settingsProvider.select((s) => s.showExerciseImages),
+    );
 
     return Card(
       color: theme.colorScheme.surfaceContainerHigh,
@@ -175,7 +180,7 @@ class _ExerciseCardState extends State<ExerciseCard> {
                             color: theme.colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(12),
                           ),
-                          child: dc.images.isNotEmpty
+                          child: showImages && dc.images.isNotEmpty
                               ? ClipRRect(
                                   borderRadius: BorderRadius.circular(12),
                                   child: Image.asset(

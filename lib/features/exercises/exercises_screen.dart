@@ -190,6 +190,9 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final showImages = ref.watch(
+      settingsProvider.select((s) => s.showExerciseImages),
+    );
 
     final isReplacing = widget.targetExerciseToReplace != null;
 
@@ -547,7 +550,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                         ),
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
-                          child: ex.images.isNotEmpty
+                          child: showImages && ex.images.isNotEmpty
                               ? Image.asset(
                                   'assets/exercise_images/${ex.images.first.replaceAll('/', '_')}',
                                   fit: BoxFit.cover,

@@ -312,7 +312,7 @@ void main() {
         final version = await migrated
             .customSelect('PRAGMA user_version')
             .getSingle();
-        expect(version.read<int>('user_version'), equals(23));
+        expect(version.read<int>('user_version'), equals(24));
       },
     );
   });

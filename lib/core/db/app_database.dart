@@ -549,7 +549,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase.executor(super.executor);
 
   @override
-  int get schemaVersion => 23;
+  int get schemaVersion => 24;
 
   Future<bool> _tableExists(String table) async {
     final rows = await customSelect(
@@ -831,6 +831,17 @@ class AppDatabase extends _$AppDatabase {
           'position',
           'position INTEGER NOT NULL DEFAULT 0',
         );
+      }
+      if (from < 24) {
+        // Weights are stored in kilograms from v24 on. Legacy pound rows are
+        // converted once; the WHERE clause keeps the migration idempotent.
+        if (await _tableExists('sets') &&
+            await _hasColumn('sets', 'weightUnit')) {
+          await customStatement(
+            'UPDATE sets SET load = load * 0.45359237, "weightUnit" = \'kg\' '
+            'WHERE "weightUnit" = \'lbs\'',
+          );
+        }
       }
     },
   );

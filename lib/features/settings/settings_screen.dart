@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/db/enums.dart';
+import '../../core/util/unit_system.dart';
 
 class SettingsScreen extends ConsumerWidget {
   const SettingsScreen({super.key});
@@ -104,6 +105,15 @@ class SettingsScreen extends ConsumerWidget {
     }
   }
 
+  String _getUnitSystemLabel(UnitSystem system) {
+    switch (system) {
+      case UnitSystem.metric:
+        return 'Metric';
+      case UnitSystem.imperial:
+        return 'Imperial';
+    }
+  }
+
   String _getRoutineUpdateModeLabel(RoutineUpdateMode mode) {
     switch (mode) {
       case RoutineUpdateMode.never:
@@ -179,6 +189,21 @@ class SettingsScreen extends ConsumerWidget {
                 selectedValue: settings.language,
                 labelBuilder: _getLanguageLabel,
                 onSelected: notifier.setLanguage,
+              );
+            },
+          ),
+          _SettingItem(
+            settingName: 'Unit system',
+            settingDesc: _getUnitSystemLabel(settings.unitSystem),
+            icon: Icons.scale_outlined,
+            onClick: () {
+              _showSingleChoiceDialog<UnitSystem>(
+                context: context,
+                title: 'Select unit system',
+                options: UnitSystem.values,
+                selectedValue: settings.unitSystem,
+                labelBuilder: _getUnitSystemLabel,
+                onSelected: notifier.setUnitSystem,
               );
             },
           ),

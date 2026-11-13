@@ -11,6 +11,7 @@ import 'package:flutter/material.dart' show ThemeMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../db/enums.dart';
+import '../util/unit_system.dart';
 
 final sharedPreferencesProvider = Provider<SharedPreferences>((ref) {
   throw UnimplementedError();
@@ -31,6 +32,7 @@ class SettingsState {
   final bool restTimerVibrationOn;
   final Language language;
   final RoutineUpdateMode routineUpdateMode;
+  final UnitSystem unitSystem;
   
   // New Global Targets
   final double targetProtein;
@@ -89,6 +91,7 @@ class SettingsState {
     required this.restTimerVibrationOn,
     required this.language,
     required this.routineUpdateMode,
+    required this.unitSystem,
     required this.targetProtein,
     required this.targetCarbs,
     required this.targetFats,
@@ -133,6 +136,7 @@ class SettingsState {
     bool? restTimerVibrationOn,
     Language? language,
     RoutineUpdateMode? routineUpdateMode,
+    UnitSystem? unitSystem,
     double? targetProtein,
     double? targetCarbs,
     double? targetFats,
@@ -175,6 +179,7 @@ class SettingsState {
       restTimerVibrationOn: restTimerVibrationOn ?? this.restTimerVibrationOn,
       language: language ?? this.language,
       routineUpdateMode: routineUpdateMode ?? this.routineUpdateMode,
+      unitSystem: unitSystem ?? this.unitSystem,
       targetProtein: targetProtein ?? this.targetProtein,
       targetCarbs: targetCarbs ?? this.targetCarbs,
       targetFats: targetFats ?? this.targetFats,
@@ -238,6 +243,12 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       orElse: () => RoutineUpdateMode.never,
     );
 
+    final unitSystemName = prefs.getString('unit_system');
+    final unitSystem = UnitSystem.values.firstWhere(
+      (system) => system.name == unitSystemName,
+      orElse: resolveDefaultUnitSystemFromPlatform,
+    );
+
     final targetProtein = prefs.getDouble('target_protein') ?? 150.0;
     final targetCarbs = prefs.getDouble('target_carbs') ?? 200.0;
     final targetFats = prefs.getDouble('target_fats') ?? 70.0;
@@ -286,6 +297,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       restTimerVibrationOn: restTimerVibrationOn,
       language: language,
       routineUpdateMode: routineUpdateMode,
+      unitSystem: unitSystem,
       targetProtein: targetProtein,
       targetCarbs: targetCarbs,
       targetFats: targetFats,
@@ -383,6 +395,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setRoutineUpdateMode(RoutineUpdateMode mode) async {
     await _prefs.setString('routine_update_mode', mode.name);
     state = state.copyWith(routineUpdateMode: mode);
+  }
+
+  Future<void> setUnitSystem(UnitSystem system) async {
+    await _prefs.setString('unit_system', system.name);
+    state = state.copyWith(unitSystem: system);
   }
 
   Future<void> setTargetMacros(double p, double c, double f) async {

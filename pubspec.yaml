@@ -97,6 +97,7 @@ flutter:
   assets:
     - assets/exercises.json
     - assets/foods.json
+    - assets/docs/
     - assets/images/
     - assets/sounds/
     - assets/exercise_images/

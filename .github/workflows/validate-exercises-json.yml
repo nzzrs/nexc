@@ -4,22 +4,27 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - 'app/src/main/res/raw/exercises.json'
+      - "assets/exercises.json"
+      - "schemas/exercises-schema.json"
+      - ".github/workflows/validate-exercises-json.yml"
   pull_request:
     paths:
-      - 'app/src/main/res/raw/exercises.json'
+      - "assets/exercises.json"
+      - "schemas/exercises-schema.json"
+      - ".github/workflows/validate-exercises-json.yml"
 
 jobs:
   validate:
+    name: Validate assets/exercises.json
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Setup node
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: "20"
 
       - name: Validate JSON file
-        run: npx ajv-cli validate -s schemas/exercises-schema.json -d "app/src/main/res/raw/exercises.json"
+        run: npx --yes ajv-cli@5 validate -s schemas/exercises-schema.json -d assets/exercises.json

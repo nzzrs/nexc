@@ -56,6 +56,12 @@ flutter run
 flutter test
 ```
 
+### Releases
+
+Tag builds are produced by GitHub Actions. Builds are best-effort reproducible and
+publish a SHA-256 checksum; see [REPRODUCIBLE.md](REPRODUCIBLE.md) for the current
+method and how to verify a download.
+
 ---
 
 ## Project structure

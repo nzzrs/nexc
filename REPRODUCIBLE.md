@@ -1,46 +1,75 @@
-# Reproducible Builds
+# Release Builds & Verification
 
-This project supports [Reproducible Builds](https://reproducible-builds.org/).
-This means the APK distributed on GitHub or F-Droid matches the source code exactly, proving no hidden code was injected during the release process.
+Nexc ships an Android APK built from source by GitHub Actions on every `v*` tag.
+The build is **best-effort reproducible**: it aims for a deterministic, inspectable
+artifact, but the APK is **not guaranteed to be byte-identical** between local and
+CI builds.
 
-> [!TIP]
-> More info at: https://f-droid.org/docs/Reproducible_Builds/
+> [!IMPORTANT]
+> Earlier LibreFit-era documentation claimed byte-identical APKs. That claim does
+> not hold for the current Flutter build pipeline and has been removed.
 
-## How to verify
+## Why the APK is not byte-identical
 
-The proof of a reproducible build is when the SHA-256 hash of a locally built APK matches the CI's build.
-This guarantees the compiler, code, and resources are exactly the same.
+Flutter release builds are not fully deterministic:
 
-## Prerequisites
-- Git
-- JDK 21
+- The Flutter engine AOT snapshot and the Dart kernel compilation embed timestamps
+  and build paths in some artifacts.
+- Flutter tooling and the Android Gradle Plugin regenerate build intermediates,
+  resource tables and zip metadata on each run.
+- `zipalign`/`apksigner` padding and signing metadata differ when the environment
+  differs (JDK, SDK build-tools, NDK and dependency resolution).
+- Dependency versions are pinned by `pubspec.lock`, but the Android toolchain is
+  resolved from the runner image.
 
-> Version 21 because F-droid use it so CI use it to ensure reproducibility, however other versions may work (e.g. 17) 
+The workflow therefore publishes a **SHA-256 checksum next to the APK** so a build
+can be compared for equality when it comes from the same toolchain, and so any
+given download can be integrity-checked.
 
-## Guide
+## What the release workflow does
 
-To reproduce the **APKs** exactly as it was built by the CI server:
+`.github/workflows/reproducible-release.yml`:
 
-1.  **Clone the repository and checkout the tag/commit to verify:**
-    ```bash
-    git clone https://github.com/NexcOrg/Nexc.git
-    cd Nexc
-    # Specify version tag (e.g. v0.1.0)
-    git checkout v0.1.0
-    ```
+1. Checks out the tagged commit.
+2. Sets up JDK 17 (Temurin) and Flutter 3.38.8 stable.
+3. Runs `flutter pub get` and `flutter build apk --release`.
+4. Copies the APK to `Nexc-release.apk` and writes `Nexc-release.apk.sha256`.
+5. Attaches both files to the GitHub release for the tag.
 
-2.  **Build the release APK locally:**
-    ```bash
-    ./gradlew clean assembleRelease --no-daemon
-    ```
-    The APK will be at `app/build/outputs/apk/release/Nexc-release-unsigned.apk`.
+Release signing is not configured yet: the APK is signed with the Android debug
+key, so it is suitable for testing and inspection, not for store distribution.
 
-3.  **Verify unsigned APK built by CI server:**
-    Download the unsigned APK (`Librefit-unsigned.apk`) from CI server.
-    To ensure the APKs are identical, their SHA-256 must match.
-    For instance, the following command computes both their hashes:
-    ```bash
-    # Output SHA-256 of CI's APK and locally built APK
-    sha256sum Nexc-unsigned.apk Nexc-release-unsigned.apk
-    ```
-    ✅ Verification is successful if and only if hashes are identical.
+## Verifying a download
+
+Check the published checksum:
+
+```bash
+sha256sum -c Nexc-release.apk.sha256
+```
+
+## Building locally with the same toolchain
+
+Prerequisites: Git, JDK 17, Android SDK, Flutter **3.38.8** stable
+(the version pinned in [`.tool-versions`](.tool-versions)).
+
+```bash
+git clone https://github.com/nzzrs/nexc.git
+cd nexc
+git checkout v0.2.0-alpha.1
+flutter pub get
+flutter build apk --release
+sha256sum build/app/outputs/flutter-apk/app-release.apk
+```
+
+Builds produced with the exact same Flutter version, JDK, Android SDK/Build-Tools
+and dependency lockfile *may* match the CI artifact. Treat a match as a bonus, not
+as a guarantee, and review the diff against the tagged source when investigating a
+mismatch.
+
+## Reproducibility roadmap
+
+- Pin the Android SDK Build-Tools and NDK versions used by CI.
+- Normalise timestamps in the APK (for example with `SOURCE_DATE_EPOCH`-aware
+  packaging) once Flutter tooling supports it end to end.
+- Configure a real release signing key so published APKs can be verified against a
+  public certificate fingerprint.

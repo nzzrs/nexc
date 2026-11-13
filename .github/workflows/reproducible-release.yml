@@ -1,78 +1,70 @@
-name: Reproducible Release
+name: Release
+
 on:
   workflow_dispatch:
   push:
     tags:
-      - 'v*' # Triggers only pushing a tag like v1.0.0
+      - "v*" # Triggers on tag pushes like v1.0.0
+
+permissions:
+  contents: write # Required to upload files to Releases
+
+env:
+  FLUTTER_VERSION: "3.38.8"
 
 jobs:
   build-and-release:
+    name: Build release APK
     runs-on: ubuntu-latest
-    permissions:
-      contents: write # Required to upload files to Releases
-
     steps:
       - name: Check out code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 21
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '21'
-          distribution: 'temurin'
-          cache: 'gradle'
+          java-version: "17"
+          distribution: temurin
 
-      - name: Build unsigned release APK
-        env:
-          SOURCE_DATE_EPOCH: 1700000000
-        # --no-daemon ensures a fresh, reproducible environment in CI
-        run: ./gradlew clean assembleRelease --no-daemon
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
 
-      - name: Sign APK
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASS }}
-          KEY_ALIAS: 'librefit_release'
-          KEY_PASSWORD: ${{ secrets.KEYSTORE_PASS }}
+      - name: Print tool versions
         run: |
-          # Decode keystore from Base64
-          echo "$KEYSTORE_BASE64" | base64 --decode > release.jks
-          
-          # Rename unsigned apk
-          mv "app/build/outputs/apk/release/LibreFit-release-unsigned.apk" "app/build/outputs/apk/release/LibreFit-unsigned.apk"
-          
-          UNSIGNED_APK="app/build/outputs/apk/release/LibreFit-unsigned.apk"
-          ALIGNED_APK="app/build/outputs/apk/release/LibreFit-aligned.apk"
-          SIGNED_APK="app/build/outputs/apk/release/LibreFit.apk"
-          BUILD_TOOLS_DIR="$ANDROID_HOME/build-tools/36.0.0"
-          
-          # Align to 16KB (Capital P is required for build tools 36)
-          $BUILD_TOOLS_DIR/zipalign -f -P 16 -v 4 "$UNSIGNED_APK" "$ALIGNED_APK"
-          
-          # Sign with preservation: --alignment-preserved prevents apksigner from changing the padding bytes
-          # Use "env:" to pass passwords securely without exposing them in CI logs
-          $BUILD_TOOLS_DIR/apksigner sign \
-            --ks release.jks \
-            --ks-key-alias "$KEY_ALIAS" \
-            --ks-pass "env:KEYSTORE_PASSWORD" \
-            --key-pass "env:KEY_PASSWORD" \
-            --alignment-preserved \
-            --out "$SIGNED_APK" \
-            "$ALIGNED_APK"
-          
-          # Clean up the keystore
-          rm release.jks
+          flutter --version
+          dart --version
 
-      # This is just for testing the manual run
-      - name: Upload artifacts if not releasing
+      - name: Install dependencies
+        run: flutter pub get
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Prepare release assets
+        run: |
+          mkdir -p dist
+          cp build/app/outputs/flutter-apk/app-release.apk dist/Nexc-release.apk
+          sha256sum dist/Nexc-release.apk > dist/Nexc-release.apk.sha256
+          echo "### APK checksum" >> "$GITHUB_STEP_SUMMARY"
+          cat dist/Nexc-release.apk.sha256 >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Warn about signing
+        run: echo "::warning::Release APK is signed with the Android debug key until release signing is configured."
+
+      # Manual runs without a tag only exercise the build.
+      - name: Upload artifacts
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         uses: actions/upload-artifact@v4
         with:
-          path: |
-            app/build/outputs/apk/release/LibreFit-unsigned.apk
-            app/build/outputs/apk/release/LibreFit.apk
+          name: nexc-release-apk
+          path: dist/
+          if-no-files-found: error
+          retention-days: 14
 
-      # It extracts notes from CHANGELOG.md by default
       - name: Extract release notes
         id: extract_notes
         uses: ffurrer2/extract-release-notes@v2
@@ -82,7 +74,7 @@ jobs:
         if: startsWith(github.ref, 'refs/tags/')
         with:
           files: |
-            app/build/outputs/apk/release/LibreFit-unsigned.apk
-            app/build/outputs/apk/release/LibreFit.apk
+            dist/Nexc-release.apk
+            dist/Nexc-release.apk.sha256
           body: ${{ steps.extract_notes.outputs.release_notes }}
-          append_body: true # List new contributors
+          append_body: true

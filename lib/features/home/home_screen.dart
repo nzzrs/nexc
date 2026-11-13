@@ -9,12 +9,20 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/components/nexc_confirm_sheet.dart';
+import '../../core/components/nexc_empty_state.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/workout_repository.dart';
 import '../../core/l10n/l10n.dart';
-import '../../core/providers/workout_providers.dart';
 import '../../core/providers/settings_provider.dart';
+import '../../core/providers/workout_providers.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/shapes.dart';
+import '../../core/theme/spacing.dart';
+import '../../core/util/format.dart';
 
+/// Workout tab: active session hero plus the routine library.
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
@@ -22,11 +30,7 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _pulseController;
-  late Animation<Color?> _borderColorAnimation;
-
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   /// Routine ids in the order last dropped by the user.
   ///
   /// The database stream stays the source of truth for routine contents; this
@@ -39,10 +43,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   ) {
     if (_localOrderIds.isEmpty) return routines;
 
-    final byId = {for (final item in routines) item.workout.id: item};
-    final ordered = <WorkoutWithExercisesAndSets>[];
-    for (final id in _localOrderIds) {
-      final item = byId.remove(id);
+    final Map<int, WorkoutWithExercisesAndSets> byId = {
+      for (final WorkoutWithExercisesAndSets item in routines)
+        item.workout.id: item,
+    };
+    final List<WorkoutWithExercisesAndSets> ordered =
+        <WorkoutWithExercisesAndSets>[];
+    for (final int id in _localOrderIds) {
+      final WorkoutWithExercisesAndSets? item = byId.remove(id);
       if (item != null) ordered.add(item);
     }
     ordered.addAll(byId.values);
@@ -56,212 +64,206 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
   ) async {
     if (routines.length < 2) return;
 
-    var targetIndex = newIndex;
+    int targetIndex = newIndex;
     if (targetIndex > oldIndex) targetIndex -= 1;
     if (targetIndex == oldIndex) return;
 
-    final reordered = List<WorkoutWithExercisesAndSets>.of(routines);
-    final moved = reordered.removeAt(oldIndex);
+    final List<WorkoutWithExercisesAndSets> reordered =
+        List<WorkoutWithExercisesAndSets>.of(routines);
+    final WorkoutWithExercisesAndSets moved = reordered.removeAt(oldIndex);
     reordered.insert(targetIndex, moved);
 
     setState(() {
-      _localOrderIds = reordered.map((item) => item.workout.id).toList();
+      _localOrderIds = reordered
+          .map((WorkoutWithExercisesAndSets item) => item.workout.id)
+          .toList();
     });
 
     await ref
         .read(workoutRepositoryProvider)
-        .updateRoutinePositions(reordered.map((item) => item.workout).toList());
-  }
-
-  @override
-  void initState() {
-    super.initState();
-    _pulseController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 1),
-    )..repeat(reverse: true);
-  }
-
-  @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    final theme = Theme.of(context);
-    _borderColorAnimation = ColorTween(
-      begin: Colors.transparent,
-      end: theme.colorScheme.secondary.withValues(alpha: 0.8),
-    ).animate(_pulseController);
-  }
-
-  @override
-  void dispose() {
-    _pulseController.dispose();
-    super.dispose();
-  }
-
-  String _formatTime(int seconds) {
-    final m = (seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (seconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
-  }
-
-  void _showDiscardDialog(Workout workout) {
-    final l10n = context.l10n;
-    showDialog(
-      context: context,
-      builder: (dialogCtx) {
-        return AlertDialog(
-          title: Text(l10n.discardRunningWorkoutTitle),
-          content: Text(l10n.discardWorkoutMessage),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: Text(l10n.cancel),
-            ),
-            TextButton(
-              onPressed: () async {
-                final nav = Navigator.of(dialogCtx);
-                final repo = ref.read(workoutRepositoryProvider);
-                await repo.deleteWorkout(workout);
-                if (mounted) nav.pop();
-              },
-              child: Text(
-                l10n.discard,
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
+        .updateRoutinePositions(
+          reordered
+              .map((WorkoutWithExercisesAndSets item) => item.workout)
+              .toList(),
         );
-      },
-    );
   }
 
-  void _showDiscardAndStartRoutineDialog(Workout running, int routineId) {
-    final l10n = context.l10n;
-    showDialog(
+  void _createRoutine() {
+    Navigator.pushNamed(context, '/edit-workout', arguments: 0);
+  }
+
+  Future<bool> _confirmDiscard({required String message}) async {
+    final bool? confirmed = await NexcConfirmSheet.show(
       context: context,
-      builder: (dialogCtx) {
-        return AlertDialog(
-          title: Text(l10n.discardRunningWorkoutTitle),
-          content: Text(l10n.discardWorkoutAndStartRoutineMessage),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(dialogCtx),
-              child: Text(l10n.cancel),
-            ),
-            TextButton(
-              onPressed: () async {
-                final nav = Navigator.of(dialogCtx);
-                final repo = ref.read(workoutRepositoryProvider);
-                await repo.deleteWorkout(running);
-                if (mounted) {
-                  nav.pop();
-                  nav.pushNamed('/workout', arguments: routineId);
-                }
-              },
-              child: Text(
-                l10n.discardAndStart,
-                style: const TextStyle(color: Colors.red),
-              ),
-            ),
-          ],
-        );
-      },
+      title: context.l10n.discardRunningWorkoutTitle,
+      message: message,
+      confirmLabel: context.l10n.discard,
+      cancelLabel: context.l10n.cancel,
+      destructive: true,
     );
+    return confirmed ?? false;
+  }
+
+  Future<void> _discardWorkout(Workout workout) async {
+    final bool confirmed = await _confirmDiscard(
+      message: context.l10n.discardWorkoutMessage,
+    );
+    if (!confirmed || !mounted) return;
+    await ref.read(workoutRepositoryProvider).deleteWorkout(workout);
+  }
+
+  Future<void> _startRoutine(Workout routine, Workout? running) async {
+    if (running != null) {
+      final bool confirmed = await _confirmDiscard(
+        message: context.l10n.discardWorkoutAndStartRoutineMessage,
+      );
+      if (!confirmed || !mounted) return;
+      await ref.read(workoutRepositoryProvider).deleteWorkout(running);
+      if (!mounted) return;
+    }
+    if (!mounted) return;
+    Navigator.pushNamed(context, '/workout', arguments: routine.id);
+  }
+
+  Future<void> _deleteRoutine(Workout routine) async {
+    final bool? confirmed = await NexcConfirmSheet.show(
+      context: context,
+      title: context.l10n.deleteRoutineTitle,
+      message: context.l10n.deleteRoutineMessage,
+      confirmLabel: context.l10n.delete,
+      cancelLabel: context.l10n.cancel,
+      destructive: true,
+    );
+    if (confirmed != true || !mounted) return;
+    await ref.read(workoutRepositoryProvider).deleteWorkout(routine);
+  }
+
+  void _openRoutine(Workout routine) {
+    Navigator.pushNamed(context, '/info-workout', arguments: routine.id);
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = context.l10n;
-    final routinesAsync = ref.watch(routinesProvider);
-    final runningWorkoutAsync = ref.watch(runningWorkoutProvider);
+    final AsyncValue<WorkoutWithExercisesAndSets?> runningAsync = ref.watch(
+      runningWorkoutProvider,
+    );
+    final AsyncValue<List<WorkoutWithExercisesAndSets>> routinesAsync = ref
+        .watch(routinesProvider);
+    final bool aiEnabled = ref
+        .watch(settingsProvider)
+        .aiWorkoutGenerationEnabled;
+    final Workout? running = runningAsync.value?.workout;
 
     return ListView(
-      padding: const EdgeInsets.all(16.0),
+      padding: const EdgeInsets.fromLTRB(
+        NexcSpacing.lg,
+        NexcSpacing.md,
+        NexcSpacing.lg,
+        NexcSpacing.section * 2,
+      ),
       children: [
-        // 1. Running Workout Card
-        runningWorkoutAsync.when(
-          data: (runningWorkout) {
-            final hasRunning = runningWorkout != null;
-            if (!hasRunning) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 18,
-                      horizontal: 24,
-                    ),
-                    textStyle: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/workout', arguments: 0);
-                  },
-                  icon: const Icon(Icons.play_arrow, size: 24),
-                  label: Text(l10n.startEmptyWorkout),
-                ),
+        runningAsync.when(
+          data: (WorkoutWithExercisesAndSets? workout) {
+            if (workout == null) {
+              return FilledButton.icon(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/workout', arguments: 0);
+                },
+                icon: const Icon(NexcIcons.play),
+                label: Text(l10n.startEmptyWorkout),
               );
             }
-            return AnimatedBuilder(
-              animation: _pulseController,
-              builder: (context, child) {
-                return Container(
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: _borderColorAnimation.value ?? Colors.transparent,
-                      width: 2.5,
-                    ),
-                  ),
-                  child: Card(
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          FilledButton.icon(
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 14),
-                              textStyle: const TextStyle(fontSize: 16),
-                            ),
-                            onPressed: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/workout',
-                                arguments: runningWorkout.workout.id,
-                              );
-                            },
-                            icon: const Icon(Icons.play_arrow),
-                            label: Text(l10n.resumeWorkout),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                l10n.elapsedTime(
-                                  _formatTime(
-                                    runningWorkout.workout.timeElapsed,
-                                  ),
-                                ),
-                                style: theme.textTheme.bodyMedium,
-                              ),
-                              IconButton(
-                                icon: const Icon(Icons.delete_outline),
-                                onPressed: () =>
-                                    _showDiscardDialog(runningWorkout.workout),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
+            return _ActiveWorkoutCard(
+              workout: workout,
+              onResume: () {
+                Navigator.pushNamed(
+                  context,
+                  '/workout',
+                  arguments: workout.workout.id,
+                );
+              },
+              onDiscard: () => _discardWorkout(workout.workout),
+            );
+          },
+          loading: () => const Center(
+            child: Padding(
+              padding: EdgeInsets.all(NexcSpacing.lg),
+              child: CircularProgressIndicator(),
+            ),
+          ),
+          error: (Object error, StackTrace stack) => Text(
+            l10n.errorLoadingActiveWorkout('$error'),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.error,
+            ),
+          ),
+        ),
+        const SizedBox(height: NexcSpacing.xl),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                l10n.yourRoutines,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+              ),
+            ),
+            Tooltip(
+              message: aiEnabled
+                  ? l10n.aiWorkoutCreator
+                  : l10n.aiWorkoutCreatorDisabled,
+              child: IconButton.filledTonal(
+                icon: const Icon(NexcIcons.ai),
+                onPressed: aiEnabled
+                    ? () => Navigator.pushNamed(context, '/workout/ai-chat')
+                    : null,
+              ),
+            ),
+            TextButton(
+              key: const Key('newRoutine'),
+              onPressed: _createRoutine,
+              child: Text(l10n.newRoutine),
+            ),
+          ],
+        ),
+        const SizedBox(height: NexcSpacing.md),
+        routinesAsync.when(
+          data: (List<WorkoutWithExercisesAndSets> routines) {
+            if (routines.isEmpty) {
+              return NexcEmptyState(
+                icon: NexcIcons.workoutIdle,
+                title: l10n.emptyRoutinesTitle,
+                message: l10n.emptyRoutinesMessage,
+                actionLabel: l10n.createRoutine,
+                onAction: _createRoutine,
+              );
+            }
+
+            final List<WorkoutWithExercisesAndSets> orderedRoutines =
+                _applyLocalOrder(routines);
+
+            return ReorderableListView.builder(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              buildDefaultDragHandles: false,
+              itemCount: orderedRoutines.length,
+              onReorder: (int oldIndex, int newIndex) =>
+                  _reorderRoutines(orderedRoutines, oldIndex, newIndex),
+              itemBuilder: (BuildContext context, int index) {
+                final WorkoutWithExercisesAndSets item = orderedRoutines[index];
+                return Padding(
+                  key: ValueKey<int>(item.workout.id),
+                  padding: const EdgeInsets.only(bottom: NexcSpacing.sm),
+                  child: _RoutineCard(
+                    routine: item,
+                    index: index,
+                    onOpen: () => _openRoutine(item.workout),
+                    onStart: () => _startRoutine(item.workout, running),
+                    onDelete: () => _deleteRoutine(item.workout),
                   ),
                 );
               },
@@ -269,178 +271,252 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
           },
           loading: () => const Center(
             child: Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(NexcSpacing.xl),
               child: CircularProgressIndicator(),
             ),
           ),
-          error: (err, stack) => Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Text(l10n.errorLoadingActiveWorkout('$err')),
+          error: (Object error, StackTrace stack) => Text(
+            l10n.errorLoadingRoutines('$error'),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: Theme.of(context).colorScheme.error,
             ),
-          ),
-        ),
-        const SizedBox(height: 24),
-
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              l10n.yourRoutines,
-              style: theme.textTheme.headlineSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            IconButton.filledTonal(
-              icon: Icon(
-                Icons.auto_awesome,
-                color: ref.watch(settingsProvider).aiWorkoutGenerationEnabled
-                    ? null
-                    : theme.disabledColor,
-              ),
-              tooltip: ref.watch(settingsProvider).aiWorkoutGenerationEnabled
-                  ? l10n.aiWorkoutCreator
-                  : l10n.aiWorkoutCreatorDisabled,
-              onPressed: () {
-                if (ref.read(settingsProvider).aiWorkoutGenerationEnabled) {
-                  Navigator.pushNamed(context, '/workout/ai-chat');
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.aiWorkoutGenerationDisabled),
-                      action: SnackBarAction(
-                        label: l10n.settingsTitle,
-                        onPressed: () =>
-                            Navigator.pushNamed(context, '/settings'),
-                      ),
-                    ),
-                  );
-                }
-              },
-            ),
-          ],
-        ),
-        const SizedBox(height: 12),
-
-        // 3. Routines List
-        routinesAsync.when(
-          data: (routines) {
-            if (routines.isEmpty) {
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 40.0),
-                child: Text(
-                  l10n.startByCreatingRoutine,
-                  textAlign: TextAlign.center,
-                ),
-              );
-            }
-
-            final orderedRoutines = _applyLocalOrder(routines);
-
-            return ReorderableListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              buildDefaultDragHandles: false,
-              itemCount: orderedRoutines.length,
-              onReorder: (oldIndex, newIndex) =>
-                  _reorderRoutines(orderedRoutines, oldIndex, newIndex),
-              itemBuilder: (context, index) {
-                final routine = orderedRoutines[index].workout;
-                return Padding(
-                  key: ValueKey(routine.id),
-                  padding: const EdgeInsets.only(bottom: 12.0),
-                  child: Card(
-                    clipBehavior: Clip.antiAlias,
-                    child: InkWell(
-                      onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/info-workout',
-                          arguments: routine.id,
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                    routine.title,
-                                    style: theme.textTheme.titleLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (routine.isTemporal) ...[
-                                  const SizedBox(width: 8),
-                                  Icon(
-                                    Icons.access_time,
-                                    size: 18,
-                                    color: theme.colorScheme.secondary,
-                                  ),
-                                ],
-                                ReorderableDragStartListener(
-                                  index: index,
-                                  child: Tooltip(
-                                    message: l10n.dragToReorder,
-                                    child: Padding(
-                                      padding: const EdgeInsets.only(left: 8.0),
-                                      child: Icon(
-                                        Icons.drag_handle,
-                                        color:
-                                            theme.colorScheme.onSurfaceVariant,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 12),
-                            FilledButton.icon(
-                              style: FilledButton.styleFrom(
-                                backgroundColor:
-                                    theme.colorScheme.secondaryContainer,
-                                foregroundColor:
-                                    theme.colorScheme.onSecondaryContainer,
-                              ),
-                              onPressed: () {
-                                final running = runningWorkoutAsync.value;
-                                if (running != null) {
-                                  _showDiscardAndStartRoutineDialog(
-                                    running.workout,
-                                    routine.id,
-                                  );
-                                } else {
-                                  Navigator.pushNamed(
-                                    context,
-                                    '/workout',
-                                    arguments: routine.id,
-                                  );
-                                }
-                              },
-                              icon: const Icon(Icons.play_arrow),
-                              label: Text(l10n.startRoutine),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                );
-              },
-            );
-          },
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Padding(
-            padding: const EdgeInsets.all(16.0),
-            child: Text(l10n.errorLoadingRoutines('$err')),
           ),
         ),
       ],
+    );
+  }
+}
+
+/// Compact hero shown while a session is running.
+class _ActiveWorkoutCard extends StatelessWidget {
+  final WorkoutWithExercisesAndSets workout;
+  final VoidCallback onResume;
+  final VoidCallback onDiscard;
+
+  const _ActiveWorkoutCard({
+    required this.workout,
+    required this.onResume,
+    required this.onDiscard,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final l10n = context.l10n;
+
+    return Material(
+      color: theme.colorScheme.secondaryContainer,
+      shape: const RoundedRectangleBorder(borderRadius: NexcShapes.lgRadius),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(NexcSpacing.lg),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        workout.workout.title,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: theme.textTheme.titleMedium?.copyWith(
+                          color: theme.colorScheme.onSecondaryContainer,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: NexcSpacing.xs),
+                      Text(
+                        l10n.elapsedTime(
+                          formatClock(workout.workout.timeElapsed),
+                        ),
+                        style: theme.textTheme.bodySmall?.copyWith(
+                          color: theme.colorScheme.onSecondaryContainer,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                PopupMenuButton<String>(
+                  tooltip: MaterialLocalizations.of(context).showMenuTooltip,
+                  icon: Icon(
+                    NexcIcons.more,
+                    color: theme.colorScheme.onSecondaryContainer,
+                  ),
+                  onSelected: (String value) {
+                    if (value == 'discard') onDiscard();
+                  },
+                  itemBuilder: (BuildContext context) => [
+                    PopupMenuItem<String>(
+                      value: 'discard',
+                      child: Row(
+                        children: [
+                          Icon(
+                            NexcIcons.delete,
+                            size: 20,
+                            color: theme.colorScheme.error,
+                          ),
+                          const SizedBox(width: NexcSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              l10n.discard,
+                              style: TextStyle(color: theme.colorScheme.error),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+            const SizedBox(height: NexcSpacing.md),
+            FilledButton.icon(
+              onPressed: onResume,
+              icon: const Icon(NexcIcons.play),
+              label: Text(l10n.resumeWorkout),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+enum _RoutineMenuAction { open, delete }
+
+/// Routine row with reorder handle, tonal play action and overflow menu.
+class _RoutineCard extends StatelessWidget {
+  final WorkoutWithExercisesAndSets routine;
+  final int index;
+  final VoidCallback onOpen;
+  final VoidCallback onStart;
+  final VoidCallback onDelete;
+
+  const _RoutineCard({
+    required this.routine,
+    required this.index,
+    required this.onOpen,
+    required this.onStart,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final l10n = context.l10n;
+    final int exerciseCount = routine.exercisesWithSets.length;
+    final String exerciseLabel = exerciseCount == 1
+        ? l10n.exerciseNoun
+        : l10n.exercisesNoun;
+
+    return Material(
+      color: theme.colorScheme.surfaceContainerLow,
+      shape: const RoundedRectangleBorder(borderRadius: NexcShapes.lgRadius),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onOpen,
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(
+            NexcSpacing.sm,
+            NexcSpacing.md,
+            NexcSpacing.xs,
+            NexcSpacing.md,
+          ),
+          child: Row(
+            children: [
+              ReorderableDragStartListener(
+                index: index,
+                child: Tooltip(
+                  message: l10n.dragToReorder,
+                  child: Padding(
+                    padding: const EdgeInsets.all(NexcSpacing.sm),
+                    child: Icon(
+                      NexcIcons.drag,
+                      size: 20,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      routine.workout.title,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.titleMedium?.copyWith(
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: NexcSpacing.xs),
+                    Text(
+                      '$exerciseCount $exerciseLabel',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              IconButton.filledTonal(
+                tooltip: l10n.startRoutine,
+                onPressed: onStart,
+                icon: const Icon(NexcIcons.play),
+              ),
+              PopupMenuButton<_RoutineMenuAction>(
+                tooltip: MaterialLocalizations.of(context).showMenuTooltip,
+                icon: Icon(
+                  NexcIcons.more,
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+                onSelected: (_RoutineMenuAction action) {
+                  switch (action) {
+                    case _RoutineMenuAction.open:
+                      onOpen();
+                    case _RoutineMenuAction.delete:
+                      onDelete();
+                  }
+                },
+                itemBuilder: (BuildContext context) => [
+                  PopupMenuItem<_RoutineMenuAction>(
+                    value: _RoutineMenuAction.open,
+                    child: Text(l10n.openThisRoutine),
+                  ),
+                  PopupMenuItem<_RoutineMenuAction>(
+                    value: _RoutineMenuAction.delete,
+                    child: Row(
+                      children: [
+                        Icon(
+                          NexcIcons.delete,
+                          size: 20,
+                          color: theme.colorScheme.error,
+                        ),
+                        const SizedBox(width: NexcSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            l10n.delete,
+                            style: TextStyle(color: theme.colorScheme.error),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

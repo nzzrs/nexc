@@ -642,5 +642,1030 @@
   "routineNotesField": "Routine notes",
   "noExercisesAdded": "No exercises added yet. Tap Add Exercise below.",
   "addExerciseTitle": "Add Exercise",
-  "discardAction": "DISCARD"
+  "discardAction": "DISCARD",
+  "notificationPermissionTitle": "Stay on Track",
+  "notificationPermissionMessage": "Nexc needs notification permission to alert you when your rest timer finishes, keeping your workouts focused and efficient.",
+  "notNow": "Not now",
+  "allow": "Allow",
+  "clearSearch": "Clear search",
+  "calendarTitle": "Calendar",
+  "selectDayHint": "Select a day to view workouts",
+  "workoutNoun": "workout",
+  "workoutsNoun": "workouts",
+  "restDayNoWorkouts": "Rest day — no workouts logged",
+  "monthJan": "Jan",
+  "monthFeb": "Feb",
+  "monthMar": "Mar",
+  "monthApr": "Apr",
+  "monthMay": "May",
+  "monthJun": "Jun",
+  "monthJul": "Jul",
+  "monthAug": "Aug",
+  "monthSep": "Sep",
+  "monthOct": "Oct",
+  "monthNov": "Nov",
+  "monthDec": "Dec",
+  "weekdayMon": "Mon",
+  "weekdayTue": "Tue",
+  "weekdayWed": "Wed",
+  "weekdayThu": "Thu",
+  "weekdayFri": "Fri",
+  "weekdaySat": "Sat",
+  "weekdaySun": "Sun",
+  "calendarDate": "{weekday}, {month} {day}",
+  "@calendarDate": {
+    "placeholders": {
+      "weekday": {
+        "type": "String"
+      },
+      "month": {
+        "type": "String"
+      },
+      "day": {
+        "type": "int"
+      }
+    }
+  },
+  "setsCompletedRatio": "{completed}/{total} sets completed",
+  "@setsCompletedRatio": {
+    "placeholders": {
+      "completed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "exerciseNoun": "exercise",
+  "exercisesNoun": "exercises",
+  "moreCount": "+{count} more",
+  "@moreCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "replaceMealItem": "Replace Meal Item",
+  "addItemToMeal": "Add Item to Meal",
+  "addItemsSelected": "Add Items ({count} selected)",
+  "@addItemsSelected": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "productsTab": "Products",
+  "recipesTab": "Recipes",
+  "createProduct": "Create Product",
+  "createRecipe": "Create Recipe",
+  "searchFoodOrProduct": "Search food or product...",
+  "searchRecipes": "Search recipes...",
+  "noProductsFound": "No products found",
+  "inStock": "In Stock",
+  "editProduct": "Edit Product",
+  "noRecipesFound": "No recipes found",
+  "ingredientsCount": "{count} ingredients",
+  "@ingredientsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "editRecipe": "Edit Recipe",
+  "gramsLabel": "Grams",
+  "unitsLabel": "Units",
+  "portionAmount": "Portion Amount",
+  "replaceAction": "Replace",
+  "addAllCount": "Add All ({count})",
+  "@addAllCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "addToMeal": "Add to Meal",
+  "macrosCompact": "{protein}g P | {carbs}g C | {fats}g F",
+  "@macrosCompact": {
+    "placeholders": {
+      "protein": {
+        "type": "String"
+      },
+      "carbs": {
+        "type": "String"
+      },
+      "fats": {
+        "type": "String"
+      }
+    }
+  },
+  "addProduct": "Add Product",
+  "nameLabel": "Name",
+  "autofillWithAi": "Autofill with AI",
+  "enterProductNameFirst": "Enter a product name first",
+  "autofilledProductDetails": "Autofilled product details!",
+  "aiError": "AI Error: {error}",
+  "@aiError": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultUnitsLabel": "Default Units",
+  "mlToGFactorRequired": "ml to g factor *",
+  "mlToGFactorLabel": "ml to g factor",
+  "requiredForMlProducts": "Required for ml-based products",
+  "unitWeightGRequired": "Unit weight (g) *",
+  "unitWeightGLabel": "Unit weight (g)",
+  "requiredForUnitsProducts": "Required for products measured in units",
+  "ediblePercentLabel": "Edible %",
+  "macrosEnergyPer100g": "Macros & Energy (per 100g)",
+  "caloriesKcal": "Calories (kcal)",
+  "proteinsG": "Proteins (g)",
+  "carbsAvailableG": "Carbs Available (g)",
+  "carbsByDiffG": "Carbs By Diff (g)",
+  "fatsG": "Fats (g)",
+  "dietaryFiberG": "Dietary Fiber (g)",
+  "isSupplementLabel": "Is Supplement",
+  "isPortableLabel": "Is Portable",
+  "isStockRawLabel": "Is Stock Raw",
+  "saveChanges": "Save Changes",
+  "validationMlFactor": "Add a positive \"ml to g factor\" so portions measured in ml can be converted to grams.",
+  "validationUnitWeight": "Add a positive \"Unit weight (g)\" so portions measured in units can be converted to grams.",
+  "addRecipe": "Add Recipe",
+  "save": "Save",
+  "instructionsProcess": "Instructions/Process",
+  "isPortableNonPortable": "Is Portable (Contains non-portable ingredients)",
+  "composition": "Composition",
+  "clearSelection": "Clear selection",
+  "searchIngredient": "Search Ingredient...",
+  "amountLabel": "Amount",
+  "addAction": "Add",
+  "ingredientLine": "{name}: {amount}",
+  "@ingredientLine": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "removeIngredient": "Remove ingredient",
+  "enterRecipeName": "Enter a recipe name",
+  "titleCannotBeEmpty": "Title cannot be empty",
+  "mealPlanSaved": "Meal plan saved",
+  "createMealPlan": "Create Meal Plan",
+  "editMealPlan": "Edit Meal Plan",
+  "planTitle": "Plan Title",
+  "notesGoal": "Notes/Goal",
+  "targetMacros": "Target Macros",
+  "proteinG": "Protein (g)",
+  "carbsG": "Carbs (g)",
+  "sumGrams": "Sum: {value}g",
+  "@sumGrams": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "mealsLabel": "Meals",
+  "mealNumber": "Meal {number}",
+  "@mealNumber": {
+    "placeholders": {
+      "number": {
+        "type": "int"
+      }
+    }
+  },
+  "addMeal": "Add Meal",
+  "deleteMeal": "Delete Meal",
+  "deleteMealConfirm": "Are you sure you want to delete '{name}'?",
+  "@deleteMealConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "unknownProduct": "Unknown Product",
+  "unknownRecipe": "Unknown Recipe",
+  "editItem": "Edit Item",
+  "selectActionForItem": "Select an action for this item.",
+  "addItem": "Add Item",
+  "mealItemFallback": "Meal Item",
+  "chooseActionForItem": "Choose an action for this item in today's meal log:",
+  "addSnack": "Add Snack",
+  "todayPlanTab": "Today's plan",
+  "mealPlansTab": "Meal plans",
+  "selectMealPlanForToday": "Select a meal plan for today",
+  "goToMealPlans": "Go to Meal Plans",
+  "startLogging": "Start Logging",
+  "discardTodayMeals": "Discard Today's Meals",
+  "discardTodayMealsMessage": "Are you sure you want to discard today's meals log? This cannot be undone.",
+  "saveTodayMeals": "Save Today's Meals",
+  "saveTodayMealsMessage": "This will save all items marked as eaten to your logs and remove any uneaten items. Proceed?",
+  "todayMealsLogged": "Today's meals logged successfully!",
+  "noMealPlansYet": "No meal plans yet",
+  "deleteMealPlan": "Delete Meal Plan",
+  "deleteMealPlanConfirm": "Are you sure you want to delete '{title}'?",
+  "@deleteMealPlanConfirm": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "changeMealPlan": "Change Meal Plan?",
+  "changeMealPlanMessage": "Changing today's plan will discard all food currently logged for today. Proceed?",
+  "proceed": "Proceed",
+  "todaysMacros": "Today's Macros",
+  "proteinLabel": "Protein",
+  "carbsLabel": "Carbs",
+  "fatsLabel": "Fats",
+  "portable": "Portable",
+  "homeOnly": "Home only",
+  "atHome": "At Home",
+  "outside": "Outside",
+  "edibleEquivalent": "≈ {amount}g edible",
+  "@edibleEquivalent": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "editDailyMacroGoals": "Edit Daily Macro Goals",
+  "scheduledMeals": "{count} scheduled meals ({names})",
+  "@scheduledMeals": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      },
+      "names": {
+        "type": "String"
+      }
+    }
+  },
+  "selectedLabel": "Selected",
+  "selectLabel": "Select",
+  "macroChip": "{label}: {value}",
+  "@macroChip": {
+    "placeholders": {
+      "label": {
+        "type": "String"
+      },
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "addNoteHint": "Add note...",
+  "addItemToMealLower": "Add item to meal",
+  "deleteProduct": "Delete Product",
+  "deleteProductConfirm": "Are you sure you want to delete '{name}'?",
+  "@deleteProductConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "supplement": "Supplement",
+  "protGrams": "Prot: {value}g",
+  "@protGrams": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "carbGrams": "Carb: {value}g",
+  "@carbGrams": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "fatGrams": "Fat: {value}g",
+  "@fatGrams": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultWithValue": "Default: {value}",
+  "@defaultWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteRecipe": "Delete Recipe",
+  "deleteRecipeConfirm": "Are you sure you want to delete '{name}'?",
+  "@deleteRecipeConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "macrosPrefixLine": "Macros: P {protein}g | C {carbs}g | F {fats}g",
+  "@macrosPrefixLine": {
+    "placeholders": {
+      "protein": {
+        "type": "String"
+      },
+      "carbs": {
+        "type": "String"
+      },
+      "fats": {
+        "type": "String"
+      }
+    }
+  },
+  "ingredientWithAmount": "{name} ({amount})",
+  "@ingredientWithAmount": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      },
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "selectProduct": "Select Product",
+  "usedCount": "Used {count}x",
+  "@usedCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "unitWithValue": "Unit: {value}",
+  "@unitWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "macrosShort": "P {protein}g | C {carbs}g | F {fats}g",
+  "@macrosShort": {
+    "placeholders": {
+      "protein": {
+        "type": "String"
+      },
+      "carbs": {
+        "type": "String"
+      },
+      "fats": {
+        "type": "String"
+      }
+    }
+  },
+  "inStockBadge": "In stock",
+  "mealPlanDetails": "Meal Plan Details",
+  "edit": "Edit",
+  "mealPlanNotFound": "Meal plan not found",
+  "measurementsMenu": "Measurements",
+  "personalInfo": "Personal Info",
+  "statisticsMenu": "Statistics",
+  "stockTitle": "Stock",
+  "overview": "Overview",
+  "errorLoadingChart": "Error loading chart: {error}",
+  "@errorLoadingChart": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "yourWorkouts": "Your workouts",
+  "viewAll": "View all",
+  "startCompletingWorkouts": "Start completing workouts to see your history here.",
+  "finishedOnDuration": "Finished on: {date}\nDuration: {duration}",
+  "@finishedOnDuration": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      },
+      "duration": {
+        "type": "String"
+      }
+    }
+  },
+  "yourMeals": "Your meals",
+  "noMealLogHistory": "No meal log history yet",
+  "eatenOn": "Eaten on: {date}",
+  "@eatenOn": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "progressItemsEaten": "Progress: {consumed} / {total} items eaten",
+  "@progressItemsEaten": {
+    "placeholders": {
+      "consumed": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "deleteMealLog": "Delete Meal Log",
+  "deleteMealLogConfirm": "Are you sure you want to delete this meal log?",
+  "weekStreak": "Week Streak: {count}",
+  "@weekStreak": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "superActive": "🔥 Super Active!",
+  "keepMoving": "Keep moving!",
+  "workoutPerformance": "Workout Performance",
+  "repsLabel": "Reps",
+  "noDataYet": "No data yet",
+  "statisticsTitle": "Statistics",
+  "errorLoadingWorkouts": "Error loading workouts: {error}",
+  "@errorLoadingWorkouts": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workoutMetrics": "Workout Metrics",
+  "totalWorkouts": "Total Workouts",
+  "totalActiveTime": "Total Active Time",
+  "minutesValue": "{minutes} mins",
+  "@minutesValue": {
+    "placeholders": {
+      "minutes": {
+        "type": "String"
+      }
+    }
+  },
+  "averageSession": "Average Session",
+  "targetedMusclesHeatmap": "Targeted Muscles Heatmap",
+  "topTargetMuscles": "Top Target Muscles",
+  "noMuscleData": "No muscle targeting data yet. Start tracking sets!",
+  "timesCount": "{count} times",
+  "@timesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "errorLoadingNutrition": "Error loading nutrition: {error}",
+  "@errorLoadingNutrition": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "nutritionInsights": "Nutrition Insights (Last {days} logs)",
+  "@nutritionInsights": {
+    "placeholders": {
+      "days": {
+        "type": "int"
+      }
+    }
+  },
+  "avgCalories": "Avg. Calories",
+  "avgProtein": "Avg. Protein",
+  "avgCarbs": "Avg. Carbs",
+  "avgFats": "Avg. Fats",
+  "macrosDistribution": "Macros Distribution",
+  "noMacroData": "No macro data available",
+  "gramsPercent": "{grams} ({percent})",
+  "@gramsPercent": {
+    "placeholders": {
+      "grams": {
+        "type": "String"
+      },
+      "percent": {
+        "type": "String"
+      }
+    }
+  },
+  "logMeasurement": "Log Measurement",
+  "bodyWeightWithUnit": "Body Weight ({unit})",
+  "@bodyWeightWithUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "advancedBodyMetrics": "Advanced Body Metrics",
+  "bodyFatPercent": "Body Fat %",
+  "muscleMassPercent": "Muscle Mass %",
+  "waistCm": "Waist (cm)",
+  "sleepMetrics": "Sleep Metrics",
+  "sleepDuration": "Sleep Duration",
+  "sleepingRhr": "Sleeping RHR",
+  "sleepingHrvMs": "Sleeping HRV (ms)",
+  "advancedSleepMetrics": "Advanced Sleep Metrics",
+  "timeInBed": "Time in Bed",
+  "totalAwakeTime": "Total Awake Time",
+  "longestAwakePeriod": "Longest Awake Period",
+  "numberOfAwakenings": "Number of Awakenings",
+  "activityMetrics": "Activity Metrics",
+  "dailySteps": "Daily Steps",
+  "vo2Max": "VO2 Max",
+  "wakingRhr": "Waking RHR",
+  "wakingHrvMs": "Waking HRV (ms)",
+  "saveMeasurement": "Save Measurement",
+  "hrsShort": "Hrs",
+  "minShort": "Min",
+  "weightProgress": "Weight Progress",
+  "waistCircumference": "Waist Circumference",
+  "bodyHistory": "Body History",
+  "noBodyMeasurements": "No body measurements recorded yet.",
+  "weightWithValue": "Weight: {value}",
+  "@weightWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "dateWithValue": "Date: {date}",
+  "@dateWithValue": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "deleteLog": "Delete log?",
+  "deleteWeightConfirm": "Are you sure you want to delete this weight measurement?",
+  "deleteAdvancedBodyConfirm": "Are you sure you want to delete this advanced body log?",
+  "deleteSleepConfirm": "Are you sure you want to delete this sleep log?",
+  "deleteAdvancedSleepConfirm": "Are you sure you want to delete this advanced sleep log?",
+  "deleteActivityConfirm": "Are you sure you want to delete this activity log?",
+  "advancedEntry": "Advanced Entry",
+  "sleepHistory": "Sleep History",
+  "noSleepLogs": "No sleep logs recorded yet.",
+  "sleepEntry": "Sleep Entry",
+  "advSleepEntry": "Adv Sleep Entry",
+  "noActivityLogs": "No activity logs recorded yet.",
+  "caloriesActive": "Calories Active",
+  "activityHistory": "Activity History",
+  "activityEntry": "Activity Entry",
+  "latestLabel": "Latest",
+  "averageLabel": "Average",
+  "minMaxLabel": "Min/Max",
+  "measurementsTitle": "Measurements",
+  "addLog": "Add Log",
+  "sleepMetricBed": "{value} Bed",
+  "@sleepMetricBed": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sleepMetricAwake": "{value} Awake",
+  "@sleepMetricAwake": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sleepMetricLongestAwake": "{value} Longest Awake",
+  "@sleepMetricLongestAwake": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "awakeningsCount": "{count} awakenings",
+  "@awakeningsCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "stepsCount": "{count} steps",
+  "@stepsCount": {
+    "placeholders": {
+      "count": {
+        "type": "String"
+      }
+    }
+  },
+  "kcalValue": "{value} kcal",
+  "@kcalValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "personalInfoSaved": "Personal information saved successfully",
+  "preferencesSaved": "Preferences saved successfully",
+  "personalInformation": "Personal Information",
+  "yourProfileMetrics": "Your Profile Metrics",
+  "heightCm": "Height (cm)",
+  "birthdayWithDate": "Birthday: {date}",
+  "@birthdayWithDate": {
+    "placeholders": {
+      "date": {
+        "type": "String"
+      }
+    }
+  },
+  "selectBirthday": "Select Birthday",
+  "calculatedAge": "Calculated Age: {age} years old",
+  "@calculatedAge": {
+    "placeholders": {
+      "age": {
+        "type": "int"
+      }
+    }
+  },
+  "saveDetails": "Save Details",
+  "userPreferencesTitle": "User Preferences",
+  "aiPreferencesContext": "AI uses this context to tailor workouts and meal plans",
+  "preferencesHint": "Paste or write your detailed preferences, schedule constraints, fitness goals, or dietary requirements here...",
+  "savePreferences": "Save Preferences",
+  "allMealsTitle": "All Meals",
+  "allWorkoutsTitle": "All Workouts",
+  "noWorkoutsCompleted": "No workouts completed yet",
+  "measurementsSettingsDesc": "Choose which measurement categories to track. Disabled categories won't appear in the Measurements view.",
+  "sleepMeasurements": "Sleep Measurements",
+  "sleepMeasurementsDesc": "Sleep duration, sleeping RHR & HRV",
+  "advancedSleepMeasurements": "Advanced Sleep Measurements",
+  "advancedSleepMeasurementsDesc": "Time in bed, awake time, number of awakenings",
+  "activityMeasurements": "Activity Measurements",
+  "activityMeasurementsDesc": "Steps, active energy, VO2 max, waking RHR/HRV",
+  "advancedBodyMeasurements": "Advanced Body Measurements",
+  "advancedBodyMeasurementsDesc": "Body fat %, muscle mass %, circumferences",
+  "searchProducts": "Search products...",
+  "bodyFatValue": "{value}% BF",
+  "@bodyFatValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "muscleMassValue": "{value}% Muscle",
+  "@muscleMassValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "waistValue": "{value}cm Waist",
+  "@waistValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sleepingRhrValue": "{value} bpm RHR",
+  "@sleepingRhrValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "sleepingHrvValue": "{value} ms HRV",
+  "@sleepingHrvValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "wakingRhrValue": "{value} bpm RHR",
+  "@wakingRhrValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "wakingHrvValue": "{value} ms HRV",
+  "@wakingHrvValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "vo2WithValue": "VO2: {value}",
+  "@vo2WithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "timeAwake": "Time Awake",
+  "wakingHrv": "Waking HRV",
+  "sleepingHrv": "Sleeping HRV",
+  "addHouse": "Add House",
+  "houseName": "House Name",
+  "renameHouse": "Rename House",
+  "deleteHouse": "Delete House",
+  "deleteHouseConfirm": "Are you sure you want to delete '{name}'? This deletes all associated stock records.",
+  "@deleteHouseConfirm": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "addProductToStockTitle": "Add Product to Stock",
+  "mapToTitle": "Map '{name}' to...",
+  "@mapToTitle": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "manageHouses": "Manage Houses",
+  "noHousesDefined": "No houses defined",
+  "operationError": "An error occurred during operation:",
+  "copyError": "Copy Error",
+  "errorCopied": "Error copied to clipboard",
+  "aiTokenNotConfigured": "AI API Token not configured. Set it in Settings.",
+  "takePhotoCamera": "Take Photo (Camera)",
+  "chooseFromGallery": "Choose from Gallery",
+  "noItemsParsed": "No items parsed from receipt.",
+  "receiptImportError": "Receipt Import Error",
+  "aiLogConfirmation": "AI Log Confirmation",
+  "notFound": "Not found",
+  "perfectMatch": "Perfect Match",
+  "fuzzyMatch": "Fuzzy Match",
+  "quantityLabel": "Quantity",
+  "unitLabel": "Unit",
+  "productEditError": "Product Edit Error",
+  "productCreationError": "Product Creation Error",
+  "createAction": "Create",
+  "confirmAction": "Confirm",
+  "loggedReceiptItems": "Logged receipt items to stock!",
+  "stockLoggingError": "Stock Logging Error",
+  "addStock": "Add Stock",
+  "restockItems": "Restock Items",
+  "restockedItems": "Restocked {count} items successfully!",
+  "@restockedItems": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "housePrefix": "House: ",
+  "aiImportReceipt": "AI Import Receipt",
+  "currentStockTab": "Current Stock",
+  "shoppingListTab": "Shopping List",
+  "selectOrAddHouse": "Select or add a house",
+  "searchStock": "Search stock...",
+  "noProductsInStock": "No products in stock",
+  "edibleEquivalentValue": "≈ {value} {unit} edible equivalent",
+  "@edibleEquivalentValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "unitPrefix": "Unit: ",
+  "noMinimum": "No minimum",
+  "minimumWithValue": "Minimum: {value} {unit}",
+  "@minimumWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "setTriggerFor": "Set Trigger for {name}",
+  "@setTriggerFor": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "minimumThresholdWithUnit": "Minimum Threshold ({unit})",
+  "@minimumThresholdWithUnit": {
+    "placeholders": {
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "leaveEmptyToDisableTrigger": "Leave empty to disable trigger",
+  "noItemsNeedRestocking": "No items need restocking",
+  "stockWithValue": "Stock: {value}",
+  "@stockWithValue": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "stockEdibleSuffix": " (≈ {value} edible)",
+  "@stockEdibleSuffix": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "minimumSuffix": " / Minimum: {value} {unit}",
+  "@minimumSuffix": {
+    "placeholders": {
+      "value": {
+        "type": "String"
+      },
+      "unit": {
+        "type": "String"
+      }
+    }
+  },
+  "optionsForItem": "Options for {name}",
+  "@optionsForItem": {
+    "placeholders": {
+      "name": {
+        "type": "String"
+      }
+    }
+  },
+  "whatToDoWithItem": "What would you like to do with this stock item?",
+  "replaceWith": "Replace with...",
+  "importFailed": "Import Failed",
+  "ok": "OK",
+  "importedSuccessfully": "{entity} imported successfully",
+  "@importedSuccessfully": {
+    "placeholders": {
+      "entity": {
+        "type": "String"
+      }
+    }
+  },
+  "unknownError": "Unknown error",
+  "backupRestoreTitle": "Backup & Restore",
+  "importFormatDocumentation": "Import Format Documentation",
+  "importFormatDocumentationDesc": "Download Markdown import specifications (fields, types, JSON templates) or the active exercise ID list.",
+  "formatShareSubject": "Nexc Import Format Specifications",
+  "formatDownloadFailed": "Failed to download format file: {error}",
+  "@formatDownloadFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "formatMarkdown": "Format (.md)",
+  "exerciseListGenerated": "Exercise list generated",
+  "exerciseListExportFailed": "Failed to export exercises list: {error}",
+  "@exerciseListExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "exercisesMarkdown": "Exercises (.md)",
+  "databaseTitle": "Database",
+  "databaseDesc": "Export or import the full SQLite database containing all workouts, routines, measurements, and foods.",
+  "databaseExported": "Database exported successfully",
+  "databaseExportFailed": "Database export failed: {error}",
+  "@databaseExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "importSuccessful": "Import Successful",
+  "importSuccessBody": "The database was imported. Please restart Nexc to load the new data.",
+  "databaseImportCancelled": "Database import cancelled",
+  "workoutPlansTitle": "Workout plans",
+  "workoutPlansDesc": "Import or export your workout plan templates as portable JSON files.",
+  "workoutPlansExported": "Workout plans exported",
+  "workoutPlansExportFailed": "Workout plans export failed: {error}",
+  "@workoutPlansExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "workoutHistoryTitle": "Workout history",
+  "workoutHistoryDesc": "Import or export your completed workouts history including exercises, weights, reps, and timestamps.",
+  "workoutHistoryExported": "Workout history exported",
+  "workoutHistoryExportFailed": "Workout history export failed: {error}",
+  "@workoutHistoryExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "exercisesBackupDesc": "Import or export your exercises database as portable JSON files.",
+  "exercisesExported": "Exercises exported",
+  "exercisesExportFailed": "Exercises export failed: {error}",
+  "@exercisesExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mealPlansTitle": "Meal plans",
+  "mealPlansDesc": "Import or export your meal plan templates as portable JSON files.",
+  "mealPlansExported": "Meal plans exported",
+  "mealPlansExportFailed": "Meal plans export failed: {error}",
+  "@mealPlansExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "mealHistoryTitle": "Meal history",
+  "mealHistoryDesc": "Import or export your logged meal history and consumed food items.",
+  "mealHistoryExported": "Meal history exported",
+  "mealHistoryExportFailed": "Meal history export failed: {error}",
+  "@mealHistoryExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "productsBackupDesc": "Import or export your products/foods database.",
+  "productsExported": "Products exported",
+  "productsExportFailed": "Products export failed: {error}",
+  "@productsExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "recipesBackupDesc": "Import or export your custom recipes database.",
+  "recipesExported": "Recipes exported",
+  "recipesExportFailed": "Recipes export failed: {error}",
+  "@recipesExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "stockBackupDesc": "Import or export your stock inventory and house data. Products must already exist in the database before importing stock.",
+  "stockExported": "Stock exported successfully",
+  "stockExportFailed": "Stock export failed: {error}",
+  "@stockExportFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "importAction": "Import",
+  "exportAction": "Export",
+  "frontView": "Front View",
+  "backView": "Back View"
 }

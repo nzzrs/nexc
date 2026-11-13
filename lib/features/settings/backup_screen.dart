@@ -12,17 +12,19 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/util/backup_manager.dart';
 
 class BackupScreen extends ConsumerWidget {
   const BackupScreen({super.key});
 
   void _showImportError(BuildContext context, String error) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         icon: const Icon(Icons.error_outline, color: Colors.red, size: 40),
-        title: const Text('Import Failed'),
+        title: Text(l10n.importFailed),
         content: SingleChildScrollView(
           child: SelectableText(
             error,
@@ -33,16 +35,16 @@ class BackupScreen extends ConsumerWidget {
           TextButton.icon(
             onPressed: () {
               Clipboard.setData(ClipboardData(text: error));
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Error copied to clipboard')),
-              );
+              ScaffoldMessenger.of(
+                context,
+              ).showSnackBar(SnackBar(content: Text(l10n.errorCopied)));
             },
             icon: const Icon(Icons.copy, size: 18),
-            label: const Text('Copy Error'),
+            label: Text(l10n.copyError),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('OK'),
+            child: Text(l10n.ok),
           ),
         ],
       ),
@@ -54,15 +56,16 @@ class BackupScreen extends ConsumerWidget {
     Future<ImportResult> Function() importFn,
     String entityName,
   ) async {
+    final l10n = context.l10n;
     try {
       final result = await importFn();
       if (!context.mounted) return;
       if (result.success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('$entityName imported successfully')),
+          SnackBar(content: Text(l10n.importedSuccessfully(entityName))),
         );
       } else {
-        _showImportError(context, result.error ?? 'Unknown error');
+        _showImportError(context, result.error ?? l10n.unknownError);
       }
     } catch (e) {
       if (!context.mounted) return;
@@ -73,10 +76,11 @@ class BackupScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final backupManager = ref.read(backupManagerProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Backup & Restore'),
+        title: Text(l10n.backupRestoreTitle),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -86,22 +90,26 @@ class BackupScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(16.0),
         children: [
           Card(
-            color: Theme.of(context).colorScheme.primaryContainer.withValues(alpha: 0.3),
+            color: Theme.of(
+              context,
+            ).colorScheme.primaryContainer.withValues(alpha: 0.3),
             elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(16),
+            ),
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Import Format Documentation',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    l10n.importFormatDocumentation,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    'Download Markdown import specifications (fields, types, JSON templates) or the active exercise ID list.',
-                  ),
+                  Text(l10n.importFormatDocumentationDesc),
                   const SizedBox(height: 12),
                   Row(
                     children: [
@@ -109,7 +117,8 @@ class BackupScreen extends ConsumerWidget {
                         child: FilledButton.icon(
                           onPressed: () async {
                             try {
-                              const formatDoc = r'''# Nexc Import Formats Specification
+                              const formatDoc =
+                                  r'''# Nexc Import Formats Specification
 
 This document details the JSON schema specifications used for importing data into Nexc.
 
@@ -305,17 +314,21 @@ Recipes are imported as a JSON array.
                                   name: 'nexc_import_format.md',
                                   mimeType: 'text/markdown',
                                 ),
-                              ], subject: 'Nexc Import Format Specifications');
+                              ], subject: l10n.formatShareSubject);
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed to download format file: $e')),
+                                  SnackBar(
+                                    content: Text(
+                                      l10n.formatDownloadFailed('$e'),
+                                    ),
+                                  ),
                                 );
                               }
                             }
                           },
                           icon: const Icon(Icons.description_outlined),
-                          label: const Text('Format (.md)'),
+                          label: Text(l10n.formatMarkdown),
                         ),
                       ),
                       const SizedBox(width: 8),
@@ -323,22 +336,29 @@ Recipes are imported as a JSON array.
                         child: FilledButton.icon(
                           onPressed: () async {
                             try {
-                              await backupManager.exportAvailableExercisesDocumentation();
+                              await backupManager
+                                  .exportAvailableExercisesDocumentation();
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text('Exercise list generated')),
+                                  SnackBar(
+                                    content: Text(l10n.exerciseListGenerated),
+                                  ),
                                 );
                               }
                             } catch (e) {
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text('Failed to export exercises list: $e')),
+                                  SnackBar(
+                                    content: Text(
+                                      l10n.exerciseListExportFailed('$e'),
+                                    ),
+                                  ),
                                 );
                               }
                             }
                           },
                           icon: const Icon(Icons.format_list_bulleted),
-                          label: const Text('Exercises (.md)'),
+                          label: Text(l10n.exercisesMarkdown),
                         ),
                       ),
                     ],
@@ -350,19 +370,19 @@ Recipes are imported as a JSON array.
           const Divider(height: 32),
           _buildBackupSection(
             context,
-            title: 'Database',
-            description: 'Export or import the full SQLite database containing all workouts, routines, measurements, and foods.',
+            title: l10n.databaseTitle,
+            description: l10n.databaseDesc,
             onExport: () async {
               try {
                 await backupManager.exportDatabase();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Database exported successfully')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(l10n.databaseExported)));
               } catch (e) {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Database export failed: $e')),
+                  SnackBar(content: Text(l10n.databaseExportFailed('$e'))),
                 );
               }
             },
@@ -375,19 +395,19 @@ Recipes are imported as a JSON array.
                     context: context,
                     barrierDismissible: false,
                     builder: (context) => AlertDialog(
-                      title: const Text('Import Successful'),
-                      content: const Text('The database was imported. Please restart Nexc to load the new data.'),
+                      title: Text(l10n.importSuccessful),
+                      content: Text(l10n.importSuccessBody),
                       actions: [
                         TextButton(
                           onPressed: () => Navigator.pop(context),
-                          child: const Text('OK'),
+                          child: Text(l10n.ok),
                         ),
                       ],
                     ),
                   );
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Database import cancelled')),
+                    SnackBar(content: Text(l10n.databaseImportCancelled)),
                   );
                 }
               } catch (e) {
@@ -399,170 +419,204 @@ Recipes are imported as a JSON array.
           const Divider(height: 32),
           _buildBackupSection(
             context,
-            title: 'Workout plans',
-            description: 'Import or export your workout plan templates as portable JSON files.',
+            title: l10n.workoutPlansTitle,
+            description: l10n.workoutPlansDesc,
             onExport: () async {
               try {
                 await backupManager.exportWorkoutPlans();
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Workout plans exported')),
+                  SnackBar(content: Text(l10n.workoutPlansExported)),
                 );
               } catch (e) {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Workout plans export failed: $e')),
+                  SnackBar(content: Text(l10n.workoutPlansExportFailed('$e'))),
                 );
               }
             },
-            onImport: () => _handleImport(context, backupManager.importWorkoutPlans, 'Workout plans'),
+            onImport: () => _handleImport(
+              context,
+              backupManager.importWorkoutPlans,
+              l10n.workoutPlansTitle,
+            ),
           ),
           const Divider(height: 32),
           _buildBackupSection(
             context,
-            title: 'Workout history',
-            description: 'Import or export your completed workouts history including exercises, weights, reps, and timestamps.',
+            title: l10n.workoutHistoryTitle,
+            description: l10n.workoutHistoryDesc,
             onExport: () async {
               try {
                 await backupManager.exportWorkoutHistory();
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Workout history exported')),
+                  SnackBar(content: Text(l10n.workoutHistoryExported)),
                 );
               } catch (e) {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Workout history export failed: $e')),
+                  SnackBar(
+                    content: Text(l10n.workoutHistoryExportFailed('$e')),
+                  ),
                 );
               }
             },
-            onImport: () => _handleImport(context, backupManager.importWorkoutHistory, 'Workout history'),
+            onImport: () => _handleImport(
+              context,
+              backupManager.importWorkoutHistory,
+              l10n.workoutHistoryTitle,
+            ),
           ),
           const Divider(height: 32),
           _buildBackupSection(
             context,
-            title: 'Exercises',
-            description: 'Import or export your exercises database as portable JSON files.',
+            title: l10n.exercisesLabel,
+            description: l10n.exercisesBackupDesc,
             onExport: () async {
               try {
                 await backupManager.exportExercises();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Exercises exported')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(l10n.exercisesExported)));
               } catch (e) {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Exercises export failed: $e')),
+                  SnackBar(content: Text(l10n.exercisesExportFailed('$e'))),
                 );
               }
             },
-            onImport: () => _handleImport(context, backupManager.importExercises, 'Exercises'),
+            onImport: () => _handleImport(
+              context,
+              backupManager.importExercises,
+              l10n.exercisesLabel,
+            ),
           ),
           const Divider(height: 32),
           _buildBackupSection(
             context,
-            title: 'Meal plans',
-            description: 'Import or export your meal plan templates as portable JSON files.',
+            title: l10n.mealPlansTitle,
+            description: l10n.mealPlansDesc,
             onExport: () async {
               try {
                 await backupManager.exportMealPlans();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Meal plans exported')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(l10n.mealPlansExported)));
               } catch (e) {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Meal plans export failed: $e')),
+                  SnackBar(content: Text(l10n.mealPlansExportFailed('$e'))),
                 );
               }
             },
-            onImport: () => _handleImport(context, backupManager.importMealPlans, 'Meal plans'),
+            onImport: () => _handleImport(
+              context,
+              backupManager.importMealPlans,
+              l10n.mealPlansTitle,
+            ),
           ),
           const Divider(height: 32),
           _buildBackupSection(
             context,
-            title: 'Meal history',
-            description: 'Import or export your logged meal history and consumed food items.',
+            title: l10n.mealHistoryTitle,
+            description: l10n.mealHistoryDesc,
             onExport: () async {
               try {
                 await backupManager.exportMealHistory();
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Meal history exported')),
+                  SnackBar(content: Text(l10n.mealHistoryExported)),
                 );
               } catch (e) {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Meal history export failed: $e')),
+                  SnackBar(content: Text(l10n.mealHistoryExportFailed('$e'))),
                 );
               }
             },
-            onImport: () => _handleImport(context, backupManager.importMealHistory, 'Meal history'),
+            onImport: () => _handleImport(
+              context,
+              backupManager.importMealHistory,
+              l10n.mealHistoryTitle,
+            ),
           ),
           const Divider(height: 32),
           _buildBackupSection(
             context,
-            title: 'Products',
-            description: 'Import or export your products/foods database.',
+            title: l10n.productsTab,
+            description: l10n.productsBackupDesc,
             onExport: () async {
               try {
                 await backupManager.exportProducts();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Products exported')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(l10n.productsExported)));
               } catch (e) {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Products export failed: $e')),
+                  SnackBar(content: Text(l10n.productsExportFailed('$e'))),
                 );
               }
             },
-            onImport: () => _handleImport(context, backupManager.importProducts, 'Products'),
+            onImport: () => _handleImport(
+              context,
+              backupManager.importProducts,
+              l10n.productsTab,
+            ),
           ),
           const Divider(height: 32),
           _buildBackupSection(
             context,
-            title: 'Recipes',
-            description: 'Import or export your custom recipes database.',
+            title: l10n.recipesTab,
+            description: l10n.recipesBackupDesc,
             onExport: () async {
               try {
                 await backupManager.exportRecipes();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Recipes exported')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(l10n.recipesExported)));
               } catch (e) {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Recipes export failed: $e')),
+                  SnackBar(content: Text(l10n.recipesExportFailed('$e'))),
                 );
               }
             },
-            onImport: () => _handleImport(context, backupManager.importRecipes, 'Recipes'),
+            onImport: () => _handleImport(
+              context,
+              backupManager.importRecipes,
+              l10n.recipesTab,
+            ),
           ),
           const Divider(height: 32),
           _buildBackupSection(
             context,
-            title: 'Stock',
-            description: 'Import or export your stock inventory and house data. Products must already exist in the database before importing stock.',
+            title: l10n.stockTitle,
+            description: l10n.stockBackupDesc,
             onExport: () async {
               try {
                 await backupManager.exportStock();
                 if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Stock exported successfully')),
-                );
+                ScaffoldMessenger.of(
+                  context,
+                ).showSnackBar(SnackBar(content: Text(l10n.stockExported)));
               } catch (e) {
                 if (!context.mounted) return;
                 ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text('Stock export failed: $e')),
+                  SnackBar(content: Text(l10n.stockExportFailed('$e'))),
                 );
               }
             },
-            onImport: () => _handleImport(context, backupManager.importStock, 'Stock'),
+            onImport: () => _handleImport(
+              context,
+              backupManager.importStock,
+              l10n.stockTitle,
+            ),
           ),
         ],
       ),
@@ -583,15 +637,15 @@ Recipes are imported as a JSON array.
         Text(
           title,
           style: theme.textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 8),
         Text(
           description,
           style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
+            color: theme.colorScheme.onSurfaceVariant,
+          ),
         ),
         const SizedBox(height: 16),
         Row(
@@ -604,13 +658,13 @@ Recipes are imported as a JSON array.
               ),
               onPressed: onImport,
               icon: const Icon(Icons.download),
-              label: const Text('Import'),
+              label: Text(context.l10n.importAction),
             ),
             const SizedBox(width: 8),
             FilledButton.icon(
               onPressed: onExport,
               icon: const Icon(Icons.upload),
-              label: const Text('Export'),
+              label: Text(context.l10n.exportAction),
             ),
           ],
         ),

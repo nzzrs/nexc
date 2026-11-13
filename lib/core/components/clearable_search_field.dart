@@ -7,6 +7,8 @@
 
 import 'package:flutter/material.dart';
 
+import '../l10n/l10n.dart';
+
 /// Text field used by every search surface in the app.
 ///
 /// The clear button resets both the controller and the owning widget state,
@@ -103,7 +105,7 @@ class _ClearableSearchFieldState extends State<ClearableSearchField> {
         suffixIcon: _hasText
             ? IconButton(
                 icon: const Icon(Icons.clear),
-                tooltip: 'Clear search',
+                tooltip: context.l10n.clearSearch,
                 onPressed: _clear,
               )
             : null,

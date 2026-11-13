@@ -14,10 +14,10 @@ import 'package:fl_chart/fl_chart.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/db/relations.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/profile_providers.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/util/unit_system.dart';
-
 
 /// Converts a volume chart point from kilograms to the selected unit.
 ///
@@ -32,12 +32,13 @@ Point convertChartPointToUnit(
     return point;
   }
   return Point(
-    yValues: point.yValues.map((value) => fromKilograms(value, system)).toList(),
+    yValues: point.yValues
+        .map((value) => fromKilograms(value, system))
+        .toList(),
     xValue: point.xValue,
     workoutId: point.workoutId,
   );
 }
-
 
 class ProfileScreen extends ConsumerStatefulWidget {
   const ProfileScreen({super.key});
@@ -50,6 +51,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final weekStreak = ref.watch(profileWeekStreakProvider);
     final workoutsAsync = ref.watch(completedWorkoutsProvider);
     final mealLogsAsync = ref.watch(profileMealLogsProvider);
@@ -68,7 +70,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: [
             Expanded(
               child: _MenuButton(
-                text: "Measurements",
+                text: l10n.measurementsMenu,
                 icon: Icons.monitor_weight_outlined,
                 onPressed: () {
                   Navigator.pushNamed(context, '/profile/measurements');
@@ -78,7 +80,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: _MenuButton(
-                text: "Personal Info",
+                text: l10n.personalInfo,
                 icon: Icons.person_outline,
                 onPressed: () {
                   Navigator.pushNamed(context, '/profile/personal-info');
@@ -92,7 +94,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           children: [
             Expanded(
               child: _MenuButton(
-                text: "Exercises",
+                text: l10n.exercisesLabel,
                 icon: Icons.fitness_center,
                 onPressed: () {
                   Navigator.pushNamed(context, '/exercises', arguments: false);
@@ -102,7 +104,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: _MenuButton(
-                text: "Calendar",
+                text: l10n.calendarTitle,
                 icon: Icons.calendar_month,
                 onPressed: () {
                   Navigator.pushNamed(context, '/calendar');
@@ -112,7 +114,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             const SizedBox(width: 8),
             Expanded(
               child: _MenuButton(
-                text: "Statistics",
+                text: l10n.statisticsMenu,
                 icon: Icons.bar_chart,
                 onPressed: () {
                   Navigator.pushNamed(context, '/profile/statistics');
@@ -127,7 +129,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             children: [
               Expanded(
                 child: _MenuButton(
-                  text: "Products",
+                  text: l10n.productsTab,
                   icon: Icons.inventory_2_outlined,
                   onPressed: () {
                     Navigator.pushNamed(context, '/meals/products');
@@ -137,7 +139,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               const SizedBox(width: 8),
               Expanded(
                 child: _MenuButton(
-                  text: "Recipes",
+                  text: l10n.recipesTab,
                   icon: Icons.restaurant,
                   onPressed: () {
                     Navigator.pushNamed(context, '/meals/recipes');
@@ -148,7 +150,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: _MenuButton(
-                    text: "Stock",
+                    text: l10n.stockTitle,
                     icon: Icons.storefront_outlined,
                     onPressed: () {
                       Navigator.pushNamed(context, '/profile/stock');
@@ -162,26 +164,36 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         const SizedBox(height: 24),
         // Overview Section
         Text(
-          "Overview",
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          l10n.overview,
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
         const SizedBox(height: 8),
         pointsAsync.when(
-          loading: () => const SizedBox(height: 200, child: Center(child: CircularProgressIndicator())),
-          error: (err, stack) => SizedBox(height: 200, child: Center(child: Text("Error loading chart: $err"))),
+          loading: () => const SizedBox(
+            height: 200,
+            child: Center(child: CircularProgressIndicator()),
+          ),
+          error: (err, stack) => SizedBox(
+            height: 200,
+            child: Center(child: Text(l10n.errorLoadingChart('$err'))),
+          ),
           data: (points) {
             final decimalCount = chartMode == WorkoutChart.duration ? 0 : 2;
             final suffix = chartMode == WorkoutChart.duration
                 ? "m"
                 : chartMode == WorkoutChart.volume
-                    ? settings.unitSystem.suffix
-                    : "";
+                ? settings.unitSystem.suffix
+                : "";
             final displayPoints = points
-                .map((point) => convertChartPointToUnit(
-                      point,
-                      chartMode,
-                      settings.unitSystem,
-                    ))
+                .map(
+                  (point) => convertChartPointToUnit(
+                    point,
+                    chartMode,
+                    settings.unitSystem,
+                  ),
+                )
                 .toList();
             return NexcCartesianChart(
               points: displayPoints,
@@ -192,7 +204,11 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 ref.read(workoutChartModeProvider.notifier).state = mode;
               },
               onEntrySelection: (workoutId) {
-                Navigator.pushNamed(context, '/info-workout', arguments: workoutId);
+                Navigator.pushNamed(
+                  context,
+                  '/info-workout',
+                  arguments: workoutId,
+                );
               },
             );
           },
@@ -203,8 +219,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              "Your workouts",
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              l10n.yourWorkouts,
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             workoutsAsync.maybeWhen(
               data: (workouts) => workouts.length > 5
@@ -212,7 +230,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                       onPressed: () {
                         Navigator.pushNamed(context, '/profile/all-workouts');
                       },
-                      child: const Text("View all"),
+                      child: Text(l10n.viewAll),
                     )
                   : const SizedBox.shrink(),
               orElse: () => const SizedBox.shrink(),
@@ -222,7 +240,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         const SizedBox(height: 8),
         workoutsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text("Error: $err")),
+          error: (err, stack) =>
+              Center(child: Text(l10n.errorWithMessage('$err'))),
           data: (workouts) {
             if (workouts.isEmpty) {
               return Card(
@@ -230,10 +249,14 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   padding: const EdgeInsets.all(24.0),
                   child: Column(
                     children: [
-                      Icon(Icons.fitness_center, size: 48, color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                      Icon(
+                        Icons.fitness_center,
+                        size: 48,
+                        color: theme.colorScheme.primary.withValues(alpha: 0.5),
+                      ),
                       const SizedBox(height: 12),
-                      const Text(
-                        "Start completing workouts to see your history here.",
+                      Text(
+                        l10n.startCompletingWorkouts,
                         textAlign: TextAlign.center,
                       ),
                     ],
@@ -251,11 +274,20 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 return Card(
                   margin: const EdgeInsets.only(bottom: 8.0),
                   child: ListTile(
-                    title: Text(w.workout.title, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    subtitle: Text("Finished on: $dateStr\nDuration: $durationStr"),
+                    title: Text(
+                      w.workout.title,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(
+                      l10n.finishedOnDuration(dateStr, durationStr),
+                    ),
                     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
                     onTap: () {
-                      Navigator.pushNamed(context, '/info-workout', arguments: w.workout.id);
+                      Navigator.pushNamed(
+                        context,
+                        '/info-workout',
+                        arguments: w.workout.id,
+                      );
                     },
                   ),
                 );
@@ -270,8 +302,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                "Your meals",
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                l10n.yourMeals,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               mealLogsAsync.maybeWhen(
                 data: (logs) => logs.length > 5
@@ -279,7 +313,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         onPressed: () {
                           Navigator.pushNamed(context, '/profile/all-meals');
                         },
-                        child: const Text("View all"),
+                        child: Text(l10n.viewAll),
                       )
                     : const SizedBox.shrink(),
                 orElse: () => const SizedBox.shrink(),
@@ -289,7 +323,8 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           const SizedBox(height: 8),
           mealLogsAsync.when(
             loading: () => const Center(child: CircularProgressIndicator()),
-            error: (err, stack) => Center(child: Text("Error: $err")),
+            error: (err, stack) =>
+                Center(child: Text(l10n.errorWithMessage('$err'))),
             data: (logs) {
               if (logs.isEmpty) {
                 return Card(
@@ -297,10 +332,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     padding: const EdgeInsets.all(24.0),
                     child: Column(
                       children: [
-                        Icon(Icons.restaurant, size: 48, color: theme.colorScheme.primary.withValues(alpha: 0.5)),
+                        Icon(
+                          Icons.restaurant,
+                          size: 48,
+                          color: theme.colorScheme.primary.withValues(
+                            alpha: 0.5,
+                          ),
+                        ),
                         const SizedBox(height: 12),
-                        const Text(
-                          "No meal log history yet",
+                        Text(
+                          l10n.noMealLogHistory,
                           textAlign: TextAlign.center,
                         ),
                       ],
@@ -329,13 +370,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                         consumedCount++;
 
                         final scale = detail.macroScale;
-                        if (detail.mealItem.type == MealItemType.PRODUCT && detail.product != null) {
+                        if (detail.mealItem.type == MealItemType.PRODUCT &&
+                            detail.product != null) {
                           totalProt += detail.product!.proteins * scale;
                           totalCarb += detail.product!.carbs * scale;
                           totalFat += detail.product!.fats * scale;
-                        } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
+                        } else if (detail.mealItem.type ==
+                                MealItemType.RECIPE &&
+                            detail.recipe != null) {
                           for (final ing in detail.recipe!.ingredients) {
-                            final ingScale = (ing.ingredient.amount / 100.0) * scale;
+                            final ingScale =
+                                (ing.ingredient.amount / 100.0) * scale;
                             totalProt += ing.product.proteins * ingScale;
                             totalCarb += ing.product.carbs * ingScale;
                             totalFat += ing.product.fats * ingScale;
@@ -369,43 +414,65 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                                 children: [
                                   Text(
                                     plan.title,
-                                    style: theme.textTheme.titleMedium?.copyWith(
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                   const SizedBox(height: 6),
-                                  Text("Eaten on: $formatter"),
-                                  Text("Progress: $consumedCount / $totalItems items eaten"),
+                                  Text(l10n.eatenOn(formatter)),
                                   Text(
-                                    "Macros: P ${totalProt.toStringAsFixed(1)}g | C ${totalCarb.toStringAsFixed(1)}g | F ${totalFat.toStringAsFixed(1)}g",
-                                    style: const TextStyle(fontWeight: FontWeight.bold),
+                                    l10n.progressItemsEaten(
+                                      consumedCount,
+                                      totalItems,
+                                    ),
+                                  ),
+                                  Text(
+                                    l10n.macrosPrefixLine(
+                                      totalProt.toStringAsFixed(1),
+                                      totalCarb.toStringAsFixed(1),
+                                      totalFat.toStringAsFixed(1),
+                                    ),
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ],
                               ),
                             ),
                           ),
                           IconButton(
-                            icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                            icon: Icon(
+                              Icons.delete_outline,
+                              color: theme.colorScheme.error,
+                            ),
                             onPressed: () async {
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                  title: const Text("Delete Meal Log"),
-                                  content: const Text("Are you sure you want to delete this meal log?"),
+                                  title: Text(l10n.deleteMealLog),
+                                  content: Text(l10n.deleteMealLogConfirm),
                                   actions: [
                                     TextButton(
-                                      onPressed: () => Navigator.pop(context, false),
-                                      child: const Text("Cancel"),
+                                      onPressed: () =>
+                                          Navigator.pop(context, false),
+                                      child: Text(l10n.cancel),
                                     ),
                                     TextButton(
-                                      onPressed: () => Navigator.pop(context, true),
-                                      child: Text("Delete", style: TextStyle(color: theme.colorScheme.error)),
+                                      onPressed: () =>
+                                          Navigator.pop(context, true),
+                                      child: Text(
+                                        l10n.delete,
+                                        style: TextStyle(
+                                          color: theme.colorScheme.error,
+                                        ),
+                                      ),
                                     ),
                                   ],
                                 ),
                               );
                               if (confirm == true) {
-                                ref.read(mealRepositoryProvider).deleteMealPlan(plan);
+                                ref
+                                    .read(mealRepositoryProvider)
+                                    .deleteMealPlan(plan);
                               }
                             },
                           ),
@@ -426,10 +493,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 class StreakCard extends StatefulWidget {
   final int weekStreak;
 
-  const StreakCard({
-    super.key,
-    required this.weekStreak,
-  });
+  const StreakCard({super.key, required this.weekStreak});
 
   @override
   State<StreakCard> createState() => _StreakCardState();
@@ -460,6 +524,7 @@ class _StreakCardState extends State<StreakCard> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final intensity = (widget.weekStreak * 2 + _clicks).clamp(0, 52) / 52.0;
 
     return Card(
@@ -511,13 +576,13 @@ class _StreakCardState extends State<StreakCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Week Streak: ${widget.weekStreak}",
+                      l10n.weekStreak(widget.weekStreak),
                       style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     Text(
-                      _clicks > 15 ? "🔥 Super Active!" : "Keep moving!",
+                      _clicks > 15 ? l10n.superActive : l10n.keepMoving,
                       style: theme.textTheme.bodySmall,
                     ),
                   ],
@@ -593,6 +658,7 @@ class NexcCartesianChart extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Card(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
@@ -604,8 +670,10 @@ class NexcCartesianChart extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Workout Performance",
-                  style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold),
+                  l10n.workoutPerformance,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 DropdownButton<WorkoutChart>(
                   value: chartMode,
@@ -617,10 +685,10 @@ class NexcCartesianChart extends StatelessWidget {
                       value: mode,
                       child: Text(
                         mode == WorkoutChart.duration
-                            ? "Duration"
+                            ? l10n.durationLabel
                             : mode == WorkoutChart.volume
-                                ? "Volume"
-                                : "Reps",
+                            ? l10n.volumeLabel
+                            : l10n.repsLabel,
                       ),
                     );
                   }).toList(),
@@ -633,10 +701,10 @@ class NexcCartesianChart extends StatelessWidget {
               child: points.isEmpty
                   ? Center(
                       child: Text(
-                        "No data yet",
+                        l10n.noDataYet,
                         style: theme.textTheme.bodyMedium?.copyWith(
-                              color: theme.colorScheme.onSurfaceVariant,
-                            ),
+                          color: theme.colorScheme.onSurfaceVariant,
+                        ),
                       ),
                     )
                   : BarChart(
@@ -663,15 +731,20 @@ class NexcCartesianChart extends StatelessWidget {
                         gridData: const FlGridData(show: false),
                         borderData: FlBorderData(show: false),
                         titlesData: FlTitlesData(
-                          topTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
-                          rightTitles: const AxisTitles(sideTitles: SideTitles(showTitles: false)),
+                          topTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
+                          rightTitles: const AxisTitles(
+                            sideTitles: SideTitles(showTitles: false),
+                          ),
                           leftTitles: AxisTitles(
                             sideTitles: SideTitles(
                               showTitles: true,
                               reservedSize: 45,
                               getTitlesWidget: (val, meta) {
                                 return Text(
-                                  val.toStringAsFixed(decimalCount) + (suffix ?? ""),
+                                  val.toStringAsFixed(decimalCount) +
+                                      (suffix ?? ""),
                                   style: theme.textTheme.labelSmall,
                                 );
                               },
@@ -687,7 +760,8 @@ class NexcCartesianChart extends StatelessWidget {
                                     padding: const EdgeInsets.only(top: 6.0),
                                     child: Text(
                                       points[idx].xValue,
-                                      style: theme.textTheme.labelSmall?.copyWith(fontSize: 9),
+                                      style: theme.textTheme.labelSmall
+                                          ?.copyWith(fontSize: 9),
                                     ),
                                   );
                                 }
@@ -698,7 +772,9 @@ class NexcCartesianChart extends StatelessWidget {
                         ),
                         barTouchData: BarTouchData(
                           touchCallback: (event, response) {
-                            if (event is FlTapUpEvent && response != null && response.spot != null) {
+                            if (event is FlTapUpEvent &&
+                                response != null &&
+                                response.spot != null) {
                               final idx = response.spot!.touchedBarGroupIndex;
                               if (idx >= 0 && idx < points.length) {
                                 final workoutId = points[idx].workoutId;

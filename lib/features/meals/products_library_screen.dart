@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/meal_repository.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/components/nexc_scaffold.dart';
 import '../../core/components/clearable_search_field.dart';
@@ -52,9 +53,10 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
   @override
   Widget build(BuildContext context) {
     final productsAsync = ref.watch(allProductsProvider);
+    final l10n = context.l10n;
 
     return NexcScaffold(
-      title: const Text("Products"),
+      title: Text(l10n.productsTab),
       navigateBack: () => Navigator.pop(context),
       fabAction: () {
         _showAddEditProduct(
@@ -74,13 +76,14 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
         );
       },
       fabIcon: const Icon(Icons.add),
-      fabText: "Add Product",
+      fabText: l10n.addProduct,
       content: (context, padding) {
         final usageCounts = ref.watch(productUsageCountsProvider).value;
         final inStockProductIds = ref.watch(inStockProductIdsProvider).value;
         return productsAsync.when(
           loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) => Center(child: Text("Error: $err")),
+          error: (err, stack) =>
+              Center(child: Text(l10n.errorWithMessage('$err'))),
           data: (products) {
             final filteredProducts = products.searchAndSort(
               _searchQuery,
@@ -94,7 +97,7 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
                   padding: const EdgeInsets.all(16.0),
                   child: ClearableSearchField(
                     controller: _searchController,
-                    labelText: "Search products...",
+                    labelText: l10n.searchProducts,
                     onChanged: (val) {
                       setState(() {
                         _searchQuery = val;
@@ -104,7 +107,7 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
                 ),
                 Expanded(
                   child: filteredProducts.isEmpty
-                      ? const Center(child: Text("No products found"))
+                      ? Center(child: Text(l10n.noProductsFound))
                       : ListView.builder(
                           padding: const EdgeInsets.only(
                             left: 16.0,
@@ -126,21 +129,21 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
                                   final confirm = await showDialog<bool>(
                                     context: context,
                                     builder: (context) => AlertDialog(
-                                      title: const Text("Delete Product"),
+                                      title: Text(l10n.deleteProduct),
                                       content: Text(
-                                        "Are you sure you want to delete '${product.name}'?",
+                                        l10n.deleteProductConfirm(product.name),
                                       ),
                                       actions: [
                                         TextButton(
                                           onPressed: () =>
                                               Navigator.pop(context, false),
-                                          child: const Text("Cancel"),
+                                          child: Text(l10n.cancel),
                                         ),
                                         TextButton(
                                           onPressed: () =>
                                               Navigator.pop(context, true),
                                           child: Text(
-                                            "Delete",
+                                            l10n.delete,
                                             style: TextStyle(
                                               color: Theme.of(
                                                 context,
@@ -186,6 +189,7 @@ class ProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Card(
       child: InkWell(
@@ -226,7 +230,9 @@ class ProductCard extends StatelessWidget {
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                product.isPortable ? "Portable" : "Home only",
+                                product.isPortable
+                                    ? l10n.portable
+                                    : l10n.homeOnly,
                                 style: TextStyle(
                                   fontSize: 10,
                                   color: product.isPortable
@@ -249,7 +255,7 @@ class ProductCard extends StatelessWidget {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  "Supplement",
+                                  l10n.supplement,
                                   style: TextStyle(
                                     fontSize: 10,
                                     color:
@@ -280,16 +286,18 @@ class ProductCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text("Prot: ${product.proteins}g"),
-                      Text("Carb: ${product.carbs}g"),
-                      Text("Fat: ${product.fats}g"),
+                      Text(l10n.protGrams('${product.proteins}')),
+                      Text(l10n.carbGrams('${product.carbs}')),
+                      Text(l10n.fatGrams('${product.fats}')),
                     ],
                   ),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
                       Text(
-                        "Default: ${product.units}${product.unitWeight != null ? ' (${product.unitWeight}g)' : ''}",
+                        l10n.defaultWithValue(
+                          '${product.units}${product.unitWeight != null ? ' (${product.unitWeight}g)' : ''}',
+                        ),
                       ),
                     ],
                   ),

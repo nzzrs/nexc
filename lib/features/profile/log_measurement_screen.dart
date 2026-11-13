@@ -12,6 +12,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/measurement_repository.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/util/unit_system.dart';
 
@@ -19,7 +20,8 @@ class LogMeasurementScreen extends ConsumerStatefulWidget {
   const LogMeasurementScreen({super.key});
 
   @override
-  ConsumerState<LogMeasurementScreen> createState() => _LogMeasurementScreenState();
+  ConsumerState<LogMeasurementScreen> createState() =>
+      _LogMeasurementScreenState();
 }
 
 class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
@@ -82,11 +84,13 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
   }
 
   Widget _buildDurationField(
+    BuildContext context,
     TextEditingController hrController,
     TextEditingController minController,
     String label,
     IconData icon,
   ) {
+    final l10n = context.l10n;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       mainAxisSize: MainAxisSize.min,
@@ -96,7 +100,10 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
           children: [
             Icon(icon, size: 20),
             const SizedBox(width: 8),
-            Text(label, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold)),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+            ),
           ],
         ),
         const SizedBox(height: 6),
@@ -107,9 +114,14 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
                 controller: hrController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: "Hrs",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  labelText: l10n.hrsShort,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
               ),
             ),
@@ -119,9 +131,14 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
                 controller: minController,
                 keyboardType: TextInputType.number,
                 decoration: InputDecoration(
-                  labelText: "Min",
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  labelText: l10n.minShort,
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
                 ),
               ),
             ),
@@ -131,7 +148,12 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
     );
   }
 
-  Widget _buildField(TextEditingController controller, String label, IconData icon, {bool isDecimal = true}) {
+  Widget _buildField(
+    TextEditingController controller,
+    String label,
+    IconData icon, {
+    bool isDecimal = true,
+  }) {
     return TextField(
       controller: controller,
       keyboardType: TextInputType.numberWithOptions(decimal: isDecimal),
@@ -139,7 +161,10 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
         labelText: label,
         prefixIcon: Icon(icon, size: 20),
         border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 12,
+          vertical: 10,
+        ),
       ),
     );
   }
@@ -173,13 +198,18 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
           date: now,
         );
         final db = ref.read(measurementRepositoryProvider).db;
-        await db.into(db.advancedBodyMeasurements).insertOnConflictUpdate(advBodyLog);
+        await db
+            .into(db.advancedBodyMeasurements)
+            .insertOnConflictUpdate(advBodyLog);
       }
     }
 
     // Save Sleep
     if (settings.enableSleep) {
-      final sleepDur = _parseDuration(_sleepDurHrController, _sleepDurMinController);
+      final sleepDur = _parseDuration(
+        _sleepDurHrController,
+        _sleepDurMinController,
+      );
       final sleepRhr = int.tryParse(_sleepRhrController.text);
       final sleepHrv = int.tryParse(_sleepHrvController.text);
       if (sleepDur != null || sleepRhr != null || sleepHrv != null) {
@@ -190,7 +220,9 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
           sleepingHRV: sleepHrv,
           date: now,
         );
-        await ref.read(measurementRepositoryProvider).upsertSleepMeasurement(sleepLog);
+        await ref
+            .read(measurementRepositoryProvider)
+            .upsertSleepMeasurement(sleepLog);
       }
     }
 
@@ -198,9 +230,15 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
     if (settings.enableAdvancedSleep) {
       final tib = _parseDuration(_tibHrController, _tibMinController);
       final awake = _parseDuration(_awakeHrController, _awakeMinController);
-      final longest = _parseDuration(_longestAwakeHrController, _longestAwakeMinController);
+      final longest = _parseDuration(
+        _longestAwakeHrController,
+        _longestAwakeMinController,
+      );
       final awakenings = int.tryParse(_awakeningsController.text);
-      if (tib != null || awake != null || longest != null || awakenings != null) {
+      if (tib != null ||
+          awake != null ||
+          longest != null ||
+          awakenings != null) {
         final advSleepLog = AdvancedSleepMeasurement(
           id: Random().nextInt(1000000),
           timeInBed: tib,
@@ -209,7 +247,9 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
           numberOfAwakenings: awakenings,
           date: now,
         );
-        await ref.read(measurementRepositoryProvider).upsertAdvancedSleepMeasurement(advSleepLog);
+        await ref
+            .read(measurementRepositoryProvider)
+            .upsertAdvancedSleepMeasurement(advSleepLog);
       }
     }
 
@@ -220,7 +260,11 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
       final vo2 = double.tryParse(_vo2Controller.text);
       final wakingRhr = int.tryParse(_wakingRhrController.text);
       final wakingHrv = int.tryParse(_wakingHrvController.text);
-      if (steps != null || activeEnergy != null || vo2 != null || wakingRhr != null || wakingHrv != null) {
+      if (steps != null ||
+          activeEnergy != null ||
+          vo2 != null ||
+          wakingRhr != null ||
+          wakingHrv != null) {
         final activityLog = ActivityMeasurement(
           id: Random().nextInt(1000000),
           dailySteps: steps,
@@ -230,7 +274,9 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
           wakingHRV: wakingHrv,
           date: now,
         );
-        await ref.read(measurementRepositoryProvider).upsertActivityMeasurement(activityLog);
+        await ref
+            .read(measurementRepositoryProvider)
+            .upsertActivityMeasurement(activityLog);
       }
     }
 
@@ -242,20 +288,16 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("Log Measurement"),
+        title: Text(l10n.logMeasurement),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
         ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: _save,
-          ),
-        ],
+        actions: [IconButton(icon: const Icon(Icons.check), onPressed: _save)],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
@@ -263,38 +305,78 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Body weight - always visible
-            _buildField(_weightController, "Body Weight (${settings.unitSystem.suffix})", Icons.scale),
+            _buildField(
+              _weightController,
+              l10n.bodyWeightWithUnit(settings.unitSystem.suffix),
+              Icons.scale,
+            ),
             const SizedBox(height: 16),
 
             if (settings.enableAdvancedBody) ...[
               const Divider(),
               const SizedBox(height: 8),
-              const Text("Advanced Body Metrics", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                l10n.advancedBodyMetrics,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildField(_bfController, "Body Fat %", Icons.percent)),
+                  Expanded(
+                    child: _buildField(
+                      _bfController,
+                      l10n.bodyFatPercent,
+                      Icons.percent,
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildField(_muscleController, "Muscle Mass %", Icons.fitness_center)),
+                  Expanded(
+                    child: _buildField(
+                      _muscleController,
+                      l10n.muscleMassPercent,
+                      Icons.fitness_center,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
-              _buildField(_waistController, "Waist (cm)", Icons.straighten),
+              _buildField(_waistController, l10n.waistCm, Icons.straighten),
               const SizedBox(height: 16),
             ],
 
             if (settings.enableSleep) ...[
               const Divider(),
               const SizedBox(height: 8),
-              const Text("Sleep Metrics", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                l10n.sleepMetrics,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
-              _buildDurationField(_sleepDurHrController, _sleepDurMinController, "Sleep Duration", Icons.hotel),
+              _buildDurationField(
+                context,
+                _sleepDurHrController,
+                _sleepDurMinController,
+                l10n.sleepDuration,
+                Icons.hotel,
+              ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildField(_sleepRhrController, "Sleeping RHR", Icons.favorite)),
+                  Expanded(
+                    child: _buildField(
+                      _sleepRhrController,
+                      l10n.sleepingRhr,
+                      Icons.favorite,
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildField(_sleepHrvController, "Sleeping HRV (ms)", Icons.monitor_heart)),
+                  Expanded(
+                    child: _buildField(
+                      _sleepHrvController,
+                      l10n.sleepingHrvMs,
+                      Icons.monitor_heart,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 16),
@@ -303,40 +385,100 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
             if (settings.enableAdvancedSleep) ...[
               const Divider(),
               const SizedBox(height: 8),
-              const Text("Advanced Sleep Metrics", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                l10n.advancedSleepMetrics,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
-              _buildDurationField(_tibHrController, _tibMinController, "Time in Bed", Icons.bed),
+              _buildDurationField(
+                context,
+                _tibHrController,
+                _tibMinController,
+                l10n.timeInBed,
+                Icons.bed,
+              ),
               const SizedBox(height: 12),
-              _buildDurationField(_awakeHrController, _awakeMinController, "Total Awake Time", Icons.wb_sunny),
+              _buildDurationField(
+                context,
+                _awakeHrController,
+                _awakeMinController,
+                l10n.totalAwakeTime,
+                Icons.wb_sunny,
+              ),
               const SizedBox(height: 12),
-              _buildDurationField(_longestAwakeHrController, _longestAwakeMinController, "Longest Awake Period", Icons.alarm),
+              _buildDurationField(
+                context,
+                _longestAwakeHrController,
+                _longestAwakeMinController,
+                l10n.longestAwakePeriod,
+                Icons.alarm,
+              ),
               const SizedBox(height: 12),
-              _buildField(_awakeningsController, "Number of Awakenings", Icons.alarm_on, isDecimal: false),
+              _buildField(
+                _awakeningsController,
+                l10n.numberOfAwakenings,
+                Icons.alarm_on,
+                isDecimal: false,
+              ),
               const SizedBox(height: 16),
             ],
 
             if (settings.enableActivity) ...[
               const Divider(),
               const SizedBox(height: 8),
-              const Text("Activity Metrics", style: TextStyle(fontWeight: FontWeight.bold)),
+              Text(
+                l10n.activityMetrics,
+                style: const TextStyle(fontWeight: FontWeight.bold),
+              ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildField(_stepsController, "Daily Steps", Icons.directions_walk, isDecimal: false)),
+                  Expanded(
+                    child: _buildField(
+                      _stepsController,
+                      l10n.dailySteps,
+                      Icons.directions_walk,
+                      isDecimal: false,
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildField(_activeEnergyController, "Calories (kcal)", Icons.local_fire_department)),
+                  Expanded(
+                    child: _buildField(
+                      _activeEnergyController,
+                      l10n.caloriesKcal,
+                      Icons.local_fire_department,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
               Row(
                 children: [
-                  Expanded(child: _buildField(_vo2Controller, "VO2 Max", Icons.speed)),
+                  Expanded(
+                    child: _buildField(
+                      _vo2Controller,
+                      l10n.vo2Max,
+                      Icons.speed,
+                    ),
+                  ),
                   const SizedBox(width: 12),
-                  Expanded(child: _buildField(_wakingRhrController, "Waking RHR", Icons.favorite_border, isDecimal: false)),
+                  Expanded(
+                    child: _buildField(
+                      _wakingRhrController,
+                      l10n.wakingRhr,
+                      Icons.favorite_border,
+                      isDecimal: false,
+                    ),
+                  ),
                 ],
               ),
               const SizedBox(height: 12),
-              _buildField(_wakingHrvController, "Waking HRV (ms)", Icons.healing, isDecimal: false),
+              _buildField(
+                _wakingHrvController,
+                l10n.wakingHrvMs,
+                Icons.healing,
+                isDecimal: false,
+              ),
               const SizedBox(height: 16),
             ],
 
@@ -346,7 +488,7 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
               height: 48,
               child: FilledButton.icon(
                 icon: const Icon(Icons.check),
-                label: const Text("Save Measurement"),
+                label: Text(l10n.saveMeasurement),
                 onPressed: _save,
               ),
             ),

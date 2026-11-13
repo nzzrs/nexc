@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/components/nexc_scaffold.dart';
 import 'meals_dashboard_screen.dart';
@@ -18,27 +19,28 @@ import 'meals_dashboard_screen.dart';
 class TrackMealPlanScreen extends ConsumerStatefulWidget {
   final int mealPlanId;
 
-  const TrackMealPlanScreen({
-    super.key,
-    required this.mealPlanId,
-  });
+  const TrackMealPlanScreen({super.key, required this.mealPlanId});
 
   @override
-  ConsumerState<TrackMealPlanScreen> createState() => _TrackMealPlanScreenState();
+  ConsumerState<TrackMealPlanScreen> createState() =>
+      _TrackMealPlanScreenState();
 }
 
 class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final planAsync = ref.watch(mealPlanStreamProvider(widget.mealPlanId));
 
     return planAsync.when(
-      loading: () => const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (err, stack) => Scaffold(body: Center(child: Text("Error: $err"))),
+      loading: () =>
+          const Scaffold(body: Center(child: CircularProgressIndicator())),
+      error: (err, stack) =>
+          Scaffold(body: Center(child: Text(l10n.errorWithMessage('$err')))),
       data: (plan) {
         if (plan == null) {
-          return const Scaffold(body: Center(child: Text("Meal plan not found")));
+          return Scaffold(body: Center(child: Text(l10n.mealPlanNotFound)));
         }
 
         final meals = plan.meals;
@@ -55,11 +57,13 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
             double itemCarb = 0.0;
             double itemFat = 0.0;
 
-            if (detail.mealItem.type == MealItemType.PRODUCT && detail.product != null) {
+            if (detail.mealItem.type == MealItemType.PRODUCT &&
+                detail.product != null) {
               itemProt = detail.product!.proteins * scale;
               itemCarb = detail.product!.carbs * scale;
               itemFat = detail.product!.fats * scale;
-            } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
+            } else if (detail.mealItem.type == MealItemType.RECIPE &&
+                detail.recipe != null) {
               for (final ing in detail.recipe!.ingredients) {
                 final ingScale = (ing.ingredient.amount / 100.0) * scale;
                 itemProt += ing.product.proteins * ingScale;
@@ -74,20 +78,24 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
           }
         }
 
-        final targetProt = plan.mealPlan.targetProtein != null && plan.mealPlan.targetProtein! > 0
+        final targetProt =
+            plan.mealPlan.targetProtein != null &&
+                plan.mealPlan.targetProtein! > 0
             ? plan.mealPlan.targetProtein!
             : totalProtTarget;
-        final targetCarb = plan.mealPlan.targetCarbs != null && plan.mealPlan.targetCarbs! > 0
+        final targetCarb =
+            plan.mealPlan.targetCarbs != null && plan.mealPlan.targetCarbs! > 0
             ? plan.mealPlan.targetCarbs!
             : totalCarbTarget;
-        final targetFat = plan.mealPlan.targetFats != null && plan.mealPlan.targetFats! > 0
+        final targetFat =
+            plan.mealPlan.targetFats != null && plan.mealPlan.targetFats! > 0
             ? plan.mealPlan.targetFats!
             : totalFatTarget;
 
         return NexcScaffold(
-          title: const Text(
-            "Meal Plan Details",
-            style: TextStyle(fontWeight: FontWeight.bold),
+          title: Text(
+            l10n.mealPlanDetails,
+            style: const TextStyle(fontWeight: FontWeight.bold),
           ),
           navigateBack: () => Navigator.pop(context),
           actions: [
@@ -97,16 +105,18 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
                 '/meals/edit-plan',
                 arguments: plan.mealPlan.id,
               );
-            }
+            },
           ],
           actionsIcons: const [Icon(Icons.edit)],
-          actionsDescription: const ["Edit"],
+          actionsDescription: [l10n.edit],
           content: (context, padding) {
             return ListView(
               padding: const EdgeInsets.all(16.0),
               children: [
                 Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.all(16.0),
                     child: Column(
@@ -114,22 +124,41 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
                       children: [
                         Text(
                           plan.mealPlan.title,
-                          style: theme.textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                          style: theme.textTheme.titleLarge?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         if (plan.mealPlan.notes.isNotEmpty) ...[
                           const SizedBox(height: 8),
                           Text(
                             plan.mealPlan.notes,
-                            style: theme.textTheme.bodyMedium?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                            style: theme.textTheme.bodyMedium?.copyWith(
+                              color: theme.colorScheme.onSurfaceVariant,
+                            ),
                           ),
                         ],
                         const SizedBox(height: 16),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceAround,
                           children: [
-                            _buildStaticMacro("P", targetProt, Colors.blue, theme),
-                            _buildStaticMacro("C", targetCarb, Colors.orange, theme),
-                            _buildStaticMacro("F", targetFat, Colors.purple, theme),
+                            _buildStaticMacro(
+                              "P",
+                              targetProt,
+                              Colors.blue,
+                              theme,
+                            ),
+                            _buildStaticMacro(
+                              "C",
+                              targetCarb,
+                              Colors.orange,
+                              theme,
+                            ),
+                            _buildStaticMacro(
+                              "F",
+                              targetFat,
+                              Colors.purple,
+                              theme,
+                            ),
                           ],
                         ),
                       ],
@@ -138,10 +167,13 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
                 ),
                 const SizedBox(height: 16),
                 ...meals.map((mealWithItems) {
-                  final timeStr = '${mealWithItems.meal.time.hour.toString().padLeft(2, '0')}:${mealWithItems.meal.time.minute.toString().padLeft(2, '0')}';
+                  final timeStr =
+                      '${mealWithItems.meal.time.hour.toString().padLeft(2, '0')}:${mealWithItems.meal.time.minute.toString().padLeft(2, '0')}';
                   return Card(
                     margin: const EdgeInsets.symmetric(vertical: 6.0),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Column(
@@ -167,19 +199,29 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
                           ),
                           const Divider(),
                           ...mealWithItems.items.map((detail) {
-                            final name = detail.mealItem.type == MealItemType.PRODUCT
-                                ? (detail.product?.name ?? "Unknown Product")
-                                : (detail.recipe?.recipe.name ?? "Unknown Recipe");
-                            final unit = getUnitLabel(detail.mealItem, detail.product);
+                            final name =
+                                detail.mealItem.type == MealItemType.PRODUCT
+                                ? (detail.product?.name ?? l10n.unknownProduct)
+                                : (detail.recipe?.recipe.name ??
+                                      l10n.unknownRecipe);
+                            final unit = getUnitLabel(
+                              detail.mealItem,
+                              detail.product,
+                            );
                             return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4.0),
+                              padding: const EdgeInsets.symmetric(
+                                vertical: 4.0,
+                              ),
                               child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
                                   Text(name, style: theme.textTheme.bodyMedium),
                                   Text(
                                     "${formatDouble(detail.mealItem.amount)} $unit",
-                                    style: theme.textTheme.bodyMedium?.copyWith(fontWeight: FontWeight.bold),
+                                    style: theme.textTheme.bodyMedium?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                    ),
                                   ),
                                 ],
                               ),
@@ -198,17 +240,27 @@ class _TrackMealPlanScreenState extends ConsumerState<TrackMealPlanScreen> {
     );
   }
 
-  Widget _buildStaticMacro(String label, double val, Color color, ThemeData theme) {
+  Widget _buildStaticMacro(
+    String label,
+    double val,
+    Color color,
+    ThemeData theme,
+  ) {
     return Column(
       children: [
         Text(
           label,
-          style: theme.textTheme.labelMedium?.copyWith(fontWeight: FontWeight.bold, color: color),
+          style: theme.textTheme.labelMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
         ),
         const SizedBox(height: 4),
         Text(
           "${val.toStringAsFixed(0)}g",
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          style: theme.textTheme.titleMedium?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ],
     );

@@ -8,6 +8,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/profile_providers.dart';
 import '../../core/providers/settings_provider.dart';
 
@@ -64,11 +65,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     await _loadUserData();
 
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Personal information saved successfully'),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.personalInfoSaved)));
     }
   }
 
@@ -77,9 +76,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         .read(settingsProvider.notifier)
         .setUserPreferences(_preferencesController.text);
     if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Preferences saved successfully')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(context.l10n.preferencesSaved)));
     }
   }
 
@@ -112,11 +111,12 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final age = _calculateAge(_selectedBirthDate);
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Personal Information'),
+        title: Text(l10n.personalInformation),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -138,7 +138,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         Text(
-                          'Your Profile Metrics',
+                          l10n.yourProfileMetrics,
                           style: theme.textTheme.titleMedium?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
@@ -151,7 +151,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                             decimal: true,
                           ),
                           decoration: InputDecoration(
-                            labelText: 'Height (cm)',
+                            labelText: l10n.heightCm,
                             prefixIcon: const Icon(Icons.height),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
@@ -170,8 +170,10 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                           icon: const Icon(Icons.cake_outlined),
                           label: Text(
                             _selectedBirthDate != null
-                                ? 'Birthday: ${_selectedBirthDate!.day}/${_selectedBirthDate!.month}/${_selectedBirthDate!.year}'
-                                : 'Select Birthday',
+                                ? l10n.birthdayWithDate(
+                                    '${_selectedBirthDate!.day}/${_selectedBirthDate!.month}/${_selectedBirthDate!.year}',
+                                  )
+                                : l10n.selectBirthday,
                           ),
                         ),
                         if (age != null) ...[
@@ -192,7 +194,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                                 ),
                                 const SizedBox(width: 12),
                                 Text(
-                                  'Calculated Age: $age years old',
+                                  l10n.calculatedAge(age),
                                   style: theme.textTheme.titleMedium?.copyWith(
                                     color:
                                         theme.colorScheme.onSecondaryContainer,
@@ -213,7 +215,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                             ),
                           ),
                           icon: const Icon(Icons.save_outlined),
-                          label: const Text('Save Details'),
+                          label: Text(l10n.saveDetails),
                         ),
                       ],
                     ),
@@ -234,14 +236,14 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "User Preferences",
+                              l10n.userPreferencesTitle,
                               style: theme.textTheme.titleMedium?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              "AI uses this context to tailor workouts and meal plans",
+                              l10n.aiPreferencesContext,
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -254,8 +256,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                           minLines: 4,
                           maxLines: 12,
                           decoration: InputDecoration(
-                            hintText:
-                                "Paste or write your detailed preferences, schedule constraints, fitness goals, or dietary requirements here...",
+                            hintText: l10n.preferencesHint,
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(16),
                             ),
@@ -271,7 +272,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                             ),
                           ),
                           icon: const Icon(Icons.save_outlined),
-                          label: const Text('Save Preferences'),
+                          label: Text(l10n.savePreferences),
                         ),
                       ],
                     ),

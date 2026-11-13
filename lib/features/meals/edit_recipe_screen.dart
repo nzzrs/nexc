@@ -15,6 +15,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../core/components/clearable_search_field.dart';
 import '../../core/db/relations.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/meals_providers.dart';
 
 /// Full-screen recipe editor used for both creating and updating recipes.
@@ -95,7 +96,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
     if (name.isEmpty) {
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text("Enter a recipe name")));
+      ).showSnackBar(SnackBar(content: Text(context.l10n.enterRecipeName)));
       return;
     }
 
@@ -152,6 +153,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final usageCounts = ref.watch(productUsageCountsProvider).value;
     final inStockProductIds = ref.watch(inStockProductIdsProvider).value;
 
@@ -166,18 +168,18 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
       appBar: AppBar(
         title: Text(
           widget.recipeWithIngredients.recipe.id == 0
-              ? "Add Recipe"
-              : "Edit Recipe",
+              ? l10n.addRecipe
+              : l10n.editRecipe,
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
-          tooltip: "Cancel",
+          tooltip: l10n.cancel,
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
             icon: const Icon(Icons.check),
-            tooltip: "Save",
+            tooltip: l10n.save,
             onPressed: _submit,
           ),
         ],
@@ -189,18 +191,18 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
             TextField(
               controller: _nameController,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: "Name",
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.nameLabel,
+                border: const OutlineInputBorder(),
               ),
             ),
             const SizedBox(height: 12),
             TextField(
               controller: _instructionsController,
               textCapitalization: TextCapitalization.sentences,
-              decoration: const InputDecoration(
-                labelText: "Instructions/Process",
-                border: OutlineInputBorder(),
+              decoration: InputDecoration(
+                labelText: l10n.instructionsProcess,
+                border: const OutlineInputBorder(),
               ),
               minLines: 2,
               maxLines: 5,
@@ -209,8 +211,8 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
             CheckboxListTile(
               title: Text(
                 _hasNonPortableIngredients
-                    ? "Is Portable (Contains non-portable ingredients)"
-                    : "Is Portable",
+                    ? l10n.isPortableNonPortable
+                    : l10n.isPortableLabel,
                 style: TextStyle(
                   color: _hasNonPortableIngredients
                       ? theme.disabledColor
@@ -229,7 +231,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
             ),
             const Divider(),
             Text(
-              "Composition",
+              l10n.composition,
               style: theme.textTheme.titleMedium?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -242,11 +244,15 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
                   leading: const Icon(Icons.check_circle, color: Colors.green),
                   title: Text(selectedProduct.name),
                   subtitle: Text(
-                    "${selectedProduct.proteins}g P | ${selectedProduct.carbs}g C | ${selectedProduct.fats}g F",
+                    l10n.macrosCompact(
+                      '${selectedProduct.proteins}',
+                      '${selectedProduct.carbs}',
+                      '${selectedProduct.fats}',
+                    ),
                   ),
                   trailing: IconButton(
                     icon: const Icon(Icons.clear),
-                    tooltip: "Clear selection",
+                    tooltip: l10n.clearSelection,
                     onPressed: () => setState(() => _selectedProductId = null),
                   ),
                 ),
@@ -254,7 +260,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
             ] else ...[
               ClearableSearchField(
                 controller: _ingredientSearchController,
-                labelText: "Search Ingredient...",
+                labelText: l10n.searchIngredient,
                 onChanged: (value) => setState(() => _searchQuery = value),
               ),
               const SizedBox(height: 8),
@@ -267,10 +273,10 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: filteredProducts.isEmpty
-                      ? const Center(
+                      ? Center(
                           child: Padding(
-                            padding: EdgeInsets.all(16.0),
-                            child: Text("No products found"),
+                            padding: const EdgeInsets.all(16.0),
+                            child: Text(l10n.noProductsFound),
                           ),
                         )
                       : ListView.builder(
@@ -281,7 +287,11 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
                             return ListTile(
                               title: Text(product.name),
                               subtitle: Text(
-                                "${product.proteins}g P | ${product.carbs}g C | ${product.fats}g F",
+                                l10n.macrosCompact(
+                                  '${product.proteins}',
+                                  '${product.carbs}',
+                                  '${product.fats}',
+                                ),
                               ),
                               onTap: () => _selectProduct(product),
                             );
@@ -300,9 +310,9 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
                     keyboardType: const TextInputType.numberWithOptions(
                       decimal: true,
                     ),
-                    decoration: const InputDecoration(
-                      labelText: "Amount",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: l10n.amountLabel,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -341,7 +351,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
                 const SizedBox(width: 8),
                 FilledButton(
                   onPressed: _addIngredient,
-                  child: const Text("Add"),
+                  child: Text(l10n.addAction),
                 ),
               ],
             ),
@@ -352,7 +362,10 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      "${ingredient.product.name}: ${ingredient.ingredient.amount.toStringAsFixed(0)}${ingredient.ingredient.amountUnits ?? 'g'}",
+                      l10n.ingredientLine(
+                        ingredient.product.name,
+                        '${ingredient.ingredient.amount.toStringAsFixed(0)}${ingredient.ingredient.amountUnits ?? 'g'}',
+                      ),
                     ),
                   ),
                   IconButton(
@@ -360,7 +373,7 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
                       Icons.delete_outline,
                       color: theme.colorScheme.error,
                     ),
-                    tooltip: "Remove ingredient",
+                    tooltip: l10n.removeIngredient,
                     onPressed: () {
                       setState(() {
                         _ingredients.remove(ingredient);
@@ -378,8 +391,8 @@ class _EditRecipeScreenState extends ConsumerState<EditRecipeScreen> {
                 icon: const Icon(Icons.check),
                 label: Text(
                   widget.recipeWithIngredients.recipe.id == 0
-                      ? "Add Recipe"
-                      : "Save Changes",
+                      ? l10n.addRecipe
+                      : l10n.saveChanges,
                 ),
                 onPressed: _submit,
               ),

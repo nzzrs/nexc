@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/providers/settings_provider.dart';
 import 'add_meal_item_screen.dart';
@@ -119,15 +120,13 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
         }
       }
     }
-    final itemName = targetDetail?.displayName ?? 'Meal Item';
+    final itemName = targetDetail?.displayName ?? context.l10n.mealItemFallback;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(itemName),
-        content: const Text(
-          "Choose an action for this item in today's meal log:",
-        ),
+        content: Text(context.l10n.chooseActionForItem),
         actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
         actions: [
           Row(
@@ -148,7 +147,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                     }
                   },
                   icon: const Icon(Icons.delete_outline, size: 18),
-                  label: const Text("Delete"),
+                  label: Text(context.l10n.delete),
                 ),
               ),
               const SizedBox(width: 8),
@@ -162,7 +161,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                     _showReplaceDialog(context, itemId, products, recipes);
                   },
                   icon: const Icon(Icons.swap_horiz, size: 18),
-                  label: const Text("Replace"),
+                  label: Text(context.l10n.replaceAction),
                 ),
               ),
             ],
@@ -244,6 +243,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final templatesAsync = ref.watch(mealTemplatesProvider);
     final todayPlanAsync = ref.watch(todayMealPlanProvider);
     final productsAsync = ref.watch(allProductsProvider);
@@ -269,7 +269,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                 Navigator.pushNamed(context, '/meals/edit-plan', arguments: 0);
               },
               icon: const Icon(Icons.add),
-              label: const Text("Create Meal Plan"),
+              label: Text(l10n.createMealPlan),
             )
           : (selectedTab == 0 && todayPlan != null)
           ? Column(
@@ -291,7 +291,10 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                     );
                   },
                   icon: const Icon(Icons.add, size: 18),
-                  label: const Text("Add Meal", style: TextStyle(fontSize: 13)),
+                  label: Text(
+                    l10n.addMeal,
+                    style: const TextStyle(fontSize: 13),
+                  ),
                   extendedPadding: const EdgeInsets.symmetric(
                     horizontal: 14,
                     vertical: 8,
@@ -305,9 +308,12 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                   onPressed: () =>
                       _handleAddSnack(context, todayPlan, products, recipes),
                   icon: const Icon(Icons.apple, size: 28),
-                  label: const Text(
-                    "Add Snack",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  label: Text(
+                    l10n.addSnack,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   extendedPadding: const EdgeInsets.symmetric(
                     horizontal: 28,
@@ -321,9 +327,9 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
         children: [
           TabBar(
             controller: _tabController,
-            tabs: const [
-              Tab(text: "Today's plan"),
-              Tab(text: "Meal plans"),
+            tabs: [
+              Tab(text: l10n.todayPlanTab),
+              Tab(text: l10n.mealPlansTab),
             ],
           ),
           Expanded(
@@ -334,7 +340,8 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                 todayPlanAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => Center(child: Text("Error: $err")),
+                  error: (err, stack) =>
+                      Center(child: Text(l10n.errorWithMessage('$err'))),
                   data: (plan) {
                     if (plan == null) {
                       return Center(
@@ -342,7 +349,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              "Select a meal plan for today",
+                              l10n.selectMealPlanForToday,
                               style: theme.textTheme.titleMedium?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -353,7 +360,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                                 _tabController.animateTo(1);
                               },
                               icon: const Icon(Icons.arrow_forward),
-                              label: const Text("Go to Meal Plans"),
+                              label: Text(l10n.goToMealPlans),
                             ),
                             const SizedBox(height: 12),
                             OutlinedButton.icon(
@@ -363,7 +370,7 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                                     .startEmptyTracking();
                               },
                               icon: const Icon(Icons.edit_note),
-                              label: const Text("Start Logging"),
+                              label: Text(l10n.startLogging),
                             ),
                           ],
                         ),
@@ -522,23 +529,21 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                                     final confirm = await showDialog<bool>(
                                       context: context,
                                       builder: (context) => AlertDialog(
-                                        title: const Text(
-                                          "Discard Today's Meals",
-                                        ),
-                                        content: const Text(
-                                          "Are you sure you want to discard today's meals log? This cannot be undone.",
+                                        title: Text(l10n.discardTodayMeals),
+                                        content: Text(
+                                          l10n.discardTodayMealsMessage,
                                         ),
                                         actions: [
                                           TextButton(
                                             onPressed: () =>
                                                 Navigator.pop(context, false),
-                                            child: const Text("Cancel"),
+                                            child: Text(l10n.cancel),
                                           ),
                                           TextButton(
                                             onPressed: () =>
                                                 Navigator.pop(context, true),
                                             child: Text(
-                                              "Discard",
+                                              l10n.discard,
                                               style: TextStyle(
                                                 color: theme.colorScheme.error,
                                               ),
@@ -567,20 +572,20 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                                     final confirm = await showDialog<bool>(
                                       context: context,
                                       builder: (context) => AlertDialog(
-                                        title: const Text("Save Today's Meals"),
-                                        content: const Text(
-                                          "This will save all items marked as eaten to your logs and remove any uneaten items. Proceed?",
+                                        title: Text(l10n.saveTodayMeals),
+                                        content: Text(
+                                          l10n.saveTodayMealsMessage,
                                         ),
                                         actions: [
                                           TextButton(
                                             onPressed: () =>
                                                 Navigator.pop(context, false),
-                                            child: const Text("Cancel"),
+                                            child: Text(l10n.cancel),
                                           ),
                                           TextButton(
                                             onPressed: () =>
                                                 Navigator.pop(context, true),
-                                            child: const Text("Save"),
+                                            child: Text(l10n.save),
                                           ),
                                         ],
                                       ),
@@ -593,9 +598,9 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                                         ScaffoldMessenger.of(
                                           context,
                                         ).showSnackBar(
-                                          const SnackBar(
+                                          SnackBar(
                                             content: Text(
-                                              "Today's meals logged successfully!",
+                                              l10n.todayMealsLogged,
                                             ),
                                           ),
                                         );
@@ -618,12 +623,13 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                 templatesAsync.when(
                   loading: () =>
                       const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) => Center(child: Text("Error: $err")),
+                  error: (err, stack) =>
+                      Center(child: Text(l10n.errorWithMessage('$err'))),
                   data: (planList) {
                     if (planList.isEmpty) {
                       return Center(
                         child: Text(
-                          "No meal plans yet",
+                          l10n.noMealPlansYet,
                           style: theme.textTheme.bodyLarge?.copyWith(
                             color: theme.colorScheme.onSurfaceVariant,
                           ),
@@ -662,21 +668,23 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                               final confirm = await showDialog<bool>(
                                 context: context,
                                 builder: (context) => AlertDialog(
-                                  title: const Text("Delete Meal Plan"),
+                                  title: Text(l10n.deleteMealPlan),
                                   content: Text(
-                                    "Are you sure you want to delete '${plan.mealPlan.title}'?",
+                                    l10n.deleteMealPlanConfirm(
+                                      plan.mealPlan.title,
+                                    ),
                                   ),
                                   actions: [
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.pop(context, false),
-                                      child: const Text("Cancel"),
+                                      child: Text(l10n.cancel),
                                     ),
                                     TextButton(
                                       onPressed: () =>
                                           Navigator.pop(context, true),
                                       child: Text(
-                                        "Delete",
+                                        l10n.delete,
                                         style: TextStyle(
                                           color: theme.colorScheme.error,
                                         ),
@@ -700,21 +708,19 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
                                 final confirm = await showDialog<bool>(
                                   context: context,
                                   builder: (context) => AlertDialog(
-                                    title: const Text("Change Meal Plan?"),
-                                    content: const Text(
-                                      "Changing today's plan will discard all food currently logged for today. Proceed?",
-                                    ),
+                                    title: Text(l10n.changeMealPlan),
+                                    content: Text(l10n.changeMealPlanMessage),
                                     actions: [
                                       TextButton(
                                         onPressed: () =>
                                             Navigator.pop(context, false),
-                                        child: const Text("Cancel"),
+                                        child: Text(l10n.cancel),
                                       ),
                                       TextButton(
                                         onPressed: () =>
                                             Navigator.pop(context, true),
                                         child: Text(
-                                          "Proceed",
+                                          l10n.proceed,
                                           style: TextStyle(
                                             color: theme.colorScheme.error,
                                           ),
@@ -800,6 +806,7 @@ class TodayMacrosCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
 
     return Card(
       color: theme.colorScheme.secondaryContainer,
@@ -813,7 +820,7 @@ class TodayMacrosCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  "Today's Macros",
+                  l10n.todaysMacros,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: theme.colorScheme.onSecondaryContainer,
@@ -833,19 +840,19 @@ class TodayMacrosCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
                 CircularMacroIndicator(
-                  label: "Protein",
+                  label: l10n.proteinLabel,
                   consumed: protConsumed,
                   target: protTarget,
                   color: Colors.blue,
                 ),
                 CircularMacroIndicator(
-                  label: "Carbs",
+                  label: l10n.carbsLabel,
                   consumed: carbConsumed,
                   target: carbTarget,
                   color: Colors.orange,
                 ),
                 CircularMacroIndicator(
-                  label: "Fats",
+                  label: l10n.fatsLabel,
                   consumed: fatConsumed,
                   target: fatTarget,
                   color: Colors.purple,
@@ -1035,6 +1042,7 @@ class MealTrackCard extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final meal = mealWithItems.meal;
     final timeStr =
         '${meal.time.hour.toString().padLeft(2, '0')}:${meal.time.minute.toString().padLeft(2, '0')}';
@@ -1102,7 +1110,7 @@ class MealTrackCard extends ConsumerWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              isPortable ? "Portable" : "Home only",
+                              isPortable ? l10n.portable : l10n.homeOnly,
                               style: theme.textTheme.labelSmall?.copyWith(
                                 fontSize: 10,
                                 fontWeight: FontWeight.bold,
@@ -1155,7 +1163,7 @@ class MealTrackCard extends ConsumerWidget {
                                   ),
                                   const SizedBox(width: 4),
                                   Text(
-                                    meal.atHome ? "At Home" : "Outside",
+                                    meal.atHome ? l10n.atHome : l10n.outside,
                                     style: theme.textTheme.labelSmall?.copyWith(
                                       fontSize: 10,
                                       fontWeight: FontWeight.bold,
@@ -1182,19 +1190,17 @@ class MealTrackCard extends ConsumerWidget {
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text("Delete Meal"),
-                        content: Text(
-                          "Are you sure you want to delete '${meal.name}'?",
-                        ),
+                        title: Text(l10n.deleteMeal),
+                        content: Text(l10n.deleteMealConfirm(meal.name)),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context, false),
-                            child: const Text("Cancel"),
+                            child: Text(l10n.cancel),
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(context, true),
                             child: Text(
-                              "Delete",
+                              l10n.delete,
                               style: TextStyle(color: theme.colorScheme.error),
                             ),
                           ),
@@ -1226,8 +1232,8 @@ class MealTrackCard extends ConsumerWidget {
             const SizedBox(height: 8),
             ...mealWithItems.items.map((detail) {
               final name = detail.mealItem.type == MealItemType.PRODUCT
-                  ? (detail.product?.name ?? "Unknown Product")
-                  : (detail.recipe?.recipe.name ?? "Unknown Recipe");
+                  ? (detail.product?.name ?? l10n.unknownProduct)
+                  : (detail.recipe?.recipe.name ?? l10n.unknownRecipe);
 
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -1272,7 +1278,7 @@ class MealTrackCard extends ConsumerWidget {
                                       borderRadius: BorderRadius.circular(4),
                                     ),
                                     child: Text(
-                                      "Home only",
+                                      l10n.homeOnly,
                                       style: TextStyle(
                                         fontSize: 9,
                                         color:
@@ -1286,7 +1292,13 @@ class MealTrackCard extends ConsumerWidget {
                                           AmountUnit.UNITS &&
                                       detail.product != null)
                                     Text(
-                                      "≈ ${(detail.mealItem.amount * getEdibleWeightPerUnit(detail.product!)).toStringAsFixed(0)}g edible",
+                                      l10n.edibleEquivalent(
+                                        (detail.mealItem.amount *
+                                                getEdibleWeightPerUnit(
+                                                  detail.product!,
+                                                ))
+                                            .toStringAsFixed(0),
+                                      ),
                                       style: theme.textTheme.bodySmall
                                           ?.copyWith(
                                             color: theme
@@ -1422,7 +1434,7 @@ class MealTrackCard extends ConsumerWidget {
                     ? () => onAddClick!(meal.id)
                     : null,
                 icon: const Icon(Icons.add, size: 18),
-                label: const Text("Add item to meal"),
+                label: Text(l10n.addItemToMealLower),
               ),
             ),
           ],
@@ -1636,8 +1648,9 @@ class _EditTodayGoalsDialogState extends State<EditTodayGoalsDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = context.l10n;
     return AlertDialog(
-      title: const Text("Edit Daily Macro Goals"),
+      title: Text(l10n.editDailyMacroGoals),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1648,7 +1661,7 @@ class _EditTodayGoalsDialogState extends State<EditTodayGoalsDialog> {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              decoration: const InputDecoration(labelText: "Protein (g)"),
+              decoration: InputDecoration(labelText: l10n.proteinG),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -1656,7 +1669,7 @@ class _EditTodayGoalsDialogState extends State<EditTodayGoalsDialog> {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              decoration: const InputDecoration(labelText: "Carbs (g)"),
+              decoration: InputDecoration(labelText: l10n.carbsG),
             ),
             const SizedBox(height: 8),
             TextField(
@@ -1664,7 +1677,7 @@ class _EditTodayGoalsDialogState extends State<EditTodayGoalsDialog> {
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
-              decoration: const InputDecoration(labelText: "Fats (g)"),
+              decoration: InputDecoration(labelText: l10n.fatsG),
             ),
           ],
         ),
@@ -1672,7 +1685,7 @@ class _EditTodayGoalsDialogState extends State<EditTodayGoalsDialog> {
       actions: [
         TextButton(
           onPressed: () => Navigator.pop(context),
-          child: const Text("Cancel"),
+          child: Text(l10n.cancel),
         ),
         TextButton(
           onPressed: () {
@@ -1684,7 +1697,7 @@ class _EditTodayGoalsDialogState extends State<EditTodayGoalsDialog> {
             widget.onConfirm(p, c, f);
             Navigator.pop(context);
           },
-          child: const Text("Save"),
+          child: Text(l10n.save),
         ),
       ],
     );
@@ -1712,6 +1725,7 @@ class MealPlanCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final plan = planWithMeals.mealPlan;
     final meals = planWithMeals.meals;
 
@@ -1805,7 +1819,10 @@ class MealPlanCard extends StatelessWidget {
               const SizedBox(height: 12),
               if (meals.isNotEmpty) ...[
                 Text(
-                  "${meals.length} scheduled meals (${meals.map((m) => m.meal.name).join(', ')})",
+                  l10n.scheduledMeals(
+                    meals.length,
+                    meals.map((m) => m.meal.name).join(', '),
+                  ),
                   style: theme.textTheme.bodySmall?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
@@ -1844,7 +1861,7 @@ class MealPlanCard extends StatelessWidget {
                   const SizedBox(width: 8),
                   if (isSelected)
                     InputChip(
-                      label: const Text("Selected"),
+                      label: Text(l10n.selectedLabel),
                       selected: true,
                       onSelected: onDeselect != null
                           ? (_) => onDeselect!()
@@ -1855,7 +1872,7 @@ class MealPlanCard extends StatelessWidget {
                     OutlinedButton.icon(
                       onPressed: onSelect,
                       icon: const Icon(Icons.play_arrow, size: 16),
-                      label: const Text("Select"),
+                      label: Text(l10n.selectLabel),
                     ),
                 ],
               ),
@@ -1879,7 +1896,7 @@ class MealPlanCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8),
       backgroundColor: color.withValues(alpha: 0.6),
       label: Text(
-        "$label: $valStr",
+        context.l10n.macroChip(label, valStr),
         style: theme.textTheme.labelSmall?.copyWith(fontSize: 10),
       ),
     );
@@ -1947,11 +1964,11 @@ class _InlineMealNotesEditorState extends State<_InlineMealNotesEditor> {
         color: theme.colorScheme.onSurfaceVariant,
       ),
       maxLines: null,
-      decoration: const InputDecoration(
+      decoration: InputDecoration(
         isDense: true,
-        contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
         border: InputBorder.none,
-        hintText: "Add note...",
+        hintText: context.l10n.addNoteHint,
       ),
       onFieldSubmitted: (_) => _save(),
     );

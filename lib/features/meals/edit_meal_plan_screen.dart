@@ -15,6 +15,7 @@ import 'package:drift/drift.dart' show Value;
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/components/nexc_scaffold.dart';
 import 'add_meal_item_screen.dart';
@@ -342,6 +343,7 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final plan = ref.watch(editMealPlanProvider(widget.mealPlanId));
     final products = ref.watch(allProductsProvider).value ?? [];
     final recipes = ref.watch(allRecipesProvider).value ?? [];
@@ -387,21 +389,19 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
         builder: (context) {
           final theme = Theme.of(context);
           return AlertDialog(
-            title: const Text('Discard Changes?'),
-            content: const Text(
-              'Do you want to discard your changes or save them?',
-            ),
+            title: Text(l10n.discardChangesTitle),
+            content: Text(l10n.discardChangesMessage),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, 'discard'),
                 child: Text(
-                  'DISCARD',
+                  l10n.discardAction,
                   style: TextStyle(color: theme.colorScheme.error),
                 ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, 'save'),
-                child: const Text('SAVE'),
+                child: Text(l10n.saveAction),
               ),
             ],
           );
@@ -413,12 +413,12 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
         Navigator.pop(context);
       } else if (confirmed == 'save') {
         if (plan.mealPlan.title.trim().isEmpty) {
-          showFloatingToast(context, "Title cannot be empty");
+          showFloatingToast(context, l10n.titleCannotBeEmpty);
           return;
         }
         ref.read(editMealPlanProvider(widget.mealPlanId).notifier).save(() {
           if (context.mounted) {
-            showFloatingToast(context, "Meal plan saved");
+            showFloatingToast(context, l10n.mealPlanSaved);
             Navigator.pop(context);
           }
         });
@@ -432,12 +432,12 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
         await handlePop();
       },
       child: NexcScaffold(
-        title: Text(isNew ? "Create Meal Plan" : "Edit Meal Plan"),
+        title: Text(isNew ? l10n.createMealPlan : l10n.editMealPlan),
         navigateBack: handlePop,
         actions: [
           () {
             ref.read(editMealPlanProvider(widget.mealPlanId).notifier).save(() {
-              showFloatingToast(context, "Meal plan saved");
+              showFloatingToast(context, l10n.mealPlanSaved);
               Navigator.pop(context);
             });
           },
@@ -455,9 +455,9 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                       .read(editMealPlanProvider(widget.mealPlanId).notifier)
                       .updateMealPlanInfo(val, plan.mealPlan.notes);
                 },
-                decoration: const InputDecoration(
-                  labelText: "Plan Title",
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.planTitle,
+                  border: const OutlineInputBorder(),
                 ),
               ),
               const SizedBox(height: 12),
@@ -468,15 +468,15 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                       .read(editMealPlanProvider(widget.mealPlanId).notifier)
                       .updateMealPlanInfo(plan.mealPlan.title, val);
                 },
-                decoration: const InputDecoration(
-                  labelText: "Notes/Goal",
-                  border: OutlineInputBorder(),
+                decoration: InputDecoration(
+                  labelText: l10n.notesGoal,
+                  border: const OutlineInputBorder(),
                 ),
                 maxLines: 2,
               ),
               const SizedBox(height: 16),
               Text(
-                "Target Macros",
+                l10n.targetMacros,
                 style: theme.textTheme.titleSmall?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -492,8 +492,10 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                         decimal: true,
                       ),
                       decoration: InputDecoration(
-                        labelText: "Protein (g)",
-                        helperText: "Sum: ${currentProt.toStringAsFixed(0)}g",
+                        labelText: l10n.proteinG,
+                        helperText: l10n.sumGrams(
+                          currentProt.toStringAsFixed(0),
+                        ),
                         border: const OutlineInputBorder(),
                       ),
                       onChanged: (val) {
@@ -519,8 +521,10 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                         decimal: true,
                       ),
                       decoration: InputDecoration(
-                        labelText: "Carbs (g)",
-                        helperText: "Sum: ${currentCarb.toStringAsFixed(0)}g",
+                        labelText: l10n.carbsG,
+                        helperText: l10n.sumGrams(
+                          currentCarb.toStringAsFixed(0),
+                        ),
                         border: const OutlineInputBorder(),
                       ),
                       onChanged: (val) {
@@ -546,8 +550,10 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                         decimal: true,
                       ),
                       decoration: InputDecoration(
-                        labelText: "Fats (g)",
-                        helperText: "Sum: ${currentFat.toStringAsFixed(0)}g",
+                        labelText: l10n.fatsG,
+                        helperText: l10n.sumGrams(
+                          currentFat.toStringAsFixed(0),
+                        ),
                         border: const OutlineInputBorder(),
                       ),
                       onChanged: (val) {
@@ -571,7 +577,7 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Text(
-                    "Meals",
+                    l10n.mealsLabel,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -595,7 +601,7 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                           .addMeal(meal);
                     },
                     icon: const Icon(Icons.add, size: 16),
-                    label: const Text("Add Meal"),
+                    label: Text(l10n.addMeal),
                   ),
                 ],
               ),
@@ -608,19 +614,19 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (context) => AlertDialog(
-                        title: const Text("Delete Meal"),
+                        title: Text(l10n.deleteMeal),
                         content: Text(
-                          "Are you sure you want to delete '${mealWithItems.meal.name}'?",
+                          l10n.deleteMealConfirm(mealWithItems.meal.name),
                         ),
                         actions: [
                           TextButton(
                             onPressed: () => Navigator.pop(context, false),
-                            child: const Text("Cancel"),
+                            child: Text(l10n.cancel),
                           ),
                           TextButton(
                             onPressed: () => Navigator.pop(context, true),
                             child: Text(
-                              "Delete",
+                              l10n.delete,
                               style: TextStyle(color: theme.colorScheme.error),
                             ),
                           ),
@@ -753,6 +759,7 @@ class MealEditCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final meal = mealWithItems.meal;
     final timeStr =
         '${meal.time.hour.toString().padLeft(2, '0')}:${meal.time.minute.toString().padLeft(2, '0')}';
@@ -848,8 +855,8 @@ class MealEditCard extends StatelessWidget {
             const Divider(),
             ...mealWithItems.items.map((detail) {
               final name = detail.mealItem.type == MealItemType.PRODUCT
-                  ? (detail.product?.name ?? "Unknown Product")
-                  : (detail.recipe?.recipe.name ?? "Unknown Recipe");
+                  ? (detail.product?.name ?? l10n.unknownProduct)
+                  : (detail.recipe?.recipe.name ?? l10n.unknownRecipe);
 
               return Padding(
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
@@ -867,17 +874,15 @@ class MealEditCard extends StatelessWidget {
                                 showDialog(
                                   context: context,
                                   builder: (context) => AlertDialog(
-                                    title: const Text("Edit Item"),
-                                    content: const Text(
-                                      "Select an action for this item.",
-                                    ),
+                                    title: Text(l10n.editItem),
+                                    content: Text(l10n.selectActionForItem),
                                     actions: [
                                       TextButton(
                                         onPressed: () {
                                           Navigator.pop(context);
                                           onReplaceItem(detail.mealItem.id);
                                         },
-                                        child: const Text("Replace"),
+                                        child: Text(l10n.replaceAction),
                                       ),
                                       TextButton(
                                         onPressed: () {
@@ -885,7 +890,7 @@ class MealEditCard extends StatelessWidget {
                                           onDeleteItem(detail.mealItem.id);
                                         },
                                         child: Text(
-                                          "Delete",
+                                          l10n.delete,
                                           style: TextStyle(
                                             color: theme.colorScheme.error,
                                           ),
@@ -893,7 +898,7 @@ class MealEditCard extends StatelessWidget {
                                       ),
                                       TextButton(
                                         onPressed: () => Navigator.pop(context),
-                                        child: const Text("Cancel"),
+                                        child: Text(l10n.cancel),
                                       ),
                                     ],
                                   ),
@@ -1037,7 +1042,7 @@ class MealEditCard extends StatelessWidget {
             OutlinedButton.icon(
               onPressed: onAddItemClick,
               icon: const Icon(Icons.add, size: 16),
-              label: const Text("Add Item"),
+              label: Text(l10n.addItem),
             ),
           ],
         ),

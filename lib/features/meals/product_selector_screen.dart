@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/components/clearable_search_field.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/meal_repository.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/meals_providers.dart';
 import 'edit_product_screen.dart';
 
@@ -20,14 +21,10 @@ import 'edit_product_screen.dart';
 /// Returns the selected [Product] through `Navigator.pop` and lets the caller
 /// create or edit products without leaving the flow.
 class ProductSelectorScreen extends ConsumerStatefulWidget {
-  final String title;
+  final String? title;
   final String? initialQuery;
 
-  const ProductSelectorScreen({
-    super.key,
-    this.title = "Select Product",
-    this.initialQuery,
-  });
+  const ProductSelectorScreen({super.key, this.title, this.initialQuery});
 
   @override
   ConsumerState<ProductSelectorScreen> createState() =>
@@ -101,24 +98,32 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
   }
 
   String _subtitleFor(
+    BuildContext context,
     Product product,
     Map<int, int>? usageCounts,
     Set<int>? inStockProductIds,
   ) {
+    final l10n = context.l10n;
     final parts = <String>[];
     if (inStockProductIds?.contains(product.id) ?? false) {
-      parts.add("In stock");
+      parts.add(l10n.inStockBadge);
     }
     final usage = usageCounts?[product.id] ?? 0;
     if (usage > 0) {
-      parts.add("Used ${usage}x");
+      parts.add(l10n.usedCount(usage));
     }
     parts.add(
-      "Unit: ${product.units}"
-      "${product.unitWeight != null && product.unitWeight! > 0 ? ' (${product.unitWeight}g)' : ''}",
+      l10n.unitWithValue(
+        '${product.units}'
+        '${product.unitWeight != null && product.unitWeight! > 0 ? ' (${product.unitWeight}g)' : ''}',
+      ),
     );
     parts.add(
-      "P ${product.proteins}g | C ${product.carbs}g | F ${product.fats}g",
+      l10n.macrosShort(
+        '${product.proteins}',
+        '${product.carbs}',
+        '${product.fats}',
+      ),
     );
     return parts.join(" • ");
   }
@@ -128,10 +133,11 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
     final productsAsync = ref.watch(allProductsProvider);
     final usageCounts = ref.watch(productUsageCountsProvider).value;
     final inStockProductIds = ref.watch(inStockProductIdsProvider).value;
+    final l10n = context.l10n;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: Text(widget.title ?? l10n.selectProduct),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -139,14 +145,15 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
         actions: [
           IconButton(
             icon: const Icon(Icons.add),
-            tooltip: "Create Product",
+            tooltip: l10n.createProduct,
             onPressed: _createProduct,
           ),
         ],
       ),
       body: productsAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (err, stack) => Center(child: Text("Error: $err")),
+        error: (err, stack) =>
+            Center(child: Text(l10n.errorWithMessage('$err'))),
         data: (products) {
           final filtered = products.searchAndSort(
             _searchController.text,
@@ -160,7 +167,7 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
                 padding: const EdgeInsets.all(16.0),
                 child: ClearableSearchField(
                   controller: _searchController,
-                  labelText: "Search products...",
+                  labelText: l10n.searchProducts,
                   onChanged: (_) => setState(() {}),
                 ),
               ),
@@ -170,11 +177,11 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
                         child: Column(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Text("No products found"),
+                            Text(l10n.noProductsFound),
                             const SizedBox(height: 12),
                             ElevatedButton.icon(
                               icon: const Icon(Icons.add),
-                              label: const Text("Create Product"),
+                              label: Text(l10n.createProduct),
                               onPressed: _createProduct,
                             ),
                           ],
@@ -192,11 +199,16 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
                               ),
                             ),
                             subtitle: Text(
-                              _subtitleFor(p, usageCounts, inStockProductIds),
+                              _subtitleFor(
+                                context,
+                                p,
+                                usageCounts,
+                                inStockProductIds,
+                              ),
                             ),
                             trailing: IconButton(
                               icon: const Icon(Icons.edit),
-                              tooltip: "Edit Product",
+                              tooltip: l10n.editProduct,
                               onPressed: () => _editProduct(p),
                             ),
                             onTap: () {

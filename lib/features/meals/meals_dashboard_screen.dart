@@ -9,34 +9,36 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/components/nexc_badge.dart';
+import '../../core/components/nexc_choice_sheet.dart';
+import '../../core/components/nexc_confirm_sheet.dart';
+import '../../core/components/nexc_empty_state.dart';
+import '../../core/components/nexc_macro.dart';
+import '../../core/components/nexc_page.dart';
+import '../../core/components/nexc_snack.dart';
+import '../../core/components/nexc_tile.dart';
 import '../../core/db/enums.dart';
-import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
+import '../../core/db/relations.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/providers/settings_provider.dart';
-import 'add_meal_item_screen.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/motion.dart';
+import '../../core/theme/shapes.dart';
+import '../../core/theme/spacing.dart';
 import '../../core/util/day_window_helper.dart';
+import '../../core/util/format.dart';
+import '../../core/util/macro_totals.dart';
+import '../../l10n/app_localizations.dart';
+import 'add_meal_item_screen.dart';
 
-String formatDouble(double val) {
-  if (val == val.toInt().toDouble()) {
-    return val.toInt().toString();
-  }
-  return val.toString();
-}
+enum _DashboardAction { addItem, logSnack, newPlan }
 
-String getUnitLabel(MealItem item, Product? product) {
-  if (item.amountUnit == AmountUnit.UNITS) {
-    return "units";
-  }
-  if (item.amountUnit == AmountUnit.ML) {
-    return "ml";
-  }
-  if (product != null && product.units.isNotEmpty) {
-    return product.units;
-  }
-  return "g";
-}
+enum _MealMenuAction { editDetails, deleteMeal }
+
+enum _PlanMenuAction { select, deselect, delete }
 
 class MealsDashboardScreen extends ConsumerStatefulWidget {
   const MealsDashboardScreen({super.key});
@@ -48,276 +50,360 @@ class MealsDashboardScreen extends ConsumerStatefulWidget {
 
 class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
     with SingleTickerProviderStateMixin {
-  late TabController _tabController;
+  late final TabController _tabController = TabController(
+    length: 2,
+    vsync: this,
+  );
+  int _tabIndex = 0;
 
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
-    _tabController.addListener(() {
-      setState(() {});
-    });
+    // Rebuild once per index change instead of once per animation frame.
+    _tabController.addListener(_handleTabChange);
+  }
+
+  void _handleTabChange() {
+    if (_tabController.index == _tabIndex) return;
+    setState(() => _tabIndex = _tabController.index);
   }
 
   @override
   void dispose() {
+    _tabController.removeListener(_handleTabChange);
     _tabController.dispose();
     super.dispose();
   }
 
-  void _showAddMealItemDialog(
-    BuildContext context,
-    int mealId,
-    List<Product> products,
-    List<RecipeWithIngredients> recipes,
-  ) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddMealItemScreen(
-          mealId: mealId,
-          products: products,
-          recipes: recipes,
-        ),
-      ),
-    );
-  }
-
-  void _showReplaceDialog(
-    BuildContext context,
-    int itemId,
-    List<Product> products,
-    List<RecipeWithIngredients> recipes,
-  ) {
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (context) => AddMealItemScreen(
-          mealId: 0,
-          isReplace: true,
-          replaceItemId: itemId,
-          products: products,
-          recipes: recipes,
-        ),
-      ),
-    );
-  }
-
-  void _showOptionsDialog(
-    BuildContext context,
-    int itemId,
-    List<Product> products,
-    List<RecipeWithIngredients> recipes,
-  ) {
-    final theme = Theme.of(context);
-    final plan = ref.read(todayMealPlanProvider).value;
-    MealItemWithDetails? targetDetail;
-    for (final m in plan?.meals ?? []) {
-      for (final d in m.items) {
-        if (d.mealItem.id == itemId) {
-          targetDetail = d;
-          break;
-        }
-      }
+  Future<void> _openActionSheet(MealPlanWithMealsAndItems? plan) async {
+    final l10n = context.l10n;
+    final _DashboardAction? action =
+        await NexcChoiceSheet.show<_DashboardAction>(
+          context: context,
+          title: l10n.addFood,
+          options: [
+            NexcChoiceOption(
+              value: _DashboardAction.addItem,
+              label: l10n.addItemToMeal,
+              icon: NexcIcons.meals,
+              enabled: plan != null && plan.meals.isNotEmpty,
+            ),
+            NexcChoiceOption(
+              value: _DashboardAction.logSnack,
+              label: l10n.addSnack,
+              icon: NexcIcons.mealsIdle,
+              enabled: plan != null,
+            ),
+            NexcChoiceOption(
+              value: _DashboardAction.newPlan,
+              label: l10n.createMealPlan,
+              icon: NexcIcons.calendar,
+            ),
+          ],
+        );
+    if (!mounted || action == null) return;
+    switch (action) {
+      case _DashboardAction.addItem:
+        if (plan == null || plan.meals.isEmpty) return;
+        await _pickMealThenAddItem(plan);
+      case _DashboardAction.logSnack:
+        if (plan == null) return;
+        await _logSnack(plan);
+      case _DashboardAction.newPlan:
+        await Navigator.pushNamed(context, '/meals/edit-plan', arguments: 0);
     }
-    final itemName = targetDetail?.displayName ?? context.l10n.mealItemFallback;
-
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(itemName),
-        content: Text(context.l10n.chooseActionForItem),
-        actionsPadding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  style: OutlinedButton.styleFrom(
-                    foregroundColor: theme.colorScheme.error,
-                    side: BorderSide(color: theme.colorScheme.error),
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () async {
-                    Navigator.pop(context);
-                    if (targetDetail != null) {
-                      await ref
-                          .read(mealRepositoryProvider)
-                          .deleteMealItem(targetDetail.mealItem);
-                    }
-                  },
-                  icon: const Icon(Icons.delete_outline, size: 18),
-                  label: Text(context.l10n.delete),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton.icon(
-                  style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                  ),
-                  onPressed: () {
-                    Navigator.pop(context);
-                    _showReplaceDialog(context, itemId, products, recipes);
-                  },
-                  icon: const Icon(Icons.swap_horiz, size: 18),
-                  label: Text(context.l10n.replaceAction),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
   }
 
-  void _showEditGoalsDialog(
-    BuildContext context,
-    double currentProt,
-    double currentCarb,
-    double currentFat,
-  ) {
-    showDialog(
+  Future<void> _pickMealThenAddItem(MealPlanWithMealsAndItems plan) async {
+    final bool useSnackName =
+        plan.meals.length == 1 &&
+        plan.meals.first.meal.name == context.l10n.addSnack;
+    if (useSnackName) {
+      await _addItemToMeal(plan.meals.first.meal.id, consumed: true);
+      return;
+    }
+    final MealWithItems? meal = await NexcChoiceSheet.show<MealWithItems>(
       context: context,
-      builder: (context) => EditTodayGoalsDialog(
-        currentProt: currentProt,
-        currentCarb: currentCarb,
-        currentFat: currentFat,
-        onConfirm: (newProt, newCarb, newFat) async {
-          await ref
+      title: context.l10n.addItemToMeal,
+      options: [
+        for (final MealWithItems entry in plan.meals)
+          NexcChoiceOption(
+            value: entry,
+            label: entry.meal.name,
+            description: _formatTime(entry.meal.time),
+            icon: NexcIcons.mealsIdle,
+          ),
+      ],
+    );
+    if (!mounted || meal == null) return;
+    final bool isSnack = meal.meal.name == context.l10n.addSnack;
+    await _addItemToMeal(meal.meal.id, consumed: isSnack);
+  }
+
+  Future<void> _addItemToMeal(int mealId, {bool consumed = false}) async {
+    final List<MealItemPick>? picks = await Navigator.push<List<MealItemPick>>(
+      context,
+      MaterialPageRoute<List<MealItemPick>>(
+        builder: (BuildContext context) => AddMealItemScreen(
+          products: ref.read(allProductsProvider).value ?? const <Product>[],
+          recipes:
+              ref.read(allRecipesProvider).value ??
+              const <RecipeWithIngredients>[],
+        ),
+      ),
+    );
+    if (picks == null || picks.isEmpty) return;
+    final MealRepository repo = ref.read(mealRepositoryProvider);
+    for (final MealItemPick pick in picks) {
+      await repo.addMealItemToMeal(
+        mealId: mealId,
+        type: pick.type,
+        targetId: pick.targetId,
+        amount: pick.amount,
+        amountUnit: pick.unit,
+        consumed: consumed ? true : null,
+      );
+    }
+  }
+
+  Future<void> _replaceItem(MealItemWithDetails detail) async {
+    final List<MealItemPick>? picks = await Navigator.push<List<MealItemPick>>(
+      context,
+      MaterialPageRoute<List<MealItemPick>>(
+        builder: (BuildContext context) => AddMealItemScreen(
+          products: ref.read(allProductsProvider).value ?? const <Product>[],
+          recipes:
+              ref.read(allRecipesProvider).value ??
+              const <RecipeWithIngredients>[],
+          isReplace: true,
+          replaceItemId: detail.mealItem.id,
+        ),
+      ),
+    );
+    if (picks == null || picks.isEmpty) return;
+    final MealItemPick pick = picks.first;
+    await ref
+        .read(mealRepositoryProvider)
+        .replaceMealItemInMeal(
+          oldItemId: detail.mealItem.id,
+          newType: pick.type,
+          newTargetId: pick.targetId,
+          newAmount: pick.amount,
+          newAmountUnit: pick.unit,
+        );
+  }
+
+  Future<void> _logSnack(MealPlanWithMealsAndItems plan) async {
+    final DateTime now = DateTime.now();
+    final MealRepository repo = ref.read(mealRepositoryProvider);
+    final String snackName = context.l10n.addSnack;
+    final List<Meal> snacks =
+        plan.meals
+            .map((MealWithItems entry) => entry.meal)
+            .where((Meal meal) => meal.name == snackName)
+            .toList()
+          ..sort((Meal a, Meal b) => a.position.compareTo(b.position));
+
+    Meal? target;
+    if (snacks.isNotEmpty) {
+      final Meal latest = snacks.last;
+      final int diffMinutes =
+          (now.hour * 60 + now.minute) -
+          (latest.time.hour * 60 + latest.time.minute);
+      if (diffMinutes.abs() <= 30) target = latest;
+    }
+
+    final int mealId =
+        target?.id ??
+        await repo.addMealToPlan(
+          mealPlanId: plan.mealPlan.id,
+          name: snackName,
+          time: LocalTime(now.hour, now.minute),
+        );
+    if (!mounted) return;
+    await _addItemToMeal(mealId, consumed: true);
+  }
+
+  Future<void> _editMealDetails(Meal meal) async {
+    final ({String name, String notes, bool atHome})? result =
+        await _MealDetailsSheet.show(context, meal);
+    if (result == null || !mounted) return;
+    await ref
+        .read(mealRepositoryProvider)
+        .updateMeal(
+          meal.copyWith(
+            name: result.name,
+            notes: result.notes,
+            atHome: result.atHome,
+          ),
+        );
+  }
+
+  Future<void> _deleteMeal(Meal meal) async {
+    final bool? confirmed = await NexcConfirmSheet.show(
+      context: context,
+      title: context.l10n.deleteMeal,
+      message: context.l10n.deleteMealConfirm(meal.name),
+      confirmLabel: context.l10n.delete,
+      cancelLabel: context.l10n.cancel,
+      destructive: true,
+    );
+    if (confirmed != true || !mounted) return;
+    final MealRepository repo = ref.read(mealRepositoryProvider);
+    await repo.db.delete(repo.db.meals).delete(meal);
+  }
+
+  Future<void> _pickMealTime(Meal meal) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay(hour: meal.time.hour, minute: meal.time.minute),
+    );
+    if (picked == null) return;
+    await ref
+        .read(mealRepositoryProvider)
+        .updateMealTime(meal.id, LocalTime(picked.hour, picked.minute));
+  }
+
+  Future<void> _editGoals(SettingsState settings) async {
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) => EditTodayGoalsDialog(
+        currentProt: settings.targetProtein,
+        currentCarb: settings.targetCarbs,
+        currentFat: settings.targetFats,
+        onConfirm: (double protein, double carbs, double fats) {
+          ref
               .read(settingsProvider.notifier)
-              .setTargetMacros(newProt, newCarb, newFat);
+              .setTargetMacros(protein, carbs, fats);
         },
       ),
     );
   }
 
-  void _handleAddSnack(
-    BuildContext context,
+  Future<void> _discardToday(MealPlanWithMealsAndItems plan) async {
+    final bool? confirmed = await NexcConfirmSheet.show(
+      context: context,
+      title: context.l10n.discardTodayMeals,
+      message: context.l10n.discardTodayMealsMessage,
+      confirmLabel: context.l10n.discard,
+      cancelLabel: context.l10n.cancel,
+      destructive: true,
+    );
+    if (confirmed != true || !mounted) return;
+    final MealRepository repo = ref.read(mealRepositoryProvider);
+    await repo.deleteMealPlan(plan.mealPlan);
+    await ref.read(settingsProvider.notifier).restorePrePlanTargetMacros();
+  }
+
+  Future<void> _saveToday(MealPlanWithMealsAndItems plan) async {
+    final bool? confirmed = await NexcConfirmSheet.show(
+      context: context,
+      title: context.l10n.saveTodayMeals,
+      message: context.l10n.saveTodayMealsMessage,
+      confirmLabel: context.l10n.save,
+      cancelLabel: context.l10n.cancel,
+    );
+    if (confirmed != true || !mounted) return;
+    await ref.read(mealRepositoryProvider).saveTodayMeals(plan);
+    if (!mounted) return;
+    NexcSnack.show(context, context.l10n.todayMealsLogged);
+  }
+
+  Future<void> _selectPlan(
     MealPlanWithMealsAndItems plan,
-    List<Product> products,
-    List<RecipeWithIngredients> recipes,
+    MealPlanWithMealsAndItems? today,
   ) async {
-    final now = DateTime.now();
-    final repo = ref.read(mealRepositoryProvider);
-
-    // Find existing meal named exactly "Snack" in the plan
-    final snackMeals = plan.meals.where((m) => m.meal.name == "Snack").toList();
-    Meal? targetSnackMeal;
-
-    if (snackMeals.isNotEmpty) {
-      // Sort to get the latest by time or position
-      snackMeals.sort((a, b) => a.meal.position.compareTo(b.meal.position));
-      final latestSnack = snackMeals.last.meal;
-
-      // Compare times
-      final snackTime = latestSnack.time;
-
-      // Calculate minutes difference
-      final diffMinutes =
-          (now.hour * 60 + now.minute) -
-          (snackTime.hour * 60 + snackTime.minute);
-      if (diffMinutes.abs() <= 30) {
-        targetSnackMeal = latestSnack;
-      }
-    }
-
-    int mealId;
-    if (targetSnackMeal != null) {
-      mealId = targetSnackMeal.id;
-    } else {
-      // Create new Snack meal
-      final nowLocal = LocalTime(now.hour, now.minute);
-      mealId = await repo.addMealToPlan(
-        mealPlanId: plan.mealPlan.id,
-        name: "Snack",
-        time: nowLocal,
+    if (today != null &&
+        today.meals.any((MealWithItems m) => m.items.isNotEmpty)) {
+      final bool? proceed = await NexcConfirmSheet.show(
+        context: context,
+        title: context.l10n.changeMealPlan,
+        message: context.l10n.changeMealPlanMessage,
+        confirmLabel: context.l10n.proceed,
+        cancelLabel: context.l10n.cancel,
       );
+      if (proceed != true || !mounted) return;
     }
+    await ref.read(mealRepositoryProvider).selectMealPlanForToday(plan);
+    final double targetP = plan.mealPlan.targetProtein ?? 0.0;
+    final double targetC = plan.mealPlan.targetCarbs ?? 0.0;
+    final double targetF = plan.mealPlan.targetFats ?? 0.0;
+    final bool isZeroOrNull =
+        targetP <= 0.0 && targetC <= 0.0 && targetF <= 0.0;
+    final SettingsState settings = ref.read(settingsProvider);
+    if (!settings.defaultMacrosOverrideMealPlan && !isZeroOrNull) {
+      await ref
+          .read(settingsProvider.notifier)
+          .overwriteTargetMacrosWithPlan(targetP, targetC, targetF);
+    }
+  }
 
-    if (context.mounted) {
-      _showAddMealItemDialog(context, mealId, products, recipes);
-    }
+  Future<void> _deselectPlan(MealPlanWithMealsAndItems plan) async {
+    final MealRepository repo = ref.read(mealRepositoryProvider);
+    await repo.deleteMealPlan(plan.mealPlan);
+    await ref.read(settingsProvider.notifier).restorePrePlanTargetMacros();
+  }
+
+  Future<void> _deletePlan(MealPlanWithMealsAndItems plan) async {
+    final bool? confirmed = await NexcConfirmSheet.show(
+      context: context,
+      title: context.l10n.deleteMealPlan,
+      message: context.l10n.deleteMealPlanConfirm(plan.mealPlan.title),
+      confirmLabel: context.l10n.delete,
+      cancelLabel: context.l10n.cancel,
+      destructive: true,
+    );
+    if (confirmed != true || !mounted) return;
+    await ref.read(mealRepositoryProvider).deleteMealPlan(plan.mealPlan);
+  }
+
+  void _openPlan(MealPlanWithMealsAndItems plan) {
+    Navigator.pushNamed(
+      context,
+      '/meals/track-plan',
+      arguments: plan.mealPlan.id,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
     final l10n = context.l10n;
-    final templatesAsync = ref.watch(mealTemplatesProvider);
-    final todayPlanAsync = ref.watch(todayMealPlanProvider);
-    final productsAsync = ref.watch(allProductsProvider);
-    final recipesAsync = ref.watch(allRecipesProvider);
-    final settings = ref.watch(settingsProvider);
+    final SettingsState settings = ref.watch(settingsProvider);
+    final AsyncValue<MealPlanWithMealsAndItems?> todayPlanAsync = ref.watch(
+      todayMealPlanProvider,
+    );
+    final AsyncValue<List<MealPlanWithMealsAndItems>> templatesAsync = ref
+        .watch(mealTemplatesProvider);
+    final MealPlanWithMealsAndItems? todayPlan = todayPlanAsync.value;
+    final bool hasTodayMeals =
+        todayPlan != null &&
+        todayPlan.meals.any((MealWithItems meal) => meal.items.isNotEmpty);
 
-    final todayPlan = todayPlanAsync.value;
-    if (todayPlanAsync.hasValue && todayPlan == null) {
-      Future.microtask(() {
-        ref.read(mealRepositoryProvider).startEmptyTracking();
-      });
-    }
-    final products = productsAsync.value ?? [];
-    final recipes = recipesAsync.value ?? [];
-
-    final selectedTab = _tabController.index;
-
-    return Scaffold(
-      floatingActionButton: selectedTab == 1
-          ? FloatingActionButton.extended(
-              heroTag: 'create_meal_plan_fab',
-              onPressed: () {
-                Navigator.pushNamed(context, '/meals/edit-plan', arguments: 0);
-              },
-              icon: const Icon(Icons.add),
-              label: Text(l10n.createMealPlan),
-            )
-          : (selectedTab == 0 && todayPlan != null)
-          ? Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.end,
+    return NexcPage(
+      title: l10n.tabMeals,
+      floatingActionButton: FloatingActionButton.extended(
+        heroTag: 'meals_contextual_fab',
+        onPressed: () => _openActionSheet(todayPlan),
+        icon: const Icon(NexcIcons.add),
+        label: Text(l10n.addAction),
+      ),
+      bottomBar: _tabIndex == 0 && hasTodayMeals
+          ? Row(
               children: [
-                FloatingActionButton.extended(
-                  heroTag: 'add_meal_fab',
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  foregroundColor: theme.colorScheme.onPrimaryContainer,
-                  onPressed: () async {
-                    final now = DateTime.now();
-                    final repo = ref.read(mealRepositoryProvider);
-                    final meals = todayPlan.meals;
-                    await repo.addMealToPlan(
-                      mealPlanId: todayPlan.mealPlan.id,
-                      name: "Meal ${meals.length + 1}",
-                      time: LocalTime(now.hour, now.minute),
-                    );
-                  },
-                  icon: const Icon(Icons.add, size: 18),
-                  label: Text(
-                    l10n.addMeal,
-                    style: const TextStyle(fontSize: 13),
+                TextButton.icon(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Theme.of(context).colorScheme.error,
                   ),
-                  extendedPadding: const EdgeInsets.symmetric(
-                    horizontal: 14,
-                    vertical: 8,
-                  ),
+                  onPressed: () => _discardToday(todayPlan),
+                  icon: const Icon(NexcIcons.delete, size: 18),
+                  label: Text(l10n.discard),
                 ),
-                const SizedBox(height: 12),
-                FloatingActionButton.extended(
-                  heroTag: 'add_snack_fab',
-                  backgroundColor: theme.colorScheme.primaryContainer,
-                  foregroundColor: theme.colorScheme.onPrimaryContainer,
-                  onPressed: () =>
-                      _handleAddSnack(context, todayPlan, products, recipes),
-                  icon: const Icon(Icons.apple, size: 28),
-                  label: Text(
-                    l10n.addSnack,
-                    style: const TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  extendedPadding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 20,
+                const SizedBox(width: NexcSpacing.sm),
+                Expanded(
+                  child: FilledButton.icon(
+                    onPressed: () => _saveToday(todayPlan),
+                    icon: const Icon(NexcIcons.check, size: 18),
+                    label: Text(l10n.save),
                   ),
                 ),
               ],
@@ -325,455 +411,25 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
           : null,
       body: Column(
         children: [
-          TabBar(
-            controller: _tabController,
-            tabs: [
-              Tab(text: l10n.todayPlanTab),
-              Tab(text: l10n.mealPlansTab),
-            ],
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: NexcSpacing.lg,
+              vertical: NexcSpacing.xs,
+            ),
+            child: TabBar(
+              controller: _tabController,
+              tabs: [
+                Tab(text: l10n.todayPlanTab),
+                Tab(text: l10n.mealPlansTab),
+              ],
+            ),
           ),
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
-                // Tab 0: Today's Plan
-                todayPlanAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) =>
-                      Center(child: Text(l10n.errorWithMessage('$err'))),
-                  data: (plan) {
-                    if (plan == null) {
-                      return Center(
-                        child: Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              l10n.selectMealPlanForToday,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            FilledButton.icon(
-                              onPressed: () {
-                                _tabController.animateTo(1);
-                              },
-                              icon: const Icon(Icons.arrow_forward),
-                              label: Text(l10n.goToMealPlans),
-                            ),
-                            const SizedBox(height: 12),
-                            OutlinedButton.icon(
-                              onPressed: () async {
-                                await ref
-                                    .read(mealRepositoryProvider)
-                                    .startEmptyTracking();
-                              },
-                              icon: const Icon(Icons.edit_note),
-                              label: Text(l10n.startLogging),
-                            ),
-                          ],
-                        ),
-                      );
-                    }
-
-                    final meals = plan.meals;
-
-                    // Totals calculations
-                    double totalProtConsumed = 0.0;
-                    double totalCarbConsumed = 0.0;
-                    double totalFatConsumed = 0.0;
-
-                    for (final m in meals) {
-                      for (final detail in m.items) {
-                        final scale = detail.macroScale;
-                        double itemProt = 0.0;
-                        double itemCarb = 0.0;
-                        double itemFat = 0.0;
-
-                        if (detail.mealItem.type == MealItemType.PRODUCT &&
-                            detail.product != null) {
-                          itemProt = detail.product!.proteins * scale;
-                          itemCarb = detail.product!.carbs * scale;
-                          itemFat = detail.product!.fats * scale;
-                        } else if (detail.mealItem.type ==
-                                MealItemType.RECIPE &&
-                            detail.recipe != null) {
-                          for (final ing in detail.recipe!.ingredients) {
-                            final ingScale =
-                                (ing.ingredient.amount / 100.0) * scale;
-                            itemProt += ing.product.proteins * ingScale;
-                            itemCarb += ing.product.carbs * ingScale;
-                            itemFat += ing.product.fats * ingScale;
-                          }
-                        }
-
-                        if (detail.mealItem.consumed) {
-                          totalProtConsumed += itemProt;
-                          totalCarbConsumed += itemCarb;
-                          totalFatConsumed += itemFat;
-                        }
-                      }
-                    }
-
-                    final targetProt = settings.targetProtein;
-                    final targetCarb = settings.targetCarbs;
-                    final targetFat = settings.targetFats;
-
-                    final sortedMeals = List<MealWithItems>.from(plan.meals)
-                      ..sort((a, b) {
-                        final aMin = DayWindowHelper.getMinutesFromDayStart(
-                          a.meal.time,
-                          settings.dayStartHour,
-                          0,
-                        );
-                        final bMin = DayWindowHelper.getMinutesFromDayStart(
-                          b.meal.time,
-                          settings.dayStartHour,
-                          0,
-                        );
-                        return aMin.compareTo(bMin);
-                      });
-
-                    final consumedMacrosAsync = ref.watch(
-                      todayTotalConsumedMacrosProvider,
-                    );
-                    final consumed =
-                        consumedMacrosAsync.value ??
-                        ConsumedMacros(
-                          protein: totalProtConsumed,
-                          carbs: totalCarbConsumed,
-                          fats: totalFatConsumed,
-                        );
-
-                    return ListView(
-                      padding: const EdgeInsets.all(16.0),
-                      children: [
-                        TodayMacrosCard(
-                          protConsumed: consumed.protein,
-                          protTarget: targetProt,
-                          carbConsumed: consumed.carbs,
-                          carbTarget: targetCarb,
-                          fatConsumed: consumed.fats,
-                          fatTarget: targetFat,
-                          onEditGoals: () => _showEditGoalsDialog(
-                            context,
-                            targetProt,
-                            targetCarb,
-                            targetFat,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        ...sortedMeals.map((mealWithItems) {
-                          return MealTrackCard(
-                            key: ValueKey(mealWithItems.meal.id),
-                            mealWithItems: mealWithItems,
-                            onItemToggle: (item) {
-                              ref
-                                  .read(mealRepositoryProvider)
-                                  .updateMealItem(
-                                    item.copyWith(consumed: !item.consumed),
-                                  );
-                            },
-                            onTimeClick: (mealId) async {
-                              final meal = mealWithItems.meal;
-                              final picked = await showTimePicker(
-                                context: context,
-                                initialTime: TimeOfDay(
-                                  hour: meal.time.hour,
-                                  minute: meal.time.minute,
-                                ),
-                              );
-                              if (picked != null) {
-                                ref
-                                    .read(mealRepositoryProvider)
-                                    .updateMealTime(
-                                      meal.id,
-                                      LocalTime(picked.hour, picked.minute),
-                                    );
-                              }
-                            },
-                            onNameClick: (itemId) {
-                              _showOptionsDialog(
-                                context,
-                                itemId,
-                                products,
-                                recipes,
-                              );
-                            },
-                            onAddClick: (mealId) {
-                              _showAddMealItemDialog(
-                                context,
-                                mealId,
-                                products,
-                                recipes,
-                              );
-                            },
-                          );
-                        }),
-                        if (sortedMeals.isNotEmpty) ...[
-                          const SizedBox(height: 16),
-                          Center(
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.start,
-                              children: [
-                                IconButton.outlined(
-                                  style: IconButton.styleFrom(
-                                    foregroundColor: theme.colorScheme.error,
-                                    side: BorderSide(
-                                      color: theme.colorScheme.error,
-                                    ),
-                                    padding: const EdgeInsets.all(12),
-                                  ),
-                                  onPressed: () async {
-                                    final confirm = await showDialog<bool>(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: Text(l10n.discardTodayMeals),
-                                        content: Text(
-                                          l10n.discardTodayMealsMessage,
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, false),
-                                            child: Text(l10n.cancel),
-                                          ),
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, true),
-                                            child: Text(
-                                              l10n.discard,
-                                              style: TextStyle(
-                                                color: theme.colorScheme.error,
-                                              ),
-                                            ),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                    if (confirm == true) {
-                                      await ref
-                                          .read(mealRepositoryProvider)
-                                          .deleteMealPlan(plan.mealPlan);
-                                      await ref
-                                          .read(settingsProvider.notifier)
-                                          .restorePrePlanTargetMacros();
-                                    }
-                                  },
-                                  icon: const Icon(Icons.delete_outline),
-                                ),
-                                const SizedBox(width: 16),
-                                IconButton.filled(
-                                  style: IconButton.styleFrom(
-                                    padding: const EdgeInsets.all(12),
-                                  ),
-                                  onPressed: () async {
-                                    final confirm = await showDialog<bool>(
-                                      context: context,
-                                      builder: (context) => AlertDialog(
-                                        title: Text(l10n.saveTodayMeals),
-                                        content: Text(
-                                          l10n.saveTodayMealsMessage,
-                                        ),
-                                        actions: [
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, false),
-                                            child: Text(l10n.cancel),
-                                          ),
-                                          TextButton(
-                                            onPressed: () =>
-                                                Navigator.pop(context, true),
-                                            child: Text(l10n.save),
-                                          ),
-                                        ],
-                                      ),
-                                    );
-                                    if (confirm == true) {
-                                      await ref
-                                          .read(mealRepositoryProvider)
-                                          .saveTodayMeals(plan);
-                                      if (context.mounted) {
-                                        ScaffoldMessenger.of(
-                                          context,
-                                        ).showSnackBar(
-                                          SnackBar(
-                                            content: Text(
-                                              l10n.todayMealsLogged,
-                                            ),
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  },
-                                  icon: const Icon(Icons.check),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                        const SizedBox(height: 40),
-                      ],
-                    );
-                  },
-                ),
-
-                // Tab 1: Meal Plans
-                templatesAsync.when(
-                  loading: () =>
-                      const Center(child: CircularProgressIndicator()),
-                  error: (err, stack) =>
-                      Center(child: Text(l10n.errorWithMessage('$err'))),
-                  data: (planList) {
-                    if (planList.isEmpty) {
-                      return Center(
-                        child: Text(
-                          l10n.noMealPlansYet,
-                          style: theme.textTheme.bodyLarge?.copyWith(
-                            color: theme.colorScheme.onSurfaceVariant,
-                          ),
-                        ),
-                      );
-                    }
-
-                    return ListView.builder(
-                      padding: const EdgeInsets.only(
-                        left: 16.0,
-                        right: 16.0,
-                        top: 16.0,
-                        bottom: 80.0,
-                      ),
-                      itemCount: planList.length,
-                      itemBuilder: (context, index) {
-                        final plan = planList[index];
-                        final isSelected =
-                            todayPlan?.mealPlan.parentPlanId ==
-                            plan.mealPlan.id;
-
-                        return Padding(
-                          key: ValueKey(plan.mealPlan.id),
-                          padding: const EdgeInsets.only(bottom: 12.0),
-                          child: MealPlanCard(
-                            planWithMeals: plan,
-                            isSelected: isSelected,
-                            onClick: () {
-                              Navigator.pushNamed(
-                                context,
-                                '/meals/track-plan',
-                                arguments: plan.mealPlan.id,
-                              );
-                            },
-                            onDelete: () async {
-                              final confirm = await showDialog<bool>(
-                                context: context,
-                                builder: (context) => AlertDialog(
-                                  title: Text(l10n.deleteMealPlan),
-                                  content: Text(
-                                    l10n.deleteMealPlanConfirm(
-                                      plan.mealPlan.title,
-                                    ),
-                                  ),
-                                  actions: [
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context, false),
-                                      child: Text(l10n.cancel),
-                                    ),
-                                    TextButton(
-                                      onPressed: () =>
-                                          Navigator.pop(context, true),
-                                      child: Text(
-                                        l10n.delete,
-                                        style: TextStyle(
-                                          color: theme.colorScheme.error,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              );
-                              if (confirm == true) {
-                                ref
-                                    .read(mealRepositoryProvider)
-                                    .deleteMealPlan(plan.mealPlan);
-                              }
-                            },
-                            onSelect: () async {
-                              bool proceed = true;
-                              if (todayPlan != null &&
-                                  todayPlan.meals.any(
-                                    (m) => m.items.isNotEmpty,
-                                  )) {
-                                final confirm = await showDialog<bool>(
-                                  context: context,
-                                  builder: (context) => AlertDialog(
-                                    title: Text(l10n.changeMealPlan),
-                                    content: Text(l10n.changeMealPlanMessage),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context, false),
-                                        child: Text(l10n.cancel),
-                                      ),
-                                      TextButton(
-                                        onPressed: () =>
-                                            Navigator.pop(context, true),
-                                        child: Text(
-                                          l10n.proceed,
-                                          style: TextStyle(
-                                            color: theme.colorScheme.error,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                );
-                                proceed = (confirm == true);
-                              }
-                              if (proceed) {
-                                await ref
-                                    .read(mealRepositoryProvider)
-                                    .selectMealPlanForToday(plan);
-                                final targetP =
-                                    plan.mealPlan.targetProtein ?? 0.0;
-                                final targetC =
-                                    plan.mealPlan.targetCarbs ?? 0.0;
-                                final targetF = plan.mealPlan.targetFats ?? 0.0;
-                                final isZeroOrNull =
-                                    (targetP <= 0.0 &&
-                                    targetC <= 0.0 &&
-                                    targetF <= 0.0);
-                                final shouldOverride =
-                                    !settings.defaultMacrosOverrideMealPlan &&
-                                    !isZeroOrNull;
-                                if (shouldOverride) {
-                                  await ref
-                                      .read(settingsProvider.notifier)
-                                      .overwriteTargetMacrosWithPlan(
-                                        targetP,
-                                        targetC,
-                                        targetF,
-                                      );
-                                }
-                              }
-                            },
-                            onDeselect: () async {
-                              if (todayPlan != null) {
-                                await ref
-                                    .read(mealRepositoryProvider)
-                                    .deleteMealPlan(todayPlan.mealPlan);
-                                await ref
-                                    .read(settingsProvider.notifier)
-                                    .restorePrePlanTargetMacros();
-                              }
-                            },
-                          ),
-                        );
-                      },
-                    );
-                  },
-                ),
+                _buildTodayTab(todayPlanAsync, settings),
+                _buildPlansTab(templatesAsync, todayPlan),
               ],
             ),
           ),
@@ -781,83 +437,302 @@ class _MealsDashboardScreenState extends ConsumerState<MealsDashboardScreen>
       ),
     );
   }
+
+  Widget _buildTodayTab(
+    AsyncValue<MealPlanWithMealsAndItems?> todayPlanAsync,
+    SettingsState settings,
+  ) {
+    final l10n = context.l10n;
+    if (todayPlanAsync.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (todayPlanAsync.hasError) {
+      return Center(
+        child: Text(l10n.errorWithMessage('${todayPlanAsync.error}')),
+      );
+    }
+    final MealPlanWithMealsAndItems? plan = todayPlanAsync.value;
+    if (plan == null) {
+      return ListView(
+        padding: const EdgeInsets.all(NexcSpacing.lg),
+        children: [
+          NexcEmptyState(
+            icon: NexcIcons.mealsIdle,
+            title: l10n.selectMealPlanForToday,
+            actionLabel: l10n.goToMealPlans,
+            onAction: () => _tabController.animateTo(1),
+          ),
+          const SizedBox(height: NexcSpacing.sm),
+          Center(
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                await ref.read(mealRepositoryProvider).startEmptyTracking();
+              },
+              icon: const Icon(NexcIcons.edit, size: 18),
+              label: Text(l10n.startLogging),
+            ),
+          ),
+        ],
+      );
+    }
+
+    final List<MealWithItems> sortedMeals = List<MealWithItems>.from(plan.meals)
+      ..sort((MealWithItems a, MealWithItems b) {
+        final int aMinutes = DayWindowHelper.getMinutesFromDayStart(
+          a.meal.time,
+          settings.dayStartHour,
+          0,
+        );
+        final int bMinutes = DayWindowHelper.getMinutesFromDayStart(
+          b.meal.time,
+          settings.dayStartHour,
+          0,
+        );
+        return aMinutes.compareTo(bMinutes);
+      });
+    final MacroTotals consumed = MacroTotals.ofPlan(plan, consumedOnly: true);
+
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(
+        NexcSpacing.lg,
+        NexcSpacing.md,
+        NexcSpacing.lg,
+        NexcSpacing.xxl,
+      ),
+      children: [
+        TodayMacroSummaryCard(
+          consumed: consumed,
+          targetProtein: settings.targetProtein,
+          targetCarbs: settings.targetCarbs,
+          targetFats: settings.targetFats,
+          onEditGoals: () => _editGoals(settings),
+        ),
+        const SizedBox(height: NexcSpacing.lg),
+        if (sortedMeals.isEmpty)
+          Center(
+            child: OutlinedButton.icon(
+              onPressed: () async {
+                final DateTime now = DateTime.now();
+                await ref
+                    .read(mealRepositoryProvider)
+                    .addMealToPlan(
+                      mealPlanId: plan.mealPlan.id,
+                      name: l10n.mealNumber(1),
+                      time: LocalTime(now.hour, now.minute),
+                    );
+              },
+              icon: const Icon(NexcIcons.add, size: 18),
+              label: Text(l10n.addMeal),
+            ),
+          )
+        else
+          for (final MealWithItems meal in sortedMeals) ...[
+            MealTrackCard(
+              key: ValueKey<int>(meal.meal.id),
+              mealWithItems: meal,
+              onEditDetails: () => _editMealDetails(meal.meal),
+              onDeleteMeal: () => _deleteMeal(meal.meal),
+              onTimeTap: () => _pickMealTime(meal.meal),
+              onAddItem: () => _addItemToMeal(
+                meal.meal.id,
+                consumed: meal.meal.name == l10n.addSnack,
+              ),
+              onReplaceItem: _replaceItem,
+            ),
+            const SizedBox(height: NexcSpacing.md),
+          ],
+      ],
+    );
+  }
+
+  Widget _buildPlansTab(
+    AsyncValue<List<MealPlanWithMealsAndItems>> templatesAsync,
+    MealPlanWithMealsAndItems? todayPlan,
+  ) {
+    final l10n = context.l10n;
+    if (templatesAsync.isLoading) {
+      return const Center(child: CircularProgressIndicator());
+    }
+    if (templatesAsync.hasError) {
+      return Center(
+        child: Text(l10n.errorWithMessage('${templatesAsync.error}')),
+      );
+    }
+    final List<MealPlanWithMealsAndItems> plans =
+        List<MealPlanWithMealsAndItems>.from(
+          templatesAsync.value ?? const <MealPlanWithMealsAndItems>[],
+        )..sort(
+          (MealPlanWithMealsAndItems a, MealPlanWithMealsAndItems b) => a
+              .mealPlan
+              .title
+              .toLowerCase()
+              .compareTo(b.mealPlan.title.toLowerCase()),
+        );
+    if (plans.isEmpty) {
+      return NexcEmptyState(
+        icon: NexcIcons.calendar,
+        title: l10n.noMealPlansYet,
+        actionLabel: l10n.createMealPlan,
+        onAction: () =>
+            Navigator.pushNamed(context, '/meals/edit-plan', arguments: 0),
+      );
+    }
+
+    return ListView.builder(
+      padding: const EdgeInsets.fromLTRB(
+        NexcSpacing.lg,
+        NexcSpacing.md,
+        NexcSpacing.lg,
+        NexcSpacing.xxl + NexcSpacing.section,
+      ),
+      itemCount: plans.length,
+      itemBuilder: (BuildContext context, int index) {
+        final MealPlanWithMealsAndItems plan = plans[index];
+        final bool isSelected =
+            todayPlan != null &&
+            (todayPlan.mealPlan.id == plan.mealPlan.id ||
+                todayPlan.mealPlan.parentPlanId == plan.mealPlan.id);
+        return Padding(
+          padding: const EdgeInsets.only(bottom: NexcSpacing.md),
+          child: MealPlanCard(
+            key: ValueKey<int>(plan.mealPlan.id),
+            planWithMeals: plan,
+            isSelected: isSelected,
+            onOpen: () => _openPlan(plan),
+            onSelect: () => _selectPlan(plan, todayPlan),
+            onDeselect: () => _deselectPlan(plan),
+            onDelete: () => _deletePlan(plan),
+          ),
+        );
+      },
+    );
+  }
+
+  String _formatTime(LocalTime time) =>
+      '${time.hour.toString().padLeft(2, '0')}:'
+      '${time.minute.toString().padLeft(2, '0')}';
 }
 
-class TodayMacrosCard extends StatelessWidget {
-  final double protConsumed;
-  final double protTarget;
-  final double carbConsumed;
-  final double carbTarget;
-  final double fatConsumed;
-  final double fatTarget;
+/// Hero card for today's macro progress.
+class TodayMacroSummaryCard extends StatelessWidget {
+  final MacroTotals consumed;
+  final double targetProtein;
+  final double targetCarbs;
+  final double targetFats;
   final VoidCallback onEditGoals;
 
-  const TodayMacrosCard({
+  const TodayMacroSummaryCard({
     super.key,
-    required this.protConsumed,
-    required this.protTarget,
-    required this.carbConsumed,
-    required this.carbTarget,
-    required this.fatConsumed,
-    required this.fatTarget,
+    required this.consumed,
+    required this.targetProtein,
+    required this.targetCarbs,
+    required this.targetFats,
     required this.onEditGoals,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
+    final AppLocalizations l10n = context.l10n;
 
-    return Card(
-      color: theme.colorScheme.secondaryContainer,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+    return Material(
+      color: scheme.surfaceContainerLow,
+      shape: const RoundedRectangleBorder(borderRadius: NexcShapes.lgRadius),
+      clipBehavior: Clip.antiAlias,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 20),
+        padding: const EdgeInsets.all(NexcSpacing.lg),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text(
-                  l10n.todaysMacros,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onSecondaryContainer,
+                Expanded(
+                  child: Text(
+                    l10n.todaysMacros,
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.edit, size: 20),
-                  color: theme.colorScheme.onSecondaryContainer.withValues(
-                    alpha: 0.7,
-                  ),
+                  tooltip: l10n.editDailyMacroGoals,
                   onPressed: onEditGoals,
+                  icon: const Icon(NexcIcons.edit, size: 20),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                CircularMacroIndicator(
-                  label: l10n.proteinLabel,
-                  consumed: protConsumed,
-                  target: protTarget,
-                  color: Colors.blue,
-                ),
-                CircularMacroIndicator(
-                  label: l10n.carbsLabel,
-                  consumed: carbConsumed,
-                  target: carbTarget,
-                  color: Colors.orange,
-                ),
-                CircularMacroIndicator(
-                  label: l10n.fatsLabel,
-                  consumed: fatConsumed,
-                  target: fatTarget,
-                  color: Colors.purple,
-                ),
-              ],
+            const SizedBox(height: NexcSpacing.sm),
+            LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final bool compact = constraints.maxWidth < 340;
+                final Widget ring = NexcMacroRing(
+                  protein: consumed.protein,
+                  carbs: consumed.carbs,
+                  fats: consumed.fats,
+                  targetProtein: targetProtein,
+                  targetCarbs: targetCarbs,
+                  targetFats: targetFats,
+                  size: compact ? 108 : 124,
+                  center: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        formatDecimal(consumed.calories),
+                        style: theme.textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                          fontFeatures: const [FontFeature.tabularFigures()],
+                        ),
+                      ),
+                      Text(
+                        l10n.unitKcal,
+                        style: theme.textTheme.labelSmall?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                );
+                final Widget bars = Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    NexcMacroBar(
+                      label: l10n.proteinLabel,
+                      value: consumed.protein,
+                      target: targetProtein,
+                      color: NexcMacroColors.protein(scheme),
+                    ),
+                    NexcMacroBar(
+                      label: l10n.carbsLabel,
+                      value: consumed.carbs,
+                      target: targetCarbs,
+                      color: NexcMacroColors.carbs(scheme),
+                    ),
+                    NexcMacroBar(
+                      label: l10n.fatsLabel,
+                      value: consumed.fats,
+                      target: targetFats,
+                      color: NexcMacroColors.fats(scheme),
+                    ),
+                  ],
+                );
+                if (compact) {
+                  return Column(
+                    children: [
+                      ring,
+                      const SizedBox(height: NexcSpacing.md),
+                      bars,
+                    ],
+                  );
+                }
+                return Row(
+                  children: [
+                    ring,
+                    const SizedBox(width: NexcSpacing.lg),
+                    Expanded(child: bars),
+                  ],
+                );
+              },
             ),
           ],
         ),
@@ -866,741 +741,706 @@ class TodayMacrosCard extends StatelessWidget {
   }
 }
 
-class CircularMacroIndicator extends StatefulWidget {
-  final String label;
-  final double consumed;
-  final double target;
-  final Color color;
-
-  const CircularMacroIndicator({
-    super.key,
-    required this.label,
-    required this.consumed,
-    required this.target,
-    required this.color,
-  });
-
-  @override
-  State<CircularMacroIndicator> createState() => _CircularMacroIndicatorState();
-}
-
-class _CircularMacroIndicatorState extends State<CircularMacroIndicator>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _controller;
-  late Animation<double> _progressAnim;
-  late Animation<double> _countAnim;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = AnimationController(
-      vsync: this,
-      duration: const Duration(milliseconds: 900),
-    );
-    _setupAnimations();
-    _controller.forward();
-  }
-
-  void _setupAnimations() {
-    final progress = widget.target > 0
-        ? (widget.consumed / widget.target).clamp(0.0, 1.0)
-        : 0.0;
-    _progressAnim = Tween<double>(
-      begin: 0.0,
-      end: progress,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-    _countAnim = Tween<double>(
-      begin: 0.0,
-      end: widget.consumed,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic));
-  }
-
-  @override
-  void didUpdateWidget(covariant CircularMacroIndicator oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.consumed != widget.consumed ||
-        oldWidget.target != widget.target) {
-      final oldProgress = _progressAnim.value;
-      final oldCount = _countAnim.value;
-      final newProgress = widget.target > 0
-          ? (widget.consumed / widget.target).clamp(0.0, 1.0)
-          : 0.0;
-      _progressAnim = Tween<double>(begin: oldProgress, end: newProgress)
-          .animate(
-            CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-          );
-      _countAnim = Tween<double>(begin: oldCount, end: widget.consumed).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeOutCubic),
-      );
-      _controller.forward(from: 0.0);
-    }
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    Color indicatorColor = widget.color;
-    if (widget.target > 0) {
-      if (widget.consumed > widget.target * 1.05) {
-        indicatorColor = Colors.red;
-      } else if (widget.consumed >= widget.target * 0.95) {
-        indicatorColor = Colors.green;
-      }
-    }
-    final theme = Theme.of(context);
-
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) {
-        return Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              children: [
-                SizedBox(
-                  width: 76,
-                  height: 76,
-                  child: CircularProgressIndicator(
-                    value: _progressAnim.value,
-                    backgroundColor: indicatorColor.withValues(alpha: 0.15),
-                    color: indicatorColor,
-                    strokeWidth: 6,
-                  ),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _countAnim.value.toStringAsFixed(0),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: indicatorColor == widget.color
-                            ? theme.colorScheme.onSecondaryContainer
-                            : indicatorColor,
-                      ),
-                    ),
-                    Container(
-                      height: 1,
-                      width: 24,
-                      color: theme.colorScheme.onSecondaryContainer.withValues(
-                        alpha: 0.3,
-                      ),
-                      margin: const EdgeInsets.symmetric(vertical: 2),
-                    ),
-                    Text(
-                      widget.target.toStringAsFixed(0),
-                      style: theme.textTheme.bodySmall?.copyWith(
-                        color: theme.colorScheme.onSecondaryContainer
-                            .withValues(alpha: 0.7),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Text(
-              widget.label,
-              style: theme.textTheme.labelMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: theme.colorScheme.onSecondaryContainer,
-              ),
-            ),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class MealTrackCard extends ConsumerWidget {
+/// Collapsible meal card used by the today tab.
+class MealTrackCard extends ConsumerStatefulWidget {
   final MealWithItems mealWithItems;
-  final void Function(MealItem) onItemToggle;
-  final void Function(int)? onTimeClick;
-  final void Function(int)? onNameClick;
-  final void Function(int)? onAddClick;
-  final void Function(int)? onReplaceItem;
-  final void Function(int)? onDeleteItem;
+  final VoidCallback onEditDetails;
+  final VoidCallback onDeleteMeal;
+  final VoidCallback onTimeTap;
+  final VoidCallback onAddItem;
+  final Future<void> Function(MealItemWithDetails detail) onReplaceItem;
 
   const MealTrackCard({
     super.key,
     required this.mealWithItems,
-    required this.onItemToggle,
-    this.onTimeClick,
-    this.onNameClick,
-    this.onAddClick,
-    this.onReplaceItem,
-    this.onDeleteItem,
+    required this.onEditDetails,
+    required this.onDeleteMeal,
+    required this.onTimeTap,
+    required this.onAddItem,
+    required this.onReplaceItem,
   });
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final meal = mealWithItems.meal;
-    final timeStr =
-        '${meal.time.hour.toString().padLeft(2, '0')}:${meal.time.minute.toString().padLeft(2, '0')}';
-    final isPortable = mealWithItems.isMealPortable;
+  ConsumerState<MealTrackCard> createState() => _MealTrackCardState();
+}
 
-    return Card(
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          InkWell(
-                            onTap: onTimeClick != null
-                                ? () => onTimeClick!(meal.id)
-                                : null,
-                            child: Text(
-                              timeStr,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.primary,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: _InlineMealNameEditor(
-                              meal: meal,
-                              onConfirm: (newName) {
-                                ref
-                                    .read(mealRepositoryProvider)
-                                    .updateMeal(meal.copyWith(name: newName));
-                              },
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 6),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 6,
-                              vertical: 2,
-                            ),
-                            decoration: BoxDecoration(
-                              color: isPortable
-                                  ? theme.colorScheme.primaryContainer
-                                        .withValues(alpha: 0.5)
-                                  : theme.colorScheme.errorContainer.withValues(
-                                      alpha: 0.5,
-                                    ),
-                              borderRadius: BorderRadius.circular(4),
-                            ),
-                            child: Text(
-                              isPortable ? l10n.portable : l10n.homeOnly,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                color: isPortable
-                                    ? theme.colorScheme.onPrimaryContainer
-                                    : theme.colorScheme.onErrorContainer,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          InkWell(
-                            onTap: () {
-                              ref
-                                  .read(mealRepositoryProvider)
-                                  .updateMeal(
-                                    meal.copyWith(atHome: !meal.atHome),
-                                  );
-                            },
-                            child: Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 6,
-                                vertical: 2,
-                              ),
-                              decoration: BoxDecoration(
-                                color: meal.atHome
-                                    ? Colors.green.withValues(alpha: 0.15)
-                                    : theme.colorScheme.secondaryContainer
-                                          .withValues(alpha: 0.5),
-                                borderRadius: BorderRadius.circular(4),
-                                border: Border.all(
-                                  color: meal.atHome
-                                      ? Colors.green.withValues(alpha: 0.5)
-                                      : theme.colorScheme.outlineVariant,
-                                  width: 1,
+class _MealTrackCardState extends ConsumerState<MealTrackCard> {
+  bool _expanded = false;
+
+  void _toggle() => setState(() => _expanded = !_expanded);
+
+  Meal get _meal => widget.mealWithItems.meal;
+
+  String get _timeLabel =>
+      '${_meal.time.hour.toString().padLeft(2, '0')}:'
+      '${_meal.time.minute.toString().padLeft(2, '0')}';
+
+  Future<void> _toggleItem(MealItem item) async {
+    await ref
+        .read(mealRepositoryProvider)
+        .updateMealItem(item.copyWith(consumed: !item.consumed));
+  }
+
+  Future<void> _editAmount(MealItemWithDetails detail) async {
+    final ({double amount, AmountUnit unit})? result =
+        await showMealItemQuantitySheet(
+          context: context,
+          initialAmount: detail.mealItem.amount,
+          initialUnit: detail.mealItem.amountUnit,
+          product: detail.product,
+          isRecipe: detail.mealItem.type == MealItemType.RECIPE,
+        );
+    if (result == null || !mounted) return;
+    await ref
+        .read(mealRepositoryProvider)
+        .updateMealItem(
+          detail.mealItem.copyWith(
+            amount: result.amount,
+            amountUnit: result.unit,
+          ),
+        );
+  }
+
+  Future<void> _deleteItem(MealItemWithDetails detail) async {
+    final String name = detail.mealItem.type == MealItemType.PRODUCT
+        ? (detail.product?.name ?? context.l10n.unknownProduct)
+        : (detail.recipe?.recipe.name ?? context.l10n.unknownRecipe);
+    final bool? confirmed = await NexcConfirmSheet.show(
+      context: context,
+      title: context.l10n.delete,
+      message: context.l10n.deleteMealConfirm(name),
+      confirmLabel: context.l10n.delete,
+      cancelLabel: context.l10n.cancel,
+      destructive: true,
+    );
+    if (confirmed != true || !mounted) return;
+    await ref.read(mealRepositoryProvider).deleteMealItem(detail.mealItem);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
+    final AppLocalizations l10n = context.l10n;
+    final MacroTotals totals = MacroTotals.ofMeal(widget.mealWithItems);
+    final int eaten = widget.mealWithItems.items
+        .where((MealItemWithDetails item) => item.mealItem.consumed)
+        .length;
+    final int totalItems = widget.mealWithItems.items.length;
+    final bool portable = widget.mealWithItems.isMealPortable;
+
+    return Material(
+      color: scheme.surfaceContainerLow,
+      shape: const RoundedRectangleBorder(borderRadius: NexcShapes.lgRadius),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          InkWell(
+            onTap: _toggle,
+            child: Padding(
+              padding: const EdgeInsets.all(NexcSpacing.lg),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            InkWell(
+                              onTap: widget.onTimeTap,
+                              borderRadius: NexcShapes.xsRadius,
+                              child: Text(
+                                _timeLabel,
+                                style: theme.textTheme.labelLarge?.copyWith(
+                                  color: scheme.primary,
+                                  fontWeight: FontWeight.w700,
+                                  fontFeatures: const [
+                                    FontFeature.tabularFigures(),
+                                  ],
                                 ),
                               ),
-                              child: Row(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Icon(
-                                    meal.atHome
-                                        ? Icons.home
-                                        : Icons.restaurant_menu,
-                                    size: 12,
-                                    color: meal.atHome
-                                        ? Colors.green[800]
-                                        : theme
-                                              .colorScheme
-                                              .onSecondaryContainer,
-                                  ),
-                                  const SizedBox(width: 4),
-                                  Text(
-                                    meal.atHome ? l10n.atHome : l10n.outside,
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      fontSize: 10,
-                                      fontWeight: FontWeight.bold,
-                                      color: meal.atHome
-                                          ? Colors.green[800]
-                                          : theme
-                                                .colorScheme
-                                                .onSecondaryContainer,
-                                    ),
-                                  ),
-                                ],
+                            ),
+                            const SizedBox(width: NexcSpacing.sm),
+                            Expanded(
+                              child: Text(
+                                _meal.name,
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                                style: theme.textTheme.titleMedium?.copyWith(
+                                  fontWeight: FontWeight.w700,
+                                ),
                               ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: NexcSpacing.xs),
+                        NexcMacroChips(
+                          protein: totals.protein,
+                          carbs: totals.carbs,
+                          fats: totals.fats,
+                          showCalories: totals.calories > 0,
+                          calories: totals.calories,
+                        ),
+                        const SizedBox(height: NexcSpacing.xs),
+                        Wrap(
+                          spacing: NexcSpacing.xs,
+                          runSpacing: NexcSpacing.xs,
+                          children: [
+                            if (portable)
+                              NexcBadge(
+                                l10n.portable,
+                                tone: NexcBadgeTone.success,
+                                icon: NexcIcons.check,
+                              )
+                            else
+                              NexcBadge(
+                                l10n.homeOnly,
+                                tone: NexcBadgeTone.warning,
+                                icon: NexcIcons.warning,
+                              ),
+                            NexcBadge(
+                              _meal.atHome ? l10n.atHome : l10n.outside,
+                              tone: NexcBadgeTone.neutral,
+                              icon: _meal.atHome
+                                  ? Icons.home_outlined
+                                  : Icons.restaurant_outlined,
+                            ),
+                          ],
+                        ),
+                        if (totalItems > 0) ...[
+                          const SizedBox(height: NexcSpacing.xs),
+                          Text(
+                            l10n.progressItemsEaten(eaten, totalItems),
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
                             ),
                           ),
                         ],
+                      ],
+                    ),
+                  ),
+                  PopupMenuButton<_MealMenuAction>(
+                    tooltip: l10n.moreOptions,
+                    icon: const Icon(NexcIcons.more),
+                    onSelected: (_MealMenuAction action) {
+                      switch (action) {
+                        case _MealMenuAction.editDetails:
+                          widget.onEditDetails();
+                        case _MealMenuAction.deleteMeal:
+                          widget.onDeleteMeal();
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      PopupMenuItem<_MealMenuAction>(
+                        value: _MealMenuAction.editDetails,
+                        child: Row(
+                          children: [
+                            const Icon(NexcIcons.edit, size: 20),
+                            const SizedBox(width: NexcSpacing.md),
+                            Text(l10n.edit),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<_MealMenuAction>(
+                        value: _MealMenuAction.deleteMeal,
+                        child: Row(
+                          children: [
+                            Icon(
+                              NexcIcons.delete,
+                              size: 20,
+                              color: scheme.error,
+                            ),
+                            const SizedBox(width: NexcSpacing.md),
+                            Text(
+                              l10n.deleteMeal,
+                              style: TextStyle(color: scheme.error),
+                            ),
+                          ],
+                        ),
                       ),
                     ],
                   ),
-                ),
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 20),
-                  color: theme.colorScheme.error,
-                  onPressed: () async {
-                    final confirm = await showDialog<bool>(
-                      context: context,
-                      builder: (context) => AlertDialog(
-                        title: Text(l10n.deleteMeal),
-                        content: Text(l10n.deleteMealConfirm(meal.name)),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, false),
-                            child: Text(l10n.cancel),
-                          ),
-                          TextButton(
-                            onPressed: () => Navigator.pop(context, true),
-                            child: Text(
-                              l10n.delete,
-                              style: TextStyle(color: theme.colorScheme.error),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                    if (confirm == true) {
-                      await ref
-                          .read(mealRepositoryProvider)
-                          .db
-                          .delete(ref.read(mealRepositoryProvider).db.meals)
-                          .delete(meal);
-                    }
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            _InlineMealNotesEditor(
-              meal: meal,
-              onConfirm: (newNotes) {
-                ref
-                    .read(mealRepositoryProvider)
-                    .updateMeal(meal.copyWith(notes: newNotes));
-              },
-            ),
-            const SizedBox(height: 8),
-            const Divider(),
-            const SizedBox(height: 8),
-            ...mealWithItems.items.map((detail) {
-              final name = detail.mealItem.type == MealItemType.PRODUCT
-                  ? (detail.product?.name ?? l10n.unknownProduct)
-                  : (detail.recipe?.recipe.name ?? l10n.unknownRecipe);
-
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    Checkbox(
-                      value: detail.mealItem.consumed,
-                      onChanged: (_) => onItemToggle(detail.mealItem),
+                  Padding(
+                    padding: const EdgeInsets.only(top: NexcSpacing.md),
+                    child: AnimatedRotation(
+                      turns: _expanded ? 0.5 : 0,
+                      duration: NexcMotion.short,
+                      child: const Icon(NexcIcons.expand),
                     ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        crossAxisAlignment: CrossAxisAlignment.center,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                InkWell(
-                                  onTap: onNameClick != null
-                                      ? () => onNameClick!(detail.mealItem.id)
-                                      : null,
-                                  child: Text(
-                                    name,
-                                    style: theme.textTheme.bodyLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ),
-                                if (!detail.isItemPortable) ...[
-                                  const SizedBox(height: 4),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.errorContainer
-                                          .withValues(alpha: 0.5),
-                                      borderRadius: BorderRadius.circular(4),
-                                    ),
-                                    child: Text(
-                                      l10n.homeOnly,
-                                      style: TextStyle(
-                                        fontSize: 9,
-                                        color:
-                                            theme.colorScheme.onErrorContainer,
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                  ),
-                                ] else ...[
-                                  if (detail.mealItem.amountUnit ==
-                                          AmountUnit.UNITS &&
-                                      detail.product != null)
-                                    Text(
-                                      l10n.edibleEquivalent(
-                                        (detail.mealItem.amount *
-                                                getEdibleWeightPerUnit(
-                                                  detail.product!,
-                                                ))
-                                            .toStringAsFixed(0),
-                                      ),
-                                      style: theme.textTheme.bodySmall
-                                          ?.copyWith(
-                                            color: theme
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                          ),
-                                    ),
-                                ],
-                              ],
-                            ),
-                          ),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              InlineAmountEditor(
-                                mealItem: detail.mealItem,
-                                onConfirm: (newAmount) {
-                                  ref
-                                      .read(mealRepositoryProvider)
-                                      .updateMealItemAmount(
-                                        detail.mealItem.id,
-                                        newAmount,
-                                      );
-                                },
-                              ),
-                              const SizedBox(width: 3),
-                              PopupMenuButton<AmountUnit>(
-                                offset: const Offset(0, 30),
-                                onSelected: (newUnit) {
-                                  ref
-                                      .read(mealRepositoryProvider)
-                                      .updateMealItem(
-                                        detail.mealItem.copyWith(
-                                          amountUnit: newUnit,
-                                        ),
-                                      );
-                                },
-                                itemBuilder: (context) {
-                                  final list = <PopupMenuEntry<AmountUnit>>[
-                                    PopupMenuItem(
-                                      value: AmountUnit.GRAMS,
-                                      child: Text(
-                                        detail.product?.units.isNotEmpty == true
-                                            ? detail.product!.units
-                                            : "g",
-                                      ),
-                                    ),
-                                  ];
-                                  if (detail.mealItem.type ==
-                                      MealItemType.PRODUCT) {
-                                    final prod = detail.product;
-                                    if (prod != null) {
-                                      if (prod.canMeasureInMl) {
-                                        list.add(
-                                          const PopupMenuItem(
-                                            value: AmountUnit.ML,
-                                            child: Text("ml"),
-                                          ),
-                                        );
-                                      }
-                                      if (prod.canMeasureInUnits) {
-                                        list.add(
-                                          const PopupMenuItem(
-                                            value: AmountUnit.UNITS,
-                                            child: Text("units"),
-                                          ),
-                                        );
-                                      }
-                                    }
-                                  } else {
-                                    list.add(
-                                      const PopupMenuItem(
-                                        value: AmountUnit.UNITS,
-                                        child: Text("units"),
-                                      ),
-                                    );
-                                  }
-                                  return list;
-                                },
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: theme
-                                        .colorScheme
-                                        .surfaceContainerHighest,
-                                    borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(
-                                      color: theme.colorScheme.outline
-                                          .withValues(alpha: 0.3),
-                                    ),
-                                  ),
-                                  child: Row(
-                                    mainAxisSize: MainAxisSize.min,
-                                    children: [
-                                      Text(
-                                        getUnitLabel(
-                                          detail.mealItem,
-                                          detail.product,
-                                        ),
-                                        style: theme.textTheme.labelMedium
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: theme.colorScheme.primary,
-                                            ),
-                                      ),
-                                      const SizedBox(width: 2),
-                                      Icon(
-                                        Icons.arrow_drop_down,
-                                        size: 16,
-                                        color: theme.colorScheme.primary,
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              );
-            }),
-            const SizedBox(height: 8),
-            Center(
-              child: TextButton.icon(
-                onPressed: onAddClick != null
-                    ? () => onAddClick!(meal.id)
-                    : null,
-                icon: const Icon(Icons.add, size: 18),
-                label: Text(l10n.addItemToMealLower),
+                  ),
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                NexcSpacing.lg,
+                0,
+                NexcSpacing.lg,
+                NexcSpacing.lg,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const Divider(),
+                  if (widget.mealWithItems.items.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: NexcSpacing.md,
+                      ),
+                      child: Text(
+                        l10n.addItemToMealLower,
+                        style: theme.textTheme.bodyMedium?.copyWith(
+                          color: scheme.onSurfaceVariant,
+                        ),
+                      ),
+                    )
+                  else
+                    for (final MealItemWithDetails detail
+                        in widget.mealWithItems.items)
+                      _MealItemRow(
+                        detail: detail,
+                        onToggle: () => _toggleItem(detail.mealItem),
+                        onEditAmount: () => _editAmount(detail),
+                        onReplace: () => widget.onReplaceItem(detail),
+                        onDelete: () => _deleteItem(detail),
+                      ),
+                  const SizedBox(height: NexcSpacing.sm),
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: TextButton.icon(
+                      onPressed: widget.onAddItem,
+                      icon: const Icon(NexcIcons.add, size: 18),
+                      label: Text(l10n.addItemToMealLower),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-class _InlineMealNameEditor extends StatefulWidget {
-  final Meal meal;
-  final void Function(String) onConfirm;
+enum _ItemMenuAction { replace, delete }
 
-  const _InlineMealNameEditor({required this.meal, required this.onConfirm});
+class _MealItemRow extends StatelessWidget {
+  final MealItemWithDetails detail;
+  final VoidCallback onToggle;
+  final VoidCallback onEditAmount;
+  final VoidCallback onReplace;
+  final VoidCallback onDelete;
 
-  @override
-  State<_InlineMealNameEditor> createState() => _InlineMealNameEditorState();
-}
-
-class _InlineMealNameEditorState extends State<_InlineMealNameEditor> {
-  late TextEditingController _controller;
-  late FocusNode _focusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.meal.name);
-    _focusNode = FocusNode();
-    _focusNode.addListener(_onFocusChange);
-  }
-
-  void _onFocusChange() {
-    if (!_focusNode.hasFocus) {
-      _save();
-    }
-  }
-
-  void _save() {
-    final val = _controller.text.trim();
-    if (val.isNotEmpty && val != widget.meal.name) {
-      widget.onConfirm(val);
-    }
-  }
-
-  @override
-  void didUpdateWidget(covariant _InlineMealNameEditor oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.meal.name != widget.meal.name && !_focusNode.hasFocus) {
-      _controller.text = widget.meal.name;
-    }
-  }
-
-  @override
-  void dispose() {
-    _focusNode.removeListener(_onFocusChange);
-    _focusNode.dispose();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return TextFormField(
-      controller: _controller,
-      focusNode: _focusNode,
-      style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-      decoration: const InputDecoration(
-        isDense: true,
-        contentPadding: EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        border: InputBorder.none,
-      ),
-      onFieldSubmitted: (_) => _save(),
-    );
-  }
-}
-
-class InlineAmountEditor extends StatefulWidget {
-  final MealItem mealItem;
-  final void Function(double) onConfirm;
-
-  const InlineAmountEditor({
-    super.key,
-    required this.mealItem,
-    required this.onConfirm,
+  const _MealItemRow({
+    required this.detail,
+    required this.onToggle,
+    required this.onEditAmount,
+    required this.onReplace,
+    required this.onDelete,
   });
 
   @override
-  State<InlineAmountEditor> createState() => _InlineAmountEditorState();
-}
-
-class _InlineAmountEditorState extends State<InlineAmountEditor> {
-  late TextEditingController _controller;
-  late FocusNode _focusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(
-      text: formatDouble(widget.mealItem.amount),
-    );
-    _focusNode = FocusNode();
-    _focusNode.addListener(_onFocusChange);
-  }
-
-  void _onFocusChange() {
-    if (!_focusNode.hasFocus) {
-      _save();
-    }
-  }
-
-  void _save() {
-    final val = double.tryParse(_controller.text);
-    if (val != null && val > 0 && val != widget.mealItem.amount) {
-      widget.onConfirm(val);
-    }
-  }
-
-  @override
-  void didUpdateWidget(covariant InlineAmountEditor oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.mealItem.amount != widget.mealItem.amount &&
-        !_focusNode.hasFocus) {
-      _controller.text = formatDouble(widget.mealItem.amount);
-    }
-  }
-
-  @override
-  void dispose() {
-    _focusNode.removeListener(_onFocusChange);
-    _focusNode.dispose();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return SizedBox(
-      width: 60,
-      height: 32,
-      child: TextField(
-        controller: _controller,
-        focusNode: _focusNode,
-        keyboardType: const TextInputType.numberWithOptions(decimal: true),
-        textAlign: TextAlign.center,
-        style: theme.textTheme.labelMedium?.copyWith(
-          fontWeight: FontWeight.bold,
-          color: theme.colorScheme.onSurface,
-        ),
-        decoration: InputDecoration(
-          isDense: true,
-          filled: true,
-          fillColor: theme.colorScheme.surface,
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 4,
-            vertical: 6,
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
+    final AppLocalizations l10n = context.l10n;
+    final String name = detail.mealItem.type == MealItemType.PRODUCT
+        ? (detail.product?.name ?? l10n.unknownProduct)
+        : (detail.recipe?.recipe.name ?? l10n.unknownRecipe);
+    final MacroTotals macros = MacroTotals.ofItem(detail);
+    final String unit = mealItemUnitLabel(
+      context,
+      detail.mealItem,
+      detail.product,
+    );
+    final String subtitle =
+        detail.mealItem.amountUnit == AmountUnit.UNITS && detail.product != null
+        ? l10n.edibleEquivalent(
+            formatDecimal(
+              detail.mealItem.amount * getEdibleWeightPerUnit(detail.product!),
+            ),
+          )
+        : l10n.macrosCompact(
+            formatDecimal(macros.protein),
+            formatDecimal(macros.carbs),
+            formatDecimal(macros.fats),
+          );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: NexcSpacing.xs),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Checkbox(
+            value: detail.mealItem.consumed,
+            onChanged: (_) => onToggle(),
           ),
-          border: const OutlineInputBorder(),
-        ),
-        onSubmitted: (_) => _save(),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodyLarge?.copyWith(
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: NexcSpacing.xs),
+          Tooltip(
+            message: l10n.portionAmount,
+            child: TextButton(
+              onPressed: onEditAmount,
+              child: Text(
+                '${formatDecimal(detail.mealItem.amount)} $unit',
+                style: theme.textTheme.labelLarge?.copyWith(
+                  fontFeatures: const [FontFeature.tabularFigures()],
+                ),
+              ),
+            ),
+          ),
+          PopupMenuButton<_ItemMenuAction>(
+            tooltip: l10n.moreOptions,
+            icon: const Icon(NexcIcons.more, size: 20),
+            onSelected: (_ItemMenuAction action) {
+              switch (action) {
+                case _ItemMenuAction.replace:
+                  onReplace();
+                case _ItemMenuAction.delete:
+                  onDelete();
+              }
+            },
+            itemBuilder: (BuildContext context) => [
+              PopupMenuItem<_ItemMenuAction>(
+                value: _ItemMenuAction.replace,
+                child: Row(
+                  children: [
+                    const Icon(NexcIcons.edit, size: 20),
+                    const SizedBox(width: NexcSpacing.md),
+                    Text(l10n.replaceAction),
+                  ],
+                ),
+              ),
+              PopupMenuItem<_ItemMenuAction>(
+                value: _ItemMenuAction.delete,
+                child: Row(
+                  children: [
+                    Icon(NexcIcons.delete, size: 20, color: scheme.error),
+                    const SizedBox(width: NexcSpacing.md),
+                    Text(l10n.delete, style: TextStyle(color: scheme.error)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
 }
 
+/// Plan card for the plans tab.
+class MealPlanCard extends StatelessWidget {
+  final MealPlanWithMealsAndItems planWithMeals;
+  final bool isSelected;
+  final VoidCallback onOpen;
+  final VoidCallback onSelect;
+  final VoidCallback onDeselect;
+  final VoidCallback onDelete;
+
+  const MealPlanCard({
+    super.key,
+    required this.planWithMeals,
+    required this.isSelected,
+    required this.onOpen,
+    required this.onSelect,
+    required this.onDeselect,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
+    final AppLocalizations l10n = context.l10n;
+    final MealPlan plan = planWithMeals.mealPlan;
+    final MacroTotals totals = MacroTotals.ofPlan(planWithMeals);
+    final ({int consumed, int total}) counts = MacroTotals.itemCount(
+      planWithMeals,
+    );
+
+    return Material(
+      color: scheme.surfaceContainerLow,
+      shape: const RoundedRectangleBorder(borderRadius: NexcShapes.lgRadius),
+      clipBehavior: Clip.antiAlias,
+      child: InkWell(
+        onTap: onOpen,
+        child: Padding(
+          padding: const EdgeInsets.all(NexcSpacing.lg),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          plan.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        if (plan.notes.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Text(
+                            plan.notes,
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.bodySmall?.copyWith(
+                              color: scheme.onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (isSelected) ...[
+                    const SizedBox(width: NexcSpacing.sm),
+                    NexcBadge(
+                      l10n.selectedLabel,
+                      tone: NexcBadgeTone.info,
+                      icon: NexcIcons.check,
+                    ),
+                  ],
+                  PopupMenuButton<_PlanMenuAction>(
+                    tooltip: l10n.moreOptions,
+                    icon: const Icon(NexcIcons.more),
+                    onSelected: (_PlanMenuAction action) {
+                      switch (action) {
+                        case _PlanMenuAction.select:
+                          onSelect();
+                        case _PlanMenuAction.deselect:
+                          onDeselect();
+                        case _PlanMenuAction.delete:
+                          onDelete();
+                      }
+                    },
+                    itemBuilder: (BuildContext context) => [
+                      PopupMenuItem<_PlanMenuAction>(
+                        value: isSelected
+                            ? _PlanMenuAction.deselect
+                            : _PlanMenuAction.select,
+                        child: Row(
+                          children: [
+                            Icon(
+                              isSelected ? NexcIcons.close : NexcIcons.play,
+                              size: 20,
+                            ),
+                            const SizedBox(width: NexcSpacing.md),
+                            Text(isSelected ? l10n.remove : l10n.selectLabel),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem<_PlanMenuAction>(
+                        value: _PlanMenuAction.delete,
+                        child: Row(
+                          children: [
+                            Icon(
+                              NexcIcons.delete,
+                              size: 20,
+                              color: scheme.error,
+                            ),
+                            const SizedBox(width: NexcSpacing.md),
+                            Text(
+                              l10n.deleteMealPlan,
+                              style: TextStyle(color: scheme.error),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+              const SizedBox(height: NexcSpacing.sm),
+              NexcMacroChips(
+                protein: totals.protein,
+                carbs: totals.carbs,
+                fats: totals.fats,
+                showCalories: totals.calories > 0,
+                calories: totals.calories,
+              ),
+              if (planWithMeals.meals.isNotEmpty) ...[
+                const SizedBox(height: NexcSpacing.xs),
+                Text(
+                  l10n.scheduledMeals(
+                    planWithMeals.meals.length,
+                    planWithMeals.meals
+                        .map((MealWithItems meal) => meal.meal.name)
+                        .join(', '),
+                  ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+                const SizedBox(height: NexcSpacing.xs),
+                Text(
+                  l10n.progressItemsEaten(counts.consumed, counts.total),
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: scheme.onSurfaceVariant,
+                  ),
+                ),
+              ],
+              if (!isSelected) ...[
+                const SizedBox(height: NexcSpacing.md),
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: OutlinedButton.icon(
+                    onPressed: onSelect,
+                    icon: const Icon(NexcIcons.play, size: 18),
+                    label: Text(l10n.selectLabel),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// Edit name, notes and location of a meal.
+class _MealDetailsSheet extends StatefulWidget {
+  final Meal meal;
+
+  const _MealDetailsSheet({required this.meal});
+
+  static Future<({String name, String notes, bool atHome})?> show(
+    BuildContext context,
+    Meal meal,
+  ) {
+    return showModalBottomSheet<({String name, String notes, bool atHome})>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (BuildContext context) => _MealDetailsSheet(meal: meal),
+    );
+  }
+
+  @override
+  State<_MealDetailsSheet> createState() => _MealDetailsSheetState();
+}
+
+class _MealDetailsSheetState extends State<_MealDetailsSheet> {
+  late final TextEditingController _name = TextEditingController(
+    text: widget.meal.name,
+  );
+  late final TextEditingController _notes = TextEditingController(
+    text: widget.meal.notes,
+  );
+  late bool _atHome = widget.meal.atHome;
+
+  @override
+  void dispose() {
+    _name.dispose();
+    _notes.dispose();
+    super.dispose();
+  }
+
+  void _submit() {
+    final String name = _name.text.trim();
+    if (name.isEmpty) return;
+    Navigator.pop(context, (
+      name: name,
+      notes: _notes.text.trim(),
+      atHome: _atHome,
+    ));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        NexcSpacing.xl,
+        NexcSpacing.sm,
+        NexcSpacing.xl,
+        NexcSpacing.lg + MediaQuery.viewInsetsOf(context).bottom,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(l10n.edit, style: theme.textTheme.headlineSmall),
+          const SizedBox(height: NexcSpacing.lg),
+          TextField(
+            controller: _name,
+            autofocus: true,
+            decoration: InputDecoration(labelText: l10n.nameLabel),
+          ),
+          const SizedBox(height: NexcSpacing.md),
+          TextField(
+            controller: _notes,
+            minLines: 1,
+            maxLines: 3,
+            decoration: InputDecoration(
+              labelText: l10n.notes,
+              hintText: l10n.addNoteHint,
+            ),
+          ),
+          const SizedBox(height: NexcSpacing.sm),
+          NexcTile.toggle(
+            title: _atHome ? l10n.atHome : l10n.outside,
+            value: _atHome,
+            onChanged: (bool value) => setState(() => _atHome = value),
+            icon: _atHome ? Icons.home_outlined : Icons.restaurant_outlined,
+          ),
+          const SizedBox(height: NexcSpacing.lg),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              TextButton(
+                onPressed: () => Navigator.pop(context),
+                child: Text(l10n.cancel),
+              ),
+              const SizedBox(width: NexcSpacing.sm),
+              FilledButton(onPressed: _submit, child: Text(l10n.save)),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Daily macro goal editor, shared by the today card.
 class EditTodayGoalsDialog extends StatefulWidget {
   final double currentProt;
   final double currentCarb;
@@ -1620,35 +1460,27 @@ class EditTodayGoalsDialog extends StatefulWidget {
 }
 
 class _EditTodayGoalsDialogState extends State<EditTodayGoalsDialog> {
-  late TextEditingController _protController;
-  late TextEditingController _carbController;
-  late TextEditingController _fatController;
-
-  @override
-  void initState() {
-    super.initState();
-    _protController = TextEditingController(
-      text: formatDouble(widget.currentProt),
-    );
-    _carbController = TextEditingController(
-      text: formatDouble(widget.currentCarb),
-    );
-    _fatController = TextEditingController(
-      text: formatDouble(widget.currentFat),
-    );
-  }
+  late final TextEditingController _protein = TextEditingController(
+    text: formatDecimal(widget.currentProt),
+  );
+  late final TextEditingController _carbs = TextEditingController(
+    text: formatDecimal(widget.currentCarb),
+  );
+  late final TextEditingController _fats = TextEditingController(
+    text: formatDecimal(widget.currentFat),
+  );
 
   @override
   void dispose() {
-    _protController.dispose();
-    _carbController.dispose();
-    _fatController.dispose();
+    _protein.dispose();
+    _carbs.dispose();
+    _fats.dispose();
     super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
-    final l10n = context.l10n;
+    final AppLocalizations l10n = context.l10n;
     return AlertDialog(
       title: Text(l10n.editDailyMacroGoals),
       content: SingleChildScrollView(
@@ -1656,24 +1488,24 @@ class _EditTodayGoalsDialogState extends State<EditTodayGoalsDialog> {
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
-              controller: _protController,
+              controller: _protein,
               autofocus: true,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
               decoration: InputDecoration(labelText: l10n.proteinG),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: NexcSpacing.md),
             TextField(
-              controller: _carbController,
+              controller: _carbs,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
               decoration: InputDecoration(labelText: l10n.carbsG),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: NexcSpacing.md),
             TextField(
-              controller: _fatController,
+              controller: _fats,
               keyboardType: const TextInputType.numberWithOptions(
                 decimal: true,
               ),
@@ -1687,290 +1519,20 @@ class _EditTodayGoalsDialogState extends State<EditTodayGoalsDialog> {
           onPressed: () => Navigator.pop(context),
           child: Text(l10n.cancel),
         ),
-        TextButton(
+        FilledButton(
           onPressed: () {
-            final p =
-                double.tryParse(_protController.text) ?? widget.currentProt;
-            final c =
-                double.tryParse(_carbController.text) ?? widget.currentCarb;
-            final f = double.tryParse(_fatController.text) ?? widget.currentFat;
-            widget.onConfirm(p, c, f);
+            final double protein =
+                double.tryParse(_protein.text) ?? widget.currentProt;
+            final double carbs =
+                double.tryParse(_carbs.text) ?? widget.currentCarb;
+            final double fats =
+                double.tryParse(_fats.text) ?? widget.currentFat;
+            widget.onConfirm(protein, carbs, fats);
             Navigator.pop(context);
           },
           child: Text(l10n.save),
         ),
       ],
-    );
-  }
-}
-
-class MealPlanCard extends StatelessWidget {
-  final MealPlanWithMealsAndItems planWithMeals;
-  final bool isSelected;
-  final VoidCallback onClick;
-  final VoidCallback onDelete;
-  final VoidCallback onSelect;
-  final VoidCallback? onDeselect;
-
-  const MealPlanCard({
-    super.key,
-    required this.planWithMeals,
-    required this.isSelected,
-    required this.onClick,
-    required this.onDelete,
-    required this.onSelect,
-    this.onDeselect,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final plan = planWithMeals.mealPlan;
-    final meals = planWithMeals.meals;
-
-    // Totals calculations
-    double totalProt = 0.0;
-    double totalCarb = 0.0;
-    double totalFat = 0.0;
-
-    for (final m in meals) {
-      for (final detail in m.items) {
-        final scale = detail.macroScale;
-        if (detail.mealItem.type == MealItemType.PRODUCT &&
-            detail.product != null) {
-          totalProt += detail.product!.proteins * scale;
-          totalCarb += detail.product!.carbs * scale;
-          totalFat += detail.product!.fats * scale;
-        } else if (detail.mealItem.type == MealItemType.RECIPE &&
-            detail.recipe != null) {
-          for (final ing in detail.recipe!.ingredients) {
-            final ingScale = (ing.ingredient.amount / 100.0) * scale;
-            totalProt += ing.product.proteins * ingScale;
-            totalCarb += ing.product.carbs * ingScale;
-            totalFat += ing.product.fats * ingScale;
-          }
-        }
-      }
-    }
-
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: onClick,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            plan.title,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                        if (plan.isTemporal) ...[
-                          const SizedBox(width: 8),
-                          Icon(
-                            Icons.access_time,
-                            size: 18,
-                            color: theme.colorScheme.secondary,
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                  if (isSelected) ...[
-                    Icon(
-                      Icons.check_circle,
-                      color: theme.colorScheme.primary,
-                      size: 20,
-                    ),
-                    const SizedBox(width: 8),
-                  ],
-                  IconButton(
-                    icon: Icon(
-                      Icons.delete_outline,
-                      color: theme.colorScheme.error,
-                    ),
-                    onPressed: onDelete,
-                  ),
-                ],
-              ),
-              if (plan.notes.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  plan.notes,
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-              const SizedBox(height: 12),
-              if (meals.isNotEmpty) ...[
-                Text(
-                  l10n.scheduledMeals(
-                    meals.length,
-                    meals.map((m) => m.meal.name).join(', '),
-                  ),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Expanded(
-                    child: Wrap(
-                      spacing: 6,
-                      runSpacing: 6,
-                      children: [
-                        _buildMacroChip(
-                          context,
-                          "P",
-                          totalProt,
-                          theme.colorScheme.primaryContainer,
-                        ),
-                        _buildMacroChip(
-                          context,
-                          "C",
-                          totalCarb,
-                          theme.colorScheme.tertiaryContainer,
-                        ),
-                        _buildMacroChip(
-                          context,
-                          "F",
-                          totalFat,
-                          theme.colorScheme.errorContainer,
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  if (isSelected)
-                    InputChip(
-                      label: Text(l10n.selectedLabel),
-                      selected: true,
-                      onSelected: onDeselect != null
-                          ? (_) => onDeselect!()
-                          : null,
-                      avatar: const Icon(Icons.check, size: 16),
-                    )
-                  else
-                    OutlinedButton.icon(
-                      onPressed: onSelect,
-                      icon: const Icon(Icons.play_arrow, size: 16),
-                      label: Text(l10n.selectLabel),
-                    ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMacroChip(
-    BuildContext context,
-    String label,
-    double val,
-    Color color,
-  ) {
-    final theme = Theme.of(context);
-    final valStr = "${val.toStringAsFixed(0)}g";
-    return Chip(
-      labelPadding: EdgeInsets.zero,
-      padding: const EdgeInsets.symmetric(horizontal: 8),
-      backgroundColor: color.withValues(alpha: 0.6),
-      label: Text(
-        context.l10n.macroChip(label, valStr),
-        style: theme.textTheme.labelSmall?.copyWith(fontSize: 10),
-      ),
-    );
-  }
-}
-
-class _InlineMealNotesEditor extends StatefulWidget {
-  final Meal meal;
-  final void Function(String) onConfirm;
-
-  const _InlineMealNotesEditor({required this.meal, required this.onConfirm});
-
-  @override
-  State<_InlineMealNotesEditor> createState() => _InlineMealNotesEditorState();
-}
-
-class _InlineMealNotesEditorState extends State<_InlineMealNotesEditor> {
-  late TextEditingController _controller;
-  late FocusNode _focusNode;
-
-  @override
-  void initState() {
-    super.initState();
-    _controller = TextEditingController(text: widget.meal.notes);
-    _focusNode = FocusNode();
-    _focusNode.addListener(_onFocusChange);
-  }
-
-  void _onFocusChange() {
-    if (!_focusNode.hasFocus) {
-      _save();
-    }
-  }
-
-  void _save() {
-    final val = _controller.text.trim();
-    if (val != widget.meal.notes) {
-      widget.onConfirm(val);
-    }
-  }
-
-  @override
-  void didUpdateWidget(covariant _InlineMealNotesEditor oldWidget) {
-    super.didUpdateWidget(oldWidget);
-    if (oldWidget.meal.notes != widget.meal.notes && !_focusNode.hasFocus) {
-      _controller.text = widget.meal.notes;
-    }
-  }
-
-  @override
-  void dispose() {
-    _focusNode.removeListener(_onFocusChange);
-    _focusNode.dispose();
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return TextFormField(
-      controller: _controller,
-      focusNode: _focusNode,
-      style: theme.textTheme.bodySmall?.copyWith(
-        color: theme.colorScheme.onSurfaceVariant,
-      ),
-      maxLines: null,
-      decoration: InputDecoration(
-        isDense: true,
-        contentPadding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
-        border: InputBorder.none,
-        hintText: context.l10n.addNoteHint,
-      ),
-      onFieldSubmitted: (_) => _save(),
     );
   }
 }

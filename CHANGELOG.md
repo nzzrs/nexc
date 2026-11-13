@@ -12,7 +12,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Option to update the linked routine with the values of the completed sets after a workout (never / always / ask).
 - Reorder routines on the home screen; the order survives restarts.
 - Toggle to show or hide exercise images (off by default).
-- Unit system preference scaffolding, storage in kilograms, and v24 migration.
+- Metric/imperial unit system, with all weights stored canonically in kilograms and a v24 data migration.
+- Barbell plate calculator with metric and imperial plates, bar selection, small-plate toggle, and remembered bar weight.
+- Scroll-wheel input for load, reps, and time, with quick buttons, optional auto-dismiss, and an inline-text fallback.
+- Localization infrastructure with 20 locales; translations imported from upstream LibreFit where available, English fallback elsewhere.
 
 ### Changed
 - Dataset updates are now driven by an explicit dataset revision instead of a hardcoded value.

@@ -24,7 +24,7 @@ Merge gate: `flutter analyze` (0 issues) + `flutter test` (green) + scope review
 | 4 | T12 scroll wheel input | `feat/upstream-scroll-wheel` | merged | merged | `e5ade332` | 232 |
 | 5 | T13 i18n infrastructure | `feat/upstream-i18n` | merged | merged | `b75d00f2` | 244 |
 | 5 | T14 translations (20 locales) | `i18n/translations` | merged | merged | `826658b3` | 244 |
-| 6 | T15 docs + regression | `dev` | orchestrator | pending | | |
+| 6 | T15 docs + regression | `dev` | orchestrator | done | | |
 
 ## Fixed merge order
 
@@ -39,3 +39,5 @@ Merge gate: `flutter analyze` (0 issues) + `flutter test` (green) + scope review
 
 - 2026-11-12: plan approved; baseline recorded.
 - 2026-11-12: wave 1 merged (T1-T6); dev at 126 tests, pushed.
+- 2026-11-13: waves 2-5 merged (T7-T14); dev at 244 tests; debug APK builds.
+- 2026-11-13: T15 docs and regression complete; pending manual Samsung checklist and main approval.

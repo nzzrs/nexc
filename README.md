@@ -22,10 +22,14 @@
 
 ## Features
 
-- **Workout Tracking**: Log routines, supersets, exercises, customizable set types (warmup, working, drop set, failure), RPE/RIR values, reorder routines, and custom sorting.
+- **Workout Tracking**: Log routines, supersets, exercises, customizable set types (warmup, working, drop set, failure), RPE/RIR values, reorder routines, scroll-wheel set input, and custom sorting.
+- **912 Exercises**: The LibreFit dataset with images, instructions, equipment filters, and a barbell plate calculator for loaded lifts.
+- **Metric or Imperial**: Weights are stored in kilograms and can be displayed and entered in kilograms or pounds; body measurements follow the same preference.
+- **Update Routines Automatically**: Choose never, always, or ask to copy the completed set values back into the linked routine after a workout.
 - **Rest Timer with Live Notifications**: Pentagonal timer, lock screen, dynamic floating notifications with real-time remaining progress bars.
 - **Sleep & Health Tracking**: Advanced sleep log (longest awake time, duration input in hours/minutes, sleep phases) and body measurements (weight, body fat %, muscle mass %, height).
 - **Meal Logs & Macro Goals**: Add products, log meals, track macros (calories, proteins, carbs, fats), import/export meal plans with strict data validation, and override macros dynamically.
+- **20 Languages**: Localized UI with English fallback. Translation coverage is published in [docs/i18n-coverage.md](docs/i18n-coverage.md); nutrition and AI strings need community translators.
 - **Clean Modern Interface**: Material 3 styling, theme-aware layouts, sticky workout status bars, interactive widgets.
 - **Backup & Restore**: Easily export and import database or individual routines, recipes, and plans.
 - **Offline & Private**: 100% offline, local database, no tracking, complete privacy.

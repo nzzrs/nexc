@@ -8,10 +8,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- 
+- Exercise dataset synced with LibreFit v0.5.0: 912 exercises (39 new) and 95 new images.
+- Option to update the linked routine with the values of the completed sets after a workout (never / always / ask).
+- Reorder routines on the home screen; the order survives restarts.
+- Toggle to show or hide exercise images (off by default).
+- Unit system preference scaffolding, storage in kilograms, and v24 migration.
 
 ### Changed
-- 
+- Dataset updates are now driven by an explicit dataset revision instead of a hardcoded value.
+- CI and exercise JSON validation workflows migrated to Flutter.
+- Reproducible builds documented as best effort instead of byte-identical.
 
 ### Deprecated
 -
@@ -20,7 +26,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 -
 
 ### Fixed
-- 
+- Rest timer alerts duck competing audio instead of mixing at full volume.
+- GPLv3 additional terms restored for the upstream LibreFit brand, with Nexc terms added separately.
 
 > [!TIP]
 > `Nexc-unsigned.apk` should be used **only** for [verification](https://github.com/NexcOrg/Nexc/blob/main/REPRODUCIBLE.md). 

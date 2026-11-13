@@ -12,44 +12,45 @@ class AppLocalizationsEs extends AppLocalizations {
   String get appName => 'Nexc';
 
   @override
-  String get cancel => 'Cancel';
+  String get cancel => 'Cancelar';
 
   @override
-  String get done => 'Done';
+  String get done => 'Hecho';
 
   @override
   String get close => 'Close';
 
   @override
-  String get delete => 'Delete';
+  String get delete => 'Borrar';
 
   @override
-  String get settingsTitle => 'Settings';
+  String get settingsTitle => 'Ajustes';
 
   @override
-  String get aboutTitle => 'About';
+  String get aboutTitle => 'Acerca';
 
   @override
-  String get tabWorkout => 'Workout';
+  String get tabWorkout => 'entrenamiento';
 
   @override
   String get tabMeals => 'Meals';
 
   @override
-  String get tabProfile => 'Profile';
+  String get tabProfile => 'Perfil';
 
   @override
-  String get createRoutine => 'Create routine';
+  String get createRoutine => 'Crear rutina';
 
   @override
-  String get discardRunningWorkoutTitle => 'Discard running workout?';
+  String get discardRunningWorkoutTitle =>
+      '¿Descartar entrenamiento en carrera?';
 
   @override
   String get discardWorkoutMessage =>
-      'Are you sure you want to discard this unsaved, ongoing workout? This action cannot be undone.';
+      '¿Estás seguro de que quieres descartar este entrenamiento en curso que no has guardado? Esta acción no se puede deshacer.';
 
   @override
-  String get discard => 'Discard';
+  String get discard => 'Descartar';
 
   @override
   String get discardWorkoutAndStartRoutineMessage =>
@@ -59,10 +60,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get discardAndStart => 'Discard & Start';
 
   @override
-  String get startEmptyWorkout => 'Start empty workout';
+  String get startEmptyWorkout => 'Empezar entrenamiento vacío';
 
   @override
-  String get resumeWorkout => 'Resume workout';
+  String get resumeWorkout => 'Continuar entrenamiento';
 
   @override
   String elapsedTime(String time) {
@@ -75,7 +76,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get yourRoutines => 'Your routines';
+  String get yourRoutines => 'Tus rutinas';
 
   @override
   String get aiWorkoutCreator => 'AI Workout Creator';
@@ -89,13 +90,13 @@ class AppLocalizationsEs extends AppLocalizations {
       'AI workout generation is disabled in Settings.';
 
   @override
-  String get startByCreatingRoutine => 'Start by creating a new routine';
+  String get startByCreatingRoutine => 'Empieza por crear una nueva rutina';
 
   @override
   String get dragToReorder => 'Drag to reorder';
 
   @override
-  String get startRoutine => 'Start routine';
+  String get startRoutine => 'Iniciar rutina';
 
   @override
   String errorLoadingRoutines(String error) {
@@ -103,22 +104,22 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get appearance => 'Appearance';
+  String get appearance => 'Apariencia';
 
   @override
-  String get theme => 'Theme';
+  String get theme => 'Tema';
 
   @override
   String get selectTheme => 'Select theme';
 
   @override
-  String get themeModeSystem => 'System';
+  String get themeModeSystem => 'Sistema';
 
   @override
-  String get themeModeLight => 'Light';
+  String get themeModeLight => 'Claro';
 
   @override
-  String get themeModeDark => 'Dark';
+  String get themeModeDark => 'Oscuro';
 
   @override
   String get materialYou => 'Material You';
@@ -142,7 +143,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get generalSettings => 'General settings';
 
   @override
-  String get language => 'Language';
+  String get language => 'Idioma';
 
   @override
   String get selectLanguage => 'Select language';
@@ -154,7 +155,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get selectUnitSystem => 'Select unit system';
 
   @override
-  String get keepScreenOn => 'Keep screen on';
+  String get keepScreenOn => 'Mantener pantalla encendida';
 
   @override
   String get screenWillStayOn => 'Screen will stay on';
@@ -163,7 +164,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get screenWillTurnOffNormally => 'Screen will turn off normally';
 
   @override
-  String get restTimerSound => 'Rest timer sound';
+  String get restTimerSound => 'Sonido del temporizador de descanso';
 
   @override
   String get soundEnabled => 'Sound enabled';
@@ -237,7 +238,7 @@ class AppLocalizationsEs extends AppLocalizations {
 
   @override
   String get dismissScrollWheelAutomatically =>
-      'Dismiss scroll wheel automatically';
+      'Cerrar automáticamente la rueda desplazable';
 
   @override
   String get closesAfterShortPause => 'Closes after a short pause';
@@ -403,28 +404,28 @@ class AppLocalizationsEs extends AppLocalizations {
   String get modelName => 'Model Name';
 
   @override
-  String get languageSystem => 'System';
+  String get languageSystem => 'Sistema';
 
   @override
-  String get languageArabic => 'Arabic';
+  String get languageArabic => 'Árabe';
 
   @override
-  String get languageCatalan => 'Catalan';
+  String get languageCatalan => 'Catalán';
 
   @override
-  String get languageCzech => 'Czech';
+  String get languageCzech => 'Checo';
 
   @override
-  String get languageGerman => 'German';
+  String get languageGerman => 'Alemán';
 
   @override
-  String get languageEnglish => 'English';
+  String get languageEnglish => 'Inglés';
 
   @override
-  String get languageSpanish => 'Spanish';
+  String get languageSpanish => 'Español';
 
   @override
-  String get languageFrench => 'French';
+  String get languageFrench => 'Francés';
 
   @override
   String get languageGalician => 'Galician';
@@ -433,19 +434,19 @@ class AppLocalizationsEs extends AppLocalizations {
   String get languageHindi => 'Hindi';
 
   @override
-  String get languageIndonesian => 'Indonesian';
+  String get languageIndonesian => 'Indonesio';
 
   @override
-  String get languageItalian => 'Italian';
+  String get languageItalian => 'Italiano';
 
   @override
   String get languageKorean => 'Korean';
 
   @override
-  String get languageDutch => 'Dutch';
+  String get languageDutch => 'Holandés';
 
   @override
-  String get languagePolish => 'Polish';
+  String get languagePolish => 'Polaco';
 
   @override
   String get languagePortuguese => 'Portuguese';
@@ -454,13 +455,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get languagePortugueseBrazil => 'Portuguese (Brazil)';
 
   @override
-  String get languageRussian => 'Russian';
+  String get languageRussian => 'Ruso';
 
   @override
-  String get languageSwedish => 'Swedish';
+  String get languageSwedish => 'Sueco';
 
   @override
-  String get languageUkrainian => 'Ukrainian';
+  String get languageUkrainian => 'Ucraniano';
 
   @override
   String get languageUrdu => 'Urdu';
@@ -469,7 +470,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get languageSimplifiedChinese => 'Simplified Chinese';
 
   @override
-  String get unitSystemMetric => 'Metric';
+  String get unitSystemMetric => 'Métrico';
 
   @override
   String get unitSystemImperial => 'Imperial';
@@ -488,10 +489,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get loadingVersion => 'Loading version…';
 
   @override
-  String get info => 'Info';
+  String get info => 'Información';
 
   @override
-  String get privacyPolicy => 'Privacy Policy';
+  String get privacyPolicy => 'Política de privacidad';
 
   @override
   String get privacyPolicyDescription => 'No data leaves your device. Ever.';
@@ -504,7 +505,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get gotIt => 'Got it';
 
   @override
-  String get license => 'License';
+  String get license => 'Licencia';
 
   @override
   String get licenseDescription => 'GNU General Public License v3.0';
@@ -563,10 +564,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get machineBusy => 'Machine busy';
 
   @override
-  String get notes => 'Notes';
+  String get notes => 'Notas';
 
   @override
-  String get restTimeLabel => 'Rest time: ';
+  String get restTimeLabel => 'Tiempo de descanso';
 
   @override
   String get type => 'Type';
@@ -575,16 +576,16 @@ class AppLocalizationsEs extends AppLocalizations {
   String get setColumn => 'Set';
 
   @override
-  String get previousColumn => 'Previous';
+  String get previousColumn => 'Anterior';
 
   @override
-  String get timeColumn => 'Time';
+  String get timeColumn => 'Tiempo';
 
   @override
-  String get weightColumn => 'Weight';
+  String get weightColumn => 'Peso';
 
   @override
-  String get repsColumn => 'Reps';
+  String get repsColumn => 'Repeticiones';
 
   @override
   String get rpe => 'RPE';
@@ -593,7 +594,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get rir => 'RIR';
 
   @override
-  String get addSet => 'Add set';
+  String get addSet => 'Añadir set';
 
   @override
   String decreaseBy(String amount) {
@@ -699,7 +700,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get saveAction => 'SAVE';
+  String get saveAction => 'Guardar';
 
   @override
   String setsRatio(int completed, int total) {
@@ -707,7 +708,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get doneAction => 'DONE';
+  String get doneAction => 'Hecho';
 
   @override
   String get emptyWorkoutHint =>
@@ -728,10 +729,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get timerCanceled => 'Timer canceled';
 
   @override
-  String get addExercise => 'Add exercise';
+  String get addExercise => 'Añadir ejercicio';
 
   @override
-  String get restTimerBadge => 'REST';
+  String get restTimerBadge => 'Descanso';
 
   @override
   String get workoutSummaryTitle => 'Workout Summary';
@@ -740,10 +741,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workoutCompleted => 'Workout Completed!';
 
   @override
-  String get volumeLabel => 'Volume';
+  String get volumeLabel => 'Volumen';
 
   @override
-  String get durationLabel => 'Duration';
+  String get durationLabel => 'Duración';
 
   @override
   String get setsCompletedLabel => 'Sets Completed';
@@ -752,7 +753,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get hardSetsSummaryLabel => 'Hard Sets';
 
   @override
-  String get exercisesLabel => 'Exercises';
+  String get exercisesLabel => 'Ejercicios';
 
   @override
   String densityWithValue(String value) {
@@ -784,31 +785,31 @@ class AppLocalizationsEs extends AppLocalizations {
   String get copyToClipboard => 'Copy to Clipboard';
 
   @override
-  String get deleteRoutineTitle => 'Delete Routine?';
+  String get deleteRoutineTitle => '¿Borrar rutina?';
 
   @override
-  String get deleteWorkoutTitle => 'Delete Workout?';
+  String get deleteWorkoutTitle => '¿Borrar entrenamiento?';
 
   @override
   String get deleteRoutineMessage =>
-      'Are you sure you want to delete this routine? This action cannot be undone.';
+      '¿Estás seguro que quieres borrar esta rutina? Esta acción no se puede deshacer';
 
   @override
   String get deleteWorkoutMessage =>
-      'Are you sure you want to delete this workout? This action cannot be undone.';
+      '¿Estás seguro que quieres borrar este entrenamiento? Esta acción no se puede deshacer';
 
   @override
-  String get unlinkRoutineTitle => 'Unlink Routine?';
+  String get unlinkRoutineTitle => '¿Desvincular rutina?';
 
   @override
   String get unlinkRoutineMessage =>
       'Are you sure you want to unlink this workout from its routine?';
 
   @override
-  String get unlink => 'Unlink';
+  String get unlink => 'Desvincular';
 
   @override
-  String get routineLabel => 'Routine';
+  String get routineLabel => 'Rutina';
 
   @override
   String durationMinutes(int minutes) {
@@ -841,10 +842,10 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get linkedRoutine => 'Linked routine';
+  String get linkedRoutine => 'Rutina vinculada';
 
   @override
-  String get openThisRoutine => 'Open this routine';
+  String get openThisRoutine => 'Abrir esta rutina';
 
   @override
   String get performance => 'Performance';
@@ -913,7 +914,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get routineSaved => 'Routine Saved';
+  String get routineSaved => 'Rutina guardada';
 
   @override
   String get saveAsRoutine => 'Save as Routine';
@@ -945,7 +946,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get searchExercise => 'Search exercise...';
 
   @override
-  String get levelLabel => 'Level';
+  String get levelLabel => 'Nivel';
 
   @override
   String levelWithValue(String value) {
@@ -956,7 +957,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get selectLevel => 'Select Level';
 
   @override
-  String get forceLabel => 'Force';
+  String get forceLabel => 'Forzar';
 
   @override
   String forceWithValue(String value) {
@@ -967,7 +968,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get selectForce => 'Select Force';
 
   @override
-  String get mechanicLabel => 'Mechanic';
+  String get mechanicLabel => 'Mecánica';
 
   @override
   String mechanicWithValue(String value) {
@@ -978,7 +979,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get selectMechanic => 'Select Mechanic';
 
   @override
-  String get equipmentLabel => 'Equipment';
+  String get equipmentLabel => 'Equipo';
 
   @override
   String equipmentWithValue(String value) {
@@ -1000,7 +1001,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get selectMuscle => 'Select Muscle';
 
   @override
-  String get categoryLabel => 'Category';
+  String get categoryLabel => 'Categoría';
 
   @override
   String categoryWithValue(String value) {
@@ -1025,7 +1026,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get noExercisesFound => 'No exercises found';
 
   @override
-  String get createExercise => 'Create Exercise';
+  String get createExercise => 'Crear ejercicio';
 
   @override
   String get createWithAi => 'Create with AI';
@@ -1060,7 +1061,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get primaryMuscleField => 'Primary Muscle';
 
   @override
-  String get cancelAction => 'CANCEL';
+  String get cancelAction => 'Cancelar';
 
   @override
   String get describeExerciseHint =>
@@ -1076,10 +1077,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get exerciseDetails => 'Exercise Details';
 
   @override
-  String get detailsTab => 'Details';
+  String get detailsTab => 'Detalles';
 
   @override
-  String get instructionsTab => 'Instructions';
+  String get instructionsTab => 'Instrucciones';
 
   @override
   String get primaryMusclesWorked => 'Primary Muscles Worked';
@@ -1088,7 +1089,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get secondaryMusclesWorked => 'Secondary Muscles Worked';
 
   @override
-  String get discardChangesTitle => 'Discard Changes?';
+  String get discardChangesTitle => '¿Descartar cambios?';
 
   @override
   String get discardChangesMessage =>
@@ -1098,10 +1099,10 @@ class AppLocalizationsEs extends AppLocalizations {
   String get enterRoutineTitle => 'Please enter a routine title';
 
   @override
-  String get createRoutineTitle => 'Create Routine';
+  String get createRoutineTitle => 'Crear rutina';
 
   @override
-  String get editRoutineTitle => 'Edit Routine';
+  String get editRoutineTitle => 'Editar rutina';
 
   @override
   String get routineTitleField => 'Routine title';
@@ -1114,10 +1115,10 @@ class AppLocalizationsEs extends AppLocalizations {
       'No exercises added yet. Tap Add Exercise below.';
 
   @override
-  String get addExerciseTitle => 'Add Exercise';
+  String get addExerciseTitle => 'Añadir ejercicio';
 
   @override
-  String get discardAction => 'DISCARD';
+  String get discardAction => 'Descartar';
 
   @override
   String get notificationPermissionTitle => 'Stay on Track';
@@ -1136,13 +1137,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get clearSearch => 'Clear search';
 
   @override
-  String get calendarTitle => 'Calendar';
+  String get calendarTitle => 'Calendario';
 
   @override
   String get selectDayHint => 'Select a day to view workouts';
 
   @override
-  String get workoutNoun => 'workout';
+  String get workoutNoun => 'entrenamiento';
 
   @override
   String get workoutsNoun => 'workouts';
@@ -1221,7 +1222,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get exerciseNoun => 'exercise';
 
   @override
-  String get exercisesNoun => 'exercises';
+  String get exercisesNoun => 'Ejercicios';
 
   @override
   String moreCount(int count) {
@@ -1306,7 +1307,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get addProduct => 'Add Product';
 
   @override
-  String get nameLabel => 'Name';
+  String get nameLabel => 'Nombre';
 
   @override
   String get autofillWithAi => 'Autofill with AI';
@@ -1392,7 +1393,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get addRecipe => 'Add Recipe';
 
   @override
-  String get save => 'Save';
+  String get save => 'Guardar';
 
   @override
   String get instructionsProcess => 'Instructions/Process';
@@ -1414,7 +1415,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get amountLabel => 'Amount';
 
   @override
-  String get addAction => 'Add';
+  String get addAction => 'Añadir';
 
   @override
   String ingredientLine(String name, String amount) {
@@ -1428,7 +1429,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get enterRecipeName => 'Enter a recipe name';
 
   @override
-  String get titleCannotBeEmpty => 'Title cannot be empty';
+  String get titleCannotBeEmpty => 'El título no puede estar vacío';
 
   @override
   String get mealPlanSaved => 'Meal plan saved';
@@ -1684,25 +1685,25 @@ class AppLocalizationsEs extends AppLocalizations {
   String get mealPlanDetails => 'Meal Plan Details';
 
   @override
-  String get edit => 'Edit';
+  String get edit => 'Editar';
 
   @override
   String get mealPlanNotFound => 'Meal plan not found';
 
   @override
-  String get measurementsMenu => 'Measurements';
+  String get measurementsMenu => 'Mediciones';
 
   @override
   String get personalInfo => 'Personal Info';
 
   @override
-  String get statisticsMenu => 'Statistics';
+  String get statisticsMenu => 'Estadísticas';
 
   @override
   String get stockTitle => 'Stock';
 
   @override
-  String get overview => 'Overview';
+  String get overview => 'Resumen';
 
   @override
   String errorLoadingChart(String error) {
@@ -1710,7 +1711,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get yourWorkouts => 'Your workouts';
+  String get yourWorkouts => 'Tus entrenamientos';
 
   @override
   String get viewAll => 'View all';
@@ -1762,13 +1763,13 @@ class AppLocalizationsEs extends AppLocalizations {
   String get workoutPerformance => 'Workout Performance';
 
   @override
-  String get repsLabel => 'Reps';
+  String get repsLabel => 'Repeticiones';
 
   @override
   String get noDataYet => 'No data yet';
 
   @override
-  String get statisticsTitle => 'Statistics';
+  String get statisticsTitle => 'Estadísticas';
 
   @override
   String errorLoadingWorkouts(String error) {
@@ -1909,7 +1910,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get hrsShort => 'Hrs';
 
   @override
-  String get minShort => 'Min';
+  String get minShort => 'min';
 
   @override
   String get weightProgress => 'Weight Progress';
@@ -1993,7 +1994,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get minMaxLabel => 'Min/Max';
 
   @override
-  String get measurementsTitle => 'Measurements';
+  String get measurementsTitle => 'Mediciones';
 
   @override
   String get addLog => 'Add Log';
@@ -2352,7 +2353,7 @@ class AppLocalizationsEs extends AppLocalizations {
   String get importFailed => 'Import Failed';
 
   @override
-  String get ok => 'OK';
+  String get ok => 'Aceptar';
 
   @override
   String importedSuccessfully(String entity) {
@@ -2360,7 +2361,7 @@ class AppLocalizationsEs extends AppLocalizations {
   }
 
   @override
-  String get unknownError => 'Unknown error';
+  String get unknownError => 'Error desconocido';
 
   @override
   String get backupRestoreTitle => 'Backup & Restore';

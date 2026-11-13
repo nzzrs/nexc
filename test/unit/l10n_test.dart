@@ -224,8 +224,8 @@ void main() {
 
       expect(installed, isNotNull);
       expect(installed!.localeName, 'es');
-      // Phase A ships English placeholders, so the text is unchanged.
-      expect(find.text('Settings'), findsOneWidget);
+      // The Spanish bundle is populated by the upstream import.
+      expect(find.text('Ajustes'), findsOneWidget);
     });
   });
 

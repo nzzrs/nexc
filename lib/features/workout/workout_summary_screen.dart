@@ -10,6 +10,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/providers/settings_provider.dart';
+import '../../core/util/unit_system.dart';
 import '../../core/util/workout_stats_helper.dart';
 
 String _formatSummaryDuration(int seconds) {
@@ -21,6 +22,7 @@ String _formatSummaryDuration(int seconds) {
 String formatWorkoutSummaryText(
   WorkoutWithExercisesAndSets workoutData, {
   IntensityScale intensityScale = IntensityScale.both,
+  UnitSystem unitSystem = UnitSystem.metric,
 }) {
   final title = workoutData.workout.title;
   final duration = _formatSummaryDuration(workoutData.workout.timeElapsed);
@@ -42,7 +44,11 @@ String formatWorkoutSummaryText(
   final buffer = StringBuffer();
   buffer.writeln('Workout Summary: $title');
   buffer.writeln('Duration: $duration');
-  buffer.writeln('Total Volume: ${volume.toStringAsFixed(1)} kg');
+  buffer.writeln(
+    'Total Volume: '
+    '${fromKilograms(volume, unitSystem).toStringAsFixed(1)} '
+    '${unitSystem.suffix}',
+  );
   buffer.writeln('Completed Sets: $completedSets/$totalSets');
   buffer.writeln();
   buffer.writeln('Exercises:');
@@ -67,7 +73,9 @@ String formatWorkoutSummaryText(
           : '';
       final rirStr = (showRir && s.rir != null) ? ', RIR ${s.rir}' : '';
       buffer.writeln(
-        '  Set ${i + 1}: ${s.load.toStringAsFixed(1)} kg x ${s.reps} reps ($status$rpeStr$rirStr)',
+        '  Set ${i + 1}: '
+        '${fromKilograms(s.load, unitSystem).toStringAsFixed(1)} '
+        '${unitSystem.suffix} x ${s.reps} reps ($status$rpeStr$rirStr)',
       );
     }
   }
@@ -151,12 +159,26 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
     );
   }
 
+  /// Reads the preferred unit system and keeps the screen reactive to it.
+  ///
+  /// Widget tests may pump this screen without a `SharedPreferences`
+  /// override; in that case the settings provider cannot be built, so the
+  /// canonical metric display is used.
+  UnitSystem _preferredUnitSystem() {
+    try {
+      return ref.watch(settingsProvider.select((s) => s.unitSystem));
+    } on UnimplementedError {
+      return UnitSystem.metric;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final title = widget.workoutData.workout.title;
     final duration = _formatDuration(widget.workoutData.workout.timeElapsed);
     final volume = _calculateTotalVolume();
+    final unitSystem = _preferredUnitSystem();
     final completedSets = _totalCompletedSets();
     final totalSets = _totalSets();
 
@@ -241,7 +263,8 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                                 FittedBox(
                                   fit: BoxFit.scaleDown,
                                   child: Text(
-                                    '${volume.toStringAsFixed(0)} kg',
+                                    '${fromKilograms(volume, unitSystem).toStringAsFixed(0)} '
+                                    '${unitSystem.suffix}',
                                     maxLines: 1,
                                     style: theme.textTheme.headlineSmall
                                         ?.copyWith(
@@ -348,7 +371,9 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                             icon: Icons.speed,
                             iconColor: theme.colorScheme.primary,
                             text:
-                                'Density: ${WorkoutStatsHelper.calculateWorkoutDensity(widget.workoutData).toStringAsFixed(1)} kg/s',
+                                'Density: '
+                                '${fromKilograms(WorkoutStatsHelper.calculateWorkoutDensity(widget.workoutData), unitSystem).toStringAsFixed(1)} '
+                                '${unitSystem.suffix}/s',
                           ),
                           if (WorkoutStatsHelper.getPrimaryMuscleImpacted(
                                 widget.workoutData,
@@ -414,7 +439,9 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                                       child: FittedBox(
                                         fit: BoxFit.scaleDown,
                                         child: Text(
-                                          'e1RM: ${WorkoutStatsHelper.calculateExerciseEstimatedOneRepMax(ex).toStringAsFixed(1)} kg',
+                                          'e1RM: '
+                                          '${fromKilograms(WorkoutStatsHelper.calculateExerciseEstimatedOneRepMax(ex), unitSystem).toStringAsFixed(1)} '
+                                          '${unitSystem.suffix}',
                                           maxLines: 1,
                                           style: theme.textTheme.labelSmall
                                               ?.copyWith(
@@ -432,7 +459,9 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Volume: ${WorkoutStatsHelper.calculateExerciseTonnage(ex).toStringAsFixed(0)} kg',
+                              'Volume: '
+                              '${fromKilograms(WorkoutStatsHelper.calculateExerciseTonnage(ex), unitSystem).toStringAsFixed(0)} '
+                              '${unitSystem.suffix}',
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -507,7 +536,8 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                                           ],
                                           Flexible(
                                             child: Text(
-                                              '${s.load.toStringAsFixed(1)} kg x ${s.reps}',
+                                              '${fromKilograms(s.load, unitSystem).toStringAsFixed(1)} '
+                                              '${unitSystem.suffix} x ${s.reps}',
                                               style: TextStyle(
                                                 color: s.completed
                                                     ? theme
@@ -565,6 +595,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                           text: formatWorkoutSummaryText(
                             widget.workoutData,
                             intensityScale: settings.intensityScale,
+                            unitSystem: settings.unitSystem,
                           ),
                         ),
                       );

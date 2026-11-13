@@ -10,7 +10,7 @@ Merge gate: `flutter analyze` (0 issues) + `flutter test` (green) + scope review
 
 | Wave | Task | Branch | Agent | Status | Merge commit | Tests |
 |---|---|---|---|---|---|---|
-| 1 | T1 dataset sync (912 exercises) | `feat/upstream-dataset-912` | pending | pending | | |
+| 1 | T1 dataset sync (912 exercises) | `feat/upstream-dataset-912` | merged | merged | `0b8b0cc5` | 106 |
 | 1 | T2 update routine after workout | `feat/upstream-routine-update` | pending | pending | | |
 | 1 | T3 reorder routines | `feat/upstream-routine-order` | pending | pending | | |
 | 1 | T4 rest alert ducking | `fix/rest-alert-ducking` | merged | merged | `274d91a2` | 100 |

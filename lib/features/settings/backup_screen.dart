@@ -8,42 +8,269 @@
  */
 
 import 'dart:convert';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:share_plus/share_plus.dart';
+
+import '../../core/components/nexc_async_view.dart';
+import '../../core/components/nexc_confirm_sheet.dart';
+import '../../core/components/nexc_page.dart';
+import '../../core/components/nexc_section.dart';
+import '../../core/components/nexc_snack.dart';
 import '../../core/l10n/l10n.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/shapes.dart';
+import '../../core/theme/spacing.dart';
 import '../../core/util/backup_manager.dart';
+import '../../l10n/app_localizations.dart';
+
+/// Bundled specification of every JSON import format.
+const String backupFormatAsset = 'assets/docs/backup_format.md';
+
+/// Actions for one exportable entity. [onExport] runs immediately; [onImport]
+/// goes through the destructive confirmation before touching any data.
+class _BackupSection extends StatelessWidget {
+  final String? title;
+  final String description;
+  final IconData icon;
+  final Future<void> Function() onExport;
+  final Future<void> Function() onImport;
+
+  const _BackupSection({
+    required this.description,
+    required this.icon,
+    required this.onExport,
+    required this.onImport,
+    this.title,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    return Padding(
+      padding: const EdgeInsets.all(NexcSpacing.lg),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Icon(icon, size: 20, color: theme.colorScheme.onSurfaceVariant),
+              const SizedBox(width: NexcSpacing.sm),
+              if (title != null)
+                Expanded(
+                  child: Text(title!, style: theme.textTheme.titleMedium),
+                ),
+            ],
+          ),
+          const SizedBox(height: NexcSpacing.xs),
+          Text(
+            description,
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: NexcSpacing.md),
+          _ResponsiveActions(
+            children: [
+              FilledButton.tonalIcon(
+                onPressed: onExport,
+                icon: const Icon(Icons.upload, size: 18),
+                label: Text(l10n.exportAction),
+              ),
+              OutlinedButton.icon(
+                onPressed: onImport,
+                icon: const Icon(Icons.download, size: 18),
+                label: Text(l10n.importAction),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Two action buttons side by side, stacked on narrow phones.
+class _ResponsiveActions extends StatelessWidget {
+  final List<Widget> children;
+
+  const _ResponsiveActions({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        if (constraints.maxWidth < 340) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (int i = 0; i < children.length; i++) ...[
+                if (i > 0) const SizedBox(height: NexcSpacing.sm),
+                children[i],
+              ],
+            ],
+          );
+        }
+        return Row(
+          children: [
+            for (int i = 0; i < children.length; i++) ...[
+              if (i > 0) const SizedBox(width: NexcSpacing.sm),
+              Expanded(child: children[i]),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+/// Read-only viewer for the bundled import format documentation.
+class _FormatDocumentation extends StatelessWidget {
+  const _FormatDocumentation();
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    return ExpansionTile(
+      leading: const Icon(NexcIcons.license),
+      title: Text(l10n.importFormatDocumentation),
+      subtitle: Text(l10n.importFormatDocumentationDesc),
+      children: [
+        FutureBuilder<String>(
+          future: rootBundle.loadString(backupFormatAsset),
+          builder: (BuildContext context, AsyncSnapshot<String> snapshot) {
+            if (snapshot.hasError) {
+              return Padding(
+                padding: const EdgeInsets.only(bottom: NexcSpacing.lg),
+                child: NexcErrorView(
+                  title: l10n.importFormatDocumentation,
+                  message: '${snapshot.error}',
+                ),
+              );
+            }
+            final String? markdown = snapshot.data;
+            if (markdown == null) {
+              return const Padding(
+                padding: EdgeInsets.all(NexcSpacing.lg),
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            return Container(
+              width: double.infinity,
+              margin: const EdgeInsets.only(bottom: NexcSpacing.lg),
+              padding: const EdgeInsets.all(NexcSpacing.lg),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.surfaceContainerHighest,
+                borderRadius: NexcShapes.smRadius,
+              ),
+              child: SelectableText(
+                markdown,
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                  fontFamily: 'monospace',
+                ),
+              ),
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
 
 class BackupScreen extends ConsumerWidget {
   const BackupScreen({super.key});
 
-  void _showImportError(BuildContext context, String error) {
-    final l10n = context.l10n;
-    showDialog(
+  Future<void> _confirmAndImport(
+    BuildContext context, {
+    required String entity,
+    required Future<ImportResult> Function(BackupManager manager) run,
+  }) async {
+    final AppLocalizations l10n = context.l10n;
+    final bool? confirmed = await NexcConfirmSheet.show(
       context: context,
-      builder: (context) => AlertDialog(
-        icon: const Icon(Icons.error_outline, color: Colors.red, size: 40),
-        title: Text(l10n.importFailed),
+      title: '${l10n.importAction} $entity',
+      message: l10n.backupExportFirst,
+      confirmLabel: l10n.importAction,
+      cancelLabel: l10n.cancel,
+      destructive: true,
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      final ImportResult result = await run(
+        ProviderScope.containerOf(
+          context,
+          listen: false,
+        ).read(backupManagerProvider),
+      );
+      if (!context.mounted) return;
+      if (result.success) {
+        NexcSnack.show(context, l10n.importedSuccessfully(entity));
+      } else {
+        _showImportError(context, result.error ?? l10n.unknownError);
+      }
+    } catch (error) {
+      if (!context.mounted) return;
+      _showImportError(context, '$error');
+    }
+  }
+
+  Future<void> _importDatabase(BuildContext context) async {
+    final AppLocalizations l10n = context.l10n;
+    final bool? confirmed = await NexcConfirmSheet.show(
+      context: context,
+      title: '${l10n.importAction} ${l10n.databaseTitle}',
+      message: l10n.backupExportFirst,
+      confirmLabel: l10n.importAction,
+      cancelLabel: l10n.cancel,
+      destructive: true,
+    );
+    if (confirmed != true || !context.mounted) return;
+
+    try {
+      final BackupManager manager = ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(backupManagerProvider);
+      final bool success = await manager.importDatabase();
+      if (!context.mounted) return;
+      if (success) {
+        NexcSnack.show(context, l10n.importSuccessBody);
+      } else {
+        NexcSnack.show(context, l10n.databaseImportCancelled);
+      }
+    } catch (error) {
+      if (!context.mounted) return;
+      _showImportError(context, '$error');
+    }
+  }
+
+  void _showImportError(BuildContext context, String error) {
+    final AppLocalizations l10n = context.l10n;
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        contentPadding: EdgeInsets.zero,
         content: SingleChildScrollView(
-          child: SelectableText(
-            error,
-            style: Theme.of(context).textTheme.bodyMedium,
-          ),
+          child: NexcErrorView(title: l10n.importFailed, message: error),
         ),
         actions: [
           TextButton.icon(
             onPressed: () {
               Clipboard.setData(ClipboardData(text: error));
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(l10n.errorCopied)));
+              NexcSnack.show(dialogContext, l10n.errorCopied);
             },
             icon: const Icon(Icons.copy, size: 18),
             label: Text(l10n.copyError),
           ),
           FilledButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(dialogContext),
             child: Text(l10n.ok),
           ),
         ],
@@ -51,624 +278,249 @@ class BackupScreen extends ConsumerWidget {
     );
   }
 
-  Future<void> _handleImport(
-    BuildContext context,
-    Future<ImportResult> Function() importFn,
-    String entityName,
-  ) async {
-    final l10n = context.l10n;
+  Future<void> _export(
+    BuildContext context, {
+    required Future<void> Function(BackupManager manager) run,
+    required String successMessage,
+    required String Function(String error) failureMessage,
+  }) async {
     try {
-      final result = await importFn();
+      await run(
+        ProviderScope.containerOf(
+          context,
+          listen: false,
+        ).read(backupManagerProvider),
+      );
       if (!context.mounted) return;
-      if (result.success) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(l10n.importedSuccessfully(entityName))),
-        );
-      } else {
-        _showImportError(context, result.error ?? l10n.unknownError);
-      }
-    } catch (e) {
+      NexcSnack.show(context, successMessage);
+    } catch (error) {
       if (!context.mounted) return;
-      _showImportError(context, e.toString());
+      NexcSnack.show(context, failureMessage('$error'));
     }
   }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final backupManager = ref.read(backupManagerProvider);
-    final l10n = context.l10n;
+    final AppLocalizations l10n = context.l10n;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.backupRestoreTitle),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          Card(
-            color: Theme.of(
-              context,
-            ).colorScheme.primaryContainer.withValues(alpha: 0.3),
-            elevation: 0,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    l10n.importFormatDocumentation,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
+    return NexcPage(
+      title: l10n.backupRestoreTitle,
+      body: SingleChildScrollView(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            NexcSection(
+              title: l10n.databaseTitle,
+              children: [
+                _BackupSection(
+                  description: l10n.databaseDesc,
+                  icon: NexcIcons.backup,
+                  onExport: () => _export(
+                    context,
+                    run: (BackupManager manager) => manager.exportDatabase(),
+                    successMessage: l10n.databaseExported,
+                    failureMessage: l10n.databaseExportFailed,
                   ),
-                  const SizedBox(height: 8),
-                  Text(l10n.importFormatDocumentationDesc),
-                  const SizedBox(height: 12),
-                  Row(
+                  onImport: () => _importDatabase(context),
+                ),
+              ],
+            ),
+            NexcSection(
+              title: 'Content',
+              children: [
+                _BackupSection(
+                  title: l10n.workoutPlansTitle,
+                  description: l10n.workoutPlansDesc,
+                  icon: NexcIcons.workout,
+                  onExport: () => _export(
+                    context,
+                    run: (BackupManager manager) =>
+                        manager.exportWorkoutPlans(),
+                    successMessage: l10n.workoutPlansExported,
+                    failureMessage: l10n.workoutPlansExportFailed,
+                  ),
+                  onImport: () => _confirmAndImport(
+                    context,
+                    entity: l10n.workoutPlansTitle,
+                    run: (BackupManager manager) =>
+                        manager.importWorkoutPlans(),
+                  ),
+                ),
+                _BackupSection(
+                  title: l10n.workoutHistoryTitle,
+                  description: l10n.workoutHistoryDesc,
+                  icon: NexcIcons.workoutHistory,
+                  onExport: () => _export(
+                    context,
+                    run: (BackupManager manager) =>
+                        manager.exportWorkoutHistory(),
+                    successMessage: l10n.workoutHistoryExported,
+                    failureMessage: l10n.workoutHistoryExportFailed,
+                  ),
+                  onImport: () => _confirmAndImport(
+                    context,
+                    entity: l10n.workoutHistoryTitle,
+                    run: (BackupManager manager) =>
+                        manager.importWorkoutHistory(),
+                  ),
+                ),
+                _BackupSection(
+                  title: l10n.exercisesLabel,
+                  description: l10n.exercisesBackupDesc,
+                  icon: NexcIcons.exercises,
+                  onExport: () => _export(
+                    context,
+                    run: (BackupManager manager) => manager.exportExercises(),
+                    successMessage: l10n.exercisesExported,
+                    failureMessage: l10n.exercisesExportFailed,
+                  ),
+                  onImport: () => _confirmAndImport(
+                    context,
+                    entity: l10n.exercisesLabel,
+                    run: (BackupManager manager) => manager.importExercises(),
+                  ),
+                ),
+                _BackupSection(
+                  title: l10n.mealPlansTitle,
+                  description: l10n.mealPlansDesc,
+                  icon: NexcIcons.meals,
+                  onExport: () => _export(
+                    context,
+                    run: (BackupManager manager) => manager.exportMealPlans(),
+                    successMessage: l10n.mealPlansExported,
+                    failureMessage: l10n.mealPlansExportFailed,
+                  ),
+                  onImport: () => _confirmAndImport(
+                    context,
+                    entity: l10n.mealPlansTitle,
+                    run: (BackupManager manager) => manager.importMealPlans(),
+                  ),
+                ),
+                _BackupSection(
+                  title: l10n.mealHistoryTitle,
+                  description: l10n.mealHistoryDesc,
+                  icon: NexcIcons.mealHistory,
+                  onExport: () => _export(
+                    context,
+                    run: (BackupManager manager) => manager.exportMealHistory(),
+                    successMessage: l10n.mealHistoryExported,
+                    failureMessage: l10n.mealHistoryExportFailed,
+                  ),
+                  onImport: () => _confirmAndImport(
+                    context,
+                    entity: l10n.mealHistoryTitle,
+                    run: (BackupManager manager) => manager.importMealHistory(),
+                  ),
+                ),
+                _BackupSection(
+                  title: l10n.productsTab,
+                  description: l10n.productsBackupDesc,
+                  icon: NexcIcons.products,
+                  onExport: () => _export(
+                    context,
+                    run: (BackupManager manager) => manager.exportProducts(),
+                    successMessage: l10n.productsExported,
+                    failureMessage: l10n.productsExportFailed,
+                  ),
+                  onImport: () => _confirmAndImport(
+                    context,
+                    entity: l10n.productsTab,
+                    run: (BackupManager manager) => manager.importProducts(),
+                  ),
+                ),
+                _BackupSection(
+                  title: l10n.recipesTab,
+                  description: l10n.recipesBackupDesc,
+                  icon: NexcIcons.recipes,
+                  onExport: () => _export(
+                    context,
+                    run: (BackupManager manager) => manager.exportRecipes(),
+                    successMessage: l10n.recipesExported,
+                    failureMessage: l10n.recipesExportFailed,
+                  ),
+                  onImport: () => _confirmAndImport(
+                    context,
+                    entity: l10n.recipesTab,
+                    run: (BackupManager manager) => manager.importRecipes(),
+                  ),
+                ),
+                _BackupSection(
+                  title: l10n.stockTitle,
+                  description: l10n.stockBackupDesc,
+                  icon: NexcIcons.stock,
+                  onExport: () => _export(
+                    context,
+                    run: (BackupManager manager) => manager.exportStock(),
+                    successMessage: l10n.stockExported,
+                    failureMessage: l10n.stockExportFailed,
+                  ),
+                  onImport: () => _confirmAndImport(
+                    context,
+                    entity: l10n.stockTitle,
+                    run: (BackupManager manager) => manager.importStock(),
+                  ),
+                ),
+              ],
+            ),
+            NexcSection(
+              title: 'Documentation',
+              children: [
+                const _FormatDocumentation(),
+                Padding(
+                  padding: const EdgeInsets.all(NexcSpacing.lg),
+                  child: _ResponsiveActions(
                     children: [
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: () async {
-                            try {
-                              const formatDoc =
-                                  r'''# Nexc Import Formats Specification
-
-This document details the JSON schema specifications used for importing data into Nexc.
-
----
-
-## 1. Workout Plans (Routines)
-
-Workout plans are imported as a JSON array of workout objects.
-
-### Fields Description
-
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `title` | `String` | Title of the workout plan/routine. |
-| `notes` | `String` | Description or instructions for the routine. |
-| `timeElapsed` | `Int` | Default elapsed time in seconds. |
-| `created` | `String` | ISO 8601 Date string. |
-| `completed` | `String` | ISO 8601 Date string. |
-| `isTemporal` | `Bool?` | Optional. If `true`, auto-deletes upon completion. |
-| `exercises` | `Array` | List of exercise items in the plan. |
-
-### Exercise Fields
-
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `exerciseId` | `String` | Unique ID of the exercise. |
-| `name` | `String` | Name of the exercise (used if not found in local database). |
-| `notes` | `String` | Exercise-specific notes. |
-| `setMode` | `String` | `LOAD`, `BODYWEIGHT`, `BODYWEIGHT_WITH_LOAD`, `TIME`, `TIME_WITH_LOAD`. |
-| `restTime` | `Int` | Rest time in seconds between sets. |
-| `supersetGroupId` | `String?` | Optional identifier to group supersets. |
-| `sets` | `Array` | Sets list. |
-
-### Set Fields
-
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `load` | `Double` | Weight load (kg/lbs). |
-| `reps` | `Int` | Target repetitions count. |
-| `elapsedTime` | `Int` | Target set duration in seconds (optional). |
-| `rpe` | `String?` | Rated Perceived Exertion (1-10). |
-| `rir` | `Int?` | Reps in Reserve. |
-| `completed` | `Bool` | Set to `false` for imported templates. |
-
-### Example
-
-```json
-[
-  {
-    "title": "Hypertrophy Push A",
-    "notes": "Focus on controlled eccentrics",
-    "timeElapsed": 0,
-    "created": "2026-06-03T12:00:00Z",
-    "completed": "2026-06-03T13:00:00Z",
-    "isTemporal": true,
-    "exercises": [
-      {
-        "exerciseId": "db_bench_press",
-        "name": "Dumbbell Bench Press",
-        "notes": "Keep shoulder blades retracted",
-        "setMode": "LOAD",
-        "restTime": 90,
-        "sets": [
-          {
-            "load": 32.5,
-            "reps": 10,
-            "elapsedTime": 0,
-            "rpe": null,
-            "rir": null,
-            "completed": false
-          }
-        ]
-      }
-    ]
-  }
-]
-```
-
----
-
-## 2. Exercises
-
-Exercises are imported as a JSON array of custom exercises.
-
-### Fields Description
-
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `id` | `String` | Unique identifier (e.g. `my_custom_exercise`). |
-| `name` | `String` | Name of the exercise. |
-| `level` | `String` | `BEGINNER`, `INTERMEDIATE`, `ADVANCED`. |
-| `category` | `String` | `STRENGTH`, `STRETCHING`, `PLYOMETRICS`, `STRONGMAN`, `POWERLIFTING`, `CARDIO`, `OLYMPIC_WEIGHTLIFTING`. |
-| `equipment` | `String?` | `BARBELL`, `DUMBBELL`, `CABLE`, `MACHINE`, `KETTLEBELLS`, `BANDS`, `MEDICINE_BALL`, `BODY_ONLY`, `FOAM_ROLL`, `EXERCISE_BALL`, `E_Z_CURL_BAR`, `OTHER`. |
-| `force` | `String?` | `PUSH`, `PULL`, `STATIC`. |
-| `mechanic` | `String?` | `COMPOUND`, `ISOLATION`. |
-| `primaryMuscles` | `Array` | Muscle names (e.g. `chest`, `triceps`). |
-| `secondaryMuscles` | `Array` | Muscle names. |
-| `instructions` | `Array` | List of instruction text paragraphs. |
-| `images` | `Array` | List of image asset URLs/filenames. |
-
----
-
-## 3. Meal Plans
-
-Meal plans are imported as a JSON array of templates.
-
-### Meal Plan Fields
-
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `title` | `String` | Title of the meal plan. |
-| `notes` | `String` | Overall plan description. |
-| `isTemporal` | `Bool?` | If `true`, auto-deletes when completed. |
-| `meals` | `Array` | List of meals within the plan. |
-
-### Meal Fields
-
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `name` | `String` | Meal name (e.g. Breakfast). |
-| `time` | `String` | Time as HH:mm:ss (e.g. 08:00:00). |
-| `notes` | `String` | Meal description. |
-| `position` | `Int` | Ordering index of the meal. |
-| `atHome` | `Bool` | Whether the meal is eaten at home. Default: true. |
-| `items` | `Array` | List of meal items. |
-
-### Meal Item Fields
-
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `type` | `String` | PRODUCT or RECIPE. |
-| `amount` | `Double` | Portion quantity in the specified unit. |
-| `amountUnit` | `String` | GRAMS, ML, or UNITS. Default: GRAMS. |
-| `consumed` | `Bool` | Whether it is marked consumed. Default: false. |
-| `position` | `Int` | Ordering index of the item. |
-| `product` | `Object` | Embedded product (for type=PRODUCT). |
-| `recipe` | `Object` | Embedded recipe (for type=RECIPE). |
-
-> Each item must have either a targetId (DB reference) or an embedded product/recipe object.
-
----
-
-## 4. Products
-
-Products are imported as a JSON array.
-
-### Fields Description
-
-| Field | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `name` | `String` | Yes | Product name. |
-| `proteins` | `Double` | No | Protein per 100 g. |
-| `fats` | `Double` | No | Fat per 100 g. |
-| `carbsAvailable` | `Double` | No | Available (net) carbs per 100 g. |
-| `carbsByDifference` | `Double` | No | Carbs by difference per 100 g. |
-| `dietaryFiber` | `Double` | No | Dietary fiber per 100 g. |
-| `kcal` | `Double` | No | Kilocalories per 100 g. |
-| `mlToGFactor` | `Int` | No | ml-to-g conversion factor (e.g. 103 for whole milk). If 0, ml unit is hidden. |
-| `unitWeight` | `Int` | No | Weight of one unit in grams (e.g. 120 for a banana). If 0, units are hidden. |
-| `edibleQtyPerUnit` | `Double` | No | Edible grams per unit. Used with isStockRaw. |
-| `defaultUnits` | `String` | No | Default stock unit: g, ml, or units. |
-| `isSupplement` | `Bool` | No | true for supplements. Default: false. |
-| `isPortable` | `Bool` | No | Whether portable. Default: true. |
-| `isStockRaw` | `Bool` | No | true if stock includes non-edible parts (peel, shell, etc.). App uses edibleQtyPerUnit to compute actual consumed grams. Default: false. |
-
----
-
-## 5. Recipes
-
-Recipes are imported as a JSON array.
-
-### Fields Description
-
-| Field | Type | Required | Description |
-| :--- | :--- | :--- | :--- |
-| `name` | `String` | Yes | Recipe name. |
-| `instructions` | `String` | No | Preparation instructions. |
-| `isPortable` | `Bool` | No | Whether portable. Default: true. |
-| `ingredients` | `Array` | No | Ingredient list. |
-
-### Ingredient Fields
-
-| Field | Type | Description |
-| :--- | :--- | :--- |
-| `amount` | `Double` | Quantity in grams. |
-| `product` | `Object` | A full Product object (see section 4). |
-
-> All ingredient products must either exist in the database (matched by name) or be provided as embedded objects.
-''';
-                              await Share.shareXFiles([
-                                XFile.fromData(
-                                  utf8.encode(formatDoc),
-                                  name: 'nexc_import_format.md',
-                                  mimeType: 'text/markdown',
-                                ),
-                              ], subject: l10n.formatShareSubject);
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      l10n.formatDownloadFailed('$e'),
-                                    ),
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          icon: const Icon(Icons.description_outlined),
-                          label: Text(l10n.formatMarkdown),
-                        ),
+                      FilledButton.tonalIcon(
+                        onPressed: () => _shareFormatDocumentation(context),
+                        icon: const Icon(Icons.description_outlined, size: 18),
+                        label: Text(l10n.formatMarkdown),
                       ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: FilledButton.icon(
-                          onPressed: () async {
-                            try {
-                              await backupManager
-                                  .exportAvailableExercisesDocumentation();
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(l10n.exerciseListGenerated),
-                                  ),
-                                );
-                              }
-                            } catch (e) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(
-                                      l10n.exerciseListExportFailed('$e'),
-                                    ),
-                                  ),
-                                );
-                              }
-                            }
-                          },
-                          icon: const Icon(Icons.format_list_bulleted),
-                          label: Text(l10n.exercisesMarkdown),
-                        ),
+                      OutlinedButton.icon(
+                        onPressed: () => _exportExercisesDocumentation(context),
+                        icon: const Icon(Icons.format_list_bulleted, size: 18),
+                        label: Text(l10n.exercisesMarkdown),
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
-          ),
-          const Divider(height: 32),
-          _buildBackupSection(
-            context,
-            title: l10n.databaseTitle,
-            description: l10n.databaseDesc,
-            onExport: () async {
-              try {
-                await backupManager.exportDatabase();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(l10n.databaseExported)));
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.databaseExportFailed('$e'))),
-                );
-              }
-            },
-            onImport: () async {
-              try {
-                final success = await backupManager.importDatabase();
-                if (!context.mounted) return;
-                if (success) {
-                  showDialog(
-                    context: context,
-                    barrierDismissible: false,
-                    builder: (context) => AlertDialog(
-                      title: Text(l10n.importSuccessful),
-                      content: Text(l10n.importSuccessBody),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context),
-                          child: Text(l10n.ok),
-                        ),
-                      ],
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text(l10n.databaseImportCancelled)),
-                  );
-                }
-              } catch (e) {
-                if (!context.mounted) return;
-                _showImportError(context, e.toString());
-              }
-            },
-          ),
-          const Divider(height: 32),
-          _buildBackupSection(
-            context,
-            title: l10n.workoutPlansTitle,
-            description: l10n.workoutPlansDesc,
-            onExport: () async {
-              try {
-                await backupManager.exportWorkoutPlans();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.workoutPlansExported)),
-                );
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.workoutPlansExportFailed('$e'))),
-                );
-              }
-            },
-            onImport: () => _handleImport(
-              context,
-              backupManager.importWorkoutPlans,
-              l10n.workoutPlansTitle,
-            ),
-          ),
-          const Divider(height: 32),
-          _buildBackupSection(
-            context,
-            title: l10n.workoutHistoryTitle,
-            description: l10n.workoutHistoryDesc,
-            onExport: () async {
-              try {
-                await backupManager.exportWorkoutHistory();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.workoutHistoryExported)),
-                );
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text(l10n.workoutHistoryExportFailed('$e')),
-                  ),
-                );
-              }
-            },
-            onImport: () => _handleImport(
-              context,
-              backupManager.importWorkoutHistory,
-              l10n.workoutHistoryTitle,
-            ),
-          ),
-          const Divider(height: 32),
-          _buildBackupSection(
-            context,
-            title: l10n.exercisesLabel,
-            description: l10n.exercisesBackupDesc,
-            onExport: () async {
-              try {
-                await backupManager.exportExercises();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(l10n.exercisesExported)));
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.exercisesExportFailed('$e'))),
-                );
-              }
-            },
-            onImport: () => _handleImport(
-              context,
-              backupManager.importExercises,
-              l10n.exercisesLabel,
-            ),
-          ),
-          const Divider(height: 32),
-          _buildBackupSection(
-            context,
-            title: l10n.mealPlansTitle,
-            description: l10n.mealPlansDesc,
-            onExport: () async {
-              try {
-                await backupManager.exportMealPlans();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(l10n.mealPlansExported)));
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.mealPlansExportFailed('$e'))),
-                );
-              }
-            },
-            onImport: () => _handleImport(
-              context,
-              backupManager.importMealPlans,
-              l10n.mealPlansTitle,
-            ),
-          ),
-          const Divider(height: 32),
-          _buildBackupSection(
-            context,
-            title: l10n.mealHistoryTitle,
-            description: l10n.mealHistoryDesc,
-            onExport: () async {
-              try {
-                await backupManager.exportMealHistory();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.mealHistoryExported)),
-                );
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.mealHistoryExportFailed('$e'))),
-                );
-              }
-            },
-            onImport: () => _handleImport(
-              context,
-              backupManager.importMealHistory,
-              l10n.mealHistoryTitle,
-            ),
-          ),
-          const Divider(height: 32),
-          _buildBackupSection(
-            context,
-            title: l10n.productsTab,
-            description: l10n.productsBackupDesc,
-            onExport: () async {
-              try {
-                await backupManager.exportProducts();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(l10n.productsExported)));
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.productsExportFailed('$e'))),
-                );
-              }
-            },
-            onImport: () => _handleImport(
-              context,
-              backupManager.importProducts,
-              l10n.productsTab,
-            ),
-          ),
-          const Divider(height: 32),
-          _buildBackupSection(
-            context,
-            title: l10n.recipesTab,
-            description: l10n.recipesBackupDesc,
-            onExport: () async {
-              try {
-                await backupManager.exportRecipes();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(l10n.recipesExported)));
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.recipesExportFailed('$e'))),
-                );
-              }
-            },
-            onImport: () => _handleImport(
-              context,
-              backupManager.importRecipes,
-              l10n.recipesTab,
-            ),
-          ),
-          const Divider(height: 32),
-          _buildBackupSection(
-            context,
-            title: l10n.stockTitle,
-            description: l10n.stockBackupDesc,
-            onExport: () async {
-              try {
-                await backupManager.exportStock();
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(
-                  context,
-                ).showSnackBar(SnackBar(content: Text(l10n.stockExported)));
-              } catch (e) {
-                if (!context.mounted) return;
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(content: Text(l10n.stockExportFailed('$e'))),
-                );
-              }
-            },
-            onImport: () => _handleImport(
-              context,
-              backupManager.importStock,
-              l10n.stockTitle,
-            ),
-          ),
-        ],
+            const SizedBox(height: NexcSpacing.xl),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildBackupSection(
-    BuildContext context, {
-    required String title,
-    required String description,
-    required VoidCallback onExport,
-    required VoidCallback onImport,
-  }) {
-    final theme = Theme.of(context);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          title,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+  Future<void> _shareFormatDocumentation(BuildContext context) async {
+    final AppLocalizations l10n = context.l10n;
+    try {
+      final String markdown = await rootBundle.loadString(backupFormatAsset);
+      await Share.shareXFiles([
+        XFile.fromData(
+          utf8.encode(markdown),
+          name: 'nexc_import_format.md',
+          mimeType: 'text/markdown',
         ),
-        const SizedBox(height: 8),
-        Text(
-          description,
-          style: theme.textTheme.bodyMedium?.copyWith(
-            color: theme.colorScheme.onSurfaceVariant,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.end,
-          children: [
-            FilledButton.icon(
-              style: FilledButton.styleFrom(
-                backgroundColor: theme.colorScheme.secondaryContainer,
-                foregroundColor: theme.colorScheme.onSecondaryContainer,
-              ),
-              onPressed: onImport,
-              icon: const Icon(Icons.download),
-              label: Text(context.l10n.importAction),
-            ),
-            const SizedBox(width: 8),
-            FilledButton.icon(
-              onPressed: onExport,
-              icon: const Icon(Icons.upload),
-              label: Text(context.l10n.exportAction),
-            ),
-          ],
-        ),
-      ],
-    );
+      ], subject: l10n.formatShareSubject);
+    } catch (error) {
+      if (!context.mounted) return;
+      NexcSnack.show(context, l10n.formatDownloadFailed('$error'));
+    }
+  }
+
+  Future<void> _exportExercisesDocumentation(BuildContext context) async {
+    final AppLocalizations l10n = context.l10n;
+    try {
+      await ProviderScope.containerOf(
+        context,
+        listen: false,
+      ).read(backupManagerProvider).exportAvailableExercisesDocumentation();
+      if (!context.mounted) return;
+      NexcSnack.show(context, l10n.exerciseListGenerated);
+    } catch (error) {
+      if (!context.mounted) return;
+      NexcSnack.show(context, l10n.exerciseListExportFailed('$error'));
+    }
   }
 }

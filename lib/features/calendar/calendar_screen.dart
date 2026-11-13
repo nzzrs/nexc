@@ -7,13 +7,23 @@
  * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
  */
 
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:table_calendar/table_calendar.dart';
-import '../../core/db/relations.dart';
+
+import '../../core/components/nexc_empty_state.dart';
+import '../../core/components/nexc_history_tile.dart';
+import '../../core/components/nexc_page.dart';
 import '../../core/db/enums.dart';
+import '../../core/db/relations.dart';
 import '../../core/db/workout_repository.dart';
 import '../../core/l10n/l10n.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/shapes.dart';
+import '../../core/theme/spacing.dart';
+import '../../core/util/format.dart';
 
 class CalendarScreen extends ConsumerStatefulWidget {
   const CalendarScreen({super.key});
@@ -29,6 +39,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
 
   List<WorkoutWithExercisesAndSets> _allWorkouts = [];
   bool _isLoading = true;
+  StreamSubscription<List<WorkoutWithExercisesAndSets>>? _subscription;
 
   @override
   void initState() {
@@ -36,351 +47,236 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
     _loadWorkouts();
   }
 
-  Future<void> _loadWorkouts() async {
-    final repo = ref.read(workoutRepositoryProvider);
-    // Watch completed workouts stream
-    repo
+  void _loadWorkouts() {
+    _subscription = ref
+        .read(workoutRepositoryProvider)
         .watchWorkoutsWithExercisesAndSetsByState(WorkoutState.COMPLETED)
-        .listen((workouts) {
-          if (mounted) {
-            setState(() {
-              _allWorkouts = workouts;
-              _isLoading = false;
-            });
-          }
+        .listen((List<WorkoutWithExercisesAndSets> workouts) {
+          if (!mounted) return;
+          setState(() {
+            _allWorkouts = workouts;
+            _isLoading = false;
+          });
         });
   }
 
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
+  }
+
   List<WorkoutWithExercisesAndSets> _getWorkoutsForDay(DateTime day) {
-    return _allWorkouts.where((w) {
-      final d = w.workout.completed;
-      return d.year == day.year && d.month == day.month && d.day == day.day;
+    return _allWorkouts.where((WorkoutWithExercisesAndSets item) {
+      final DateTime date = item.workout.completed;
+      return date.year == day.year &&
+          date.month == day.month &&
+          date.day == day.day;
     }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final ThemeData theme = Theme.of(context);
     final l10n = context.l10n;
-    final selectedWorkouts = _selectedDay != null
-        ? _getWorkoutsForDay(_selectedDay!)
-        : [];
-    final todayWorkouts = _getWorkoutsForDay(DateTime.now());
+    final List<WorkoutWithExercisesAndSets> selectedWorkouts =
+        _selectedDay == null ? const [] : _getWorkoutsForDay(_selectedDay!);
 
-    // Build a set of days that have workouts
-    final workoutDays = <DateTime>{};
-    for (final w in _allWorkouts) {
-      final d = w.workout.completed;
-      workoutDays.add(DateTime(d.year, d.month, d.day));
-    }
-
-    return Scaffold(
-      appBar: AppBar(title: Text(l10n.calendarTitle)),
+    return NexcPage(
+      title: l10n.calendarTitle,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
-                    child: TableCalendar<WorkoutWithExercisesAndSets>(
-                      firstDay: DateTime.utc(2020, 1, 1),
-                      lastDay: DateTime.utc(2030, 12, 31),
-                      focusedDay: _focusedDay,
-                      calendarFormat: _calendarFormat,
-                      selectedDayPredicate: (day) =>
-                          isSameDay(_selectedDay, day),
-                      eventLoader: _getWorkoutsForDay,
-                      onDaySelected: (selectedDay, focusedDay) {
-                        setState(() {
-                          _selectedDay = selectedDay;
-                          _focusedDay = focusedDay;
-                        });
-                      },
-                      onFormatChanged: (format) {
-                        setState(() => _calendarFormat = format);
-                      },
-                      onPageChanged: (focusedDay) {
-                        _focusedDay = focusedDay;
-                      },
-                      calendarStyle: CalendarStyle(
-                        todayDecoration: BoxDecoration(
-                          color: theme.colorScheme.secondaryContainer,
-                          shape: BoxShape.circle,
+          : ListView(
+              padding: const EdgeInsets.only(bottom: NexcSpacing.xl),
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    NexcSpacing.lg,
+                    NexcSpacing.sm,
+                    NexcSpacing.lg,
+                    0,
+                  ),
+                  child: Material(
+                    color: theme.colorScheme.surfaceContainerLow,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: NexcShapes.lgRadius,
+                    ),
+                    clipBehavior: Clip.antiAlias,
+                    child: Padding(
+                      padding: const EdgeInsets.all(NexcSpacing.sm),
+                      child: TableCalendar<WorkoutWithExercisesAndSets>(
+                        firstDay: DateTime.utc(2020, 1, 1),
+                        lastDay: DateTime.utc(2030, 12, 31),
+                        focusedDay: _focusedDay,
+                        calendarFormat: _calendarFormat,
+                        selectedDayPredicate: (DateTime day) =>
+                            isSameDay(_selectedDay, day),
+                        eventLoader: _getWorkoutsForDay,
+                        onDaySelected:
+                            (DateTime selectedDay, DateTime focusedDay) {
+                              setState(() {
+                                _selectedDay = selectedDay;
+                                _focusedDay = focusedDay;
+                              });
+                            },
+                        onFormatChanged: (CalendarFormat format) {
+                          setState(() => _calendarFormat = format);
+                        },
+                        onPageChanged: (DateTime focusedDay) {
+                          setState(() => _focusedDay = focusedDay);
+                        },
+                        calendarStyle: CalendarStyle(
+                          todayDecoration: BoxDecoration(
+                            color: theme.colorScheme.secondaryContainer,
+                            shape: BoxShape.circle,
+                          ),
+                          todayTextStyle: TextStyle(
+                            color: theme.colorScheme.onSecondaryContainer,
+                            fontWeight: FontWeight.bold,
+                          ),
+                          selectedDecoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          markerDecoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
+                          ),
+                          outsideDaysVisible: false,
                         ),
-                        todayTextStyle: TextStyle(
-                          color: theme.colorScheme.onSecondaryContainer,
-                          fontWeight: FontWeight.bold,
+                        headerStyle: HeaderStyle(
+                          formatButtonDecoration: BoxDecoration(
+                            border: Border.all(
+                              color: theme.colorScheme.outline,
+                            ),
+                            borderRadius: NexcShapes.smRadius,
+                          ),
+                          formatButtonTextStyle: theme.textTheme.labelSmall!,
                         ),
-                        selectedDecoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        markerDecoration: BoxDecoration(
-                          color: theme.colorScheme.primary,
-                          shape: BoxShape.circle,
-                        ),
-                        outsideDaysVisible: false,
-                      ),
-                      headerStyle: HeaderStyle(
-                        formatButtonDecoration: BoxDecoration(
-                          border: Border.all(color: theme.colorScheme.outline),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        formatButtonTextStyle: theme.textTheme.labelSmall!,
                       ),
                     ),
                   ),
                 ),
-
-                // Divider
-                const SliverToBoxAdapter(child: SizedBox(height: 8)),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                if (_allWorkouts.isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      NexcSpacing.lg,
+                      NexcSpacing.md,
+                      NexcSpacing.lg,
+                      0,
+                    ),
                     child: Row(
                       children: [
-                        Text(
-                          _selectedDay != null
-                              ? _formatDate(context, _selectedDay!)
-                              : l10n.selectDayHint,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primary,
+                            shape: BoxShape.circle,
                           ),
                         ),
-                        if (_selectedDay != null) ...[
-                          const Spacer(),
-                          Text(
-                            '${selectedWorkouts.length} ${selectedWorkouts.length == 1 ? l10n.workoutNoun : l10n.workoutsNoun}',
-                            style: theme.textTheme.bodySmall?.copyWith(
+                        const SizedBox(width: NexcSpacing.sm),
+                        Expanded(
+                          child: Text(
+                            l10n.workoutNoun,
+                            style: theme.textTheme.labelSmall?.copyWith(
                               color: theme.colorScheme.onSurfaceVariant,
                             ),
                           ),
-                        ],
+                        ),
                       ],
                     ),
                   ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 8)),
-
-                // Workout list for selected day
-                if (_selectedDay != null && selectedWorkouts.isEmpty)
-                  SliverToBoxAdapter(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 32.0),
-                      child: Center(
-                        child: Column(
-                          children: [
-                            Icon(
-                              Icons.fitness_center,
-                              size: 48,
-                              color: theme.colorScheme.onSurfaceVariant
-                                  .withValues(alpha: 0.4),
+                if (_selectedDay == null)
+                  NexcEmptyState(
+                    icon: NexcIcons.calendar,
+                    title: l10n.selectDayHint,
+                  )
+                else ...[
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(
+                      NexcSpacing.lg,
+                      NexcSpacing.lg,
+                      NexcSpacing.lg,
+                      NexcSpacing.sm,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            context.formatMediumDate(_selectedDay!),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: theme.textTheme.titleMedium?.copyWith(
+                              fontWeight: FontWeight.w700,
                             ),
-                            const SizedBox(height: 12),
-                            Text(
-                              l10n.restDayNoWorkouts,
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
+                          ),
+                        ),
+                        const SizedBox(width: NexcSpacing.sm),
+                        Text(
+                          selectedWorkouts.length == 1
+                              ? '1 ${l10n.workoutNoun}'
+                              : '${selectedWorkouts.length} '
+                                    '${l10n.workoutsNoun}',
+                          style: theme.textTheme.bodySmall?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (selectedWorkouts.isEmpty)
+                    NexcEmptyState(
+                      icon: NexcIcons.workoutIdle,
+                      title: l10n.restDayNoWorkouts,
+                    )
+                  else
+                    for (final WorkoutWithExercisesAndSets item
+                        in selectedWorkouts)
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                          NexcSpacing.lg,
+                          0,
+                          NexcSpacing.lg,
+                          NexcSpacing.sm,
+                        ),
+                        child: NexcHistoryTile(
+                          icon: NexcIcons.workout,
+                          title: item.workout.title,
+                          meta: [
+                            formatDurationShort(item.workout.timeElapsed),
+                            l10n.setsCompletedRatio(
+                              _completedSets(item),
+                              _totalSets(item),
                             ),
                           ],
-                        ),
-                      ),
-                    ),
-                  )
-                else
-                  SliverList(
-                    delegate: SliverChildBuilderDelegate(
-                      (context, index) {
-                        final w = (selectedWorkouts.isNotEmpty
-                            ? selectedWorkouts
-                            : todayWorkouts)[index];
-                        return GestureDetector(
                           onTap: () {
                             Navigator.pushNamed(
                               context,
                               '/info-workout',
-                              arguments: w.workout.id,
+                              arguments: item.workout.id,
                             );
                           },
-                          child: _WorkoutSummaryCard(workout: w),
-                        );
-                      },
-                      childCount: selectedWorkouts.isNotEmpty
-                          ? selectedWorkouts.length
-                          : todayWorkouts.length,
-                    ),
-                  ),
-              ],
-            ),
-    );
-  }
-
-  String _formatDate(BuildContext context, DateTime d) {
-    final l10n = context.l10n;
-    final months = [
-      l10n.monthJan,
-      l10n.monthFeb,
-      l10n.monthMar,
-      l10n.monthApr,
-      l10n.monthMay,
-      l10n.monthJun,
-      l10n.monthJul,
-      l10n.monthAug,
-      l10n.monthSep,
-      l10n.monthOct,
-      l10n.monthNov,
-      l10n.monthDec,
-    ];
-    final days = [
-      l10n.weekdayMon,
-      l10n.weekdayTue,
-      l10n.weekdayWed,
-      l10n.weekdayThu,
-      l10n.weekdayFri,
-      l10n.weekdaySat,
-      l10n.weekdaySun,
-    ];
-    final wd = d.weekday - 1; // 0=Mon
-    return l10n.calendarDate(days[wd], months[d.month - 1], d.day);
-  }
-}
-
-class _WorkoutSummaryCard extends StatelessWidget {
-  final WorkoutWithExercisesAndSets workout;
-
-  const _WorkoutSummaryCard({required this.workout});
-
-  String _formatDuration(int seconds) {
-    final h = seconds ~/ 3600;
-    final m = (seconds % 3600) ~/ 60;
-    if (h > 0) return '${h}h ${m}m';
-    return '${m}m';
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final w = workout.workout;
-    final exercises = workout.exercisesWithSets;
-    final totalSets = exercises.fold(0, (sum, e) => sum + e.sets.length);
-    final completedSets = exercises.fold(
-      0,
-      (sum, e) => sum + e.sets.where((s) => s.completed).length,
-    );
-
-    return Card(
-      margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Text(
-                    w.title,
-                    style: theme.textTheme.titleMedium?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ),
-                Chip(
-                  label: Text(_formatDuration(w.timeElapsed)),
-                  avatar: const Icon(Icons.timer_outlined, size: 14),
-                  labelStyle: theme.textTheme.labelSmall,
-                  padding: EdgeInsets.zero,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(
-                  Icons.check_circle_outline,
-                  size: 16,
-                  color: theme.colorScheme.primary,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  l10n.setsCompletedRatio(completedSets, totalSets),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Icon(
-                  Icons.fitness_center_outlined,
-                  size: 16,
-                  color: theme.colorScheme.secondary,
-                ),
-                const SizedBox(width: 4),
-                Text(
-                  '${exercises.length} ${exercises.length == 1 ? l10n.exerciseNoun : l10n.exercisesNoun}',
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-            ),
-            if (exercises.isNotEmpty) ...[
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 6,
-                runSpacing: 4,
-                children:
-                    exercises.take(5).map((e) {
-                      return Chip(
-                        label: Text(
-                          e.exerciseDC.name,
-                          style: theme.textTheme.labelSmall,
                         ),
-                        padding: EdgeInsets.zero,
-                        materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                        backgroundColor:
-                            theme.colorScheme.surfaceContainerHighest,
-                      );
-                    }).toList()..addAll(
-                      exercises.length > 5
-                          ? [
-                              Chip(
-                                label: Text(
-                                  l10n.moreCount(exercises.length - 5),
-                                  style: theme.textTheme.labelSmall,
-                                ),
-                                padding: EdgeInsets.zero,
-                                materialTapTargetSize:
-                                    MaterialTapTargetSize.shrinkWrap,
-                                backgroundColor:
-                                    theme.colorScheme.surfaceContainerHighest,
-                              ),
-                            ]
-                          : [],
-                    ),
-              ),
-            ],
-            if (w.notes.isNotEmpty) ...[
-              const SizedBox(height: 8),
-              Text(
-                w.notes,
-                style: theme.textTheme.bodySmall?.copyWith(
-                  color: theme.colorScheme.onSurfaceVariant,
-                  fontStyle: FontStyle.italic,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-            ],
-          ],
-        ),
-      ),
+                      ),
+                ],
+              ],
+            ),
+    );
+  }
+
+  int _totalSets(WorkoutWithExercisesAndSets item) {
+    return item.exercisesWithSets.fold(
+      0,
+      (int sum, ExerciseWithSets exercise) => sum + exercise.sets.length,
+    );
+  }
+
+  int _completedSets(WorkoutWithExercisesAndSets item) {
+    return item.exercisesWithSets.fold(
+      0,
+      (int sum, ExerciseWithSets exercise) =>
+          sum + exercise.sets.where((WorkoutSet set) => set.completed).length,
     );
   }
 }

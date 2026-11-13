@@ -9,14 +9,28 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../core/components/constrained_center_view.dart';
-import '../core/components/nexc_scaffold.dart';
 import '../core/l10n/l10n.dart';
 import '../core/providers/settings_provider.dart';
+import '../core/theme/iconography.dart';
+import '../core/theme/spacing.dart';
 import 'home/home_screen.dart';
 import 'meals/meals_dashboard_screen.dart';
-import 'profile/profile_screen.dart';
 import 'notifications/notification_permission_dialog.dart';
+import 'profile/profile_screen.dart';
+
+/// Tabs of the root shell.
+enum MainTab { workout, meals, profile }
+
+/// Everything the shell needs to render one destination.
+typedef MainTabSpec = ({
+  MainTab tab,
+  String label,
+  IconData icon,
+  IconData selectedIcon,
+  Widget screen,
+});
 
 class MainScreen extends ConsumerStatefulWidget {
   const MainScreen({super.key});
@@ -26,8 +40,7 @@ class MainScreen extends ConsumerStatefulWidget {
 }
 
 class _MainScreenState extends ConsumerState<MainScreen> {
-  final PageController _pageController = PageController(initialPage: 0);
-  int _currentPageIndex = 0;
+  MainTab _selectedTab = MainTab.workout;
 
   @override
   void initState() {
@@ -37,190 +50,155 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     });
   }
 
-  void _onPageChanged(int index) {
-    setState(() {
-      _currentPageIndex = index;
-    });
+  List<MainTabSpec> _tabs(bool mealTracking) {
+    final l10n = context.l10n;
+    return [
+      (
+        tab: MainTab.workout,
+        label: l10n.tabWorkout,
+        icon: NexcIcons.workoutIdle,
+        selectedIcon: NexcIcons.workout,
+        screen: const HomeScreen(),
+      ),
+      if (mealTracking)
+        (
+          tab: MainTab.meals,
+          label: l10n.tabMeals,
+          icon: NexcIcons.mealsIdle,
+          selectedIcon: NexcIcons.meals,
+          screen: const MealsDashboardScreen(),
+        ),
+      (
+        tab: MainTab.profile,
+        label: l10n.tabProfile,
+        icon: NexcIcons.profileIdle,
+        selectedIcon: NexcIcons.profile,
+        screen: const ProfileScreen(),
+      ),
+    ];
   }
 
-  void _onDestinationSelected(int index) {
-    _pageController.animateToPage(
-      index,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeInOut,
-    );
+  /// Resolves the tab that is still available after the tab set changes.
+  ///
+  /// Disabling meal tracking removes the middle destination; a selection on
+  /// meals falls back to the profile tab instead of an out-of-range index.
+  MainTab _resolveTab(List<MainTabSpec> tabs) {
+    final bool stillThere = tabs.any((tab) => tab.tab == _selectedTab);
+    if (stillThere) return _selectedTab;
+    if (_selectedTab == MainTab.meals) {
+      final bool hasProfile = tabs.any((tab) => tab.tab == MainTab.profile);
+      if (hasProfile) return MainTab.profile;
+    }
+    return tabs.first.tab;
   }
 
-  @override
-  void dispose() {
-    _pageController.dispose();
-    super.dispose();
+  void _selectTab(int index, List<MainTabSpec> tabs) {
+    if (index < 0 || index >= tabs.length) return;
+    setState(() => _selectedTab = tabs[index].tab);
+  }
+
+  void _openSettings() => Navigator.pushNamed(context, '/settings');
+
+  void _createRoutine() {
+    Navigator.pushNamed(context, '/edit-workout', arguments: 0);
   }
 
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
-    final theme = Theme.of(context);
     final l10n = context.l10n;
-    final screenWidth = MediaQuery.of(context).size.width;
-    final isWide = screenWidth >= 800;
+    final double width = MediaQuery.sizeOf(context).width;
+    final bool useRail = width >= 840;
 
-    final tabs = [
-      (
-        icon: const Icon(Icons.fitness_center_outlined),
-        selectedIcon: const Icon(Icons.fitness_center),
-        label: l10n.tabWorkout,
-        screen: const HomeScreen(),
+    final tabs = _tabs(settings.enableMealTracking);
+    final MainTab activeTab = _resolveTab(tabs);
+    final int activeIndex = tabs.indexWhere((tab) => tab.tab == activeTab);
+    final String title = tabs[activeIndex].label;
+
+    final Widget pages = IndexedStack(
+      index: activeIndex,
+      children: tabs.map((tab) => tab.screen).toList(),
+    );
+
+    final Widget? fab = activeTab == MainTab.workout
+        ? FloatingActionButton.extended(
+            onPressed: _createRoutine,
+            icon: const Icon(NexcIcons.add),
+            label: Text(l10n.createRoutine),
+          )
+        : null;
+
+    return Scaffold(
+      appBar: AppBar(
+        title: Text(title, maxLines: 1, overflow: TextOverflow.ellipsis),
+        actions: [
+          IconButton(
+            tooltip: l10n.settingsTitle,
+            icon: const Icon(NexcIcons.settings),
+            onPressed: _openSettings,
+          ),
+          const SizedBox(width: NexcSpacing.xs),
+        ],
       ),
-      if (settings.enableMealTracking)
-        (
-          icon: const Icon(Icons.restaurant_outlined),
-          selectedIcon: const Icon(Icons.restaurant),
-          label: l10n.tabMeals,
-          screen: const MealsDashboardScreen(),
-        ),
-      (
-        icon: const Icon(Icons.person_outline),
-        selectedIcon: const Icon(Icons.person),
-        label: l10n.tabProfile,
-        screen: const ProfileScreen(),
-      ),
-    ];
-
-    final currentIndex = _currentPageIndex.clamp(0, tabs.length - 1);
-
-    if (isWide) {
-      return Scaffold(
-        body: Row(
-          children: [
-            NavigationRail(
-              selectedIndex: currentIndex,
-              onDestinationSelected: _onDestinationSelected,
-              labelType: NavigationRailLabelType.all,
-              leading: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 16.0),
-                child: Text(
-                  l10n.appName,
-                  style: theme.textTheme.titleLarge?.copyWith(
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -0.5,
+      body: SafeArea(
+        top: false,
+        child: useRail
+            ? Row(
+                children: [
+                  NavigationRail(
+                    extended: true,
+                    minExtendedWidth: 200,
+                    selectedIndex: activeIndex,
+                    onDestinationSelected: (int index) =>
+                        _selectTab(index, tabs),
+                    leading: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: NexcSpacing.xl,
+                        horizontal: NexcSpacing.md,
+                      ),
+                      child: Text(
+                        l10n.appName,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -0.5,
+                        ),
+                      ),
+                    ),
+                    destinations: [
+                      for (final tab in tabs)
+                        NavigationRailDestination(
+                          icon: Icon(tab.icon),
+                          selectedIcon: Icon(tab.selectedIcon),
+                          label: Text(tab.label),
+                        ),
+                    ],
                   ),
-                ),
-              ),
-              trailing: Expanded(
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    IconButton(
-                      icon: const Icon(Icons.info_outline),
-                      tooltip: l10n.aboutTitle,
-                      onPressed: () => Navigator.pushNamed(context, '/about'),
+                  const VerticalDivider(width: 1),
+                  Expanded(
+                    child: ConstrainedCenterView(
+                      maxWidth: NexcSpacing.pageMaxWidth,
+                      child: pages,
                     ),
-                    IconButton(
-                      icon: const Icon(Icons.settings_outlined),
-                      tooltip: l10n.settingsTitle,
-                      onPressed: () =>
-                          Navigator.pushNamed(context, '/settings'),
-                    ),
-                    const SizedBox(height: 16),
-                  ],
-                ),
-              ),
-              destinations: tabs.map((tab) {
-                return NavigationRailDestination(
-                  icon: tab.icon,
-                  selectedIcon: tab.selectedIcon,
-                  label: Text(tab.label),
-                );
-              }).toList(),
-            ),
-            const VerticalDivider(thickness: 1, width: 1),
-            Expanded(
-              child: ConstrainedCenterView(
-                maxWidth: 1200,
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  onPageChanged: _onPageChanged,
-                  children: tabs.map((tab) => tab.screen).toList(),
-                ),
-              ),
-            ),
-          ],
-        ),
-        floatingActionButton: currentIndex == 0
-            ? FloatingActionButton.extended(
-                onPressed: () {
-                  Navigator.pushNamed(context, '/edit-workout', arguments: 0);
-                },
-                icon: const Icon(Icons.add),
-                label: Text(l10n.createRoutine),
+                  ),
+                ],
               )
-            : null,
-      );
-    }
-
-    return NexcScaffold(
-      title: RichText(
-        text: TextSpan(
-          text: l10n.appName,
-          style: theme.textTheme.titleLarge?.copyWith(
-            fontWeight: FontWeight.w800,
-            letterSpacing: -0.5,
-          ),
-        ),
+            : pages,
       ),
-      actions: [
-        () => Navigator.pushNamed(context, '/about'),
-        () => Navigator.pushNamed(context, '/settings'),
-      ],
-      actionsIcons: const [
-        Icon(Icons.info_outline),
-        Icon(Icons.settings_outlined),
-      ],
-      actionsElevated: const [false, false],
-      fabAction: currentIndex == 0
-          ? () {
-              Navigator.pushNamed(context, '/edit-workout', arguments: 0);
-            }
-          : null,
-      fabIcon: const Icon(Icons.add),
-      fabDescription: l10n.createRoutine,
-      fabText: l10n.createRoutine,
-      bottomBar: Container(
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.08),
-              blurRadius: 12,
-              offset: const Offset(0, 4),
+      bottomNavigationBar: useRail
+          ? null
+          : NavigationBar(
+              selectedIndex: activeIndex,
+              onDestinationSelected: (int index) => _selectTab(index, tabs),
+              destinations: [
+                for (final tab in tabs)
+                  NavigationDestination(
+                    icon: Icon(tab.icon),
+                    selectedIcon: Icon(tab.selectedIcon),
+                    label: tab.label,
+                  ),
+              ],
             ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(24),
-          child: NavigationBar(
-            selectedIndex: currentIndex,
-            onDestinationSelected: _onDestinationSelected,
-            destinations: tabs.map((tab) {
-              return NavigationDestination(
-                icon: tab.icon,
-                selectedIcon: tab.selectedIcon,
-                label: tab.label,
-              );
-            }).toList(),
-          ),
-        ),
-      ),
-      content: (context, padding) {
-        return PageView(
-          controller: _pageController,
-          onPageChanged: _onPageChanged,
-          children: tabs.map((tab) => tab.screen).toList(),
-        );
-      },
+      floatingActionButton: fab,
     );
   }
 }

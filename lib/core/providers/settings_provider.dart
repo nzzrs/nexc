@@ -26,6 +26,7 @@ class SettingsState {
   final int pastVersionCode;
   final bool isWorkoutHeaderSticky;
   final bool showKeepAndroidOpen;
+  final bool showExerciseImages;
   final IntensityScale intensityScale;
   final bool restTimerVibrationOn;
   final Language language;
@@ -107,6 +108,7 @@ class SettingsState {
     this.savedCustomTargetProtein,
     this.savedCustomTargetCarbs,
     this.savedCustomTargetFats,
+    this.showExerciseImages = false,
     this.userPreferences = '',
     this.enableUserPreferences = false,
     this.enableAiWorkoutAssistant = true,
@@ -126,6 +128,7 @@ class SettingsState {
     int? pastVersionCode,
     bool? isWorkoutHeaderSticky,
     bool? showKeepAndroidOpen,
+    bool? showExerciseImages,
     IntensityScale? intensityScale,
     bool? restTimerVibrationOn,
     Language? language,
@@ -167,6 +170,7 @@ class SettingsState {
       pastVersionCode: pastVersionCode ?? this.pastVersionCode,
       isWorkoutHeaderSticky: isWorkoutHeaderSticky ?? this.isWorkoutHeaderSticky,
       showKeepAndroidOpen: showKeepAndroidOpen ?? this.showKeepAndroidOpen,
+      showExerciseImages: showExerciseImages ?? this.showExerciseImages,
       intensityScale: intensityScale ?? this.intensityScale,
       restTimerVibrationOn: restTimerVibrationOn ?? this.restTimerVibrationOn,
       language: language ?? this.language,
@@ -218,6 +222,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
     final pastVersionCode = prefs.getInt('pastVersionCode') ?? -1;
     final isWorkoutHeaderSticky = prefs.getBool('is_workout_header_sticky') ?? true;
     final showKeepAndroidOpen = prefs.getBool('showKeepAndroidOpenKey') ?? true;
+    final showExerciseImages = prefs.getBool('show_exercise_images') ?? false;
 
     final intensityScaleVal = prefs.getInt('intensity_scale') ?? 0;
     final intensityScale = IntensityScale.values[intensityScaleVal.clamp(0, IntensityScale.values.length - 1)];
@@ -276,6 +281,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       pastVersionCode: pastVersionCode,
       isWorkoutHeaderSticky: isWorkoutHeaderSticky,
       showKeepAndroidOpen: showKeepAndroidOpen,
+      showExerciseImages: showExerciseImages,
       intensityScale: intensityScale,
       restTimerVibrationOn: restTimerVibrationOn,
       language: language,
@@ -352,6 +358,11 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setShowKeepAndroidOpen(bool val) async {
     await _prefs.setBool('showKeepAndroidOpenKey', val);
     state = state.copyWith(showKeepAndroidOpen: val);
+  }
+
+  Future<void> setShowExerciseImages(bool val) async {
+    await _prefs.setBool('show_exercise_images', val);
+    state = state.copyWith(showExerciseImages: val);
   }
 
   Future<void> setIntensityScale(IntensityScale scale) async {

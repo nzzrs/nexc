@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/dataset_repository.dart';
+import '../../core/providers/settings_provider.dart';
 
 class InfoExerciseScreen extends ConsumerStatefulWidget {
   final String exerciseId;
@@ -53,7 +54,8 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
       _isLoading = false;
     });
 
-    if (data.images.isNotEmpty) {
+    if (data.images.isNotEmpty &&
+        ref.read(settingsProvider).showExerciseImages) {
       _startImageTimer();
     }
   }
@@ -61,6 +63,7 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
   void _startImageTimer() {
     _imageTimer?.cancel();
     _imageTimer = Timer.periodic(const Duration(milliseconds: 1500), (timer) {
+      if (!ref.read(settingsProvider).showExerciseImages) return;
       if (_exercise != null && _exercise!.images.isNotEmpty && mounted) {
         setState(() {
           _currentImageIndex = (_currentImageIndex + 1) % _exercise!.images.length;
@@ -126,6 +129,9 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final colors = theme.colorScheme;
+    final showImages = ref.watch(
+      settingsProvider.select((s) => s.showExerciseImages),
+    );
 
     if (_isLoading || _exercise == null) {
       return const Scaffold(
@@ -153,7 +159,7 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
             child: Stack(
               alignment: Alignment.center,
               children: [
-                if (ex.images.isNotEmpty) ...[
+                if (showImages && ex.images.isNotEmpty) ...[
                   ClipRRect(
                     borderRadius: BorderRadius.circular(16),
                     child: Image.asset(

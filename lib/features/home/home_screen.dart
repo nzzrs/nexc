@@ -223,11 +223,6 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
                     : null,
               ),
             ),
-            TextButton(
-              key: const Key('newRoutine'),
-              onPressed: _createRoutine,
-              child: Text(l10n.newRoutine),
-            ),
           ],
         ),
         const SizedBox(height: NexcSpacing.md),

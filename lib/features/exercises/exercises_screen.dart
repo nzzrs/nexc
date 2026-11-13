@@ -643,8 +643,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                                   const SizedBox(width: 4),
                                   Text(
                                     l10n.aiMatch,
-                                    style: TextStyle(
-                                      fontSize: 10,
+                                    style: theme.textTheme.labelSmall?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: theme.colorScheme.primary,
                                     ),

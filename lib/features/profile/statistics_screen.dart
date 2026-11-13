@@ -388,7 +388,7 @@ class _MacroChart extends StatelessWidget {
       color: color,
       radius: 28,
       titleStyle: TextStyle(
-        fontSize: 10,
+        fontSize: 11,
         fontWeight: FontWeight.bold,
         color: onColor,
       ),

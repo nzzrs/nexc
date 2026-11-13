@@ -653,9 +653,7 @@ class NexcCartesianChart extends StatelessWidget {
                             padding: const EdgeInsets.only(top: 6),
                             child: Text(
                               points[idx].xValue,
-                              style: theme.textTheme.labelSmall?.copyWith(
-                                fontSize: 9,
-                              ),
+                              style: theme.textTheme.labelSmall,
                             ),
                           );
                         }

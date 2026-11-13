@@ -110,7 +110,6 @@ class NexcPage extends StatelessWidget {
       appBar: embedded
           ? null
           : AppBar(
-              titleSpacing: 0,
               title: subtitle == null
                   ? Text(title, maxLines: 1, overflow: TextOverflow.ellipsis)
                   : Column(

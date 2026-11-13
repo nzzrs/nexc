@@ -511,13 +511,27 @@ class SettingsScreen extends ConsumerWidget {
     SettingsState settings,
     SettingsNotifier notifier,
   ) async {
-    final TimeOfDay? picked = await showTimePicker(
-      context: context,
-      initialTime: TimeOfDay(hour: settings.dayStartHour, minute: 0),
-      helpText: context.l10n.dayStartHour,
+    final MaterialLocalizations localizations = MaterialLocalizations.of(
+      context,
     );
-    // Only the hour is stored; the label always renders the hour on the hour.
-    if (picked != null) await notifier.setDayStartHour(picked.hour);
+    final int? hour = await NexcChoiceSheet.show<int>(
+      context: context,
+      title: context.l10n.dayStartHour,
+      selected: settings.dayStartHour,
+      options: [
+        for (int hour = 0; hour < 24; hour++)
+          NexcChoiceOption<int>(
+            value: hour,
+            label: localizations.formatTimeOfDay(
+              TimeOfDay(hour: hour, minute: 0),
+              alwaysUse24HourFormat: MediaQuery.alwaysUse24HourFormatOf(
+                context,
+              ),
+            ),
+          ),
+      ],
+    );
+    if (hour != null) await notifier.setDayStartHour(hour);
   }
 
   void _showIntensityInfo(BuildContext context) {

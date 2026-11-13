@@ -31,9 +31,9 @@ import 'features/meals/products_library_screen.dart';
 import 'features/meals/recipes_library_screen.dart';
 import 'features/calendar/calendar_screen.dart';
 import 'features/profile/statistics_screen.dart';
+import 'features/profile/measurements_screen.dart';
+import 'features/stock/stock_screen.dart';
 import 'core/util/app_scroll_behavior.dart';
-import 'features/biometrics/biometrics_screen.dart';
-import 'features/pantry/pantry_screen.dart';
 import 'features/workout/info_workout_screen.dart';
 import 'features/profile/personal_info_screen.dart';
 import 'features/settings/measurements_settings_screen.dart';
@@ -143,13 +143,11 @@ class MyApp extends ConsumerWidget {
             '/calendar': (context) => const CalendarScreen(),
             '/profile/statistics': (context) => const StatisticsScreen(),
             '/profile/measurements': (context) => const MeasurementsScreen(),
-            '/biometrics': (context) => const BiometricsScreen(),
             '/profile/personal-info': (context) => const PersonalInfoScreen(),
             '/profile/stock': (context) => const StockScreen(),
             '/profile/all-workouts': (context) =>
                 const AllWorkoutsHistoryScreen(),
             '/profile/all-meals': (context) => const AllMealsHistoryScreen(),
-            '/pantry': (context) => const PantryScreen(),
             '/settings/measurements': (context) =>
                 const MeasurementsSettingsScreen(),
           },

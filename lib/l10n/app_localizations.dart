@@ -4569,6 +4569,402 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Back View'**
   String get backView;
+
+  /// No description provided for @sectionProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Progress'**
+  String get sectionProgress;
+
+  /// No description provided for @sectionBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Body'**
+  String get sectionBody;
+
+  /// No description provided for @sectionLibrary.
+  ///
+  /// In en, this message translates to:
+  /// **'Library'**
+  String get sectionLibrary;
+
+  /// No description provided for @sectionInventory.
+  ///
+  /// In en, this message translates to:
+  /// **'Inventory'**
+  String get sectionInventory;
+
+  /// No description provided for @settingsWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout'**
+  String get settingsWorkout;
+
+  /// No description provided for @settingsNutrition.
+  ///
+  /// In en, this message translates to:
+  /// **'Nutrition'**
+  String get settingsNutrition;
+
+  /// No description provided for @settingsHealth.
+  ///
+  /// In en, this message translates to:
+  /// **'Health'**
+  String get settingsHealth;
+
+  /// No description provided for @settingsAi.
+  ///
+  /// In en, this message translates to:
+  /// **'AI'**
+  String get settingsAi;
+
+  /// No description provided for @settingsData.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get settingsData;
+
+  /// No description provided for @settingsAbout.
+  ///
+  /// In en, this message translates to:
+  /// **'About'**
+  String get settingsAbout;
+
+  /// No description provided for @settingsAboutDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Version, licenses and sources'**
+  String get settingsAboutDesc;
+
+  /// No description provided for @moreOptions.
+  ///
+  /// In en, this message translates to:
+  /// **'More options'**
+  String get moreOptions;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @clearFilters.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear filters'**
+  String get clearFilters;
+
+  /// No description provided for @showMore.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get showMore;
+
+  /// No description provided for @showLess.
+  ///
+  /// In en, this message translates to:
+  /// **'Show less'**
+  String get showLess;
+
+  /// No description provided for @todayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get todayLabel;
+
+  /// No description provided for @yesterdayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get yesterdayLabel;
+
+  /// No description provided for @sortBy.
+  ///
+  /// In en, this message translates to:
+  /// **'Sort by'**
+  String get sortBy;
+
+  /// No description provided for @sortName.
+  ///
+  /// In en, this message translates to:
+  /// **'Name'**
+  String get sortName;
+
+  /// No description provided for @sortRecent.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent'**
+  String get sortRecent;
+
+  /// No description provided for @sortMostUsed.
+  ///
+  /// In en, this message translates to:
+  /// **'Most used'**
+  String get sortMostUsed;
+
+  /// No description provided for @sortStock.
+  ///
+  /// In en, this message translates to:
+  /// **'In stock first'**
+  String get sortStock;
+
+  /// No description provided for @newRoutine.
+  ///
+  /// In en, this message translates to:
+  /// **'New routine'**
+  String get newRoutine;
+
+  /// No description provided for @addFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Add food'**
+  String get addFood;
+
+  /// No description provided for @newPlan.
+  ///
+  /// In en, this message translates to:
+  /// **'New plan'**
+  String get newPlan;
+
+  /// No description provided for @emptyRoutinesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No routines yet'**
+  String get emptyRoutinesTitle;
+
+  /// No description provided for @emptyRoutinesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Create a routine to plan your training.'**
+  String get emptyRoutinesMessage;
+
+  /// No description provided for @emptyHistoryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Nothing here yet'**
+  String get emptyHistoryTitle;
+
+  /// No description provided for @emptyHistoryMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed sessions will appear here.'**
+  String get emptyHistoryMessage;
+
+  /// No description provided for @restAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest timer alerts'**
+  String get restAlerts;
+
+  /// No description provided for @restAlertsDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Sound and vibration when a rest timer ends'**
+  String get restAlertsDesc;
+
+  /// No description provided for @testAlert.
+  ///
+  /// In en, this message translates to:
+  /// **'Test alert'**
+  String get testAlert;
+
+  /// No description provided for @showToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Show key'**
+  String get showToken;
+
+  /// No description provided for @hideToken.
+  ///
+  /// In en, this message translates to:
+  /// **'Hide key'**
+  String get hideToken;
+
+  /// No description provided for @testConnection.
+  ///
+  /// In en, this message translates to:
+  /// **'Test connection'**
+  String get testConnection;
+
+  /// No description provided for @apiPrivacyNote.
+  ///
+  /// In en, this message translates to:
+  /// **'The key stays on this device and is only sent to the provider you choose.'**
+  String get apiPrivacyNote;
+
+  /// No description provided for @mealTrackingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Plan meals and track macros'**
+  String get mealTrackingDesc;
+
+  /// No description provided for @stockTrackingDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Track quantities and shopping needs'**
+  String get stockTrackingDesc;
+
+  /// No description provided for @workoutAlerts.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout alerts'**
+  String get workoutAlerts;
+
+  /// No description provided for @aiPermissions.
+  ///
+  /// In en, this message translates to:
+  /// **'What AI can use'**
+  String get aiPermissions;
+
+  /// No description provided for @unitKcal.
+  ///
+  /// In en, this message translates to:
+  /// **'kcal'**
+  String get unitKcal;
+
+  /// No description provided for @unitG.
+  ///
+  /// In en, this message translates to:
+  /// **'g'**
+  String get unitG;
+
+  /// No description provided for @unitMl.
+  ///
+  /// In en, this message translates to:
+  /// **'ml'**
+  String get unitMl;
+
+  /// No description provided for @unitKg.
+  ///
+  /// In en, this message translates to:
+  /// **'kg'**
+  String get unitKg;
+
+  /// No description provided for @unitLb.
+  ///
+  /// In en, this message translates to:
+  /// **'lb'**
+  String get unitLb;
+
+  /// No description provided for @unitCm.
+  ///
+  /// In en, this message translates to:
+  /// **'cm'**
+  String get unitCm;
+
+  /// No description provided for @unitBpm.
+  ///
+  /// In en, this message translates to:
+  /// **'bpm'**
+  String get unitBpm;
+
+  /// No description provided for @unitMs.
+  ///
+  /// In en, this message translates to:
+  /// **'ms'**
+  String get unitMs;
+
+  /// No description provided for @unitSteps.
+  ///
+  /// In en, this message translates to:
+  /// **'steps'**
+  String get unitSteps;
+
+  /// No description provided for @addToLog.
+  ///
+  /// In en, this message translates to:
+  /// **'Add to log'**
+  String get addToLog;
+
+  /// No description provided for @logFood.
+  ///
+  /// In en, this message translates to:
+  /// **'Log food'**
+  String get logFood;
+
+  /// No description provided for @remove.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove'**
+  String get remove;
+
+  /// No description provided for @viewRecipe.
+  ///
+  /// In en, this message translates to:
+  /// **'View recipe'**
+  String get viewRecipe;
+
+  /// No description provided for @ingredients.
+  ///
+  /// In en, this message translates to:
+  /// **'Ingredients'**
+  String get ingredients;
+
+  /// No description provided for @instructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructions'**
+  String get instructions;
+
+  /// No description provided for @recipePortable.
+  ///
+  /// In en, this message translates to:
+  /// **'Portable'**
+  String get recipePortable;
+
+  /// No description provided for @recipeHomeOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Home only'**
+  String get recipeHomeOnly;
+
+  /// No description provided for @history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get history;
+
+  /// No description provided for @chartType.
+  ///
+  /// In en, this message translates to:
+  /// **'Chart'**
+  String get chartType;
+
+  /// No description provided for @caloriesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Calories'**
+  String get caloriesLabel;
+
+  /// No description provided for @backupExportFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Export a backup before importing.'**
+  String get backupExportFirst;
+
+  /// No description provided for @aiTryAsking.
+  ///
+  /// In en, this message translates to:
+  /// **'Try asking'**
+  String get aiTryAsking;
+
+  /// No description provided for @aiClearChat.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear chat'**
+  String get aiClearChat;
+
+  /// No description provided for @aiRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get aiRetry;
 }
 
 class _AppLocalizationsDelegate

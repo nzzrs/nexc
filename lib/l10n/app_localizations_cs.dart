@@ -2538,4 +2538,203 @@ class AppLocalizationsCs extends AppLocalizations {
 
   @override
   String get backView => 'Back View';
+
+  @override
+  String get sectionProgress => 'Progress';
+
+  @override
+  String get sectionBody => 'Body';
+
+  @override
+  String get sectionLibrary => 'Library';
+
+  @override
+  String get sectionInventory => 'Inventory';
+
+  @override
+  String get settingsWorkout => 'Workout';
+
+  @override
+  String get settingsNutrition => 'Nutrition';
+
+  @override
+  String get settingsHealth => 'Health';
+
+  @override
+  String get settingsAi => 'AI';
+
+  @override
+  String get settingsData => 'Data';
+
+  @override
+  String get settingsAbout => 'About';
+
+  @override
+  String get settingsAboutDesc => 'Version, licenses and sources';
+
+  @override
+  String get moreOptions => 'More options';
+
+  @override
+  String get apply => 'Apply';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get clearFilters => 'Clear filters';
+
+  @override
+  String get showMore => 'Show more';
+
+  @override
+  String get showLess => 'Show less';
+
+  @override
+  String get todayLabel => 'Today';
+
+  @override
+  String get yesterdayLabel => 'Yesterday';
+
+  @override
+  String get sortBy => 'Sort by';
+
+  @override
+  String get sortName => 'Name';
+
+  @override
+  String get sortRecent => 'Recent';
+
+  @override
+  String get sortMostUsed => 'Most used';
+
+  @override
+  String get sortStock => 'In stock first';
+
+  @override
+  String get newRoutine => 'New routine';
+
+  @override
+  String get addFood => 'Add food';
+
+  @override
+  String get newPlan => 'New plan';
+
+  @override
+  String get emptyRoutinesTitle => 'No routines yet';
+
+  @override
+  String get emptyRoutinesMessage => 'Create a routine to plan your training.';
+
+  @override
+  String get emptyHistoryTitle => 'Nothing here yet';
+
+  @override
+  String get emptyHistoryMessage => 'Completed sessions will appear here.';
+
+  @override
+  String get restAlerts => 'Rest timer alerts';
+
+  @override
+  String get restAlertsDesc => 'Sound and vibration when a rest timer ends';
+
+  @override
+  String get testAlert => 'Test alert';
+
+  @override
+  String get showToken => 'Show key';
+
+  @override
+  String get hideToken => 'Hide key';
+
+  @override
+  String get testConnection => 'Test connection';
+
+  @override
+  String get apiPrivacyNote =>
+      'The key stays on this device and is only sent to the provider you choose.';
+
+  @override
+  String get mealTrackingDesc => 'Plan meals and track macros';
+
+  @override
+  String get stockTrackingDesc => 'Track quantities and shopping needs';
+
+  @override
+  String get workoutAlerts => 'Workout alerts';
+
+  @override
+  String get aiPermissions => 'What AI can use';
+
+  @override
+  String get unitKcal => 'kcal';
+
+  @override
+  String get unitG => 'g';
+
+  @override
+  String get unitMl => 'ml';
+
+  @override
+  String get unitKg => 'kg';
+
+  @override
+  String get unitLb => 'lb';
+
+  @override
+  String get unitCm => 'cm';
+
+  @override
+  String get unitBpm => 'bpm';
+
+  @override
+  String get unitMs => 'ms';
+
+  @override
+  String get unitSteps => 'steps';
+
+  @override
+  String get addToLog => 'Add to log';
+
+  @override
+  String get logFood => 'Log food';
+
+  @override
+  String get remove => 'Remove';
+
+  @override
+  String get viewRecipe => 'View recipe';
+
+  @override
+  String get ingredients => 'Ingredients';
+
+  @override
+  String get instructions => 'Instructions';
+
+  @override
+  String get recipePortable => 'Portable';
+
+  @override
+  String get recipeHomeOnly => 'Home only';
+
+  @override
+  String get history => 'History';
+
+  @override
+  String get chartType => 'Chart';
+
+  @override
+  String get caloriesLabel => 'Calories';
+
+  @override
+  String get backupExportFirst => 'Export a backup before importing.';
+
+  @override
+  String get aiTryAsking => 'Try asking';
+
+  @override
+  String get aiClearChat => 'Clear chat';
+
+  @override
+  String get aiRetry => 'Retry';
 }

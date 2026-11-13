@@ -45,6 +45,14 @@ class $WorkoutsTable extends Workouts with TableInfo<$WorkoutsTable, Workout> {
   late final GeneratedColumn<int> timeElapsed = GeneratedColumn<int>(
       'timeElapsed', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
+  static const VerificationMeta _positionMeta =
+      const VerificationMeta('position');
+  @override
+  late final GeneratedColumn<int> position = GeneratedColumn<int>(
+      'position', aliasedName, false,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
   static const VerificationMeta _createdMeta =
       const VerificationMeta('created');
   @override
@@ -77,6 +85,7 @@ class $WorkoutsTable extends Workouts with TableInfo<$WorkoutsTable, Workout> {
         title,
         state,
         timeElapsed,
+        position,
         created,
         completed,
         isTemporal
@@ -121,6 +130,10 @@ class $WorkoutsTable extends Workouts with TableInfo<$WorkoutsTable, Workout> {
     } else if (isInserting) {
       context.missing(_timeElapsedMeta);
     }
+    if (data.containsKey('position')) {
+      context.handle(_positionMeta,
+          position.isAcceptableOrUnknown(data['position']!, _positionMeta));
+    }
     context.handle(_createdMeta, const VerificationResult.success());
     context.handle(_completedMeta, const VerificationResult.success());
     if (data.containsKey('isTemporal')) {
@@ -150,6 +163,8 @@ class $WorkoutsTable extends Workouts with TableInfo<$WorkoutsTable, Workout> {
           .read(DriftSqlType.string, data['${effectivePrefix}state'])!),
       timeElapsed: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}timeElapsed'])!,
+      position: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}position'])!,
       created: $WorkoutsTable.$convertercreated.fromSql(attachedDatabase
           .typeMapping
           .read(DriftSqlType.string, data['${effectivePrefix}created'])!),
@@ -181,6 +196,7 @@ class Workout extends DataClass implements Insertable<Workout> {
   final String title;
   final WorkoutState state;
   final int timeElapsed;
+  final int position;
   final DateTime created;
   final DateTime completed;
   final bool isTemporal;
@@ -191,6 +207,7 @@ class Workout extends DataClass implements Insertable<Workout> {
       required this.title,
       required this.state,
       required this.timeElapsed,
+      required this.position,
       required this.created,
       required this.completed,
       required this.isTemporal});
@@ -206,6 +223,7 @@ class Workout extends DataClass implements Insertable<Workout> {
           Variable<String>($WorkoutsTable.$converterstate.toSql(state));
     }
     map['timeElapsed'] = Variable<int>(timeElapsed);
+    map['position'] = Variable<int>(position);
     {
       map['created'] =
           Variable<String>($WorkoutsTable.$convertercreated.toSql(created));
@@ -226,6 +244,7 @@ class Workout extends DataClass implements Insertable<Workout> {
       title: Value(title),
       state: Value(state),
       timeElapsed: Value(timeElapsed),
+      position: Value(position),
       created: Value(created),
       completed: Value(completed),
       isTemporal: Value(isTemporal),
@@ -242,6 +261,7 @@ class Workout extends DataClass implements Insertable<Workout> {
       title: serializer.fromJson<String>(json['title']),
       state: serializer.fromJson<WorkoutState>(json['state']),
       timeElapsed: serializer.fromJson<int>(json['timeElapsed']),
+      position: serializer.fromJson<int>(json['position']),
       created: serializer.fromJson<DateTime>(json['created']),
       completed: serializer.fromJson<DateTime>(json['completed']),
       isTemporal: serializer.fromJson<bool>(json['isTemporal']),
@@ -257,6 +277,7 @@ class Workout extends DataClass implements Insertable<Workout> {
       'title': serializer.toJson<String>(title),
       'state': serializer.toJson<WorkoutState>(state),
       'timeElapsed': serializer.toJson<int>(timeElapsed),
+      'position': serializer.toJson<int>(position),
       'created': serializer.toJson<DateTime>(created),
       'completed': serializer.toJson<DateTime>(completed),
       'isTemporal': serializer.toJson<bool>(isTemporal),
@@ -270,6 +291,7 @@ class Workout extends DataClass implements Insertable<Workout> {
           String? title,
           WorkoutState? state,
           int? timeElapsed,
+          int? position,
           DateTime? created,
           DateTime? completed,
           bool? isTemporal}) =>
@@ -280,6 +302,7 @@ class Workout extends DataClass implements Insertable<Workout> {
         title: title ?? this.title,
         state: state ?? this.state,
         timeElapsed: timeElapsed ?? this.timeElapsed,
+        position: position ?? this.position,
         created: created ?? this.created,
         completed: completed ?? this.completed,
         isTemporal: isTemporal ?? this.isTemporal,
@@ -293,6 +316,7 @@ class Workout extends DataClass implements Insertable<Workout> {
           ..write('title: $title, ')
           ..write('state: $state, ')
           ..write('timeElapsed: $timeElapsed, ')
+          ..write('position: $position, ')
           ..write('created: $created, ')
           ..write('completed: $completed, ')
           ..write('isTemporal: $isTemporal')
@@ -302,7 +326,7 @@ class Workout extends DataClass implements Insertable<Workout> {
 
   @override
   int get hashCode => Object.hash(id, routineId, notes, title, state,
-      timeElapsed, created, completed, isTemporal);
+      timeElapsed, position, created, completed, isTemporal);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -313,6 +337,7 @@ class Workout extends DataClass implements Insertable<Workout> {
           other.title == this.title &&
           other.state == this.state &&
           other.timeElapsed == this.timeElapsed &&
+          other.position == this.position &&
           other.created == this.created &&
           other.completed == this.completed &&
           other.isTemporal == this.isTemporal);
@@ -325,6 +350,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
   final Value<String> title;
   final Value<WorkoutState> state;
   final Value<int> timeElapsed;
+  final Value<int> position;
   final Value<DateTime> created;
   final Value<DateTime> completed;
   final Value<bool> isTemporal;
@@ -335,6 +361,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
     this.title = const Value.absent(),
     this.state = const Value.absent(),
     this.timeElapsed = const Value.absent(),
+    this.position = const Value.absent(),
     this.created = const Value.absent(),
     this.completed = const Value.absent(),
     this.isTemporal = const Value.absent(),
@@ -346,6 +373,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
     required String title,
     required WorkoutState state,
     required int timeElapsed,
+    this.position = const Value.absent(),
     required DateTime created,
     required DateTime completed,
     this.isTemporal = const Value.absent(),
@@ -363,6 +391,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
     Expression<String>? title,
     Expression<String>? state,
     Expression<int>? timeElapsed,
+    Expression<int>? position,
     Expression<String>? created,
     Expression<String>? completed,
     Expression<bool>? isTemporal,
@@ -374,6 +403,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
       if (title != null) 'title': title,
       if (state != null) 'state': state,
       if (timeElapsed != null) 'timeElapsed': timeElapsed,
+      if (position != null) 'position': position,
       if (created != null) 'created': created,
       if (completed != null) 'completed': completed,
       if (isTemporal != null) 'isTemporal': isTemporal,
@@ -387,6 +417,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
       Value<String>? title,
       Value<WorkoutState>? state,
       Value<int>? timeElapsed,
+      Value<int>? position,
       Value<DateTime>? created,
       Value<DateTime>? completed,
       Value<bool>? isTemporal}) {
@@ -397,6 +428,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
       title: title ?? this.title,
       state: state ?? this.state,
       timeElapsed: timeElapsed ?? this.timeElapsed,
+      position: position ?? this.position,
       created: created ?? this.created,
       completed: completed ?? this.completed,
       isTemporal: isTemporal ?? this.isTemporal,
@@ -425,6 +457,9 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
     if (timeElapsed.present) {
       map['timeElapsed'] = Variable<int>(timeElapsed.value);
     }
+    if (position.present) {
+      map['position'] = Variable<int>(position.value);
+    }
     if (created.present) {
       map['created'] = Variable<String>(
           $WorkoutsTable.$convertercreated.toSql(created.value));
@@ -448,6 +483,7 @@ class WorkoutsCompanion extends UpdateCompanion<Workout> {
           ..write('title: $title, ')
           ..write('state: $state, ')
           ..write('timeElapsed: $timeElapsed, ')
+          ..write('position: $position, ')
           ..write('created: $created, ')
           ..write('completed: $completed, ')
           ..write('isTemporal: $isTemporal')
@@ -8053,6 +8089,7 @@ typedef $$WorkoutsTableInsertCompanionBuilder = WorkoutsCompanion Function({
   required String title,
   required WorkoutState state,
   required int timeElapsed,
+  Value<int> position,
   required DateTime created,
   required DateTime completed,
   Value<bool> isTemporal,
@@ -8064,6 +8101,7 @@ typedef $$WorkoutsTableUpdateCompanionBuilder = WorkoutsCompanion Function({
   Value<String> title,
   Value<WorkoutState> state,
   Value<int> timeElapsed,
+  Value<int> position,
   Value<DateTime> created,
   Value<DateTime> completed,
   Value<bool> isTemporal,
@@ -8095,6 +8133,7 @@ class $$WorkoutsTableTableManager extends RootTableManager<
             Value<String> title = const Value.absent(),
             Value<WorkoutState> state = const Value.absent(),
             Value<int> timeElapsed = const Value.absent(),
+            Value<int> position = const Value.absent(),
             Value<DateTime> created = const Value.absent(),
             Value<DateTime> completed = const Value.absent(),
             Value<bool> isTemporal = const Value.absent(),
@@ -8106,6 +8145,7 @@ class $$WorkoutsTableTableManager extends RootTableManager<
             title: title,
             state: state,
             timeElapsed: timeElapsed,
+            position: position,
             created: created,
             completed: completed,
             isTemporal: isTemporal,
@@ -8117,6 +8157,7 @@ class $$WorkoutsTableTableManager extends RootTableManager<
             required String title,
             required WorkoutState state,
             required int timeElapsed,
+            Value<int> position = const Value.absent(),
             required DateTime created,
             required DateTime completed,
             Value<bool> isTemporal = const Value.absent(),
@@ -8128,6 +8169,7 @@ class $$WorkoutsTableTableManager extends RootTableManager<
             title: title,
             state: state,
             timeElapsed: timeElapsed,
+            position: position,
             created: created,
             completed: completed,
             isTemporal: isTemporal,
@@ -8182,6 +8224,11 @@ class $$WorkoutsTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
+  ColumnFilters<int> get position => $state.composableBuilder(
+      column: $state.table.position,
+      builder: (column, joinBuilders) =>
+          ColumnFilters(column, joinBuilders: joinBuilders));
+
   ColumnWithTypeConverterFilters<DateTime, DateTime, String> get created =>
       $state.composableBuilder(
           column: $state.table.created,
@@ -8232,6 +8279,11 @@ class $$WorkoutsTableOrderingComposer
 
   ColumnOrderings<int> get timeElapsed => $state.composableBuilder(
       column: $state.table.timeElapsed,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<int> get position => $state.composableBuilder(
+      column: $state.table.position,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 

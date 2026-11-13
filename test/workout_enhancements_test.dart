@@ -14,6 +14,7 @@ void main() {
         title: 'Morning Push',
         state: WorkoutState.COMPLETED,
         timeElapsed: 3600,
+        position: 0,
         created: now,
         completed: now,
         isTemporal: false,

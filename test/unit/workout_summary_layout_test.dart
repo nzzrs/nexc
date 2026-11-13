@@ -50,6 +50,7 @@ void main() {
         title: 'A Very Long Upper Body Hypertrophy Workout Title',
         state: WorkoutState.COMPLETED,
         timeElapsed: 3725,
+        position: 0,
         created: DateTime(2026, 11, 12, 16),
         completed: DateTime(2026, 11, 12, 17),
         isTemporal: false,

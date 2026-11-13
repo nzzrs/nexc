@@ -103,6 +103,7 @@ void main() {
         title: 'Push Day',
         state: WorkoutState.COMPLETED,
         timeElapsed: 3600,
+        position: 0,
         created: DateTime.now(),
         completed: DateTime.now(),
         isTemporal: false,

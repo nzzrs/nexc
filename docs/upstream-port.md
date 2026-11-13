@@ -16,7 +16,7 @@ Merge gate: `flutter analyze` (0 issues) + `flutter test` (green) + scope review
 | 1 | T4 rest alert ducking | `fix/rest-alert-ducking` | merged | merged | `274d91a2` | 100 |
 | 1 | T5 license compliance | `chore/license-attribution` | merged | merged | `6f3b04b7` | 97 |
 | 1 | T6 Flutter CI + validator | `chore/flutter-ci` | merged | merged | `d1dab966` | 97 |
-| 2 | T7 images toggle | `feat/upstream-image-toggle` | pending | pending | | |
+| 2 | T7 images toggle | `feat/upstream-image-toggle` | merged | merged | `025fff4a` | 135 |
 | 3 | T8 units core | `feat/upstream-units-core` | pending | pending | | |
 | 3 | T9 units workout UI | `feat/upstream-units-workout-ui` | pending | pending | | |
 | 3 | T10 units profile UI | `feat/upstream-units-profile-ui` | pending | pending | | |

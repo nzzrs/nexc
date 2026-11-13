@@ -20,6 +20,24 @@ import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/util/exercise_set_mode_helper.dart';
 import '../../core/util/workout_stats_helper.dart';
+import '../../core/util/unit_system.dart';
+
+/// Formats the latest body-weight measurement for the AI user context.
+///
+/// The stored value stays in kilograms; only the presentation follows the
+/// user's preferred [system].
+String formatLatestWeightSummary(
+  BodyMeasurement measurement,
+  UnitSystem system,
+) {
+  final weight = formatWeight(
+    measurement.bodyWeight,
+    system,
+    suffix: system.suffix,
+  );
+  final date = measurement.date;
+  return 'Latest weight: $weight recorded on ${date.month}/${date.day}/${date.year}.';
+}
 
 class ProposedExerciseItem {
   final String name;
@@ -411,9 +429,7 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
         final parts = <String>[];
         if (measurements.isNotEmpty) {
           final last = measurements.first;
-          parts.add(
-            'Latest weight: ${last.bodyWeight} kg recorded on ${last.date.month}/${last.date.day}/${last.date.year}.',
-          );
+          parts.add(formatLatestWeightSummary(last, settings.unitSystem));
         }
         if (advancedMeasurements.isNotEmpty) {
           final lastAdvanced = advancedMeasurements.first;

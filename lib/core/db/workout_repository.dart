@@ -13,6 +13,7 @@ import 'enums.dart';
 import 'relations.dart';
 import '../providers/db_provider.dart';
 import '../util/routine_update.dart';
+import '../util/unit_system.dart';
 
 class WorkoutRepository {
   final AppDatabase db;
@@ -212,26 +213,39 @@ class WorkoutRepository {
     return db.delete(db.exercises).delete(exercise);
   }
 
+  /// Returns [set] in Nexc's canonical storage: kilograms.
+  ///
+  /// Legacy rows, backup imports and AI payloads may still carry pounds. They
+  /// are converted on write so every consumer can assume kilograms.
+  WorkoutSet _normalizeSet(WorkoutSet set) {
+    if (set.weightUnit == WeightUnit.kg) return set;
+    return set.copyWith(
+      load: toKilograms(set.load, UnitSystem.imperial),
+      weightUnit: WeightUnit.kg,
+    );
+  }
+
   Future<int> addSet(WorkoutSet set) {
-    if (set.id == 0) {
+    final normalized = _normalizeSet(set);
+    if (normalized.id == 0) {
       return db.into(db.sets).insert(
             SetsCompanion.insert(
-              exerciseId: set.exerciseId,
-              load: set.load,
-              reps: set.reps,
-              elapsedTime: set.elapsedTime,
-              completed: set.completed,
-              rpe: Value(set.rpe),
-              rir: Value(set.rir),
+              exerciseId: normalized.exerciseId,
+              load: normalized.load,
+              reps: normalized.reps,
+              elapsedTime: normalized.elapsedTime,
+              completed: normalized.completed,
+              rpe: Value(normalized.rpe),
+              rir: Value(normalized.rir),
             ),
           );
     } else {
-      return db.into(db.sets).insert(set.toCompanion(true));
+      return db.into(db.sets).insert(normalized.toCompanion(true));
     }
   }
 
   Future<void> updateSet(WorkoutSet set) {
-    return db.update(db.sets).replace(set);
+    return db.update(db.sets).replace(_normalizeSet(set));
   }
 
   Future<void> deleteSet(WorkoutSet set) {
@@ -322,7 +336,8 @@ class WorkoutRepository {
         }
 
         // Add or update sets
-        for (final set in newSets) {
+        for (final rawSet in newSets) {
+          final set = _normalizeSet(rawSet);
           if (oldSetsMap.containsKey(set.id)) {
             await db.update(db.sets).replace(set);
           } else {

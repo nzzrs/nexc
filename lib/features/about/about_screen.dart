@@ -11,7 +11,13 @@ import 'package:flutter/material.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../core/components/nexc_page.dart';
+import '../../core/components/nexc_snack.dart';
+import '../../core/components/nexc_tile.dart';
 import '../../core/l10n/l10n.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/shapes.dart';
+import '../../core/theme/spacing.dart';
 
 class AboutScreen extends StatefulWidget {
   const AboutScreen({super.key});
@@ -21,6 +27,9 @@ class AboutScreen extends StatefulWidget {
 }
 
 class _AboutScreenState extends State<AboutScreen> {
+  static const String _sourceUrl = 'https://github.com/nzzrs/nexc';
+  static const String _reportUrl = 'https://github.com/nzzrs/nexc/issues/new';
+
   PackageInfo? _packageInfo;
 
   @override
@@ -30,262 +39,174 @@ class _AboutScreenState extends State<AboutScreen> {
   }
 
   Future<void> _loadPackageInfo() async {
-    final info = await PackageInfo.fromPlatform();
-    if (mounted) {
-      setState(() => _packageInfo = info);
-    }
+    final PackageInfo info = await PackageInfo.fromPlatform();
+    if (mounted) setState(() => _packageInfo = info);
   }
 
   Future<void> _launchUrl(String url) async {
-    final uri = Uri.parse(url);
-    if (!await launchUrl(uri, mode: LaunchMode.externalApplication)) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(context.l10n.couldNotOpenUrl(url))),
-        );
-      }
+    final Uri uri = Uri.parse(url);
+    final bool opened = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && mounted) {
+      NexcSnack.show(context, context.l10n.couldNotOpenUrl(url));
     }
+  }
+
+  void _showPrivacy() {
+    final l10n = context.l10n;
+    showDialog<void>(
+      context: context,
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(l10n.privacyPolicy),
+        content: SingleChildScrollView(child: Text(l10n.privacyPolicyBody)),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dialogContext),
+            child: Text(l10n.gotIt),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showLicense() {
+    final l10n = context.l10n;
+    // The upstream attribution clause requires this exact credit:
+    // Based on LibreFit © IamDg and the LibreFit Contributors
+    showLicensePage(
+      context: context,
+      applicationName: l10n.appName,
+      applicationVersion: _packageInfo?.version ?? '',
+      applicationLegalese: l10n.licenseLegalese,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final ThemeData theme = Theme.of(context);
     final l10n = context.l10n;
-    final version = _packageInfo != null
+    final String version = _packageInfo != null
         ? l10n.versionWithBuild(
             _packageInfo!.version,
             _packageInfo!.buildNumber,
           )
         : l10n.loadingVersion;
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.aboutTitle),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+    return NexcPage(
+      title: l10n.aboutTitle,
       body: ListView(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 24.0),
+        padding: const EdgeInsets.only(
+          top: NexcSpacing.xl,
+          bottom: NexcSpacing.xl,
+        ),
         children: [
-          // App Logo
-          Center(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(24),
-              child: Image.asset(
-                'assets/images/logo.png',
-                width: 120,
-                height: 120,
-                errorBuilder: (context, error, stack) => Container(
-                  width: 120,
-                  height: 120,
-                  decoration: BoxDecoration(
-                    color: theme.colorScheme.primaryContainer,
-                    shape: BoxShape.circle,
-                  ),
-                  child: Icon(
-                    Icons.fitness_center,
-                    size: 64,
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: NexcSpacing.lg),
+            child: Material(
+              color: theme.colorScheme.surfaceContainerLow,
+              shape: const RoundedRectangleBorder(
+                borderRadius: NexcShapes.lgRadius,
               ),
-            ),
-          ),
-          const SizedBox(height: 24),
-          Center(
-            child: Text(
-              l10n.appName,
-              style: theme.textTheme.displaySmall?.copyWith(
-                fontWeight: FontWeight.w900,
-                letterSpacing: -1.0,
-              ),
-            ),
-          ),
-          const SizedBox(height: 8),
-          Center(
-            child: Text(
-              version,
-              style: theme.textTheme.bodyMedium?.copyWith(
-                color: theme.colorScheme.onSurfaceVariant,
-              ),
-            ),
-          ),
-          const SizedBox(height: 32),
-
-          _buildSectionHeader(context, l10n.info),
-          const SizedBox(height: 8),
-          _AboutItem(
-            text: l10n.privacyPolicy,
-            description: l10n.privacyPolicyDescription,
-            icon: Icons.privacy_tip_outlined,
-            onClick: () {
-              showDialog(
-                context: context,
-                builder: (ctx) => AlertDialog(
-                  title: Text(l10n.privacyPolicy),
-                  content: SingleChildScrollView(
-                    child: Text(l10n.privacyPolicyBody),
-                  ),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.pop(ctx),
-                      child: Text(l10n.gotIt),
+              clipBehavior: Clip.antiAlias,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(NexcSpacing.xl),
+                    child: Column(
+                      children: [
+                        Container(
+                          width: 96,
+                          height: 96,
+                          decoration: BoxDecoration(
+                            color: theme.colorScheme.primaryContainer,
+                            borderRadius: NexcShapes.xlRadius,
+                          ),
+                          child: Icon(
+                            NexcIcons.workout,
+                            size: 48,
+                            color: theme.colorScheme.onPrimaryContainer,
+                          ),
+                        ),
+                        const SizedBox(height: NexcSpacing.lg),
+                        Text(
+                          l10n.appName,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.displaySmall?.copyWith(
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -1,
+                          ),
+                        ),
+                        const SizedBox(height: NexcSpacing.xs),
+                        Text(
+                          version,
+                          textAlign: TextAlign.center,
+                          style: theme.textTheme.bodyMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              );
-            },
+                  ),
+                  const Divider(height: 1),
+                  NexcTile(
+                    icon: NexcIcons.privacy,
+                    title: l10n.privacyPolicy,
+                    subtitle: l10n.privacyPolicyDescription,
+                    showChevron: true,
+                    onTap: _showPrivacy,
+                  ),
+                  const Divider(height: 1),
+                  NexcTile(
+                    icon: NexcIcons.license,
+                    title: l10n.license,
+                    subtitle: l10n.licenseDescription,
+                    showChevron: true,
+                    onTap: _showLicense,
+                  ),
+                  const Divider(height: 1),
+                  NexcTile(
+                    icon: NexcIcons.attribution,
+                    title: l10n.github,
+                    subtitle: l10n.githubDescription,
+                    showChevron: true,
+                    onTap: () => _launchUrl(_sourceUrl),
+                  ),
+                  const Divider(height: 1),
+                  NexcTile(
+                    icon: NexcIcons.warning,
+                    title: l10n.reportBug,
+                    subtitle: l10n.reportBugDescription,
+                    showChevron: true,
+                    onTap: () => _launchUrl(_reportUrl),
+                  ),
+                  const Divider(height: 1),
+                  NexcTile(
+                    icon: NexcIcons.about,
+                    title: l10n.libreFitName,
+                    subtitle: l10n.libreFitDescription,
+                    showChevron: true,
+                    onTap: () =>
+                        _launchUrl('https://github.com/LibreFitOrg/LibreFit'),
+                  ),
+                ],
+              ),
+            ),
           ),
-          _AboutItem(
-            text: l10n.license,
-            description: l10n.licenseDescription,
-            icon: Icons.gavel_outlined,
-            onClick: () {
-              showLicensePage(
-                context: context,
-                applicationName: l10n.appName,
-                applicationVersion: _packageInfo?.version ?? '',
-                // The upstream attribution clause requires this exact credit.
-                // English text: "Based on LibreFit © IamDg and the LibreFit Contributors".
-                applicationLegalese: l10n.licenseLegalese,
-              );
-            },
-          ),
-          _AboutItem(
-            text: l10n.github,
-            description: l10n.githubDescription,
-            icon: Icons.code,
-            onClick: () => _launchUrl('https://github.com/nzzrs/nexc'),
-          ),
-
-          const SizedBox(height: 16),
-          _buildSectionHeader(context, l10n.attribution),
-          const SizedBox(height: 8),
-          _AboutItem(
-            text: l10n.libreFitName,
-            description: l10n.libreFitDescription,
-            icon: Icons.favorite_outline,
-            onClick: () =>
-                _launchUrl('https://github.com/LibreFitOrg/LibreFit'),
-          ),
-
-          const SizedBox(height: 16),
-          _buildSectionHeader(context, l10n.contact),
-          const SizedBox(height: 8),
-          _AboutItem(
-            text: l10n.reportBug,
-            description: l10n.reportBugDescription,
-            icon: Icons.bug_report_outlined,
-            onClick: () =>
-                _launchUrl('https://github.com/nzzrs/nexc/issues/new'),
-          ),
-          _AboutItem(
-            text: l10n.suggestFeature,
-            description: l10n.suggestFeatureDescription,
-            icon: Icons.lightbulb_outline,
-            onClick: () =>
-                _launchUrl('https://github.com/nzzrs/nexc/discussions'),
-          ),
-
-          const SizedBox(height: 32),
-          Center(
+          const SizedBox(height: NexcSpacing.xl),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: NexcSpacing.xl),
             child: Text(
               l10n.madeWithLove,
+              textAlign: TextAlign.center,
               style: theme.textTheme.bodySmall?.copyWith(
                 color: theme.colorScheme.onSurfaceVariant,
               ),
-              textAlign: TextAlign.center,
             ),
           ),
-          const SizedBox(height: 8),
         ],
-      ),
-    );
-  }
-
-  Widget _buildSectionHeader(BuildContext context, String text) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 4.0),
-      child: Text(
-        text,
-        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.bold,
-        ),
-      ),
-    );
-  }
-}
-
-class _AboutItem extends StatelessWidget {
-  final String text;
-  final String description;
-  final IconData icon;
-  final VoidCallback onClick;
-
-  const _AboutItem({
-    required this.text,
-    required this.description,
-    required this.icon,
-    required this.onClick,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4.0),
-      child: Card(
-        margin: EdgeInsets.zero,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16.0),
-        ),
-        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(16.0),
-          onTap: onClick,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(
-              horizontal: 16.0,
-              vertical: 12.0,
-            ),
-            child: Row(
-              children: [
-                Icon(icon, color: theme.colorScheme.onSurfaceVariant),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        text,
-                        style: theme.textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        description,
-                        style: theme.textTheme.bodyMedium?.copyWith(
-                          color: theme.colorScheme.onSurfaceVariant,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Icon(
-                  Icons.chevron_right,
-                  color: theme.colorScheme.onSurfaceVariant.withValues(
-                    alpha: 0.5,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
       ),
     );
   }

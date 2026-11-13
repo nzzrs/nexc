@@ -16,6 +16,27 @@ import '../../core/db/meal_repository.dart';
 import '../../core/db/relations.dart';
 import '../../core/providers/profile_providers.dart';
 import '../../core/providers/settings_provider.dart';
+import '../../core/util/unit_system.dart';
+
+
+/// Converts a volume chart point from kilograms to the selected unit.
+///
+/// Duration and reps points are unaffected, and metric points are returned
+/// untouched so canonical values never drift.
+Point convertChartPointToUnit(
+  Point point,
+  WorkoutChart mode,
+  UnitSystem system,
+) {
+  if (mode != WorkoutChart.volume || system == UnitSystem.metric) {
+    return point;
+  }
+  return Point(
+    yValues: point.yValues.map((value) => fromKilograms(value, system)).toList(),
+    xValue: point.xValue,
+    workoutId: point.workoutId,
+  );
+}
 
 
 class ProfileScreen extends ConsumerStatefulWidget {
@@ -153,10 +174,17 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
             final suffix = chartMode == WorkoutChart.duration
                 ? "m"
                 : chartMode == WorkoutChart.volume
-                    ? "kg"
+                    ? settings.unitSystem.suffix
                     : "";
+            final displayPoints = points
+                .map((point) => convertChartPointToUnit(
+                      point,
+                      chartMode,
+                      settings.unitSystem,
+                    ))
+                .toList();
             return NexcCartesianChart(
-              points: points,
+              points: displayPoints,
               decimalCount: decimalCount,
               suffix: suffix,
               chartMode: chartMode,

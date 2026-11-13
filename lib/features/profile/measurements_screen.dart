@@ -15,9 +15,21 @@ import '../../core/db/app_database.dart';
 import '../../core/db/measurement_repository.dart';
 import '../../core/providers/profile_providers.dart';
 import '../../core/providers/settings_provider.dart';
+import '../../core/util/unit_system.dart';
 import '../../core/components/nexc_scaffold.dart';
 
 import 'log_measurement_screen.dart';
+
+/// Converts body-weight chart spots stored in kilograms to [system].
+///
+/// Metric spots are returned untouched; imperial spots are converted for
+/// rendering so the chart axis and tooltips share the selected unit.
+List<FlSpot> convertWeightSpots(List<FlSpot> spots, UnitSystem system) {
+  if (system == UnitSystem.metric) return spots;
+  return spots
+      .map((spot) => FlSpot(spot.x, fromKilograms(spot.y, system)))
+      .toList();
+}
 
 String formatDoubleHours(double hours) {
   final totalMinutes = (hours * 60).round();
@@ -53,12 +65,16 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
     List<BodyMeasurement> weightLogs,
     List<AdvancedBodyMeasurement> advBodyLogs,
     bool enableAdvanced,
+    UnitSystem unitSystem,
   ) {
-    // Weight spots
+    // Weight spots, converted from canonical kilograms for display.
     final chronologicalWeight = weightLogs.reversed.toList();
-    final weightSpots = chronologicalWeight.asMap().entries.map((entry) {
-      return FlSpot(entry.key.toDouble(), entry.value.bodyWeight);
-    }).toList();
+    final weightSpots = convertWeightSpots(
+      chronologicalWeight.asMap().entries.map((entry) {
+        return FlSpot(entry.key.toDouble(), entry.value.bodyWeight);
+      }).toList(),
+      unitSystem,
+    );
 
     // Fat / Muscle / Waist spots if enabled
     List<FlSpot> fatSpots = [];
@@ -101,7 +117,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
       padding: const EdgeInsets.all(16.0),
       children: [
         if (weightSpots.length >= 2) ...[
-          _buildChartCard(theme, "Weight Progress", weightSpots, chronologicalWeight.map((l) => l.date).toList(), "kg"),
+          _buildChartCard(theme, "Weight Progress", weightSpots, chronologicalWeight.map((l) => l.date).toList(), unitSystem.suffix),
           const SizedBox(height: 16),
         ],
         if (enableAdvanced) ...[
@@ -136,7 +152,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                 margin: const EdgeInsets.only(bottom: 8),
                 child: ListTile(
                   title: Text(
-                    "Weight: ${log.bodyWeight} kg",
+                    "Weight: ${formatWeight(log.bodyWeight, unitSystem, suffix: unitSystem.suffix)}",
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text("Date: $dateStr"),
@@ -740,7 +756,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                 data: (weightLogs) => advBodyAsync.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (err, stack) => Center(child: Text("Error: $err")),
-                  data: (advBodyLogs) => _buildBodyTab(context, theme, weightLogs, advBodyLogs, true),
+                  data: (advBodyLogs) => _buildBodyTab(context, theme, weightLogs, advBodyLogs, true, settings.unitSystem),
                 ),
               );
             }),
@@ -782,7 +798,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                 data: (weightLogs) => advBodyAsync.when(
                   loading: () => const Center(child: CircularProgressIndicator()),
                   error: (err, stack) => Center(child: Text("Error: $err")),
-                  data: (advBodyLogs) => _buildBodyTab(context, theme, weightLogs, advBodyLogs, true),
+                  data: (advBodyLogs) => _buildBodyTab(context, theme, weightLogs, advBodyLogs, true, settings.unitSystem),
                 ),
               );
             } else if (type == 'sleep') {
@@ -969,7 +985,7 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Body weight - always visible
-              _buildField(_weightController, "Body Weight (kg)", Icons.scale),
+              _buildField(_weightController, "Body Weight (${settings.unitSystem.suffix})", Icons.scale),
               const SizedBox(height: 16),
 
               if (settings.enableAdvancedBody) ...[
@@ -1060,7 +1076,7 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
             final now = DateTime.now();
 
             // Save body weight if entered
-            final w = double.tryParse(_weightController.text) ?? 0.0;
+            final w = parseWeight(_weightController.text, settings.unitSystem) ?? 0.0;
             if (w > 0.0) {
               final newLog = BodyMeasurement(
                 id: Random().nextInt(1000000),

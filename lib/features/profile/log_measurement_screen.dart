@@ -13,6 +13,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/measurement_repository.dart';
 import '../../core/providers/settings_provider.dart';
+import '../../core/util/unit_system.dart';
 
 class LogMeasurementScreen extends ConsumerStatefulWidget {
   const LogMeasurementScreen({super.key});
@@ -148,7 +149,7 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
     final now = DateTime.now();
 
     // Save body weight if entered
-    final w = double.tryParse(_weightController.text) ?? 0.0;
+    final w = parseWeight(_weightController.text, settings.unitSystem) ?? 0.0;
     if (w > 0.0) {
       final newLog = BodyMeasurement(
         id: Random().nextInt(1000000),
@@ -262,7 +263,7 @@ class _LogMeasurementScreenState extends ConsumerState<LogMeasurementScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Body weight - always visible
-            _buildField(_weightController, "Body Weight (kg)", Icons.scale),
+            _buildField(_weightController, "Body Weight (${settings.unitSystem.suffix})", Icons.scale),
             const SizedBox(height: 16),
 
             if (settings.enableAdvancedBody) ...[

@@ -9,6 +9,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/util/unit_system.dart';
 import '../../core/util/workout_stats_helper.dart';
@@ -175,6 +176,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final title = widget.workoutData.workout.title;
     final duration = _formatDuration(widget.workoutData.workout.timeElapsed);
     final volume = _calculateTotalVolume();
@@ -184,7 +186,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Workout Summary'),
+        title: Text(l10n.workoutSummaryTitle),
         automaticallyImplyLeading: false,
         actions: [
           IconButton(
@@ -226,7 +228,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                   ),
                   const SizedBox(height: 16),
                   Text(
-                    'Workout Completed!',
+                    l10n.workoutCompleted,
                     textAlign: TextAlign.center,
                     style: theme.textTheme.headlineMedium?.copyWith(
                       fontWeight: FontWeight.bold,
@@ -254,7 +256,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                             child: Column(
                               children: [
                                 Text(
-                                  'Volume',
+                                  l10n.volumeLabel,
                                   style: theme.textTheme.labelMedium?.copyWith(
                                     color: theme.colorScheme.onPrimaryContainer,
                                   ),
@@ -289,7 +291,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                             child: Column(
                               children: [
                                 Text(
-                                  'Duration',
+                                  l10n.durationLabel,
                                   style: theme.textTheme.labelMedium?.copyWith(
                                     color:
                                         theme.colorScheme.onSecondaryContainer,
@@ -326,7 +328,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                         children: [
                           Expanded(
                             child: _SummaryStat(
-                              label: 'Sets Completed',
+                              label: l10n.setsCompletedLabel,
                               value: '$completedSets / $totalSets',
                               color: theme.colorScheme.onTertiaryContainer,
                             ),
@@ -334,7 +336,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                           const SizedBox(width: 8),
                           Expanded(
                             child: _SummaryStat(
-                              label: 'Hard Sets',
+                              label: l10n.hardSetsSummaryLabel,
                               value:
                                   '${WorkoutStatsHelper.countHardSets(widget.workoutData)}',
                               color: theme.colorScheme.onTertiaryContainer,
@@ -343,7 +345,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                           const SizedBox(width: 8),
                           Expanded(
                             child: _SummaryStat(
-                              label: 'Exercises',
+                              label: l10n.exercisesLabel,
                               value:
                                   '${widget.workoutData.exercisesWithSets.length}',
                               color: theme.colorScheme.onTertiaryContainer,
@@ -370,10 +372,10 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                           _SummaryBadge(
                             icon: Icons.speed,
                             iconColor: theme.colorScheme.primary,
-                            text:
-                                'Density: '
-                                '${fromKilograms(WorkoutStatsHelper.calculateWorkoutDensity(widget.workoutData), unitSystem).toStringAsFixed(1)} '
-                                '${unitSystem.suffix}/s',
+                            text: l10n.densityWithValue(
+                              '${fromKilograms(WorkoutStatsHelper.calculateWorkoutDensity(widget.workoutData), unitSystem).toStringAsFixed(1)} '
+                              '${unitSystem.suffix}/s',
+                            ),
                           ),
                           if (WorkoutStatsHelper.getPrimaryMuscleImpacted(
                                 widget.workoutData,
@@ -382,8 +384,11 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                             _SummaryBadge(
                               icon: Icons.fitness_center,
                               iconColor: theme.colorScheme.secondary,
-                              text:
-                                  'Focus: ${WorkoutStatsHelper.getPrimaryMuscleImpacted(widget.workoutData)!.name}',
+                              text: l10n.focusWithValue(
+                                WorkoutStatsHelper.getPrimaryMuscleImpacted(
+                                  widget.workoutData,
+                                )!.name,
+                              ),
                             ),
                         ],
                       ),
@@ -393,7 +398,7 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
 
                   // Detail Header
                   Text(
-                    'Exercise Breakdown',
+                    l10n.exerciseBreakdown,
                     style: theme.textTheme.titleMedium?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
@@ -439,9 +444,10 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                                       child: FittedBox(
                                         fit: BoxFit.scaleDown,
                                         child: Text(
-                                          'e1RM: '
-                                          '${fromKilograms(WorkoutStatsHelper.calculateExerciseEstimatedOneRepMax(ex), unitSystem).toStringAsFixed(1)} '
-                                          '${unitSystem.suffix}',
+                                          l10n.e1rmWithValue(
+                                            '${fromKilograms(WorkoutStatsHelper.calculateExerciseEstimatedOneRepMax(ex), unitSystem).toStringAsFixed(1)} '
+                                            '${unitSystem.suffix}',
+                                          ),
                                           maxLines: 1,
                                           style: theme.textTheme.labelSmall
                                               ?.copyWith(
@@ -459,9 +465,10 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Volume: '
-                              '${fromKilograms(WorkoutStatsHelper.calculateExerciseTonnage(ex), unitSystem).toStringAsFixed(0)} '
-                              '${unitSystem.suffix}',
+                              l10n.volumeWithValue(
+                                '${fromKilograms(WorkoutStatsHelper.calculateExerciseTonnage(ex), unitSystem).toStringAsFixed(0)} '
+                                '${unitSystem.suffix}',
+                              ),
                               style: theme.textTheme.bodySmall?.copyWith(
                                 color: theme.colorScheme.onSurfaceVariant,
                               ),
@@ -600,18 +607,16 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
                         ),
                       );
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Detailed summary copied to clipboard'),
-                        ),
+                        SnackBar(content: Text(l10n.detailedSummaryCopied)),
                       );
                     },
                     icon: const Icon(Icons.copy),
-                    label: const Text('Copy to Clipboard'),
+                    label: Text(l10n.copyToClipboard),
                   ),
                   const SizedBox(height: 12),
                   OutlinedButton(
                     onPressed: () => Navigator.pop(context),
-                    child: const Text('Close'),
+                    child: Text(l10n.close),
                   ),
                   const SizedBox(height: 32),
                 ],

@@ -19,6 +19,7 @@ import 'package:drift/drift.dart' show Value;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:permission_handler/permission_handler.dart';
 import '../../core/db/enums.dart';
+import '../../core/l10n/l10n.dart';
 import 'workout_summary_screen.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/workout_repository.dart';
@@ -40,19 +41,18 @@ Future<bool> showUpdateRoutineDialog(BuildContext context) async {
     context: context,
     barrierDismissible: true,
     builder: (context) {
+      final l10n = context.l10n;
       return AlertDialog(
-        title: const Text('Update routine?'),
-        content: const Text(
-          'Copy the values of the completed sets into your routine?',
-        ),
+        title: Text(l10n.updateRoutineTitle),
+        content: Text(l10n.updateRoutineMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text("Don't update"),
+            child: Text(l10n.dontUpdate),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Update'),
+            child: Text(l10n.update),
           ),
         ],
       );
@@ -124,10 +124,11 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
   }
 
   Future<void> _updateWorkoutForegroundService() async {
+    final l10n = context.l10n;
     final androidDetails = AndroidNotificationDetails(
       'workout_session_channel',
-      'Active Workout',
-      channelDescription: 'Keeps workout stopwatch running in background',
+      l10n.activeWorkoutChannel,
+      channelDescription: l10n.activeWorkoutChannelDesc,
       importance: Importance.low,
       priority: Priority.low,
       showWhen: false,
@@ -141,8 +142,8 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
           >()
           ?.startForegroundService(
             id: 888,
-            title: 'Workout in Progress',
-            body: 'Duration: ${_formatTime(_elapsedSeconds)}',
+            title: l10n.workoutInProgress,
+            body: l10n.durationWithTime(_formatTime(_elapsedSeconds)),
             notificationDetails: androidDetails,
           );
     } catch (_) {}
@@ -178,11 +179,12 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
   }
 
   Future<void> _updateRestNotification(int remaining, int initial) async {
+    final l10n = context.l10n;
     final elapsed = initial - remaining;
     final androidDetails = AndroidNotificationDetails(
       'rest_timer_channel',
-      'Rest Timer',
-      channelDescription: 'Notifications for active rest timer',
+      l10n.restTimerChannel,
+      channelDescription: l10n.restTimerChannelDesc,
       importance: Importance.low,
       priority: Priority.low,
       showWhen: false,
@@ -195,8 +197,8 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
     final notificationDetails = NotificationDetails(android: androidDetails);
     await _notificationsPlugin.show(
       id: 999,
-      title: 'Resting...',
-      body: '$remaining seconds remaining',
+      title: l10n.resting,
+      body: l10n.secondsRemaining(remaining),
       notificationDetails: notificationDetails,
     );
   }
@@ -206,19 +208,20 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
   }
 
   Future<void> _showRestFinishedNotification() async {
-    const androidDetails = AndroidNotificationDetails(
+    final l10n = context.l10n;
+    final androidDetails = AndroidNotificationDetails(
       'rest_timer_channel_finished',
-      'Rest Timer Finished',
-      channelDescription: 'Notifications when rest timer is done',
+      l10n.restTimerFinishedChannel,
+      channelDescription: l10n.restTimerFinishedChannelDesc,
       importance: Importance.max,
       priority: Priority.high,
       playSound: false,
     );
-    const notificationDetails = NotificationDetails(android: androidDetails);
+    final notificationDetails = NotificationDetails(android: androidDetails);
     await _notificationsPlugin.show(
       id: 999,
-      title: 'Rest Finished',
-      body: 'Time to start your next set!',
+      title: l10n.restFinished,
+      body: l10n.restFinishedBody,
       notificationDetails: notificationDetails,
     );
   }
@@ -552,6 +555,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
 
     if (!mounted) return;
 
+    final l10n = context.l10n;
     final confirmed = await showDialog<String>(
       context: context,
       barrierDismissible: true,
@@ -573,7 +577,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          'Finish Workout?',
+                          l10n.finishWorkoutTitle,
                           style: theme.textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: theme.colorScheme.primary,
@@ -601,7 +605,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Duration: $timeStr',
+                              l10n.durationWithTime(timeStr),
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -626,7 +630,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
-                              'Completed: $completedSets/$totalSets sets',
+                              l10n.completedSetsRatio(completedSets, totalSets),
                               style: theme.textTheme.bodyLarge?.copyWith(
                                 fontWeight: FontWeight.w600,
                               ),
@@ -649,9 +653,11 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                               ),
                             ),
                             onPressed: () => Navigator.pop(context, 'discard'),
-                            child: const Text(
-                              'DISCARD',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                            child: Text(
+                              l10n.discardAction,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -667,9 +673,11 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                               ),
                             ),
                             onPressed: () => Navigator.pop(context, 'save'),
-                            child: const Text(
-                              'SAVE',
-                              style: TextStyle(fontWeight: FontWeight.bold),
+                            child: Text(
+                              l10n.saveAction,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ),
@@ -829,6 +837,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final settings = ref.watch(settingsProvider);
 
     ref.listen<bool>(settingsProvider.select((s) => s.workoutScreenOn), (
@@ -868,7 +877,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Sets: $completedSets/$totalSets',
+                  l10n.setsRatio(completedSets, totalSets),
                   style: theme.textTheme.bodyMedium?.copyWith(
                     color: theme.colorScheme.onPrimaryContainer,
                   ),
@@ -920,7 +929,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       },
       child: Scaffold(
         appBar: AppBar(
-          title: const Text('Workout'),
+          title: Text(l10n.tabWorkout),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: handlePop,
@@ -934,19 +943,17 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                     : theme.disabledColor,
               ),
               tooltip: settings.aiWorkoutGenerationEnabled
-                  ? "AI Workout Creator"
-                  : "AI Workout Creator (Disabled in Settings)",
+                  ? l10n.aiWorkoutCreator
+                  : l10n.aiWorkoutCreatorDisabled,
               onPressed: () {
                 if (settings.aiWorkoutGenerationEnabled) {
                   Navigator.pushNamed(context, '/workout/ai-chat');
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text(
-                        'AI workout generation is disabled in Settings.',
-                      ),
+                      content: Text(l10n.aiWorkoutGenerationDisabled),
                       action: SnackBarAction(
-                        label: 'Settings',
+                        label: l10n.settingsTitle,
                         onPressed: () =>
                             Navigator.pushNamed(context, '/settings'),
                       ),
@@ -959,8 +966,8 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
               IconButton(
                 icon: Icon(_isReordering ? Icons.check : Icons.swap_vert),
                 tooltip: _isReordering
-                    ? "Done Reordering"
-                    : "Reorder Exercises",
+                    ? l10n.doneReordering
+                    : l10n.reorderExercises,
                 onPressed: () {
                   setState(() {
                     _isReordering = !_isReordering;
@@ -969,9 +976,9 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
               ),
               TextButton(
                 onPressed: _finishWorkout,
-                child: const Text(
-                  'DONE',
-                  style: TextStyle(fontWeight: FontWeight.bold),
+                child: Text(
+                  l10n.doneAction,
+                  style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),
             ],
@@ -980,11 +987,11 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
         body: Stack(
           children: [
             _exercises.isEmpty
-                ? const Center(
+                ? Center(
                     child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 60.0),
+                      padding: const EdgeInsets.symmetric(vertical: 60.0),
                       child: Text(
-                        'Your workout is empty. Tap Add Exercise below.',
+                        l10n.emptyWorkoutHint,
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -1336,7 +1343,9 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
                               content: Text(
-                                'Pushed "${eWs.exerciseDC.name}" for later',
+                                l10n.pushedExerciseForLater(
+                                  eWs.exerciseDC.name,
+                                ),
                               ),
                             ),
                           );
@@ -1449,7 +1458,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                           _restSecondsRemaining = 0;
                           _initialRestTime = 0;
                         });
-                        showFloatingToast(context, 'Timer canceled');
+                        showFloatingToast(context, l10n.timerCanceled);
                       },
                     ),
                   ],
@@ -1473,7 +1482,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
                       }
                     },
                     icon: const Icon(Icons.add),
-                    label: const Text('Add exercise'),
+                    label: Text(l10n.addExercise),
                   ),
                 ],
               ),
@@ -1610,7 +1619,7 @@ class _RestTimerPanelState extends State<_RestTimerPanel>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'REST',
+                      context.l10n.restTimerBadge,
                       style: theme.textTheme.labelSmall?.copyWith(
                         fontSize: 10,
                         letterSpacing: 1.0,

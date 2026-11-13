@@ -11,21 +11,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/dataset_repository.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/settings_provider.dart';
 
 class InfoExerciseScreen extends ConsumerStatefulWidget {
   final String exerciseId;
 
-  const InfoExerciseScreen({
-    super.key,
-    required this.exerciseId,
-  });
+  const InfoExerciseScreen({super.key, required this.exerciseId});
 
   @override
   ConsumerState<InfoExerciseScreen> createState() => _InfoExerciseScreenState();
 }
 
-class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with SingleTickerProviderStateMixin {
+class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen>
+    with SingleTickerProviderStateMixin {
   bool _isLoading = true;
   ExerciseDataDC? _exercise;
   int _currentImageIndex = 0;
@@ -66,7 +65,8 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
       if (!ref.read(settingsProvider).showExerciseImages) return;
       if (_exercise != null && _exercise!.images.isNotEmpty && mounted) {
         setState(() {
-          _currentImageIndex = (_currentImageIndex + 1) % _exercise!.images.length;
+          _currentImageIndex =
+              (_currentImageIndex + 1) % _exercise!.images.length;
         });
       }
     });
@@ -84,7 +84,12 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
     return val.replaceAll('_', ' ').toUpperCase();
   }
 
-  Widget _buildDetailChip(String label, String value, IconData icon, ColorScheme colors) {
+  Widget _buildDetailChip(
+    String label,
+    String value,
+    IconData icon,
+    ColorScheme colors,
+  ) {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
@@ -128,22 +133,21 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final colors = theme.colorScheme;
     final showImages = ref.watch(
       settingsProvider.select((s) => s.showExerciseImages),
     );
 
     if (_isLoading || _exercise == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final ex = _exercise!;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Exercise Details'),
+        title: Text(l10n.exerciseDetails),
         backgroundColor: colors.surfaceContainerLow,
         elevation: 0,
       ),
@@ -153,9 +157,7 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
           Container(
             width: double.infinity,
             height: 250,
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerLow,
-            ),
+            decoration: BoxDecoration(color: colors.surfaceContainerLow),
             child: Stack(
               alignment: Alignment.center,
               children: [
@@ -191,7 +193,9 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
                             width: _currentImageIndex == idx ? 12.0 : 8.0,
                             height: 8.0,
                             decoration: BoxDecoration(
-                              color: _currentImageIndex == idx ? colors.primary : colors.primary.withValues(alpha: 0.3),
+                              color: _currentImageIndex == idx
+                                  ? colors.primary
+                                  : colors.primary.withValues(alpha: 0.3),
                               borderRadius: BorderRadius.circular(4.0),
                             ),
                           );
@@ -211,7 +215,10 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
           ),
           // Exercise Name below the image
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 16.0),
+            padding: const EdgeInsets.symmetric(
+              horizontal: 20.0,
+              vertical: 16.0,
+            ),
             child: Text(
               ex.name,
               textAlign: TextAlign.center,
@@ -230,14 +237,14 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
               unselectedLabelColor: colors.onSurfaceVariant,
               indicatorColor: colors.primary,
               indicatorSize: TabBarIndicatorSize.tab,
-              tabs: const [
+              tabs: [
                 Tab(
-                  icon: Icon(Icons.info_outline),
-                  text: 'Details',
+                  icon: const Icon(Icons.info_outline),
+                  text: l10n.detailsTab,
                 ),
                 Tab(
-                  icon: Icon(Icons.list_alt),
-                  text: 'Instructions',
+                  icon: const Icon(Icons.list_alt),
+                  text: l10n.instructionsTab,
                 ),
               ],
             ),
@@ -254,20 +261,47 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
                   ListView(
                     padding: const EdgeInsets.all(16.0),
                     children: [
-                      _buildDetailChip('Category', _formatEnum(ex.category.name), Icons.category_outlined, colors),
+                      _buildDetailChip(
+                        l10n.categoryLabel,
+                        _formatEnum(ex.category.name),
+                        Icons.category_outlined,
+                        colors,
+                      ),
                       const SizedBox(height: 8),
-                      _buildDetailChip('Equipment', _formatEnum(ex.equipment?.name), Icons.construction_outlined, colors),
+                      _buildDetailChip(
+                        l10n.equipmentLabel,
+                        _formatEnum(ex.equipment?.name),
+                        Icons.construction_outlined,
+                        colors,
+                      ),
                       const SizedBox(height: 8),
-                      _buildDetailChip('Level', _formatEnum(ex.level.name), Icons.speed_outlined, colors),
+                      _buildDetailChip(
+                        l10n.levelLabel,
+                        _formatEnum(ex.level.name),
+                        Icons.speed_outlined,
+                        colors,
+                      ),
                       const SizedBox(height: 8),
-                      _buildDetailChip('Force', _formatEnum(ex.force?.name), Icons.flash_on_outlined, colors),
+                      _buildDetailChip(
+                        l10n.forceLabel,
+                        _formatEnum(ex.force?.name),
+                        Icons.flash_on_outlined,
+                        colors,
+                      ),
                       const SizedBox(height: 8),
-                      _buildDetailChip('Mechanic', _formatEnum(ex.mechanic?.name), Icons.settings_accessibility_outlined, colors),
+                      _buildDetailChip(
+                        l10n.mechanicLabel,
+                        _formatEnum(ex.mechanic?.name),
+                        Icons.settings_accessibility_outlined,
+                        colors,
+                      ),
                       const SizedBox(height: 16),
                       if (ex.primaryMuscles.isNotEmpty) ...[
                         Text(
-                          'Primary Muscles Worked',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          l10n.primaryMusclesWorked,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Wrap(
@@ -276,8 +310,12 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
                           children: ex.primaryMuscles.map((muscle) {
                             return Chip(
                               label: Text(_formatEnum(muscle.name)),
-                              backgroundColor: colors.primaryContainer.withValues(alpha: 0.5),
-                              labelStyle: TextStyle(color: colors.onPrimaryContainer, fontWeight: FontWeight.w600),
+                              backgroundColor: colors.primaryContainer
+                                  .withValues(alpha: 0.5),
+                              labelStyle: TextStyle(
+                                color: colors.onPrimaryContainer,
+                                fontWeight: FontWeight.w600,
+                              ),
                             );
                           }).toList(),
                         ),
@@ -285,8 +323,10 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
                       ],
                       if (ex.secondaryMuscles.isNotEmpty) ...[
                         Text(
-                          'Secondary Muscles Worked',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          l10n.secondaryMusclesWorked,
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 8),
                         Wrap(
@@ -295,8 +335,12 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
                           children: ex.secondaryMuscles.map((muscle) {
                             return Chip(
                               label: Text(_formatEnum(muscle.name)),
-                              backgroundColor: colors.secondaryContainer.withValues(alpha: 0.5),
-                              labelStyle: TextStyle(color: colors.onSecondaryContainer, fontWeight: FontWeight.w600),
+                              backgroundColor: colors.secondaryContainer
+                                  .withValues(alpha: 0.5),
+                              labelStyle: TextStyle(
+                                color: colors.onSecondaryContainer,
+                                fontWeight: FontWeight.w600,
+                              ),
                             );
                           }).toList(),
                         ),

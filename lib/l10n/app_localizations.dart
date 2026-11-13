@@ -1299,6 +1299,828 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'× {count}'**
   String plateCount(int count);
+
+  /// No description provided for @updateRoutineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Update routine?'**
+  String get updateRoutineTitle;
+
+  /// No description provided for @updateRoutineMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy the values of the completed sets into your routine?'**
+  String get updateRoutineMessage;
+
+  /// No description provided for @dontUpdate.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t update'**
+  String get dontUpdate;
+
+  /// No description provided for @update.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get update;
+
+  /// No description provided for @activeWorkoutChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Workout'**
+  String get activeWorkoutChannel;
+
+  /// No description provided for @activeWorkoutChannelDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Keeps workout stopwatch running in background'**
+  String get activeWorkoutChannelDesc;
+
+  /// No description provided for @workoutInProgress.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout in Progress'**
+  String get workoutInProgress;
+
+  /// No description provided for @durationWithTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration: {time}'**
+  String durationWithTime(String time);
+
+  /// No description provided for @restTimerChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest Timer'**
+  String get restTimerChannel;
+
+  /// No description provided for @restTimerChannelDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications for active rest timer'**
+  String get restTimerChannelDesc;
+
+  /// No description provided for @resting.
+  ///
+  /// In en, this message translates to:
+  /// **'Resting...'**
+  String get resting;
+
+  /// No description provided for @secondsRemaining.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} seconds remaining'**
+  String secondsRemaining(int count);
+
+  /// No description provided for @restTimerFinishedChannel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest Timer Finished'**
+  String get restTimerFinishedChannel;
+
+  /// No description provided for @restTimerFinishedChannelDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications when rest timer is done'**
+  String get restTimerFinishedChannelDesc;
+
+  /// No description provided for @restFinished.
+  ///
+  /// In en, this message translates to:
+  /// **'Rest Finished'**
+  String get restFinished;
+
+  /// No description provided for @restFinishedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Time to start your next set!'**
+  String get restFinishedBody;
+
+  /// No description provided for @finishWorkoutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Finish Workout?'**
+  String get finishWorkoutTitle;
+
+  /// No description provided for @completedSetsRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed: {completed}/{total} sets'**
+  String completedSetsRatio(int completed, int total);
+
+  /// No description provided for @saveAction.
+  ///
+  /// In en, this message translates to:
+  /// **'SAVE'**
+  String get saveAction;
+
+  /// No description provided for @setsRatio.
+  ///
+  /// In en, this message translates to:
+  /// **'Sets: {completed}/{total}'**
+  String setsRatio(int completed, int total);
+
+  /// No description provided for @doneAction.
+  ///
+  /// In en, this message translates to:
+  /// **'DONE'**
+  String get doneAction;
+
+  /// No description provided for @emptyWorkoutHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Your workout is empty. Tap Add Exercise below.'**
+  String get emptyWorkoutHint;
+
+  /// No description provided for @doneReordering.
+  ///
+  /// In en, this message translates to:
+  /// **'Done Reordering'**
+  String get doneReordering;
+
+  /// No description provided for @reorderExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'Reorder Exercises'**
+  String get reorderExercises;
+
+  /// No description provided for @pushedExerciseForLater.
+  ///
+  /// In en, this message translates to:
+  /// **'Pushed \"{name}\" for later'**
+  String pushedExerciseForLater(String name);
+
+  /// No description provided for @timerCanceled.
+  ///
+  /// In en, this message translates to:
+  /// **'Timer canceled'**
+  String get timerCanceled;
+
+  /// No description provided for @addExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'Add exercise'**
+  String get addExercise;
+
+  /// No description provided for @restTimerBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'REST'**
+  String get restTimerBadge;
+
+  /// No description provided for @workoutSummaryTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout Summary'**
+  String get workoutSummaryTitle;
+
+  /// No description provided for @workoutCompleted.
+  ///
+  /// In en, this message translates to:
+  /// **'Workout Completed!'**
+  String get workoutCompleted;
+
+  /// No description provided for @volumeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume'**
+  String get volumeLabel;
+
+  /// No description provided for @durationLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration'**
+  String get durationLabel;
+
+  /// No description provided for @setsCompletedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Sets Completed'**
+  String get setsCompletedLabel;
+
+  /// No description provided for @hardSetsSummaryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hard Sets'**
+  String get hardSetsSummaryLabel;
+
+  /// No description provided for @exercisesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercises'**
+  String get exercisesLabel;
+
+  /// No description provided for @densityWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Density: {value}'**
+  String densityWithValue(String value);
+
+  /// No description provided for @focusWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Focus: {value}'**
+  String focusWithValue(String value);
+
+  /// No description provided for @exerciseBreakdown.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise Breakdown'**
+  String get exerciseBreakdown;
+
+  /// No description provided for @e1rmWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'e1RM: {value}'**
+  String e1rmWithValue(String value);
+
+  /// No description provided for @volumeWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Volume: {value}'**
+  String volumeWithValue(String value);
+
+  /// No description provided for @detailedSummaryCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Detailed summary copied to clipboard'**
+  String get detailedSummaryCopied;
+
+  /// No description provided for @copyToClipboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy to Clipboard'**
+  String get copyToClipboard;
+
+  /// No description provided for @deleteRoutineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Routine?'**
+  String get deleteRoutineTitle;
+
+  /// No description provided for @deleteWorkoutTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Workout?'**
+  String get deleteWorkoutTitle;
+
+  /// No description provided for @deleteRoutineMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this routine? This action cannot be undone.'**
+  String get deleteRoutineMessage;
+
+  /// No description provided for @deleteWorkoutMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to delete this workout? This action cannot be undone.'**
+  String get deleteWorkoutMessage;
+
+  /// No description provided for @unlinkRoutineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink Routine?'**
+  String get unlinkRoutineTitle;
+
+  /// No description provided for @unlinkRoutineMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to unlink this workout from its routine?'**
+  String get unlinkRoutineMessage;
+
+  /// No description provided for @unlink.
+  ///
+  /// In en, this message translates to:
+  /// **'Unlink'**
+  String get unlink;
+
+  /// No description provided for @routineLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Routine'**
+  String get routineLabel;
+
+  /// No description provided for @durationMinutes.
+  ///
+  /// In en, this message translates to:
+  /// **'Duration: {minutes} min'**
+  String durationMinutes(int minutes);
+
+  /// No description provided for @createdWithDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Created: {date}'**
+  String createdWithDate(String date);
+
+  /// No description provided for @completedWithDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed: {date}'**
+  String completedWithDate(String date);
+
+  /// No description provided for @exercisesWithCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercises: {count}'**
+  String exercisesWithCount(int count);
+
+  /// No description provided for @totalSetsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Total sets: {count}'**
+  String totalSetsCount(int count);
+
+  /// No description provided for @completedSetsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed sets: {count}'**
+  String completedSetsCount(int count);
+
+  /// No description provided for @linkedRoutine.
+  ///
+  /// In en, this message translates to:
+  /// **'Linked routine'**
+  String get linkedRoutine;
+
+  /// No description provided for @openThisRoutine.
+  ///
+  /// In en, this message translates to:
+  /// **'Open this routine'**
+  String get openThisRoutine;
+
+  /// No description provided for @performance.
+  ///
+  /// In en, this message translates to:
+  /// **'Performance'**
+  String get performance;
+
+  /// No description provided for @tonnageLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Tonnage'**
+  String get tonnageLabel;
+
+  /// No description provided for @densityLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Density'**
+  String get densityLabel;
+
+  /// No description provided for @hardSetsMetricLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hard sets'**
+  String get hardSetsMetricLabel;
+
+  /// No description provided for @primaryMuscleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary muscle'**
+  String get primaryMuscleLabel;
+
+  /// No description provided for @bestE1rmLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Best e1RM'**
+  String get bestE1rmLabel;
+
+  /// No description provided for @setNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Set {number}'**
+  String setNumber(int number);
+
+  /// No description provided for @repsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} reps'**
+  String repsCount(int count);
+
+  /// No description provided for @rpeWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'  (RPE {value})'**
+  String rpeWithValue(String value);
+
+  /// No description provided for @rirWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'  (RIR {value})'**
+  String rirWithValue(String value);
+
+  /// No description provided for @routineSavedToRoutines.
+  ///
+  /// In en, this message translates to:
+  /// **'Routine \"{title}\" saved to your routines!'**
+  String routineSavedToRoutines(String title);
+
+  /// No description provided for @view.
+  ///
+  /// In en, this message translates to:
+  /// **'View'**
+  String get view;
+
+  /// No description provided for @failedToSaveRoutine.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save routine: {error}'**
+  String failedToSaveRoutine(String error);
+
+  /// No description provided for @aiPreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'AI Preferences'**
+  String get aiPreferences;
+
+  /// No description provided for @aiGenerationTurnedOff.
+  ///
+  /// In en, this message translates to:
+  /// **'AI assisted workout generation is turned off in Settings.'**
+  String get aiGenerationTurnedOff;
+
+  /// No description provided for @enableAction.
+  ///
+  /// In en, this message translates to:
+  /// **'ENABLE'**
+  String get enableAction;
+
+  /// No description provided for @exercisesWithList.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Exercises: {list}'**
+  String exercisesWithList(int count, String list);
+
+  /// No description provided for @routineSaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Routine Saved'**
+  String get routineSaved;
+
+  /// No description provided for @saveAsRoutine.
+  ///
+  /// In en, this message translates to:
+  /// **'Save as Routine'**
+  String get saveAsRoutine;
+
+  /// No description provided for @aiCoachThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'AI coach is thinking...'**
+  String get aiCoachThinking;
+
+  /// No description provided for @askOrCreateWorkout.
+  ///
+  /// In en, this message translates to:
+  /// **'Ask or create a workout...'**
+  String get askOrCreateWorkout;
+
+  /// No description provided for @aiGenerationDisabledHint.
+  ///
+  /// In en, this message translates to:
+  /// **'AI generation disabled in Settings'**
+  String get aiGenerationDisabledHint;
+
+  /// No description provided for @addExercisesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Exercises'**
+  String get addExercisesTitle;
+
+  /// No description provided for @replaceExerciseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Replace Exercise'**
+  String get replaceExerciseTitle;
+
+  /// No description provided for @selectExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Exercise'**
+  String get selectExercise;
+
+  /// No description provided for @addCount.
+  ///
+  /// In en, this message translates to:
+  /// **'ADD ({count})'**
+  String addCount(int count);
+
+  /// No description provided for @searchExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'Search exercise...'**
+  String get searchExercise;
+
+  /// No description provided for @levelLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Level'**
+  String get levelLabel;
+
+  /// No description provided for @levelWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Level: {value}'**
+  String levelWithValue(String value);
+
+  /// No description provided for @selectLevel.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Level'**
+  String get selectLevel;
+
+  /// No description provided for @forceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Force'**
+  String get forceLabel;
+
+  /// No description provided for @forceWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Force: {value}'**
+  String forceWithValue(String value);
+
+  /// No description provided for @selectForce.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Force'**
+  String get selectForce;
+
+  /// No description provided for @mechanicLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Mechanic'**
+  String get mechanicLabel;
+
+  /// No description provided for @mechanicWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Mechanic: {value}'**
+  String mechanicWithValue(String value);
+
+  /// No description provided for @selectMechanic.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Mechanic'**
+  String get selectMechanic;
+
+  /// No description provided for @equipmentLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Equipment'**
+  String get equipmentLabel;
+
+  /// No description provided for @equipmentWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Equipment: {value}'**
+  String equipmentWithValue(String value);
+
+  /// No description provided for @selectEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Equipment'**
+  String get selectEquipment;
+
+  /// No description provided for @muscleLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Muscle'**
+  String get muscleLabel;
+
+  /// No description provided for @muscleWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Muscle: {value}'**
+  String muscleWithValue(String value);
+
+  /// No description provided for @selectMuscle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Muscle'**
+  String get selectMuscle;
+
+  /// No description provided for @categoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Category'**
+  String get categoryLabel;
+
+  /// No description provided for @categoryWithValue.
+  ///
+  /// In en, this message translates to:
+  /// **'Category: {value}'**
+  String categoryWithValue(String value);
+
+  /// No description provided for @selectCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Category'**
+  String get selectCategory;
+
+  /// No description provided for @customOnly.
+  ///
+  /// In en, this message translates to:
+  /// **'Custom Only'**
+  String get customOnly;
+
+  /// No description provided for @reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
+
+  /// No description provided for @errorWithMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Error: {error}'**
+  String errorWithMessage(String error);
+
+  /// No description provided for @noExercisesFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No exercises found'**
+  String get noExercisesFound;
+
+  /// No description provided for @createExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Exercise'**
+  String get createExercise;
+
+  /// No description provided for @createWithAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Create with AI'**
+  String get createWithAi;
+
+  /// No description provided for @aiMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'AI MATCH'**
+  String get aiMatch;
+
+  /// No description provided for @exerciseSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'{category} • {equipment} • {muscles}'**
+  String exerciseSubtitle(String category, String equipment, String muscles);
+
+  /// No description provided for @noEquipment.
+  ///
+  /// In en, this message translates to:
+  /// **'No Equipment'**
+  String get noEquipment;
+
+  /// No description provided for @aiSuggestions.
+  ///
+  /// In en, this message translates to:
+  /// **'AI SUGGESTIONS (SIMILAR MUSCLES)'**
+  String get aiSuggestions;
+
+  /// No description provided for @allExercises.
+  ///
+  /// In en, this message translates to:
+  /// **'ALL EXERCISES'**
+  String get allExercises;
+
+  /// No description provided for @all.
+  ///
+  /// In en, this message translates to:
+  /// **'All'**
+  String get all;
+
+  /// No description provided for @createCustomExercise.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Custom Exercise'**
+  String get createCustomExercise;
+
+  /// No description provided for @exerciseName.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise Name'**
+  String get exerciseName;
+
+  /// No description provided for @primaryMuscleField.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary Muscle'**
+  String get primaryMuscleField;
+
+  /// No description provided for @cancelAction.
+  ///
+  /// In en, this message translates to:
+  /// **'CANCEL'**
+  String get cancelAction;
+
+  /// No description provided for @describeExerciseHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe exercise (e.g. Dumbbell rear delt fly on incline bench)'**
+  String get describeExerciseHint;
+
+  /// No description provided for @generateAction.
+  ///
+  /// In en, this message translates to:
+  /// **'GENERATE'**
+  String get generateAction;
+
+  /// No description provided for @generatingExerciseWithAi.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating exercise with AI...'**
+  String get generatingExerciseWithAi;
+
+  /// No description provided for @exerciseDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Exercise Details'**
+  String get exerciseDetails;
+
+  /// No description provided for @detailsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Details'**
+  String get detailsTab;
+
+  /// No description provided for @instructionsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Instructions'**
+  String get instructionsTab;
+
+  /// No description provided for @primaryMusclesWorked.
+  ///
+  /// In en, this message translates to:
+  /// **'Primary Muscles Worked'**
+  String get primaryMusclesWorked;
+
+  /// No description provided for @secondaryMusclesWorked.
+  ///
+  /// In en, this message translates to:
+  /// **'Secondary Muscles Worked'**
+  String get secondaryMusclesWorked;
+
+  /// No description provided for @discardChangesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Discard Changes?'**
+  String get discardChangesTitle;
+
+  /// No description provided for @discardChangesMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Do you want to discard your changes or save them?'**
+  String get discardChangesMessage;
+
+  /// No description provided for @enterRoutineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a routine title'**
+  String get enterRoutineTitle;
+
+  /// No description provided for @createRoutineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Routine'**
+  String get createRoutineTitle;
+
+  /// No description provided for @editRoutineTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Routine'**
+  String get editRoutineTitle;
+
+  /// No description provided for @routineTitleField.
+  ///
+  /// In en, this message translates to:
+  /// **'Routine title'**
+  String get routineTitleField;
+
+  /// No description provided for @routineNotesField.
+  ///
+  /// In en, this message translates to:
+  /// **'Routine notes'**
+  String get routineNotesField;
+
+  /// No description provided for @noExercisesAdded.
+  ///
+  /// In en, this message translates to:
+  /// **'No exercises added yet. Tap Add Exercise below.'**
+  String get noExercisesAdded;
+
+  /// No description provided for @addExerciseTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Exercise'**
+  String get addExerciseTitle;
+
+  /// No description provided for @discardAction.
+  ///
+  /// In en, this message translates to:
+  /// **'DISCARD'**
+  String get discardAction;
 }
 
 class _AppLocalizationsDelegate

@@ -18,6 +18,7 @@ import '../../core/db/meal_repository.dart';
 import '../../core/db/measurement_repository.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/util/exercise_set_mode_helper.dart';
 import '../../core/util/workout_stats_helper.dart';
 import '../../core/util/unit_system.dart';
@@ -307,11 +308,12 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
         _savedProposalMessageIndices.add(messageIndex);
       });
 
+      final l10n = context.l10n;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Routine "${proposal.title}" saved to your routines!'),
+          content: Text(l10n.routineSavedToRoutines(proposal.title)),
           action: SnackBarAction(
-            label: 'View',
+            label: l10n.view,
             onPressed: () {
               Navigator.pushNamed(
                 context,
@@ -324,9 +326,9 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
       );
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('Failed to save routine: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(context.l10n.failedToSaveRoutine('$e'))),
+      );
     }
   }
 
@@ -500,16 +502,17 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final settings = ref.watch(settingsProvider);
     final isAiEnabled = settings.aiWorkoutGenerationEnabled;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('AI Workout Creator'),
+        title: Text(l10n.aiWorkoutCreator),
         actions: [
           IconButton(
             icon: const Icon(Icons.settings_outlined),
-            tooltip: 'AI Preferences',
+            tooltip: l10n.aiPreferences,
             onPressed: () {
               Navigator.pushNamed(context, '/settings');
             },
@@ -533,7 +536,7 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
                   const SizedBox(width: 10),
                   Expanded(
                     child: Text(
-                      'AI assisted workout generation is turned off in Settings.',
+                      l10n.aiGenerationTurnedOff,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onErrorContainer,
                         fontWeight: FontWeight.bold,
@@ -543,7 +546,7 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
                   TextButton(
                     onPressed: () => Navigator.pushNamed(context, '/settings'),
                     child: Text(
-                      'ENABLE',
+                      l10n.enableAction,
                       style: TextStyle(
                         color: theme.colorScheme.onErrorContainer,
                         fontWeight: FontWeight.bold,
@@ -640,7 +643,15 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
                                 ),
                                 const SizedBox(height: 6),
                                 Text(
-                                  '${proposal.exercises.length} Exercises: ${proposal.exercises.map((e) => '${e.name} (${e.sets}x${e.reps})').join(', ')}',
+                                  l10n.exercisesWithList(
+                                    proposal.exercises.length,
+                                    proposal.exercises
+                                        .map(
+                                          (e) =>
+                                              '${e.name} (${e.sets}x${e.reps})',
+                                        )
+                                        .join(', '),
+                                  ),
                                   style: theme.textTheme.bodySmall?.copyWith(
                                     color: theme.colorScheme.onSurfaceVariant,
                                   ),
@@ -669,8 +680,8 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
                                   ),
                                   label: Text(
                                     isProposalSaved
-                                        ? 'Routine Saved'
-                                        : 'Save as Routine',
+                                        ? l10n.routineSaved
+                                        : l10n.saveAsRoutine,
                                   ),
                                 ),
                               ],
@@ -697,7 +708,7 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
                   ),
                   const SizedBox(width: 12),
                   Text(
-                    'AI coach is thinking...',
+                    l10n.aiCoachThinking,
                     style: theme.textTheme.bodySmall?.copyWith(
                       color: theme.colorScheme.onSurfaceVariant,
                       fontStyle: FontStyle.italic,
@@ -725,8 +736,8 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
                       enabled: isAiEnabled && !_isLoading,
                       decoration: InputDecoration(
                         hintText: isAiEnabled
-                            ? 'Ask or create a workout...'
-                            : 'AI generation disabled in Settings',
+                            ? l10n.askOrCreateWorkout
+                            : l10n.aiGenerationDisabledHint,
                         border: const OutlineInputBorder(
                           borderRadius: BorderRadius.all(Radius.circular(24)),
                         ),

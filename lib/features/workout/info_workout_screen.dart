@@ -15,6 +15,7 @@ import '../../core/db/relations.dart';
 import '../../core/db/workout_repository.dart';
 import '../../core/db/measurement_repository.dart';
 import '../../core/components/nexc_scaffold.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/profile_providers.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/util/unit_system.dart';
@@ -167,27 +168,28 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
 
   Future<void> _deleteWorkout() async {
     if (_workoutData == null) return;
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: Text(
           _workoutData!.workout.state == WorkoutState.ROUTINE
-              ? 'Delete Routine?'
-              : 'Delete Workout?',
+              ? l10n.deleteRoutineTitle
+              : l10n.deleteWorkoutTitle,
         ),
         content: Text(
           _workoutData!.workout.state == WorkoutState.ROUTINE
-              ? 'Are you sure you want to delete this routine? This action cannot be undone.'
-              : 'Are you sure you want to delete this workout? This action cannot be undone.',
+              ? l10n.deleteRoutineMessage
+              : l10n.deleteWorkoutMessage,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete', style: TextStyle(color: Colors.red)),
+            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
           ),
         ],
       ),
@@ -204,21 +206,20 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
 
   Future<void> _unlinkRoutine() async {
     if (_workoutData == null) return;
+    final l10n = context.l10n;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Unlink Routine?'),
-        content: const Text(
-          'Are you sure you want to unlink this workout from its routine?',
-        ),
+        title: Text(l10n.unlinkRoutineTitle),
+        content: Text(l10n.unlinkRoutineMessage),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(l10n.cancel),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Unlink'),
+            child: Text(l10n.unlink),
           ),
         ],
       ),
@@ -240,6 +241,7 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
     }
 
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final unitSystem = ref.watch(settingsProvider.select((s) => s.unitSystem));
     final workout = _workoutData!.workout;
     final isRoutine = workout.state == WorkoutState.ROUTINE;
@@ -257,7 +259,7 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
     );
 
     return NexcScaffold(
-      title: Text(isRoutine ? 'Routine' : 'Workout'),
+      title: Text(isRoutine ? l10n.routineLabel : l10n.tabWorkout),
       navigateBack: () => Navigator.pop(context),
       actions: [
         () {
@@ -295,27 +297,32 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
                     ),
                     const Divider(height: 24),
                     if (!isRoutine) ...[
-                      Text('Duration: ${(workout.timeElapsed ~/ 60)} min'),
+                      Text(l10n.durationMinutes(workout.timeElapsed ~/ 60)),
                       const SizedBox(height: 8),
                     ],
                     Text(
-                      isRoutine ? 'Created: $dateStr' : 'Completed: $dateStr',
+                      isRoutine
+                          ? l10n.createdWithDate(dateStr)
+                          : l10n.completedWithDate(dateStr),
                     ),
                     const Divider(height: 24),
                     Text(
-                      'Exercises: ${_workoutData!.exercisesWithSets.length}',
+                      l10n.exercisesWithCount(
+                        _workoutData!.exercisesWithSets.length,
+                      ),
                     ),
                     const SizedBox(height: 8),
-                    Text('Total sets: $totalSets'),
+                    Text(l10n.totalSetsCount(totalSets)),
                     if (!isRoutine) ...[
                       const SizedBox(height: 8),
-                      Text('Completed sets: $completedSets'),
+                      Text(l10n.completedSetsCount(completedSets)),
                     ],
                     const SizedBox(height: 8),
                     Text(
-                      'Volume: '
-                      '${fromKilograms(_volume, unitSystem).toStringAsFixed(2)} '
-                      '${unitSystem.suffix}',
+                      l10n.volumeWithValue(
+                        '${fromKilograms(_volume, unitSystem).toStringAsFixed(2)} '
+                        '${unitSystem.suffix}',
+                      ),
                     ),
                   ],
                 ),
@@ -344,7 +351,7 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
                           const Icon(Icons.info_outline),
                           const SizedBox(width: 8),
                           Text(
-                            'Notes',
+                            l10n.notes,
                             style: theme.textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -404,7 +411,7 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
               Padding(
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Text(
-                  'Linked routine',
+                  l10n.linkedRoutine,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -433,7 +440,9 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
-                                  'Created: ${_linkedRoutineData!.workout.created.month}/${_linkedRoutineData!.workout.created.day}/${_linkedRoutineData!.workout.created.year}',
+                                  l10n.createdWithDate(
+                                    '${_linkedRoutineData!.workout.created.month}/${_linkedRoutineData!.workout.created.day}/${_linkedRoutineData!.workout.created.year}',
+                                  ),
                                 ),
                               ],
                             ),
@@ -462,7 +471,7 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
                             ).then((_) => _loadData());
                           },
                           icon: const Icon(Icons.open_in_new),
-                          label: const Text('Open this routine'),
+                          label: Text(l10n.openThisRoutine),
                         ),
                       ),
                     ],
@@ -474,7 +483,7 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
             Padding(
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Text(
-                'Exercises',
+                l10n.exercisesLabel,
                 style: theme.textTheme.titleMedium?.copyWith(
                   fontWeight: FontWeight.bold,
                 ),
@@ -511,6 +520,7 @@ class _PerformanceCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final tonnage = WorkoutStatsHelper.calculateWorkoutTonnage(workoutData);
     final density = WorkoutStatsHelper.calculateWorkoutDensity(workoutData);
     final hardSets = WorkoutStatsHelper.countHardSets(workoutData);
@@ -522,14 +532,14 @@ class _PerformanceCard extends StatelessWidget {
     final metrics = <Widget>[
       _PerformanceMetric(
         icon: Icons.scale_outlined,
-        label: 'Tonnage',
+        label: l10n.tonnageLabel,
         value:
             '${fromKilograms(tonnage, unitSystem).toStringAsFixed(0)} '
             '${unitSystem.suffix}',
       ),
       _PerformanceMetric(
         icon: Icons.speed_outlined,
-        label: 'Density',
+        label: l10n.densityLabel,
         value: density > 0
             ? '${fromKilograms(density, unitSystem).toStringAsFixed(2)} '
                   '${unitSystem.suffix}/s'
@@ -537,19 +547,19 @@ class _PerformanceCard extends StatelessWidget {
       ),
       _PerformanceMetric(
         icon: Icons.local_fire_department_outlined,
-        label: 'Hard sets',
+        label: l10n.hardSetsMetricLabel,
         value: '$hardSets',
       ),
       if (primaryMuscle != null)
         _PerformanceMetric(
           icon: Icons.fitness_center_outlined,
-          label: 'Primary muscle',
+          label: l10n.primaryMuscleLabel,
           value: _humanizeMuscleName(primaryMuscle.name),
         ),
       if (bestOneRm != null)
         _PerformanceMetric(
           icon: Icons.trending_up_outlined,
-          label: 'Best e1RM',
+          label: l10n.bestE1rmLabel,
           value:
               '${bestOneRm.exerciseName} · '
               '${fromKilograms(bestOneRm.estimatedOneRepMax, unitSystem).toStringAsFixed(1)} '
@@ -569,7 +579,7 @@ class _PerformanceCard extends StatelessWidget {
                 const Icon(Icons.insights_outlined),
                 const SizedBox(width: 8),
                 Text(
-                  'Performance',
+                  l10n.performance,
                   style: theme.textTheme.titleMedium?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
@@ -673,6 +683,7 @@ class _ReadOnlyExerciseCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final dc = exe.exerciseDC;
     final sets = exe.sets;
 
@@ -698,7 +709,7 @@ class _ReadOnlyExerciseCard extends StatelessWidget {
                 child: Row(
                   children: [
                     Text(
-                      'Set ${idx + 1}',
+                      l10n.setNumber(idx + 1),
                       style: const TextStyle(fontWeight: FontWeight.w500),
                     ),
                     const Spacer(),
@@ -712,10 +723,10 @@ class _ReadOnlyExerciseCard extends StatelessWidget {
                         Text(
                           '${formatWeight(set.load, unitSystem, suffix: unitSystem.suffix)}  x  ',
                         ),
-                      Text('${set.reps} reps'),
+                      Text(l10n.repsCount(set.reps)),
                     ],
-                    if (set.rpe != null) Text('  (RPE ${set.rpe})'),
-                    if (set.rir != null) Text('  (RIR ${set.rir})'),
+                    if (set.rpe != null) Text(l10n.rpeWithValue('${set.rpe}')),
+                    if (set.rir != null) Text(l10n.rirWithValue('${set.rir}')),
                     if (!isRoutine) ...[
                       const SizedBox(width: 12),
                       Icon(

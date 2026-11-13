@@ -634,4 +634,488 @@ class AppLocalizationsPl extends AppLocalizations {
   String plateCount(int count) {
     return '× $count';
   }
+
+  @override
+  String get updateRoutineTitle => 'Update routine?';
+
+  @override
+  String get updateRoutineMessage =>
+      'Copy the values of the completed sets into your routine?';
+
+  @override
+  String get dontUpdate => 'Don\'t update';
+
+  @override
+  String get update => 'Update';
+
+  @override
+  String get activeWorkoutChannel => 'Active Workout';
+
+  @override
+  String get activeWorkoutChannelDesc =>
+      'Keeps workout stopwatch running in background';
+
+  @override
+  String get workoutInProgress => 'Workout in Progress';
+
+  @override
+  String durationWithTime(String time) {
+    return 'Duration: $time';
+  }
+
+  @override
+  String get restTimerChannel => 'Rest Timer';
+
+  @override
+  String get restTimerChannelDesc => 'Notifications for active rest timer';
+
+  @override
+  String get resting => 'Resting...';
+
+  @override
+  String secondsRemaining(int count) {
+    return '$count seconds remaining';
+  }
+
+  @override
+  String get restTimerFinishedChannel => 'Rest Timer Finished';
+
+  @override
+  String get restTimerFinishedChannelDesc =>
+      'Notifications when rest timer is done';
+
+  @override
+  String get restFinished => 'Rest Finished';
+
+  @override
+  String get restFinishedBody => 'Time to start your next set!';
+
+  @override
+  String get finishWorkoutTitle => 'Finish Workout?';
+
+  @override
+  String completedSetsRatio(int completed, int total) {
+    return 'Completed: $completed/$total sets';
+  }
+
+  @override
+  String get saveAction => 'SAVE';
+
+  @override
+  String setsRatio(int completed, int total) {
+    return 'Sets: $completed/$total';
+  }
+
+  @override
+  String get doneAction => 'DONE';
+
+  @override
+  String get emptyWorkoutHint =>
+      'Your workout is empty. Tap Add Exercise below.';
+
+  @override
+  String get doneReordering => 'Done Reordering';
+
+  @override
+  String get reorderExercises => 'Reorder Exercises';
+
+  @override
+  String pushedExerciseForLater(String name) {
+    return 'Pushed \"$name\" for later';
+  }
+
+  @override
+  String get timerCanceled => 'Timer canceled';
+
+  @override
+  String get addExercise => 'Add exercise';
+
+  @override
+  String get restTimerBadge => 'REST';
+
+  @override
+  String get workoutSummaryTitle => 'Workout Summary';
+
+  @override
+  String get workoutCompleted => 'Workout Completed!';
+
+  @override
+  String get volumeLabel => 'Volume';
+
+  @override
+  String get durationLabel => 'Duration';
+
+  @override
+  String get setsCompletedLabel => 'Sets Completed';
+
+  @override
+  String get hardSetsSummaryLabel => 'Hard Sets';
+
+  @override
+  String get exercisesLabel => 'Exercises';
+
+  @override
+  String densityWithValue(String value) {
+    return 'Density: $value';
+  }
+
+  @override
+  String focusWithValue(String value) {
+    return 'Focus: $value';
+  }
+
+  @override
+  String get exerciseBreakdown => 'Exercise Breakdown';
+
+  @override
+  String e1rmWithValue(String value) {
+    return 'e1RM: $value';
+  }
+
+  @override
+  String volumeWithValue(String value) {
+    return 'Volume: $value';
+  }
+
+  @override
+  String get detailedSummaryCopied => 'Detailed summary copied to clipboard';
+
+  @override
+  String get copyToClipboard => 'Copy to Clipboard';
+
+  @override
+  String get deleteRoutineTitle => 'Delete Routine?';
+
+  @override
+  String get deleteWorkoutTitle => 'Delete Workout?';
+
+  @override
+  String get deleteRoutineMessage =>
+      'Are you sure you want to delete this routine? This action cannot be undone.';
+
+  @override
+  String get deleteWorkoutMessage =>
+      'Are you sure you want to delete this workout? This action cannot be undone.';
+
+  @override
+  String get unlinkRoutineTitle => 'Unlink Routine?';
+
+  @override
+  String get unlinkRoutineMessage =>
+      'Are you sure you want to unlink this workout from its routine?';
+
+  @override
+  String get unlink => 'Unlink';
+
+  @override
+  String get routineLabel => 'Routine';
+
+  @override
+  String durationMinutes(int minutes) {
+    return 'Duration: $minutes min';
+  }
+
+  @override
+  String createdWithDate(String date) {
+    return 'Created: $date';
+  }
+
+  @override
+  String completedWithDate(String date) {
+    return 'Completed: $date';
+  }
+
+  @override
+  String exercisesWithCount(int count) {
+    return 'Exercises: $count';
+  }
+
+  @override
+  String totalSetsCount(int count) {
+    return 'Total sets: $count';
+  }
+
+  @override
+  String completedSetsCount(int count) {
+    return 'Completed sets: $count';
+  }
+
+  @override
+  String get linkedRoutine => 'Linked routine';
+
+  @override
+  String get openThisRoutine => 'Open this routine';
+
+  @override
+  String get performance => 'Performance';
+
+  @override
+  String get tonnageLabel => 'Tonnage';
+
+  @override
+  String get densityLabel => 'Density';
+
+  @override
+  String get hardSetsMetricLabel => 'Hard sets';
+
+  @override
+  String get primaryMuscleLabel => 'Primary muscle';
+
+  @override
+  String get bestE1rmLabel => 'Best e1RM';
+
+  @override
+  String setNumber(int number) {
+    return 'Set $number';
+  }
+
+  @override
+  String repsCount(int count) {
+    return '$count reps';
+  }
+
+  @override
+  String rpeWithValue(String value) {
+    return '  (RPE $value)';
+  }
+
+  @override
+  String rirWithValue(String value) {
+    return '  (RIR $value)';
+  }
+
+  @override
+  String routineSavedToRoutines(String title) {
+    return 'Routine \"$title\" saved to your routines!';
+  }
+
+  @override
+  String get view => 'View';
+
+  @override
+  String failedToSaveRoutine(String error) {
+    return 'Failed to save routine: $error';
+  }
+
+  @override
+  String get aiPreferences => 'AI Preferences';
+
+  @override
+  String get aiGenerationTurnedOff =>
+      'AI assisted workout generation is turned off in Settings.';
+
+  @override
+  String get enableAction => 'ENABLE';
+
+  @override
+  String exercisesWithList(int count, String list) {
+    return '$count Exercises: $list';
+  }
+
+  @override
+  String get routineSaved => 'Routine Saved';
+
+  @override
+  String get saveAsRoutine => 'Save as Routine';
+
+  @override
+  String get aiCoachThinking => 'AI coach is thinking...';
+
+  @override
+  String get askOrCreateWorkout => 'Ask or create a workout...';
+
+  @override
+  String get aiGenerationDisabledHint => 'AI generation disabled in Settings';
+
+  @override
+  String get addExercisesTitle => 'Add Exercises';
+
+  @override
+  String get replaceExerciseTitle => 'Replace Exercise';
+
+  @override
+  String get selectExercise => 'Select Exercise';
+
+  @override
+  String addCount(int count) {
+    return 'ADD ($count)';
+  }
+
+  @override
+  String get searchExercise => 'Search exercise...';
+
+  @override
+  String get levelLabel => 'Level';
+
+  @override
+  String levelWithValue(String value) {
+    return 'Level: $value';
+  }
+
+  @override
+  String get selectLevel => 'Select Level';
+
+  @override
+  String get forceLabel => 'Force';
+
+  @override
+  String forceWithValue(String value) {
+    return 'Force: $value';
+  }
+
+  @override
+  String get selectForce => 'Select Force';
+
+  @override
+  String get mechanicLabel => 'Mechanic';
+
+  @override
+  String mechanicWithValue(String value) {
+    return 'Mechanic: $value';
+  }
+
+  @override
+  String get selectMechanic => 'Select Mechanic';
+
+  @override
+  String get equipmentLabel => 'Equipment';
+
+  @override
+  String equipmentWithValue(String value) {
+    return 'Equipment: $value';
+  }
+
+  @override
+  String get selectEquipment => 'Select Equipment';
+
+  @override
+  String get muscleLabel => 'Muscle';
+
+  @override
+  String muscleWithValue(String value) {
+    return 'Muscle: $value';
+  }
+
+  @override
+  String get selectMuscle => 'Select Muscle';
+
+  @override
+  String get categoryLabel => 'Category';
+
+  @override
+  String categoryWithValue(String value) {
+    return 'Category: $value';
+  }
+
+  @override
+  String get selectCategory => 'Select Category';
+
+  @override
+  String get customOnly => 'Custom Only';
+
+  @override
+  String get reset => 'Reset';
+
+  @override
+  String errorWithMessage(String error) {
+    return 'Error: $error';
+  }
+
+  @override
+  String get noExercisesFound => 'No exercises found';
+
+  @override
+  String get createExercise => 'Create Exercise';
+
+  @override
+  String get createWithAi => 'Create with AI';
+
+  @override
+  String get aiMatch => 'AI MATCH';
+
+  @override
+  String exerciseSubtitle(String category, String equipment, String muscles) {
+    return '$category • $equipment • $muscles';
+  }
+
+  @override
+  String get noEquipment => 'No Equipment';
+
+  @override
+  String get aiSuggestions => 'AI SUGGESTIONS (SIMILAR MUSCLES)';
+
+  @override
+  String get allExercises => 'ALL EXERCISES';
+
+  @override
+  String get all => 'All';
+
+  @override
+  String get createCustomExercise => 'Create Custom Exercise';
+
+  @override
+  String get exerciseName => 'Exercise Name';
+
+  @override
+  String get primaryMuscleField => 'Primary Muscle';
+
+  @override
+  String get cancelAction => 'CANCEL';
+
+  @override
+  String get describeExerciseHint =>
+      'Describe exercise (e.g. Dumbbell rear delt fly on incline bench)';
+
+  @override
+  String get generateAction => 'GENERATE';
+
+  @override
+  String get generatingExerciseWithAi => 'Generating exercise with AI...';
+
+  @override
+  String get exerciseDetails => 'Exercise Details';
+
+  @override
+  String get detailsTab => 'Details';
+
+  @override
+  String get instructionsTab => 'Instructions';
+
+  @override
+  String get primaryMusclesWorked => 'Primary Muscles Worked';
+
+  @override
+  String get secondaryMusclesWorked => 'Secondary Muscles Worked';
+
+  @override
+  String get discardChangesTitle => 'Discard Changes?';
+
+  @override
+  String get discardChangesMessage =>
+      'Do you want to discard your changes or save them?';
+
+  @override
+  String get enterRoutineTitle => 'Please enter a routine title';
+
+  @override
+  String get createRoutineTitle => 'Create Routine';
+
+  @override
+  String get editRoutineTitle => 'Edit Routine';
+
+  @override
+  String get routineTitleField => 'Routine title';
+
+  @override
+  String get routineNotesField => 'Routine notes';
+
+  @override
+  String get noExercisesAdded =>
+      'No exercises added yet. Tap Add Exercise below.';
+
+  @override
+  String get addExerciseTitle => 'Add Exercise';
+
+  @override
+  String get discardAction => 'DISCARD';
 }

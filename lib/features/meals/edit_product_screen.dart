@@ -18,11 +18,7 @@ class EditProductScreen extends ConsumerStatefulWidget {
   final Product product;
   final FutureOr<void> Function(Product)? onConfirm;
 
-  const EditProductScreen({
-    super.key,
-    required this.product,
-    this.onConfirm,
-  });
+  const EditProductScreen({super.key, required this.product, this.onConfirm});
 
   @override
   ConsumerState<EditProductScreen> createState() => _EditProductScreenState();
@@ -52,16 +48,39 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
     _nameController = TextEditingController(text: widget.product.name);
     _selectedDefaultUnit = widget.product.defaultUnits ?? "g";
     _ediblePercentController = TextEditingController(
-        text: widget.product.edibleQtyPerUnit != null ? (widget.product.edibleQtyPerUnit! * 100.0).toStringAsFixed(0) : "100");
-    _proteinsController = TextEditingController(text: widget.product.proteins == 0.0 ? "" : widget.product.proteins.toString());
-    _carbsController = TextEditingController(text: widget.product.carbsAvailable == null ? "" : widget.product.carbsAvailable.toString());
-    _fatsController = TextEditingController(text: widget.product.fats == 0.0 ? "" : widget.product.fats.toString());
-    
-    _kcalController = TextEditingController(text: widget.product.kcal?.toString() ?? "");
-    _dietaryFiberController = TextEditingController(text: widget.product.dietaryFiber?.toString() ?? "");
-    _carbsByDifferenceController = TextEditingController(text: widget.product.carbsByDifference?.toString() ?? "");
-    _mlToGFactorController = TextEditingController(text: widget.product.mlToGFactor?.toString() ?? "");
-    _unitWeightController = TextEditingController(text: widget.product.unitWeight?.toString() ?? "");
+      text: widget.product.edibleQtyPerUnit != null
+          ? (widget.product.edibleQtyPerUnit! * 100.0).toStringAsFixed(0)
+          : "100",
+    );
+    _proteinsController = TextEditingController(
+      text: widget.product.proteins == 0.0
+          ? ""
+          : widget.product.proteins.toString(),
+    );
+    _carbsController = TextEditingController(
+      text: widget.product.carbsAvailable == null
+          ? ""
+          : widget.product.carbsAvailable.toString(),
+    );
+    _fatsController = TextEditingController(
+      text: widget.product.fats == 0.0 ? "" : widget.product.fats.toString(),
+    );
+
+    _kcalController = TextEditingController(
+      text: widget.product.kcal?.toString() ?? "",
+    );
+    _dietaryFiberController = TextEditingController(
+      text: widget.product.dietaryFiber?.toString() ?? "",
+    );
+    _carbsByDifferenceController = TextEditingController(
+      text: widget.product.carbsByDifference?.toString() ?? "",
+    );
+    _mlToGFactorController = TextEditingController(
+      text: widget.product.mlToGFactor?.toString() ?? "",
+    );
+    _unitWeightController = TextEditingController(
+      text: widget.product.unitWeight?.toString() ?? "",
+    );
     _isSupplement = widget.product.isSupplement;
     _isPortable = widget.product.isPortable;
     _isStockRaw = widget.product.isStockRaw;
@@ -84,32 +103,58 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
 
   Future<void> _submit() async {
     final name = _nameController.text.trim();
-    if (name.isNotEmpty) {
-      final ediblePct = double.tryParse(_ediblePercentController.text) ?? 100.0;
-      final newProduct = Product(
-        id: widget.product.id,
-        name: name,
-        defaultUnits: _selectedDefaultUnit,
-        edibleQtyPerUnit: ediblePct / 100.0,
-        kcal: double.tryParse(_kcalController.text),
-        proteins: double.tryParse(_proteinsController.text) ?? 0.0,
-        carbsAvailable: double.tryParse(_carbsController.text),
-        carbsByDifference: double.tryParse(_carbsByDifferenceController.text),
-        dietaryFiber: double.tryParse(_dietaryFiberController.text),
-        fats: double.tryParse(_fatsController.text) ?? 0.0,
-        mlToGFactor: int.tryParse(_mlToGFactorController.text),
-        unitWeight: int.tryParse(_unitWeightController.text),
-        isSupplement: _isSupplement,
-        isPortable: _isPortable,
-        isStockRaw: _isStockRaw,
+    if (name.isEmpty) return;
+
+    final mlToGFactor = int.tryParse(_mlToGFactorController.text.trim());
+    final unitWeight = int.tryParse(_unitWeightController.text.trim());
+
+    // Units and millilitres are only usable when their equivalence is known.
+    if (_selectedDefaultUnit == 'ml' &&
+        (mlToGFactor == null || mlToGFactor <= 0)) {
+      _showValidationMessage(
+        'Add a positive "ml to g factor" so portions measured in ml can be converted to grams.',
       );
-      if (widget.onConfirm != null) {
-        await widget.onConfirm!(newProduct);
-      }
-      if (mounted) {
-        Navigator.pop(context, newProduct);
-      }
+      return;
     }
+    if (_selectedDefaultUnit == 'unit' &&
+        (unitWeight == null || unitWeight <= 0)) {
+      _showValidationMessage(
+        'Add a positive "Unit weight (g)" so portions measured in units can be converted to grams.',
+      );
+      return;
+    }
+
+    final ediblePct = double.tryParse(_ediblePercentController.text) ?? 100.0;
+    final newProduct = Product(
+      id: widget.product.id,
+      name: name,
+      defaultUnits: _selectedDefaultUnit,
+      edibleQtyPerUnit: ediblePct / 100.0,
+      kcal: double.tryParse(_kcalController.text),
+      proteins: double.tryParse(_proteinsController.text) ?? 0.0,
+      carbsAvailable: double.tryParse(_carbsController.text),
+      carbsByDifference: double.tryParse(_carbsByDifferenceController.text),
+      dietaryFiber: double.tryParse(_dietaryFiberController.text),
+      fats: double.tryParse(_fatsController.text) ?? 0.0,
+      mlToGFactor: mlToGFactor,
+      unitWeight: unitWeight,
+      isSupplement: _isSupplement,
+      isPortable: _isPortable,
+      isStockRaw: _isStockRaw,
+    );
+    if (widget.onConfirm != null) {
+      await widget.onConfirm!(newProduct);
+    }
+    if (mounted) {
+      Navigator.pop(context, newProduct);
+    }
+  }
+
+  void _showValidationMessage(String message) {
+    if (!mounted) return;
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
   }
 
   @override
@@ -122,10 +167,7 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
-          IconButton(
-            icon: const Icon(Icons.check),
-            onPressed: _submit,
-          ),
+          IconButton(icon: const Icon(Icons.check), onPressed: _submit),
         ],
       ),
       body: SingleChildScrollView(
@@ -159,7 +201,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                             final name = _nameController.text.trim();
                             if (name.isEmpty) {
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text("Enter a product name first")),
+                                const SnackBar(
+                                  content: Text("Enter a product name first"),
+                                ),
                               );
                               return;
                             }
@@ -175,40 +219,72 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                                 productName: name,
                               );
                               final isEdit = widget.product.id != 0;
-                              if (!isEdit || _nameController.text.trim().isEmpty) {
+                              if (!isEdit ||
+                                  _nameController.text.trim().isEmpty) {
                                 _nameController.text = details.name;
                               }
-                              if (!isEdit || _kcalController.text.trim().isEmpty) {
-                                _kcalController.text = details.kcal.toStringAsFixed(0);
+                              if (!isEdit ||
+                                  _kcalController.text.trim().isEmpty) {
+                                _kcalController.text = details.kcal
+                                    .toStringAsFixed(0);
                               }
-                              if (!isEdit || _proteinsController.text.trim().isEmpty) {
-                                _proteinsController.text = details.proteins.toStringAsFixed(1);
+                              if (!isEdit ||
+                                  _proteinsController.text.trim().isEmpty) {
+                                _proteinsController.text = details.proteins
+                                    .toStringAsFixed(1);
                               }
-                              if (!isEdit || _carbsController.text.trim().isEmpty) {
-                                _carbsController.text = details.carbsAvailable.toStringAsFixed(1);
+                              if (!isEdit ||
+                                  _carbsController.text.trim().isEmpty) {
+                                _carbsController.text = details.carbsAvailable
+                                    .toStringAsFixed(1);
                               }
-                              if (!isEdit || _carbsByDifferenceController.text.trim().isEmpty) {
-                                _carbsByDifferenceController.text = details.carbsByDifference.toStringAsFixed(1);
+                              if (!isEdit ||
+                                  _carbsByDifferenceController.text
+                                      .trim()
+                                      .isEmpty) {
+                                _carbsByDifferenceController.text = details
+                                    .carbsByDifference
+                                    .toStringAsFixed(1);
                               }
-                              if (!isEdit || _dietaryFiberController.text.trim().isEmpty) {
-                                _dietaryFiberController.text = details.dietaryFiber.toStringAsFixed(1);
+                              if (!isEdit ||
+                                  _dietaryFiberController.text.trim().isEmpty) {
+                                _dietaryFiberController.text = details
+                                    .dietaryFiber
+                                    .toStringAsFixed(1);
                               }
-                              if (!isEdit || _fatsController.text.trim().isEmpty) {
-                                _fatsController.text = details.fats.toStringAsFixed(1);
+                              if (!isEdit ||
+                                  _fatsController.text.trim().isEmpty) {
+                                _fatsController.text = details.fats
+                                    .toStringAsFixed(1);
                               }
-                              if (!isEdit || _unitWeightController.text.trim().isEmpty) {
-                                _unitWeightController.text = details.unitWeight?.toString() ?? "";
+                              if (!isEdit ||
+                                  _unitWeightController.text.trim().isEmpty) {
+                                _unitWeightController.text =
+                                    details.unitWeight?.toString() ?? "";
                               }
-                              if (!isEdit || _mlToGFactorController.text.trim().isEmpty) {
-                                _mlToGFactorController.text = details.mlToGFactor?.toString() ?? "";
+                              if (!isEdit ||
+                                  _mlToGFactorController.text.trim().isEmpty) {
+                                _mlToGFactorController.text =
+                                    details.mlToGFactor?.toString() ?? "";
                               }
-                              if (!isEdit || _ediblePercentController.text.trim().isEmpty || _ediblePercentController.text == "100") {
+                              if (!isEdit ||
+                                  _ediblePercentController.text
+                                      .trim()
+                                      .isEmpty ||
+                                  _ediblePercentController.text == "100") {
                                 if (details.edibleQtyPerUnit != null) {
-                                  _ediblePercentController.text = (details.edibleQtyPerUnit! * 100.0).toStringAsFixed(0);
+                                  _ediblePercentController.text =
+                                      (details.edibleQtyPerUnit! * 100.0)
+                                          .toStringAsFixed(0);
                                 }
                               }
                               setState(() {
-                                _selectedDefaultUnit = ['g', 'ml', 'unit'].contains(details.defaultUnits)
+                                _selectedDefaultUnit =
+                                    [
+                                      'g',
+                                      'ml',
+                                      'unit',
+                                    ].contains(details.defaultUnits)
                                     ? details.defaultUnits
                                     : 'g';
                                 _isSupplement = details.isSupplement;
@@ -217,7 +293,11 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                               });
                               if (context.mounted) {
                                 ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(content: Text("Autofilled product details!")),
+                                  const SnackBar(
+                                    content: Text(
+                                      "Autofilled product details!",
+                                    ),
+                                  ),
                                 );
                               }
                             } catch (e) {
@@ -271,9 +351,14 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   child: TextField(
                     controller: _mlToGFactorController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "ml to g factor",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: _selectedDefaultUnit == 'ml'
+                          ? "ml to g factor *"
+                          : "ml to g factor",
+                      helperText: _selectedDefaultUnit == 'ml'
+                          ? 'Required for ml-based products'
+                          : null,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -282,9 +367,14 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                   child: TextField(
                     controller: _unitWeightController,
                     keyboardType: TextInputType.number,
-                    decoration: const InputDecoration(
-                      labelText: "Unit weight (g)",
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      labelText: _selectedDefaultUnit == 'unit'
+                          ? "Unit weight (g) *"
+                          : "Unit weight (g)",
+                      helperText: _selectedDefaultUnit == 'unit'
+                          ? 'Required for products measured in units'
+                          : null,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -296,7 +386,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 Expanded(
                   child: TextField(
                     controller: _ediblePercentController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       labelText: "Edible %",
                       border: OutlineInputBorder(),
@@ -318,7 +410,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 Expanded(
                   child: TextField(
                     controller: _kcalController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       labelText: "Calories (kcal)",
                       border: OutlineInputBorder(),
@@ -329,7 +423,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 Expanded(
                   child: TextField(
                     controller: _proteinsController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       labelText: "Proteins (g)",
                       border: OutlineInputBorder(),
@@ -344,7 +440,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 Expanded(
                   child: TextField(
                     controller: _carbsController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       labelText: "Carbs Available (g)",
                       border: OutlineInputBorder(),
@@ -355,7 +453,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 Expanded(
                   child: TextField(
                     controller: _carbsByDifferenceController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       labelText: "Carbs By Diff (g)",
                       border: OutlineInputBorder(),
@@ -370,7 +470,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 Expanded(
                   child: TextField(
                     controller: _fatsController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       labelText: "Fats (g)",
                       border: OutlineInputBorder(),
@@ -381,7 +483,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 Expanded(
                   child: TextField(
                     controller: _dietaryFiberController,
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                    ),
                     decoration: const InputDecoration(
                       labelText: "Dietary Fiber (g)",
                       border: OutlineInputBorder(),
@@ -395,7 +499,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               children: [
                 Expanded(
                   child: CheckboxListTile(
-                    title: const Text("Is Supplement", style: TextStyle(fontSize: 12)),
+                    title: const Text(
+                      "Is Supplement",
+                      style: TextStyle(fontSize: 12),
+                    ),
                     value: _isSupplement,
                     dense: true,
                     contentPadding: EdgeInsets.zero,
@@ -409,7 +516,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
                 ),
                 Expanded(
                   child: CheckboxListTile(
-                    title: const Text("Is Portable", style: TextStyle(fontSize: 12)),
+                    title: const Text(
+                      "Is Portable",
+                      style: TextStyle(fontSize: 12),
+                    ),
                     value: _isPortable,
                     dense: true,
                     contentPadding: EdgeInsets.zero,
@@ -427,7 +537,10 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               children: [
                 Expanded(
                   child: CheckboxListTile(
-                    title: const Text("Is Stock Raw", style: TextStyle(fontSize: 12)),
+                    title: const Text(
+                      "Is Stock Raw",
+                      style: TextStyle(fontSize: 12),
+                    ),
                     value: _isStockRaw,
                     dense: true,
                     contentPadding: EdgeInsets.zero,
@@ -448,7 +561,9 @@ class _EditProductScreenState extends ConsumerState<EditProductScreen> {
               height: 48,
               child: FilledButton.icon(
                 icon: const Icon(Icons.check),
-                label: Text(widget.product.id == 0 ? "Add Product" : "Save Changes"),
+                label: Text(
+                  widget.product.id == 0 ? "Add Product" : "Save Changes",
+                ),
                 onPressed: _submit,
               ),
             ),

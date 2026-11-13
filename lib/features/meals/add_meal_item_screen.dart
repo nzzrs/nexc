@@ -14,8 +14,9 @@ import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/providers/meals_providers.dart';
-import 'recipes_library_screen.dart';
+import '../../core/components/clearable_search_field.dart';
 import 'edit_product_screen.dart';
+import 'edit_recipe_screen.dart';
 
 class _SelectedItemConfig {
   final MealItemType type;
@@ -39,7 +40,13 @@ class AddMealItemScreen extends ConsumerStatefulWidget {
   final int? replaceItemId;
   final List<Product> products;
   final List<RecipeWithIngredients> recipes;
-  final void Function(MealItemType type, int targetId, double amount, AmountUnit amountUnit)? onConfirm;
+  final void Function(
+    MealItemType type,
+    int targetId,
+    double amount,
+    AmountUnit amountUnit,
+  )?
+  onConfirm;
 
   const AddMealItemScreen({
     super.key,
@@ -60,7 +67,9 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
   String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
   final Map<String, _SelectedItemConfig> _selectedItems = {};
-  final TextEditingController _amountController = TextEditingController(text: "100");
+  final TextEditingController _amountController = TextEditingController(
+    text: "100",
+  );
   AmountUnit _amountUnit = AmountUnit.GRAMS;
 
   @override
@@ -70,7 +79,7 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
     super.dispose();
   }
 
-  Future<void> _showAddEditProductDialog(Product product) async {
+  Future<void> _showAddEditProduct(Product product) async {
     final savedProduct = await Navigator.push<Product>(
       context,
       MaterialPageRoute(
@@ -95,25 +104,28 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
     }
   }
 
-  void _showAddEditRecipeDialog(RecipeWithIngredients recipe) {
-    showDialog(
-      context: context,
-      builder: (ctx) => AddEditRecipeDialog(
-        recipeWithIngredients: recipe,
-        products: widget.products,
-        onDismiss: () => Navigator.pop(ctx),
-        onConfirm: (updated) async {
-          final id = await ref.read(mealRepositoryProvider).saveRecipeWithIngredients(updated);
-          final key = 'recipe_$id';
-          setState(() {
-            _selectedItems[key] = _SelectedItemConfig(
-              type: MealItemType.RECIPE,
-              targetId: id,
-              name: updated.recipe.name,
-            );
-          });
-          if (ctx.mounted) Navigator.pop(ctx);
-        },
+  Future<void> _showAddEditRecipe(RecipeWithIngredients recipe) async {
+    await Navigator.push<RecipeWithIngredients>(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => EditRecipeScreen(
+          recipeWithIngredients: recipe,
+          products: widget.products,
+          onConfirm: (updated) async {
+            final id = await ref
+                .read(mealRepositoryProvider)
+                .saveRecipeWithIngredients(updated);
+            if (!mounted) return;
+            final key = 'recipe_$id';
+            setState(() {
+              _selectedItems[key] = _SelectedItemConfig(
+                type: MealItemType.RECIPE,
+                targetId: id,
+                name: updated.recipe.name,
+              );
+            });
+          },
+        ),
       ),
     );
   }
@@ -189,18 +201,24 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
     final filteredRecipes = _searchQuery.isEmpty
         ? widget.recipes
         : widget.recipes
-            .where((r) => r.recipe.name.toLowerCase().contains(_searchQuery.toLowerCase()))
-            .toList();
+              .where(
+                (r) => r.recipe.name.toLowerCase().contains(
+                  _searchQuery.toLowerCase(),
+                ),
+              )
+              .toList();
 
     final isAnySelected = _selectedItems.isNotEmpty;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.isReplace
-            ? "Replace Meal Item"
-            : _selectedItems.isEmpty
-                ? "Add Item to Meal"
-                : "Add Items (${_selectedItems.length} selected)"),
+        title: Text(
+          widget.isReplace
+              ? "Replace Meal Item"
+              : _selectedItems.isEmpty
+              ? "Add Item to Meal"
+              : "Add Items (${_selectedItems.length} selected)",
+        ),
       ),
       body: SafeArea(
         child: Column(
@@ -235,10 +253,12 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                   const Spacer(),
                   IconButton.filledTonal(
                     icon: const Icon(Icons.add),
-                    tooltip: _type == MealItemType.PRODUCT ? "Create Product" : "Create Recipe",
+                    tooltip: _type == MealItemType.PRODUCT
+                        ? "Create Product"
+                        : "Create Recipe",
                     onPressed: () {
                       if (_type == MealItemType.PRODUCT) {
-                        _showAddEditProductDialog(
+                        _showAddEditProduct(
                           Product(
                             id: 0,
                             name: _searchQuery,
@@ -254,9 +274,14 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                           ),
                         );
                       } else {
-                        _showAddEditRecipeDialog(
+                        _showAddEditRecipe(
                           RecipeWithIngredients(
-                            recipe: Recipe(id: 0, name: _searchQuery, instructions: "", isPortable: false),
+                            recipe: Recipe(
+                              id: 0,
+                              name: _searchQuery,
+                              instructions: "",
+                              isPortable: false,
+                            ),
                             ingredients: [],
                           ),
                         );
@@ -267,25 +292,15 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
               ),
             ),
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-              child: TextField(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 4.0,
+              ),
+              child: ClearableSearchField(
                 controller: _searchController,
-                decoration: InputDecoration(
-                  labelText: _type == MealItemType.PRODUCT ? "Search food or product..." : "Search recipes...",
-                  prefixIcon: const Icon(Icons.search),
-                  suffixIcon: _searchQuery.isNotEmpty
-                      ? IconButton(
-                          icon: const Icon(Icons.clear),
-                          onPressed: () {
-                            _searchController.clear();
-                            setState(() => _searchQuery = "");
-                          },
-                        )
-                      : null,
-                  border: const OutlineInputBorder(
-                    borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                  ),
-                ),
+                labelText: _type == MealItemType.PRODUCT
+                    ? "Search food or product..."
+                    : "Search recipes...",
                 onChanged: (val) => setState(() => _searchQuery = val),
               ),
             ),
@@ -318,88 +333,140 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
             Expanded(
               child: _type == MealItemType.PRODUCT
                   ? filteredProducts.isEmpty
-                      ? const Center(child: Text("No products found"))
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                          itemCount: filteredProducts.length,
-                          itemBuilder: (context, idx) {
-                            final p = filteredProducts[idx];
-                            final key = 'product_${p.id}';
-                            final isSelected = _selectedItems.containsKey(key);
-                            final inStock = inStockProductIds?.contains(p.id) ?? false;
+                        ? const Center(child: Text("No products found"))
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16.0,
+                              vertical: 4.0,
+                            ),
+                            itemCount: filteredProducts.length,
+                            itemBuilder: (context, idx) {
+                              final p = filteredProducts[idx];
+                              final key = 'product_${p.id}';
+                              final isSelected = _selectedItems.containsKey(
+                                key,
+                              );
+                              final inStock =
+                                  inStockProductIds?.contains(p.id) ?? false;
 
-                            return Card(
-                              elevation: isSelected ? 2 : 0,
-                              color: isSelected
-                                  ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
-                                  : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                              margin: const EdgeInsets.symmetric(vertical: 4.0),
-                              child: ListTile(
-                                leading: inStock
-                                    ? const Tooltip(
-                                        message: "In Stock",
-                                        child: Icon(Icons.inventory_2, color: Colors.green, size: 20),
-                                      )
-                                    : null,
-                                title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                subtitle: Text("${p.proteins}g P | ${p.carbs}g C | ${p.fats}g F"),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_outlined, size: 20),
-                                      tooltip: "Edit Product",
-                                      onPressed: () => _showAddEditProductDialog(p),
-                                    ),
-                                    if (isSelected)
-                                      const Icon(Icons.check_circle, color: Colors.green)
-                                    else
-                                      const Icon(Icons.circle_outlined, color: Colors.grey),
-                                  ],
+                              return Card(
+                                elevation: isSelected ? 2 : 0,
+                                color: isSelected
+                                    ? theme.colorScheme.primaryContainer
+                                          .withValues(alpha: 0.5)
+                                    : theme.colorScheme.surfaceContainerHighest
+                                          .withValues(alpha: 0.3),
+                                margin: const EdgeInsets.symmetric(
+                                  vertical: 4.0,
                                 ),
-                                onTap: () => _toggleProduct(p),
-                              ),
-                            );
-                          },
-                        )
+                                child: ListTile(
+                                  leading: inStock
+                                      ? const Tooltip(
+                                          message: "In Stock",
+                                          child: Icon(
+                                            Icons.inventory_2,
+                                            color: Colors.green,
+                                            size: 20,
+                                          ),
+                                        )
+                                      : null,
+                                  title: Text(
+                                    p.name,
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                  subtitle: Text(
+                                    "${p.proteins}g P | ${p.carbs}g C | ${p.fats}g F",
+                                  ),
+                                  trailing: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      IconButton(
+                                        icon: const Icon(
+                                          Icons.edit_outlined,
+                                          size: 20,
+                                        ),
+                                        tooltip: "Edit Product",
+                                        onPressed: () => _showAddEditProduct(p),
+                                      ),
+                                      if (isSelected)
+                                        const Icon(
+                                          Icons.check_circle,
+                                          color: Colors.green,
+                                        )
+                                      else
+                                        const Icon(
+                                          Icons.circle_outlined,
+                                          color: Colors.grey,
+                                        ),
+                                    ],
+                                  ),
+                                  onTap: () => _toggleProduct(p),
+                                ),
+                              );
+                            },
+                          )
                   : filteredRecipes.isEmpty
-                      ? const Center(child: Text("No recipes found"))
-                      : ListView.builder(
-                          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4.0),
-                          itemCount: filteredRecipes.length,
-                          itemBuilder: (context, idx) {
-                            final r = filteredRecipes[idx];
-                            final key = 'recipe_${r.recipe.id}';
-                            final isSelected = _selectedItems.containsKey(key);
+                  ? const Center(child: Text("No recipes found"))
+                  : ListView.builder(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 4.0,
+                      ),
+                      itemCount: filteredRecipes.length,
+                      itemBuilder: (context, idx) {
+                        final r = filteredRecipes[idx];
+                        final key = 'recipe_${r.recipe.id}';
+                        final isSelected = _selectedItems.containsKey(key);
 
-                            return Card(
-                              elevation: isSelected ? 2 : 0,
-                              color: isSelected
-                                  ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
-                                  : theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
-                              margin: const EdgeInsets.symmetric(vertical: 4.0),
-                              child: ListTile(
-                                title: Text(r.recipe.name, style: const TextStyle(fontWeight: FontWeight.w600)),
-                                subtitle: Text("${r.ingredients.length} ingredients"),
-                                trailing: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    IconButton(
-                                      icon: const Icon(Icons.edit_outlined, size: 20),
-                                      tooltip: "Edit Recipe",
-                                      onPressed: () => _showAddEditRecipeDialog(r),
-                                    ),
-                                    if (isSelected)
-                                      const Icon(Icons.check_circle, color: Colors.green)
-                                    else
-                                      const Icon(Icons.circle_outlined, color: Colors.grey),
-                                  ],
-                                ),
-                                onTap: () => _toggleRecipe(r),
+                        return Card(
+                          elevation: isSelected ? 2 : 0,
+                          color: isSelected
+                              ? theme.colorScheme.primaryContainer.withValues(
+                                  alpha: 0.5,
+                                )
+                              : theme.colorScheme.surfaceContainerHighest
+                                    .withValues(alpha: 0.3),
+                          margin: const EdgeInsets.symmetric(vertical: 4.0),
+                          child: ListTile(
+                            title: Text(
+                              r.recipe.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w600,
                               ),
-                            );
-                          },
-                        ),
+                            ),
+                            subtitle: Text(
+                              "${r.ingredients.length} ingredients",
+                            ),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit_outlined,
+                                    size: 20,
+                                  ),
+                                  tooltip: "Edit Recipe",
+                                  onPressed: () => _showAddEditRecipe(r),
+                                ),
+                                if (isSelected)
+                                  const Icon(
+                                    Icons.check_circle,
+                                    color: Colors.green,
+                                  )
+                                else
+                                  const Icon(
+                                    Icons.circle_outlined,
+                                    color: Colors.grey,
+                                  ),
+                              ],
+                            ),
+                            onTap: () => _toggleRecipe(r),
+                          ),
+                        );
+                      },
+                    ),
             ),
             if (isAnySelected) ...[
               Container(
@@ -429,7 +496,9 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
 
                           for (final item in _selectedItems.values) {
                             if (item.type == MealItemType.PRODUCT) {
-                              final p = widget.products.firstWhereOrNull((prod) => prod.id == item.targetId);
+                              final p = widget.products.firstWhereOrNull(
+                                (prod) => prod.id == item.targetId,
+                              );
                               if (p == null || !p.canMeasureInMl) {
                                 allSupportMl = false;
                               }
@@ -446,10 +515,16 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                         }
 
                         if (_amountUnit == AmountUnit.ML && !showMl) {
-                          Future.microtask(() => setState(() => _amountUnit = AmountUnit.GRAMS));
+                          Future.microtask(
+                            () =>
+                                setState(() => _amountUnit = AmountUnit.GRAMS),
+                          );
                         }
                         if (_amountUnit == AmountUnit.UNITS && !showUnits) {
-                          Future.microtask(() => setState(() => _amountUnit = AmountUnit.GRAMS));
+                          Future.microtask(
+                            () =>
+                                setState(() => _amountUnit = AmountUnit.GRAMS),
+                          );
                         }
 
                         return Row(
@@ -458,7 +533,11 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                               label: const Text("Grams"),
                               selected: _amountUnit == AmountUnit.GRAMS,
                               onSelected: (selected) {
-                                if (selected) setState(() => _amountUnit = AmountUnit.GRAMS);
+                                if (selected) {
+                                  setState(
+                                    () => _amountUnit = AmountUnit.GRAMS,
+                                  );
+                                }
                               },
                             ),
                             if (showMl) ...[
@@ -467,7 +546,9 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                                 label: const Text("ml"),
                                 selected: _amountUnit == AmountUnit.ML,
                                 onSelected: (selected) {
-                                  if (selected) setState(() => _amountUnit = AmountUnit.ML);
+                                  if (selected) {
+                                    setState(() => _amountUnit = AmountUnit.ML);
+                                  }
                                 },
                               ),
                             ],
@@ -477,7 +558,11 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                                 label: const Text("Units"),
                                 selected: _amountUnit == AmountUnit.UNITS,
                                 onSelected: (selected) {
-                                  if (selected) setState(() => _amountUnit = AmountUnit.UNITS);
+                                  if (selected) {
+                                    setState(
+                                      () => _amountUnit = AmountUnit.UNITS,
+                                    );
+                                  }
                                 },
                               ),
                             ],
@@ -491,7 +576,9 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                         Expanded(
                           child: TextField(
                             controller: _amountController,
-                            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                            keyboardType: const TextInputType.numberWithOptions(
+                              decimal: true,
+                            ),
                             decoration: const InputDecoration(
                               labelText: "Portion Amount",
                               border: OutlineInputBorder(),
@@ -501,16 +588,27 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                         const SizedBox(width: 12),
                         FilledButton.icon(
                           style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+                            padding: const EdgeInsets.symmetric(
+                              vertical: 16,
+                              horizontal: 24,
+                            ),
                           ),
                           onPressed: () async {
-                            final amount = double.tryParse(_amountController.text) ?? 100.0;
+                            final amount =
+                                double.tryParse(_amountController.text) ??
+                                100.0;
                             final repo = ref.read(mealRepositoryProvider);
 
                             for (final item in _selectedItems.values) {
                               if (widget.onConfirm != null) {
-                                widget.onConfirm!(item.type, item.targetId, amount, _amountUnit);
-                              } else if (widget.isReplace && widget.replaceItemId != null) {
+                                widget.onConfirm!(
+                                  item.type,
+                                  item.targetId,
+                                  amount,
+                                  _amountUnit,
+                                );
+                              } else if (widget.isReplace &&
+                                  widget.replaceItemId != null) {
                                 await repo.replaceMealItemInMeal(
                                   oldItemId: widget.replaceItemId!,
                                   newType: item.type,
@@ -533,11 +631,13 @@ class _AddMealItemScreenState extends ConsumerState<AddMealItemScreen> {
                             }
                           },
                           icon: const Icon(Icons.check),
-                          label: Text(widget.isReplace
-                              ? "Replace"
-                              : _selectedItems.length > 1
-                                  ? "Add All (${_selectedItems.length})"
-                                  : "Add to Meal"),
+                          label: Text(
+                            widget.isReplace
+                                ? "Replace"
+                                : _selectedItems.length > 1
+                                ? "Add All (${_selectedItems.length})"
+                                : "Add to Meal",
+                          ),
                         ),
                       ],
                     ),

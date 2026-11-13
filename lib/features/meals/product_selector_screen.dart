@@ -9,11 +9,16 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../core/components/clearable_search_field.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/providers/meals_providers.dart';
 import 'edit_product_screen.dart';
 
+/// Reusable product-selection view.
+///
+/// Returns the selected [Product] through `Navigator.pop` and lets the caller
+/// create or edit products without leaving the flow.
 class ProductSelectorScreen extends ConsumerStatefulWidget {
   final String title;
   final String? initialQuery;
@@ -25,11 +30,12 @@ class ProductSelectorScreen extends ConsumerStatefulWidget {
   });
 
   @override
-  ConsumerState<ProductSelectorScreen> createState() => _ProductSelectorScreenState();
+  ConsumerState<ProductSelectorScreen> createState() =>
+      _ProductSelectorScreenState();
 }
 
 class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
-  late TextEditingController _searchController;
+  late final TextEditingController _searchController;
 
   @override
   void initState() {
@@ -44,7 +50,8 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
   }
 
   Future<void> _createProduct() async {
-    final newProduct = await Navigator.push<Product>(
+    Product? createdProduct;
+    final result = await Navigator.push<Product>(
       context,
       MaterialPageRoute(
         builder: (ctx) => EditProductScreen(
@@ -61,15 +68,59 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
             isStockRaw: false,
           ),
           onConfirm: (prod) async {
-            await ref.read(mealRepositoryProvider).saveProduct(prod);
+            final newId = await ref
+                .read(mealRepositoryProvider)
+                .saveProduct(prod);
+            createdProduct = prod.copyWith(id: newId);
           },
         ),
       ),
     );
 
-    if (newProduct != null && mounted) {
-      Navigator.pop(context, newProduct);
+    final product = createdProduct ?? result;
+    if (product != null && mounted) {
+      Navigator.pop(context, product);
     }
+  }
+
+  Future<void> _editProduct(Product product) async {
+    await Navigator.push<Product>(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => EditProductScreen(
+          product: product,
+          onConfirm: (prod) async {
+            await ref.read(mealRepositoryProvider).saveProduct(prod);
+          },
+        ),
+      ),
+    );
+    if (mounted) {
+      setState(() {});
+    }
+  }
+
+  String _subtitleFor(
+    Product product,
+    Map<int, int>? usageCounts,
+    Set<int>? inStockProductIds,
+  ) {
+    final parts = <String>[];
+    if (inStockProductIds?.contains(product.id) ?? false) {
+      parts.add("In stock");
+    }
+    final usage = usageCounts?[product.id] ?? 0;
+    if (usage > 0) {
+      parts.add("Used ${usage}x");
+    }
+    parts.add(
+      "Unit: ${product.units}"
+      "${product.unitWeight != null && product.unitWeight! > 0 ? ' (${product.unitWeight}g)' : ''}",
+    );
+    parts.add(
+      "P ${product.proteins}g | C ${product.carbs}g | F ${product.fats}g",
+    );
+    return parts.join(" • ");
   }
 
   @override
@@ -107,28 +158,10 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
             children: [
               Padding(
                 padding: const EdgeInsets.all(16.0),
-                child: TextField(
+                child: ClearableSearchField(
                   controller: _searchController,
-                  decoration: InputDecoration(
-                    labelText: "Search products...",
-                    prefixIcon: const Icon(Icons.search),
-                    suffixIcon: _searchController.text.isNotEmpty
-                        ? IconButton(
-                            icon: const Icon(Icons.clear),
-                            onPressed: () {
-                              setState(() {
-                                _searchController.clear();
-                              });
-                            },
-                          )
-                        : null,
-                    border: const OutlineInputBorder(
-                      borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                    ),
-                  ),
-                  onChanged: (val) {
-                    setState(() {});
-                  },
+                  labelText: "Search products...",
+                  onChanged: (_) => setState(() {}),
                 ),
               ),
               Expanded(
@@ -141,7 +174,7 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
                             const SizedBox(height: 12),
                             ElevatedButton.icon(
                               icon: const Icon(Icons.add),
-                              label: const Text("Create this Product"),
+                              label: const Text("Create Product"),
                               onPressed: _createProduct,
                             ),
                           ],
@@ -152,8 +185,20 @@ class _ProductSelectorScreenState extends ConsumerState<ProductSelectorScreen> {
                         itemBuilder: (context, index) {
                           final p = filtered[index];
                           return ListTile(
-                            title: Text(p.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text("Unit: ${p.units}${p.unitWeight != null && p.unitWeight! > 0 ? ' (${p.unitWeight}g)' : ''} • P ${p.proteins}g | C ${p.carbs}g | F ${p.fats}g"),
+                            title: Text(
+                              p.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(
+                              _subtitleFor(p, usageCounts, inStockProductIds),
+                            ),
+                            trailing: IconButton(
+                              icon: const Icon(Icons.edit),
+                              tooltip: "Edit Product",
+                              onPressed: () => _editProduct(p),
+                            ),
                             onTap: () {
                               Navigator.pop(context, p);
                             },

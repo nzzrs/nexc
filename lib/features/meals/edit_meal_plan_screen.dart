@@ -17,6 +17,7 @@ import '../../core/db/relations.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/components/nexc_scaffold.dart';
+import 'add_meal_item_screen.dart';
 import 'meals_dashboard_screen.dart';
 
 class EditMealPlanNotifier extends StateNotifier<MealPlanWithMealsAndItems?> {
@@ -74,10 +75,15 @@ class EditMealPlanNotifier extends StateNotifier<MealPlanWithMealsAndItems?> {
   void addMeal(Meal meal) {
     if (state == null) return;
     final updatedMeals = List<MealWithItems>.from(state!.meals)
-      ..add(MealWithItems(
-        meal: meal.copyWith(mealPlanId: state!.mealPlan.id, position: state!.meals.length),
-        items: [],
-      ));
+      ..add(
+        MealWithItems(
+          meal: meal.copyWith(
+            mealPlanId: state!.mealPlan.id,
+            position: state!.meals.length,
+          ),
+          items: [],
+        ),
+      );
     updatedMeals.sort((a, b) {
       final aMinutes = a.meal.time.hour * 60 + a.meal.time.minute;
       final bMinutes = b.meal.time.hour * 60 + b.meal.time.minute;
@@ -91,14 +97,21 @@ class EditMealPlanNotifier extends StateNotifier<MealPlanWithMealsAndItems?> {
 
   void deleteMeal(int mealId) {
     if (state == null) return;
-    final updatedMeals = state!.meals.where((m) => m.meal.id != mealId).toList();
+    final updatedMeals = state!.meals
+        .where((m) => m.meal.id != mealId)
+        .toList();
     state = MealPlanWithMealsAndItems(
       mealPlan: state!.mealPlan,
       meals: updatedMeals,
     );
   }
 
-  void addMealItem(int mealId, MealItem item, List<Product> products, List<RecipeWithIngredients> recipes) {
+  void addMealItem(
+    int mealId,
+    MealItem item,
+    List<Product> products,
+    List<RecipeWithIngredients> recipes,
+  ) {
     if (state == null) return;
     final updatedMeals = state!.meals.map((m) {
       if (m.meal.id == mealId) {
@@ -256,7 +269,9 @@ void showFloatingToast(BuildContext context, String message) {
             ),
             child: Text(
               message,
-              style: TextStyle(color: Theme.of(context).colorScheme.onInverseSurface),
+              style: TextStyle(
+                color: Theme.of(context).colorScheme.onInverseSurface,
+              ),
               textAlign: TextAlign.center,
             ),
           ),
@@ -270,17 +285,15 @@ void showFloatingToast(BuildContext context, String message) {
   });
 }
 
-final editMealPlanProvider = StateNotifierProvider.autoDispose.family<EditMealPlanNotifier, MealPlanWithMealsAndItems?, int>((ref, id) {
-  return EditMealPlanNotifier(ref, id);
-});
+final editMealPlanProvider = StateNotifierProvider.autoDispose
+    .family<EditMealPlanNotifier, MealPlanWithMealsAndItems?, int>((ref, id) {
+      return EditMealPlanNotifier(ref, id);
+    });
 
 class EditMealPlanScreen extends ConsumerStatefulWidget {
   final int mealPlanId;
 
-  const EditMealPlanScreen({
-    super.key,
-    required this.mealPlanId,
-  });
+  const EditMealPlanScreen({super.key, required this.mealPlanId});
 
   @override
   ConsumerState<EditMealPlanScreen> createState() => _EditMealPlanScreenState();
@@ -291,7 +304,9 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
 
   bool _hasChanges(MealPlanWithMealsAndItems current) {
     if (widget.mealPlanId == 0) {
-      final hasTitle = current.mealPlan.title.trim().isNotEmpty && current.mealPlan.title != "New Meal Plan";
+      final hasTitle =
+          current.mealPlan.title.trim().isNotEmpty &&
+          current.mealPlan.title != "New Meal Plan";
       final hasNotes = current.mealPlan.notes.trim().isNotEmpty;
       final hasMeals = current.meals.isNotEmpty;
       return hasTitle || hasNotes || hasMeals;
@@ -341,11 +356,13 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
     for (final m in plan.meals) {
       for (final detail in m.items) {
         final scale = detail.macroScale;
-        if (detail.mealItem.type == MealItemType.PRODUCT && detail.product != null) {
+        if (detail.mealItem.type == MealItemType.PRODUCT &&
+            detail.product != null) {
           currentProt += detail.product!.proteins * scale;
           currentCarb += detail.product!.carbs * scale;
           currentFat += detail.product!.fats * scale;
-        } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
+        } else if (detail.mealItem.type == MealItemType.RECIPE &&
+            detail.recipe != null) {
           for (final ing in detail.recipe!.ingredients) {
             final ingScale = (ing.ingredient.amount / 100.0) * scale;
             currentProt += ing.product.proteins * ingScale;
@@ -371,11 +388,16 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
           final theme = Theme.of(context);
           return AlertDialog(
             title: const Text('Discard Changes?'),
-            content: const Text('Do you want to discard your changes or save them?'),
+            content: const Text(
+              'Do you want to discard your changes or save them?',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, 'discard'),
-                child: Text('DISCARD', style: TextStyle(color: theme.colorScheme.error)),
+                child: Text(
+                  'DISCARD',
+                  style: TextStyle(color: theme.colorScheme.error),
+                ),
               ),
               TextButton(
                 onPressed: () => Navigator.pop(context, 'save'),
@@ -418,234 +440,296 @@ class _EditMealPlanScreenState extends ConsumerState<EditMealPlanScreen> {
               showFloatingToast(context, "Meal plan saved");
               Navigator.pop(context);
             });
-          }
+          },
         ],
         actionsIcons: const [Icon(Icons.check)],
         actionsEnabled: [plan.mealPlan.title.trim().isNotEmpty],
         content: (context, padding) {
-        return ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            TextFormField(
-              initialValue: plan.mealPlan.title,
-              onChanged: (val) {
-                ref
-                    .read(editMealPlanProvider(widget.mealPlanId).notifier)
-                    .updateMealPlanInfo(val, plan.mealPlan.notes);
-              },
-              decoration: const InputDecoration(
-                labelText: "Plan Title",
-                border: OutlineInputBorder(),
+          return ListView(
+            padding: const EdgeInsets.all(16.0),
+            children: [
+              TextFormField(
+                initialValue: plan.mealPlan.title,
+                onChanged: (val) {
+                  ref
+                      .read(editMealPlanProvider(widget.mealPlanId).notifier)
+                      .updateMealPlanInfo(val, plan.mealPlan.notes);
+                },
+                decoration: const InputDecoration(
+                  labelText: "Plan Title",
+                  border: OutlineInputBorder(),
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextFormField(
-              initialValue: plan.mealPlan.notes,
-              onChanged: (val) {
-                ref
-                    .read(editMealPlanProvider(widget.mealPlanId).notifier)
-                    .updateMealPlanInfo(plan.mealPlan.title, val);
-              },
-              decoration: const InputDecoration(
-                labelText: "Notes/Goal",
-                border: OutlineInputBorder(),
+              const SizedBox(height: 12),
+              TextFormField(
+                initialValue: plan.mealPlan.notes,
+                onChanged: (val) {
+                  ref
+                      .read(editMealPlanProvider(widget.mealPlanId).notifier)
+                      .updateMealPlanInfo(plan.mealPlan.title, val);
+                },
+                decoration: const InputDecoration(
+                  labelText: "Notes/Goal",
+                  border: OutlineInputBorder(),
+                ),
+                maxLines: 2,
               ),
-              maxLines: 2,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              "Target Macros",
-              style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Expanded(
-                  child: TextFormField(
-                    initialValue: plan.mealPlan.targetProtein?.toStringAsFixed(0) ?? "",
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      labelText: "Protein (g)",
-                      helperText: "Sum: ${currentProt.toStringAsFixed(0)}g",
-                      border: const OutlineInputBorder(),
+              const SizedBox(height: 16),
+              Text(
+                "Target Macros",
+                style: theme.textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      initialValue:
+                          plan.mealPlan.targetProtein?.toStringAsFixed(0) ?? "",
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: "Protein (g)",
+                        helperText: "Sum: ${currentProt.toStringAsFixed(0)}g",
+                        border: const OutlineInputBorder(),
+                      ),
+                      onChanged: (val) {
+                        final parsed = double.tryParse(val);
+                        ref
+                            .read(
+                              editMealPlanProvider(widget.mealPlanId).notifier,
+                            )
+                            .updateMealPlanMacros(
+                              parsed,
+                              plan.mealPlan.targetCarbs,
+                              plan.mealPlan.targetFats,
+                            );
+                      },
                     ),
-                    onChanged: (val) {
-                      final parsed = double.tryParse(val);
-                      ref.read(editMealPlanProvider(widget.mealPlanId).notifier).updateMealPlanMacros(
-                        parsed,
-                        plan.mealPlan.targetCarbs,
-                        plan.mealPlan.targetFats,
-                      );
-                    },
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    initialValue: plan.mealPlan.targetCarbs?.toStringAsFixed(0) ?? "",
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      labelText: "Carbs (g)",
-                      helperText: "Sum: ${currentCarb.toStringAsFixed(0)}g",
-                      border: const OutlineInputBorder(),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      initialValue:
+                          plan.mealPlan.targetCarbs?.toStringAsFixed(0) ?? "",
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: "Carbs (g)",
+                        helperText: "Sum: ${currentCarb.toStringAsFixed(0)}g",
+                        border: const OutlineInputBorder(),
+                      ),
+                      onChanged: (val) {
+                        final parsed = double.tryParse(val);
+                        ref
+                            .read(
+                              editMealPlanProvider(widget.mealPlanId).notifier,
+                            )
+                            .updateMealPlanMacros(
+                              plan.mealPlan.targetProtein,
+                              parsed,
+                              plan.mealPlan.targetFats,
+                            );
+                      },
                     ),
-                    onChanged: (val) {
-                      final parsed = double.tryParse(val);
-                      ref.read(editMealPlanProvider(widget.mealPlanId).notifier).updateMealPlanMacros(
-                        plan.mealPlan.targetProtein,
-                        parsed,
-                        plan.mealPlan.targetFats,
-                      );
-                    },
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: TextFormField(
-                    initialValue: plan.mealPlan.targetFats?.toStringAsFixed(0) ?? "",
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    decoration: InputDecoration(
-                      labelText: "Fats (g)",
-                      helperText: "Sum: ${currentFat.toStringAsFixed(0)}g",
-                      border: const OutlineInputBorder(),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextFormField(
+                      initialValue:
+                          plan.mealPlan.targetFats?.toStringAsFixed(0) ?? "",
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: "Fats (g)",
+                        helperText: "Sum: ${currentFat.toStringAsFixed(0)}g",
+                        border: const OutlineInputBorder(),
+                      ),
+                      onChanged: (val) {
+                        final parsed = double.tryParse(val);
+                        ref
+                            .read(
+                              editMealPlanProvider(widget.mealPlanId).notifier,
+                            )
+                            .updateMealPlanMacros(
+                              plan.mealPlan.targetProtein,
+                              plan.mealPlan.targetCarbs,
+                              parsed,
+                            );
+                      },
                     ),
-                    onChanged: (val) {
-                      final parsed = double.tryParse(val);
-                      ref.read(editMealPlanProvider(widget.mealPlanId).notifier).updateMealPlanMacros(
-                        plan.mealPlan.targetProtein,
-                        plan.mealPlan.targetCarbs,
-                        parsed,
-                      );
-                    },
                   ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  "Meals",
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                ),
-                OutlinedButton.icon(
-                  onPressed: () {
-                    final now = DateTime.now();
-                    final meal = Meal(
-                      id: Random().nextInt(10000000),
-                      mealPlanId: widget.mealPlanId,
-                      name: "Meal ${plan.meals.length + 1}",
-                      time: LocalTime(now.hour, now.minute),
-                      notes: "",
-                      position: plan.meals.length,
-                      atHome: true,
+                ],
+              ),
+              const SizedBox(height: 24),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    "Meals",
+                    style: theme.textTheme.titleMedium?.copyWith(
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  OutlinedButton.icon(
+                    onPressed: () {
+                      final now = DateTime.now();
+                      final meal = Meal(
+                        id: Random().nextInt(10000000),
+                        mealPlanId: widget.mealPlanId,
+                        name: "Meal ${plan.meals.length + 1}",
+                        time: LocalTime(now.hour, now.minute),
+                        notes: "",
+                        position: plan.meals.length,
+                        atHome: true,
+                      );
+                      ref
+                          .read(
+                            editMealPlanProvider(widget.mealPlanId).notifier,
+                          )
+                          .addMeal(meal);
+                    },
+                    icon: const Icon(Icons.add, size: 16),
+                    label: const Text("Add Meal"),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              ...plan.meals.map((mealWithItems) {
+                return MealEditCard(
+                  key: ValueKey(mealWithItems.meal.id),
+                  mealWithItems: mealWithItems,
+                  onDeleteMeal: () async {
+                    final confirm = await showDialog<bool>(
+                      context: context,
+                      builder: (context) => AlertDialog(
+                        title: const Text("Delete Meal"),
+                        content: Text(
+                          "Are you sure you want to delete '${mealWithItems.meal.name}'?",
+                        ),
+                        actions: [
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, false),
+                            child: const Text("Cancel"),
+                          ),
+                          TextButton(
+                            onPressed: () => Navigator.pop(context, true),
+                            child: Text(
+                              "Delete",
+                              style: TextStyle(color: theme.colorScheme.error),
+                            ),
+                          ),
+                        ],
+                      ),
                     );
-                    ref.read(editMealPlanProvider(widget.mealPlanId).notifier).addMeal(meal);
+                    if (confirm == true) {
+                      ref
+                          .read(
+                            editMealPlanProvider(widget.mealPlanId).notifier,
+                          )
+                          .deleteMeal(mealWithItems.meal.id);
+                    }
                   },
-                  icon: const Icon(Icons.add, size: 16),
-                  label: const Text("Add Meal"),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            ...plan.meals.map((mealWithItems) {
-              return MealEditCard(
-                key: ValueKey(mealWithItems.meal.id),
-                mealWithItems: mealWithItems,
-                onDeleteMeal: () async {
-                  final confirm = await showDialog<bool>(
-                    context: context,
-                    builder: (context) => AlertDialog(
-                      title: const Text("Delete Meal"),
-                      content: Text("Are you sure you want to delete '${mealWithItems.meal.name}'?"),
-                      actions: [
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, false),
-                          child: const Text("Cancel"),
+                  onAddItemClick: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddMealItemScreen(
+                          mealId: mealWithItems.meal.id,
+                          products: products,
+                          recipes: recipes,
+                          onConfirm: (type, targetId, amount, amountUnit) {
+                            final newItem = MealItem(
+                              id: Random().nextInt(
+                                10000000,
+                              ), // Unique ID in memory
+                              mealId: mealWithItems.meal.id,
+                              type: type,
+                              targetId: targetId,
+                              amount: amount,
+                              amountUnit: amountUnit,
+                              consumed: false,
+                              position: 0,
+                            );
+                            ref
+                                .read(
+                                  editMealPlanProvider(
+                                    widget.mealPlanId,
+                                  ).notifier,
+                                )
+                                .addMealItem(
+                                  mealWithItems.meal.id,
+                                  newItem,
+                                  products,
+                                  recipes,
+                                );
+                          },
                         ),
-                        TextButton(
-                          onPressed: () => Navigator.pop(context, true),
-                          child: Text("Delete", style: TextStyle(color: theme.colorScheme.error)),
-                        ),
-                      ],
-                    ),
-                  );
-                  if (confirm == true) {
+                      ),
+                    );
+                  },
+                  onDeleteItem: (itemId) {
                     ref
                         .read(editMealPlanProvider(widget.mealPlanId).notifier)
-                        .deleteMeal(mealWithItems.meal.id);
-                  }
-                },
-                onAddItemClick: () {
-                  showDialog(
-                    context: context,
-                    builder: (context) => AddMealItemDialog(
-                      products: products,
-                      recipes: recipes,
-                      onDismiss: () => Navigator.pop(context),
-                      onConfirm: (type, targetId, amount, amountUnit) {
-                        final newItem = MealItem(
-                          id: Random().nextInt(10000000), // Unique ID in memory
-                          mealId: mealWithItems.meal.id,
-                          type: type,
-                          targetId: targetId,
-                          amount: amount,
-                          amountUnit: amountUnit,
-                          consumed: false,
-                          position: 0,
-                        );
-                        ref
-                            .read(editMealPlanProvider(widget.mealPlanId).notifier)
-                            .addMealItem(mealWithItems.meal.id, newItem, products, recipes);
-                        Navigator.pop(context);
-                      },
-                    ),
-                  );
-                },
-                onDeleteItem: (itemId) {
-                  ref
-                      .read(editMealPlanProvider(widget.mealPlanId).notifier)
-                      .deleteMealItem(mealWithItems.meal.id, itemId);
-                },
-                onReplaceItem: (oldItemId) {
-                  ref
-                      .read(editMealPlanProvider(widget.mealPlanId).notifier)
-                      .deleteMealItem(mealWithItems.meal.id, oldItemId);
-                  showDialog(
-                    context: context,
-                    builder: (context) => AddMealItemDialog(
-                      products: products,
-                      recipes: recipes,
-                      onDismiss: () => Navigator.pop(context),
-                      onConfirm: (type, targetId, amount, amountUnit) {
-                        final newItem = MealItem(
-                          id: Random().nextInt(10000000), // Unique ID in memory
-                          mealId: mealWithItems.meal.id,
-                          type: type,
-                          targetId: targetId,
-                          amount: amount,
-                          amountUnit: amountUnit,
-                          consumed: false,
-                          position: 0,
-                        );
-                        ref
-                            .read(editMealPlanProvider(widget.mealPlanId).notifier)
-                            .addMealItem(mealWithItems.meal.id, newItem, products, recipes);
-                        Navigator.pop(context);
-                      },
-                    ),
-                  );
-                },
-                widgetRef: ref,
-              );
-            }),
-          ],
-        );
-      },
-    ),
-  );
-}
+                        .deleteMealItem(mealWithItems.meal.id, itemId);
+                  },
+                  onReplaceItem: (oldItemId) {
+                    ref
+                        .read(editMealPlanProvider(widget.mealPlanId).notifier)
+                        .deleteMealItem(mealWithItems.meal.id, oldItemId);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddMealItemScreen(
+                          mealId: 0,
+                          isReplace: true,
+                          replaceItemId: oldItemId,
+                          products: products,
+                          recipes: recipes,
+                          onConfirm: (type, targetId, amount, amountUnit) {
+                            final newItem = MealItem(
+                              id: Random().nextInt(
+                                10000000,
+                              ), // Unique ID in memory
+                              mealId: mealWithItems.meal.id,
+                              type: type,
+                              targetId: targetId,
+                              amount: amount,
+                              amountUnit: amountUnit,
+                              consumed: false,
+                              position: 0,
+                            );
+                            ref
+                                .read(
+                                  editMealPlanProvider(
+                                    widget.mealPlanId,
+                                  ).notifier,
+                                )
+                                .addMealItem(
+                                  mealWithItems.meal.id,
+                                  newItem,
+                                  products,
+                                  recipes,
+                                );
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                  widgetRef: ref,
+                );
+              }),
+            ],
+          );
+        },
+      ),
+    );
+  }
 }
 
 class MealEditCard extends StatelessWidget {
@@ -691,27 +775,39 @@ class MealEditCard extends StatelessWidget {
                         onTap: () async {
                           final picked = await showTimePicker(
                             context: context,
-                            initialTime: TimeOfDay(hour: meal.time.hour, minute: meal.time.minute),
+                            initialTime: TimeOfDay(
+                              hour: meal.time.hour,
+                              minute: meal.time.minute,
+                            ),
                           );
                           if (picked != null) {
                             widgetRef
-                                .read(editMealPlanProvider(meal.mealPlanId).notifier)
-                                .updateMealTime(meal.id, LocalTime(picked.hour, picked.minute));
+                                .read(
+                                  editMealPlanProvider(
+                                    meal.mealPlanId,
+                                  ).notifier,
+                                )
+                                .updateMealTime(
+                                  meal.id,
+                                  LocalTime(picked.hour, picked.minute),
+                                );
                           }
                         },
                         child: Text(
                           timeStr,
                           style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                                color: theme.colorScheme.primary,
-                              ),
+                            fontWeight: FontWeight.bold,
+                            color: theme.colorScheme.primary,
+                          ),
                         ),
                       ),
                       const SizedBox(width: 8),
                       Expanded(
                         child: TextFormField(
                           initialValue: meal.name,
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                           decoration: const InputDecoration(
                             isDense: true,
                             contentPadding: EdgeInsets.symmetric(vertical: 4),
@@ -719,7 +815,11 @@ class MealEditCard extends StatelessWidget {
                           ),
                           onChanged: (val) {
                             widgetRef
-                                .read(editMealPlanProvider(meal.mealPlanId).notifier)
+                                .read(
+                                  editMealPlanProvider(
+                                    meal.mealPlanId,
+                                  ).notifier,
+                                )
                                 .updateMealName(meal.id, val);
                           },
                         ),
@@ -728,7 +828,10 @@ class MealEditCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                  icon: Icon(
+                    Icons.delete_outline,
+                    color: theme.colorScheme.error,
+                  ),
                   onPressed: onDeleteMeal,
                 ),
               ],
@@ -736,7 +839,9 @@ class MealEditCard extends StatelessWidget {
             if (meal.notes.isNotEmpty) ...[
               Text(
                 meal.notes,
-                style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
               ),
               const SizedBox(height: 8),
             ],
@@ -763,7 +868,9 @@ class MealEditCard extends StatelessWidget {
                                   context: context,
                                   builder: (context) => AlertDialog(
                                     title: const Text("Edit Item"),
-                                    content: const Text("Select an action for this item."),
+                                    content: const Text(
+                                      "Select an action for this item.",
+                                    ),
                                     actions: [
                                       TextButton(
                                         onPressed: () {
@@ -779,7 +886,9 @@ class MealEditCard extends StatelessWidget {
                                         },
                                         child: Text(
                                           "Delete",
-                                          style: TextStyle(color: theme.colorScheme.error),
+                                          style: TextStyle(
+                                            color: theme.colorScheme.error,
+                                          ),
                                         ),
                                       ),
                                       TextButton(
@@ -793,8 +902,8 @@ class MealEditCard extends StatelessWidget {
                               child: Text(
                                 name,
                                 style: theme.textTheme.bodyLarge?.copyWith(
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                                  fontWeight: FontWeight.bold,
+                                ),
                               ),
                             ),
                           ),
@@ -806,8 +915,16 @@ class MealEditCard extends StatelessWidget {
                                 mealItem: detail.mealItem,
                                 onConfirm: (newAmount) {
                                   widgetRef
-                                      .read(editMealPlanProvider(meal.mealPlanId).notifier)
-                                      .updateMealItemAmount(meal.id, detail.mealItem.id, newAmount);
+                                      .read(
+                                        editMealPlanProvider(
+                                          meal.mealPlanId,
+                                        ).notifier,
+                                      )
+                                      .updateMealItemAmount(
+                                        meal.id,
+                                        detail.mealItem.id,
+                                        newAmount,
+                                      );
                                 },
                               ),
                               const SizedBox(width: 3),
@@ -815,53 +932,84 @@ class MealEditCard extends StatelessWidget {
                                 offset: const Offset(0, 30),
                                 onSelected: (newUnit) {
                                   widgetRef
-                                      .read(editMealPlanProvider(meal.mealPlanId).notifier)
-                                      .updateMealItemUnit(meal.id, detail.mealItem.id, newUnit);
+                                      .read(
+                                        editMealPlanProvider(
+                                          meal.mealPlanId,
+                                        ).notifier,
+                                      )
+                                      .updateMealItemUnit(
+                                        meal.id,
+                                        detail.mealItem.id,
+                                        newUnit,
+                                      );
                                 },
-                                 itemBuilder: (context) {
-                                   final list = <PopupMenuEntry<AmountUnit>>[
-                                     PopupMenuItem(
-                                       value: AmountUnit.GRAMS,
-                                       child: Text(detail.product?.units.isNotEmpty == true ? detail.product!.units : "g"),
-                                     ),
-                                   ];
-                                   if (detail.mealItem.type == MealItemType.PRODUCT) {
-                                     final prod = detail.product;
-                                     if (prod != null) {
-                                       if (prod.canMeasureInMl) {
-                                         list.add(const PopupMenuItem(
-                                           value: AmountUnit.ML,
-                                           child: Text("ml"),
-                                         ));
-                                       }
-                                       if (prod.canMeasureInUnits) {
-                                         list.add(const PopupMenuItem(
-                                           value: AmountUnit.UNITS,
-                                           child: Text("units"),
-                                         ));
-                                       }
-                                     }
-                                   } else {
-                                     list.add(const PopupMenuItem(
-                                       value: AmountUnit.UNITS,
-                                       child: Text("units"),
-                                     ));
-                                   }
-                                   return list;
-                                 },
+                                itemBuilder: (context) {
+                                  final list = <PopupMenuEntry<AmountUnit>>[
+                                    PopupMenuItem(
+                                      value: AmountUnit.GRAMS,
+                                      child: Text(
+                                        detail.product?.units.isNotEmpty == true
+                                            ? detail.product!.units
+                                            : "g",
+                                      ),
+                                    ),
+                                  ];
+                                  if (detail.mealItem.type ==
+                                      MealItemType.PRODUCT) {
+                                    final prod = detail.product;
+                                    if (prod != null) {
+                                      if (prod.canMeasureInMl) {
+                                        list.add(
+                                          const PopupMenuItem(
+                                            value: AmountUnit.ML,
+                                            child: Text("ml"),
+                                          ),
+                                        );
+                                      }
+                                      if (prod.canMeasureInUnits) {
+                                        list.add(
+                                          const PopupMenuItem(
+                                            value: AmountUnit.UNITS,
+                                            child: Text("units"),
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  } else {
+                                    list.add(
+                                      const PopupMenuItem(
+                                        value: AmountUnit.UNITS,
+                                        child: Text("units"),
+                                      ),
+                                    );
+                                  }
+                                  return list;
+                                },
                                 child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
-                                    color: theme.colorScheme.surfaceContainerHighest,
+                                    color: theme
+                                        .colorScheme
+                                        .surfaceContainerHighest,
                                     borderRadius: BorderRadius.circular(8),
-                                    border: Border.all(color: theme.colorScheme.outline.withValues(alpha: 0.3)),
+                                    border: Border.all(
+                                      color: theme.colorScheme.outline
+                                          .withValues(alpha: 0.3),
+                                    ),
                                   ),
                                   child: Row(
                                     mainAxisSize: MainAxisSize.min,
                                     children: [
                                       Text(
-                                        getUnitLabel(detail.mealItem, detail.product),
-                                        style: theme.textTheme.labelMedium?.copyWith(
+                                        getUnitLabel(
+                                          detail.mealItem,
+                                          detail.product,
+                                        ),
+                                        style: theme.textTheme.labelMedium
+                                            ?.copyWith(
                                               fontWeight: FontWeight.bold,
                                               color: theme.colorScheme.primary,
                                             ),

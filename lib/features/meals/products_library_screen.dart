@@ -13,6 +13,7 @@ import '../../core/db/app_database.dart';
 import '../../core/db/meal_repository.dart';
 import '../../core/providers/meals_providers.dart';
 import '../../core/components/nexc_scaffold.dart';
+import '../../core/components/clearable_search_field.dart';
 
 import 'edit_product_screen.dart';
 
@@ -20,7 +21,8 @@ class ProductsLibraryScreen extends ConsumerStatefulWidget {
   const ProductsLibraryScreen({super.key});
 
   @override
-  ConsumerState<ProductsLibraryScreen> createState() => _ProductsLibraryScreenState();
+  ConsumerState<ProductsLibraryScreen> createState() =>
+      _ProductsLibraryScreenState();
 }
 
 class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
@@ -90,26 +92,9 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
               children: [
                 Padding(
                   padding: const EdgeInsets.all(16.0),
-                  child: TextField(
+                  child: ClearableSearchField(
                     controller: _searchController,
-                    decoration: InputDecoration(
-                      labelText: "Search products...",
-                      prefixIcon: const Icon(Icons.search),
-                      suffixIcon: _searchQuery.isNotEmpty
-                          ? IconButton(
-                              icon: const Icon(Icons.clear),
-                              onPressed: () {
-                                _searchController.clear();
-                                setState(() {
-                                  _searchQuery = "";
-                                });
-                              },
-                            )
-                          : null,
-                      border: const OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(12.0)),
-                      ),
-                    ),
+                    labelText: "Search products...",
                     onChanged: (val) {
                       setState(() {
                         _searchQuery = val;
@@ -121,7 +106,11 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
                   child: filteredProducts.isEmpty
                       ? const Center(child: Text("No products found"))
                       : ListView.builder(
-                          padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 80.0),
+                          padding: const EdgeInsets.only(
+                            left: 16.0,
+                            right: 16.0,
+                            bottom: 80.0,
+                          ),
                           itemCount: filteredProducts.length,
                           itemBuilder: (context, index) {
                             final product = filteredProducts[index];
@@ -138,21 +127,34 @@ class _ProductsLibraryScreenState extends ConsumerState<ProductsLibraryScreen> {
                                     context: context,
                                     builder: (context) => AlertDialog(
                                       title: const Text("Delete Product"),
-                                      content: Text("Are you sure you want to delete '${product.name}'?"),
+                                      content: Text(
+                                        "Are you sure you want to delete '${product.name}'?",
+                                      ),
                                       actions: [
                                         TextButton(
-                                          onPressed: () => Navigator.pop(context, false),
+                                          onPressed: () =>
+                                              Navigator.pop(context, false),
                                           child: const Text("Cancel"),
                                         ),
                                         TextButton(
-                                          onPressed: () => Navigator.pop(context, true),
-                                          child: Text("Delete", style: TextStyle(color: Theme.of(context).colorScheme.error)),
+                                          onPressed: () =>
+                                              Navigator.pop(context, true),
+                                          child: Text(
+                                            "Delete",
+                                            style: TextStyle(
+                                              color: Theme.of(
+                                                context,
+                                              ).colorScheme.error,
+                                            ),
+                                          ),
                                         ),
                                       ],
                                     ),
                                   );
                                   if (confirm == true) {
-                                    ref.read(mealRepositoryProvider).deleteProduct(product);
+                                    ref
+                                        .read(mealRepositoryProvider)
+                                        .deleteProduct(product);
                                   }
                                 },
                               ),
@@ -204,18 +206,23 @@ class ProductCard extends StatelessWidget {
                         Text(
                           product.name,
                           style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                         const SizedBox(height: 4),
                         Row(
                           children: [
                             Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
                               decoration: BoxDecoration(
                                 color: product.isPortable
-                                    ? theme.colorScheme.primaryContainer.withValues(alpha: 0.5)
-                                    : theme.colorScheme.errorContainer.withValues(alpha: 0.5),
+                                    ? theme.colorScheme.primaryContainer
+                                          .withValues(alpha: 0.5)
+                                    : theme.colorScheme.errorContainer
+                                          .withValues(alpha: 0.5),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
@@ -232,16 +239,21 @@ class ProductCard extends StatelessWidget {
                             if (product.isSupplement) ...[
                               const SizedBox(width: 6),
                               Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 6,
+                                  vertical: 2,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: theme.colorScheme.tertiaryContainer.withValues(alpha: 0.5),
+                                  color: theme.colorScheme.tertiaryContainer
+                                      .withValues(alpha: 0.5),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
                                   "Supplement",
                                   style: TextStyle(
                                     fontSize: 10,
-                                    color: theme.colorScheme.onTertiaryContainer,
+                                    color:
+                                        theme.colorScheme.onTertiaryContainer,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -253,7 +265,10 @@ class ProductCard extends StatelessWidget {
                     ),
                   ),
                   IconButton(
-                    icon: Icon(Icons.delete_outline, color: theme.colorScheme.error),
+                    icon: Icon(
+                      Icons.delete_outline,
+                      color: theme.colorScheme.error,
+                    ),
                     onPressed: onDelete,
                   ),
                 ],
@@ -273,7 +288,9 @@ class ProductCard extends StatelessWidget {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      Text("Default: ${product.units}${product.unitWeight != null ? ' (${product.unitWeight}g)' : ''}"),
+                      Text(
+                        "Default: ${product.units}${product.unitWeight != null ? ' (${product.unitWeight}g)' : ''}",
+                      ),
                     ],
                   ),
                 ],

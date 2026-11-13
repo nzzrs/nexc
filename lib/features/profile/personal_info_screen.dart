@@ -57,22 +57,25 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
 
   Future<void> _saveUserData() async {
     final heightVal = double.tryParse(_heightController.text);
-    await ref.read(userRepositoryProvider).saveUser(
-      birthDate: _selectedBirthDate,
-      height: heightVal,
-    );
+    await ref
+        .read(userRepositoryProvider)
+        .saveUser(birthDate: _selectedBirthDate, height: heightVal);
 
     await _loadUserData();
 
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Personal information saved successfully')),
+        const SnackBar(
+          content: Text('Personal information saved successfully'),
+        ),
       );
     }
   }
 
   Future<void> _savePreferences() async {
-    await ref.read(settingsProvider.notifier).setUserPreferences(_preferencesController.text);
+    await ref
+        .read(settingsProvider.notifier)
+        .setUserPreferences(_preferencesController.text);
     if (mounted) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Preferences saved successfully')),
@@ -84,7 +87,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     if (birthDate == null) return null;
     final today = DateTime.now();
     int age = today.year - birthDate.year;
-    if (today.month < birthDate.month || (today.month == birthDate.month && today.day < birthDate.day)) {
+    if (today.month < birthDate.month ||
+        (today.month == birthDate.month && today.day < birthDate.day)) {
       age--;
     }
     return age;
@@ -109,7 +113,6 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final age = _calculateAge(_selectedBirthDate);
-    final settings = ref.watch(settingsProvider);
 
     return Scaffold(
       appBar: AppBar(
@@ -125,7 +128,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
               padding: const EdgeInsets.all(24.0),
               children: [
                 Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                   elevation: 2,
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
@@ -134,17 +139,23 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                       children: [
                         Text(
                           'Your Profile Metrics',
-                          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                          style: theme.textTheme.titleMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 24),
                         TextField(
                           controller: _heightController,
-                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          keyboardType: const TextInputType.numberWithOptions(
+                            decimal: true,
+                          ),
                           decoration: InputDecoration(
                             labelText: 'Height (cm)',
                             prefixIcon: const Icon(Icons.height),
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
                         ),
                         const SizedBox(height: 16),
@@ -152,7 +163,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                           onPressed: () => _selectDate(context),
                           style: OutlinedButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
                           icon: const Icon(Icons.cake_outlined),
                           label: Text(
@@ -166,18 +179,23 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                           Container(
                             padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: theme.colorScheme.secondaryContainer.withValues(alpha: 0.4),
+                              color: theme.colorScheme.secondaryContainer
+                                  .withValues(alpha: 0.4),
                               borderRadius: BorderRadius.circular(16),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                Icon(Icons.hourglass_empty, color: theme.colorScheme.onSecondaryContainer),
+                                Icon(
+                                  Icons.hourglass_empty,
+                                  color: theme.colorScheme.onSecondaryContainer,
+                                ),
                                 const SizedBox(width: 12),
                                 Text(
                                   'Calculated Age: $age years old',
                                   style: theme.textTheme.titleMedium?.copyWith(
-                                    color: theme.colorScheme.onSecondaryContainer,
+                                    color:
+                                        theme.colorScheme.onSecondaryContainer,
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),
@@ -190,7 +208,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                           onPressed: _saveUserData,
                           style: FilledButton.styleFrom(
                             padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
                           ),
                           icon: const Icon(Icons.save_outlined),
                           label: const Text('Save Details'),
@@ -201,62 +221,58 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                 ),
                 const SizedBox(height: 24),
                 Card(
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(24),
+                  ),
                   elevation: 2,
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "User Preferences",
-                                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    "AI uses this context to tailor workouts and meal plans",
-                                    style: theme.textTheme.bodySmall?.copyWith(color: theme.colorScheme.onSurfaceVariant),
-                                  ),
-                                ],
+                            Text(
+                              "User Preferences",
+                              style: theme.textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                            Switch(
-                              value: settings.enableUserPreferences,
-                              onChanged: (val) {
-                                ref.read(settingsProvider.notifier).setEnableUserPreferences(val);
-                              },
+                            const SizedBox(height: 4),
+                            Text(
+                              "AI uses this context to tailor workouts and meal plans",
+                              style: theme.textTheme.bodySmall?.copyWith(
+                                color: theme.colorScheme.onSurfaceVariant,
+                              ),
                             ),
                           ],
                         ),
-                        if (settings.enableUserPreferences) ...[
-                          const SizedBox(height: 16),
-                          TextField(
-                            controller: _preferencesController,
-                            minLines: 4,
-                            maxLines: 12,
-                            decoration: InputDecoration(
-                              hintText: "Paste or write your detailed preferences, schedule constraints, fitness goals, or dietary requirements here...",
-                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(16)),
+                        const SizedBox(height: 16),
+                        TextField(
+                          controller: _preferencesController,
+                          minLines: 4,
+                          maxLines: 12,
+                          decoration: InputDecoration(
+                            hintText:
+                                "Paste or write your detailed preferences, schedule constraints, fitness goals, or dietary requirements here...",
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
                           ),
-                          const SizedBox(height: 20),
-                          FilledButton.icon(
-                            onPressed: _savePreferences,
-                            style: FilledButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        const SizedBox(height: 20),
+                        FilledButton.icon(
+                          onPressed: _savePreferences,
+                          style: FilledButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
                             ),
-                            icon: const Icon(Icons.save_outlined),
-                            label: const Text('Save Preferences'),
                           ),
-                        ],
+                          icon: const Icon(Icons.save_outlined),
+                          label: const Text('Save Preferences'),
+                        ),
                       ],
                     ),
                   ),

@@ -25,12 +25,19 @@ String formatWorkoutSummaryText(
   final title = workoutData.workout.title;
   final duration = _formatSummaryDuration(workoutData.workout.timeElapsed);
   final volume = workoutData.exercisesWithSets.fold(0.0, (sum, item) {
-    return sum + item.sets.fold(0.0, (sSum, s) => sSum + (s.completed ? s.load * s.reps : 0.0));
+    return sum +
+        item.sets.fold(
+          0.0,
+          (sSum, s) => sSum + (s.completed ? s.load * s.reps : 0.0),
+        );
   });
   final completedSets = workoutData.exercisesWithSets.fold(0, (sum, item) {
     return sum + item.sets.where((s) => s.completed).length;
   });
-  final totalSets = workoutData.exercisesWithSets.fold(0, (sum, item) => sum + item.sets.length);
+  final totalSets = workoutData.exercisesWithSets.fold(
+    0,
+    (sum, item) => sum + item.sets.length,
+  );
 
   final buffer = StringBuffer();
   buffer.writeln('Workout Summary: $title');
@@ -40,8 +47,12 @@ String formatWorkoutSummaryText(
   buffer.writeln();
   buffer.writeln('Exercises:');
 
-  final showRpe = intensityScale == IntensityScale.rpe || intensityScale == IntensityScale.both;
-  final showRir = intensityScale == IntensityScale.rir || intensityScale == IntensityScale.both;
+  final showRpe =
+      intensityScale == IntensityScale.rpe ||
+      intensityScale == IntensityScale.both;
+  final showRir =
+      intensityScale == IntensityScale.rir ||
+      intensityScale == IntensityScale.both;
 
   for (final ex in workoutData.exercisesWithSets) {
     final restMin = ex.exercise.restTime ~/ 60;
@@ -51,9 +62,13 @@ String formatWorkoutSummaryText(
     for (int i = 0; i < ex.sets.length; i++) {
       final s = ex.sets[i];
       final status = s.completed ? 'Done' : 'Incomplete';
-      final rpeStr = (showRpe && s.rpe != null) ? ', RPE ${s.rpe.toString().replaceAll(RegExp(r'\.0$'), '')}' : '';
+      final rpeStr = (showRpe && s.rpe != null)
+          ? ', RPE ${s.rpe.toString().replaceAll(RegExp(r'\.0$'), '')}'
+          : '';
       final rirStr = (showRir && s.rir != null) ? ', RIR ${s.rir}' : '';
-      buffer.writeln('  Set ${i + 1}: ${s.load.toStringAsFixed(1)} kg x ${s.reps} reps ($status$rpeStr$rirStr)');
+      buffer.writeln(
+        '  Set ${i + 1}: ${s.load.toStringAsFixed(1)} kg x ${s.reps} reps ($status$rpeStr$rirStr)',
+      );
     }
   }
   return buffer.toString();
@@ -62,16 +77,15 @@ String formatWorkoutSummaryText(
 class WorkoutSummaryScreen extends ConsumerStatefulWidget {
   final WorkoutWithExercisesAndSets workoutData;
 
-  const WorkoutSummaryScreen({
-    super.key,
-    required this.workoutData,
-  });
+  const WorkoutSummaryScreen({super.key, required this.workoutData});
 
   @override
-  ConsumerState<WorkoutSummaryScreen> createState() => _WorkoutSummaryScreenState();
+  ConsumerState<WorkoutSummaryScreen> createState() =>
+      _WorkoutSummaryScreenState();
 }
 
-class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> with SingleTickerProviderStateMixin {
+class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _animationController;
   final List<_ConfettiParticle> _particles = [];
   final Random _random = Random();
@@ -88,15 +102,17 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final size = MediaQuery.of(context).size;
       for (int i = 0; i < 120; i++) {
-        _particles.add(_ConfettiParticle(
-          x: _random.nextDouble() * size.width,
-          y: -_random.nextDouble() * size.height * 0.5,
-          color: Colors.primaries[_random.nextInt(Colors.primaries.length)],
-          size: _random.nextDouble() * 8 + 6,
-          speedY: _random.nextDouble() * 150 + 100,
-          speedX: _random.nextDouble() * 60 - 30,
-          rotationSpeed: _random.nextDouble() * 4 + 1,
-        ));
+        _particles.add(
+          _ConfettiParticle(
+            x: _random.nextDouble() * size.width,
+            y: -_random.nextDouble() * size.height * 0.5,
+            color: Colors.primaries[_random.nextInt(Colors.primaries.length)],
+            size: _random.nextDouble() * 8 + 6,
+            speedY: _random.nextDouble() * 150 + 100,
+            speedX: _random.nextDouble() * 60 - 30,
+            rotationSpeed: _random.nextDouble() * 4 + 1,
+          ),
+        );
       }
       _animationController.repeat();
     });
@@ -122,11 +138,17 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
   }
 
   int _totalCompletedSets() {
-    return widget.workoutData.exercisesWithSets.fold(0, (sum, item) => sum + item.sets.where((s) => s.completed).length);
+    return widget.workoutData.exercisesWithSets.fold(
+      0,
+      (sum, item) => sum + item.sets.where((s) => s.completed).length,
+    );
   }
 
   int _totalSets() {
-    return widget.workoutData.exercisesWithSets.fold(0, (sum, item) => sum + item.sets.length);
+    return widget.workoutData.exercisesWithSets.fold(
+      0,
+      (sum, item) => sum + item.sets.length,
+    );
   }
 
   @override
@@ -156,7 +178,10 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
             animation: _animationController,
             builder: (context, child) {
               return CustomPaint(
-                painter: _ConfettiPainter(_particles, _animationController.value),
+                painter: _ConfettiPainter(
+                  _particles,
+                  _animationController.value,
+                ),
                 child: Container(),
               );
             },
@@ -213,11 +238,18 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                Text(
-                                  '${volume.toStringAsFixed(0)} kg',
-                                  style: theme.textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.onPrimaryContainer,
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    '${volume.toStringAsFixed(0)} kg',
+                                    maxLines: 1,
+                                    style: theme.textTheme.headlineSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: theme
+                                              .colorScheme
+                                              .onPrimaryContainer,
+                                        ),
                                   ),
                                 ),
                               ],
@@ -236,15 +268,23 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
                                 Text(
                                   'Duration',
                                   style: theme.textTheme.labelMedium?.copyWith(
-                                    color: theme.colorScheme.onSecondaryContainer,
+                                    color:
+                                        theme.colorScheme.onSecondaryContainer,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
-                                Text(
-                                  duration,
-                                  style: theme.textTheme.headlineSmall?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                    color: theme.colorScheme.onSecondaryContainer,
+                                FittedBox(
+                                  fit: BoxFit.scaleDown,
+                                  child: Text(
+                                    duration,
+                                    maxLines: 1,
+                                    style: theme.textTheme.headlineSmall
+                                        ?.copyWith(
+                                          fontWeight: FontWeight.bold,
+                                          color: theme
+                                              .colorScheme
+                                              .onSecondaryContainer,
+                                        ),
                                   ),
                                 ),
                               ],
@@ -260,61 +300,31 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
                     child: Padding(
                       padding: const EdgeInsets.all(16.0),
                       child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
                         children: [
-                          Column(
-                            children: [
-                              Text(
-                                'Sets Completed',
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: theme.colorScheme.onTertiaryContainer,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '$completedSets / $totalSets',
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.onTertiaryContainer,
-                                ),
-                              ),
-                            ],
+                          Expanded(
+                            child: _SummaryStat(
+                              label: 'Sets Completed',
+                              value: '$completedSets / $totalSets',
+                              color: theme.colorScheme.onTertiaryContainer,
+                            ),
                           ),
-                          Column(
-                            children: [
-                              Text(
-                                'Hard Sets',
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: theme.colorScheme.onTertiaryContainer,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${WorkoutStatsHelper.countHardSets(widget.workoutData)}',
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.onTertiaryContainer,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _SummaryStat(
+                              label: 'Hard Sets',
+                              value:
+                                  '${WorkoutStatsHelper.countHardSets(widget.workoutData)}',
+                              color: theme.colorScheme.onTertiaryContainer,
+                            ),
                           ),
-                          Column(
-                            children: [
-                              Text(
-                                'Exercises',
-                                style: theme.textTheme.labelMedium?.copyWith(
-                                  color: theme.colorScheme.onTertiaryContainer,
-                                ),
-                              ),
-                              const SizedBox(height: 8),
-                              Text(
-                                '${widget.workoutData.exercisesWithSets.length}',
-                                style: theme.textTheme.headlineSmall?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: theme.colorScheme.onTertiaryContainer,
-                                ),
-                              ),
-                            ],
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _SummaryStat(
+                              label: 'Exercises',
+                              value:
+                                  '${widget.workoutData.exercisesWithSets.length}',
+                              color: theme.colorScheme.onTertiaryContainer,
+                            ),
                           ),
                         ],
                       ),
@@ -324,36 +334,32 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
                   Card(
                     color: theme.colorScheme.surfaceContainerHighest,
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16.0,
+                        vertical: 12.0,
+                      ),
+                      child: Wrap(
+                        alignment: WrapAlignment.spaceAround,
+                        crossAxisAlignment: WrapCrossAlignment.center,
+                        spacing: 24,
+                        runSpacing: 8,
                         children: [
-                          Row(
-                            children: [
-                              Icon(Icons.speed, size: 20, color: theme.colorScheme.primary),
-                              const SizedBox(width: 8),
-                              Text(
+                          _SummaryBadge(
+                            icon: Icons.speed,
+                            iconColor: theme.colorScheme.primary,
+                            text:
                                 'Density: ${WorkoutStatsHelper.calculateWorkoutDensity(widget.workoutData).toStringAsFixed(1)} kg/s',
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
                           ),
-                          if (WorkoutStatsHelper.getPrimaryMuscleImpacted(widget.workoutData) != null) ...[
-                            Row(
-                              children: [
-                                Icon(Icons.fitness_center, size: 20, color: theme.colorScheme.secondary),
-                                const SizedBox(width: 8),
-                                Text(
+                          if (WorkoutStatsHelper.getPrimaryMuscleImpacted(
+                                widget.workoutData,
+                              ) !=
+                              null)
+                            _SummaryBadge(
+                              icon: Icons.fitness_center,
+                              iconColor: theme.colorScheme.secondary,
+                              text:
                                   'Focus: ${WorkoutStatsHelper.getPrimaryMuscleImpacted(widget.workoutData)!.name}',
-                                  style: theme.textTheme.bodyMedium?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
                             ),
-                          ],
                         ],
                       ),
                     ),
@@ -384,24 +390,44 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
                                 Expanded(
                                   child: Text(
                                     ex.exerciseDC.name,
-                                    style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                                    style: theme.textTheme.titleMedium
+                                        ?.copyWith(fontWeight: FontWeight.bold),
                                   ),
                                 ),
-                                if (WorkoutStatsHelper.calculateExerciseEstimatedOneRepMax(ex) > 0)
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                    decoration: BoxDecoration(
-                                      color: theme.colorScheme.secondaryContainer,
-                                      borderRadius: BorderRadius.circular(12),
-                                    ),
-                                    child: Text(
-                                      'e1RM: ${WorkoutStatsHelper.calculateExerciseEstimatedOneRepMax(ex).toStringAsFixed(1)} kg',
-                                      style: theme.textTheme.labelSmall?.copyWith(
-                                        color: theme.colorScheme.onSecondaryContainer,
-                                        fontWeight: FontWeight.bold,
+                                if (WorkoutStatsHelper.calculateExerciseEstimatedOneRepMax(
+                                      ex,
+                                    ) >
+                                    0) ...[
+                                  const SizedBox(width: 8),
+                                  Flexible(
+                                    child: Container(
+                                      padding: const EdgeInsets.symmetric(
+                                        horizontal: 8,
+                                        vertical: 2,
+                                      ),
+                                      decoration: BoxDecoration(
+                                        color: theme
+                                            .colorScheme
+                                            .secondaryContainer,
+                                        borderRadius: BorderRadius.circular(12),
+                                      ),
+                                      child: FittedBox(
+                                        fit: BoxFit.scaleDown,
+                                        child: Text(
+                                          'e1RM: ${WorkoutStatsHelper.calculateExerciseEstimatedOneRepMax(ex).toStringAsFixed(1)} kg',
+                                          maxLines: 1,
+                                          style: theme.textTheme.labelSmall
+                                              ?.copyWith(
+                                                color: theme
+                                                    .colorScheme
+                                                    .onSecondaryContainer,
+                                                fontWeight: FontWeight.bold,
+                                              ),
+                                        ),
                                       ),
                                     ),
                                   ),
+                                ],
                               ],
                             ),
                             const SizedBox(height: 4),
@@ -414,62 +440,110 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
                             const SizedBox(height: 8),
                             ...ex.sets.map((s) {
                               return Padding(
-                                padding: const EdgeInsets.symmetric(vertical: 2.0),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 2.0,
+                                ),
                                 child: Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Row(
-                                      children: [
-                                        if (s.setType != SetType.NORMAL) ...[
-                                          Container(
-                                            margin: const EdgeInsets.only(right: 6),
-                                            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-                                            decoration: BoxDecoration(
-                                              color: s.setType == SetType.WARMUP
-                                                  ? Colors.amber.withValues(alpha: 0.2)
-                                                  : s.setType == SetType.DROP
-                                                      ? Colors.purple.withValues(alpha: 0.2)
-                                                      : s.setType == SetType.MYO
-                                                          ? Colors.teal.withValues(alpha: 0.2)
-                                                          : Colors.red.withValues(alpha: 0.2),
-                                              borderRadius: BorderRadius.circular(4),
-                                            ),
-                                            child: Text(
-                                              s.setType == SetType.WARMUP
-                                                  ? 'W'
-                                                  : s.setType == SetType.DROP
-                                                      ? 'D'
-                                                      : s.setType == SetType.MYO
-                                                          ? 'M'
-                                                          : 'F',
-                                              style: TextStyle(
-                                                fontSize: 10,
-                                                fontWeight: FontWeight.bold,
-                                                color: s.setType == SetType.WARMUP
-                                                    ? Colors.amber.shade800
+                                    Expanded(
+                                      child: Row(
+                                        children: [
+                                          if (s.setType != SetType.NORMAL) ...[
+                                            Container(
+                                              margin: const EdgeInsets.only(
+                                                right: 6,
+                                              ),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                    horizontal: 5,
+                                                    vertical: 1,
+                                                  ),
+                                              decoration: BoxDecoration(
+                                                color:
+                                                    s.setType == SetType.WARMUP
+                                                    ? Colors.amber.withValues(
+                                                        alpha: 0.2,
+                                                      )
                                                     : s.setType == SetType.DROP
-                                                        ? Colors.purple.shade700
-                                                        : s.setType == SetType.MYO
-                                                            ? Colors.teal.shade700
-                                                            : Colors.red.shade700,
+                                                    ? Colors.purple.withValues(
+                                                        alpha: 0.2,
+                                                      )
+                                                    : s.setType == SetType.MYO
+                                                    ? Colors.teal.withValues(
+                                                        alpha: 0.2,
+                                                      )
+                                                    : Colors.red.withValues(
+                                                        alpha: 0.2,
+                                                      ),
+                                                borderRadius:
+                                                    BorderRadius.circular(4),
+                                              ),
+                                              child: Text(
+                                                s.setType == SetType.WARMUP
+                                                    ? 'W'
+                                                    : s.setType == SetType.DROP
+                                                    ? 'D'
+                                                    : s.setType == SetType.MYO
+                                                    ? 'M'
+                                                    : 'F',
+                                                style: TextStyle(
+                                                  fontSize: 10,
+                                                  fontWeight: FontWeight.bold,
+                                                  color:
+                                                      s.setType ==
+                                                          SetType.WARMUP
+                                                      ? Colors.amber.shade800
+                                                      : s.setType ==
+                                                            SetType.DROP
+                                                      ? Colors.purple.shade700
+                                                      : s.setType == SetType.MYO
+                                                      ? Colors.teal.shade700
+                                                      : Colors.red.shade700,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                          Flexible(
+                                            child: Text(
+                                              '${s.load.toStringAsFixed(1)} kg x ${s.reps}',
+                                              style: TextStyle(
+                                                color: s.completed
+                                                    ? theme
+                                                          .colorScheme
+                                                          .onSurface
+                                                    : theme
+                                                          .colorScheme
+                                                          .onSurfaceVariant
+                                                          .withValues(
+                                                            alpha: 0.5,
+                                                          ),
+                                                fontWeight: s.completed
+                                                    ? FontWeight.normal
+                                                    : FontWeight.w300,
+                                                decoration: s.completed
+                                                    ? null
+                                                    : TextDecoration
+                                                          .lineThrough,
                                               ),
                                             ),
                                           ),
                                         ],
-                                        Text(
-                                          '${s.load.toStringAsFixed(1)} kg x ${s.reps}',
-                                          style: TextStyle(
-                                            color: s.completed ? theme.colorScheme.onSurface : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
-                                            fontWeight: s.completed ? FontWeight.normal : FontWeight.w300,
-                                            decoration: s.completed ? null : TextDecoration.lineThrough,
-                                          ),
-                                        ),
-                                      ],
+                                      ),
                                     ),
                                     if (s.completed)
-                                      Icon(Icons.check_circle, size: 16, color: theme.colorScheme.primary)
+                                      Icon(
+                                        Icons.check_circle,
+                                        size: 16,
+                                        color: theme.colorScheme.primary,
+                                      )
                                     else
-                                      const Icon(Icons.cancel_outlined, size: 16, color: Colors.grey),
+                                      const Icon(
+                                        Icons.cancel_outlined,
+                                        size: 16,
+                                        color: Colors.grey,
+                                      ),
                                   ],
                                 ),
                               );
@@ -486,11 +560,18 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
                   FilledButton.icon(
                     onPressed: () {
                       final settings = ref.read(settingsProvider);
-                      Clipboard.setData(ClipboardData(
-                        text: formatWorkoutSummaryText(widget.workoutData, intensityScale: settings.intensityScale),
-                      ));
+                      Clipboard.setData(
+                        ClipboardData(
+                          text: formatWorkoutSummaryText(
+                            widget.workoutData,
+                            intensityScale: settings.intensityScale,
+                          ),
+                        ),
+                      );
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(content: Text('Detailed summary copied to clipboard')),
+                        const SnackBar(
+                          content: Text('Detailed summary copied to clipboard'),
+                        ),
                       );
                     },
                     icon: const Icon(Icons.copy),
@@ -508,6 +589,80 @@ class _WorkoutSummaryScreenState extends ConsumerState<WorkoutSummaryScreen> wit
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SummaryStat extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _SummaryStat({
+    required this.label,
+    required this.value,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            label,
+            maxLines: 1,
+            style: theme.textTheme.labelMedium?.copyWith(color: color),
+          ),
+        ),
+        const SizedBox(height: 8),
+        FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            value,
+            maxLines: 1,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: color,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _SummaryBadge extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String text;
+
+  const _SummaryBadge({
+    required this.icon,
+    required this.iconColor,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, size: 20, color: iconColor),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            text,
+            style: theme.textTheme.bodyMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -569,7 +724,11 @@ class _ConfettiPainter extends CustomPainter {
       canvas.translate(p.x, p.y);
       canvas.rotate(p.rotation);
       canvas.drawRect(
-        Rect.fromCenter(center: Offset.zero, width: p.size, height: p.size * 0.6),
+        Rect.fromCenter(
+          center: Offset.zero,
+          width: p.size,
+          height: p.size * 0.6,
+        ),
         paint,
       );
       canvas.restore();

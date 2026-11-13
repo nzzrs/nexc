@@ -29,6 +29,7 @@ import '../../core/providers/workout_providers.dart';
 import '../exercises/exercises_screen.dart';
 import '../../core/components/wavy_progress_indicators.dart';
 import '../../core/util/exercise_set_mode_helper.dart';
+import '../../core/util/rest_alert_audio.dart';
 import '../meals/edit_meal_plan_screen.dart';
 
 class WorkoutScreen extends ConsumerStatefulWidget {
@@ -81,7 +82,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
     WidgetsBinding.instance.addObserver(this);
     _loadWorkout();
     _initNotifications();
-    _configureAudioMixing();
+    unawaited(_configureAudioMixing());
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (ref.read(settingsProvider).workoutScreenOn) {
         WakelockPlus.enable();
@@ -128,20 +129,12 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
     } catch (_) {}
   }
 
-  void _configureAudioMixing() {
-    _audioPlayer.setAudioContext(
-      AudioContext(
-        android: const AudioContextAndroid(
-          contentType: AndroidContentType.sonification,
-          audioMode: AndroidAudioMode.normal,
-          audioFocus: AndroidAudioFocus.none,
-        ),
-        iOS: AudioContextIOS(
-          category: AVAudioSessionCategory.playback,
-          options: const {AVAudioSessionOptions.mixWithOthers},
-        ),
-      ),
-    );
+  Future<void> _configureAudioMixing() async {
+    try {
+      await applyRestAlertAudioContext(_audioPlayer);
+    } catch (_) {
+      // audio configuration failure is non-fatal
+    }
   }
 
   Future<void> _initNotifications() async {
@@ -359,7 +352,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
     // Sound
     if (settings.restTimerSoundOn) {
       try {
-        await _audioPlayer.play(AssetSource('sounds/rest_done.wav'));
+        await playRestAlert(_audioPlayer, AssetSource(restAlertSoundAsset));
       } catch (_) {
         // audio failure is non-fatal
       }

@@ -9,13 +9,27 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../../core/db/relations.dart';
+
+import '../../core/components/clearable_search_field.dart';
+import '../../core/components/nexc_async_view.dart';
+import '../../core/components/nexc_badge.dart';
+import '../../core/components/nexc_empty_state.dart';
+import '../../core/components/nexc_food_tile.dart';
+import '../../core/components/nexc_macro.dart';
+import '../../core/components/nexc_page.dart';
+import '../../core/components/nexc_confirm_sheet.dart';
 import '../../core/db/meal_repository.dart';
+import '../../core/db/relations.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/providers/meals_providers.dart';
-import '../../core/components/nexc_scaffold.dart';
-import '../../core/components/clearable_search_field.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/shapes.dart';
+import '../../core/theme/spacing.dart';
+import '../../core/util/format.dart';
+import '../../core/util/macro_totals.dart';
+
 import 'edit_recipe_screen.dart';
+import 'recipe_detail_screen.dart';
 
 class RecipesLibraryScreen extends ConsumerStatefulWidget {
   const RecipesLibraryScreen({super.key});
@@ -26,8 +40,8 @@ class RecipesLibraryScreen extends ConsumerStatefulWidget {
 }
 
 class _RecipesLibraryScreenState extends ConsumerState<RecipesLibraryScreen> {
-  String _searchQuery = "";
   final TextEditingController _searchController = TextEditingController();
+  String _searchQuery = '';
 
   @override
   void dispose() {
@@ -35,302 +49,254 @@ class _RecipesLibraryScreenState extends ConsumerState<RecipesLibraryScreen> {
     super.dispose();
   }
 
-  Future<void> _showAddEditRecipe(
-    BuildContext context,
+  Future<void> _openEditor(
     RecipeWithIngredients recipe,
     List<Product> products,
   ) async {
-    final isNewRecipe = recipe.recipe.id == 0;
-    final savedRecipe = await Navigator.push<RecipeWithIngredients>(
-      context,
-      MaterialPageRoute(
-        builder: (context) => EditRecipeScreen(
-          recipeWithIngredients: recipe,
-          products: products,
-          onConfirm: (editedRecipe) async {
-            await ref
-                .read(mealRepositoryProvider)
-                .saveRecipeWithIngredients(editedRecipe);
-          },
-        ),
-      ),
-    );
+    final bool isNew = recipe.recipe.id == 0;
+    final RecipeWithIngredients? saved =
+        await Navigator.push<RecipeWithIngredients>(
+          context,
+          NexcPage.route(
+            title: isNew ? context.l10n.addRecipe : context.l10n.editRecipe,
+            builder: (BuildContext context) => EditRecipeScreen(
+              recipeWithIngredients: recipe,
+              products: products,
+              onConfirm: (RecipeWithIngredients edited) async {
+                await ref
+                    .read(mealRepositoryProvider)
+                    .saveRecipeWithIngredients(edited);
+              },
+            ),
+          ),
+        );
 
     // New recipes refresh through the provider; clearing the filter keeps the
     // saved recipe visible without leaving the library.
-    if (savedRecipe != null && isNewRecipe && mounted) {
+    if (saved != null && isNew && mounted) {
       setState(() {
-        _searchQuery = "";
+        _searchQuery = '';
         _searchController.clear();
       });
     }
   }
 
+  void _createRecipe(List<Product> products) {
+    _openEditor(
+      RecipeWithIngredients(
+        recipe: Recipe(
+          id: 0,
+          name: _searchQuery.trim(),
+          instructions: "",
+          isPortable: true,
+        ),
+        ingredients: <RecipeIngredientWithProduct>[],
+      ),
+      products,
+    );
+  }
+
+  void _openDetail(RecipeWithIngredients recipe) {
+    Navigator.push<void>(
+      context,
+      NexcPage.route(
+        title: recipe.recipe.name,
+        builder: (BuildContext context) =>
+            RecipeDetailScreen(recipeWithIngredients: recipe),
+      ),
+    );
+  }
+
+  Future<void> _deleteRecipe(RecipeWithIngredients recipe) async {
+    final l10n = context.l10n;
+    final bool? confirmed = await NexcConfirmSheet.show(
+      context: context,
+      title: l10n.deleteRecipe,
+      message: l10n.deleteRecipeConfirm(recipe.recipe.name),
+      confirmLabel: l10n.delete,
+      cancelLabel: l10n.cancel,
+      destructive: true,
+    );
+    if (confirmed == true) {
+      await ref.read(mealRepositoryProvider).deleteRecipe(recipe.recipe);
+    }
+  }
+
+  List<RecipeWithIngredients> _filter(List<RecipeWithIngredients> recipes) {
+    final String query = _searchQuery.trim().toLowerCase();
+    if (query.isEmpty) return recipes;
+    return recipes.where((RecipeWithIngredients recipe) {
+      final bool nameMatch = recipe.recipe.name.toLowerCase().contains(query);
+      final bool ingredientMatch = recipe.ingredients.any(
+        (RecipeIngredientWithProduct ingredient) =>
+            ingredient.product.name.toLowerCase().contains(query),
+      );
+      return nameMatch || ingredientMatch;
+    }).toList();
+  }
+
   @override
   Widget build(BuildContext context) {
-    final recipesAsync = ref.watch(allRecipesProvider);
-    final products = ref.watch(allProductsProvider).value ?? [];
-    final theme = Theme.of(context);
     final l10n = context.l10n;
+    final AsyncValue<List<RecipeWithIngredients>> recipesAsync = ref.watch(
+      allRecipesProvider,
+    );
+    final List<Product> products = ref.watch(allProductsProvider).value ?? [];
 
-    return NexcScaffold(
-      title: Text(l10n.recipesTab),
-      navigateBack: () => Navigator.pop(context),
-      fabAction: () {
-        _showAddEditRecipe(
-          context,
-          RecipeWithIngredients(
-            recipe: Recipe(
-              id: 0,
-              name: _searchQuery.trim(),
-              instructions: "",
-              isPortable: true,
-            ),
-            ingredients: [],
-          ),
-          products,
-        );
-      },
-      fabIcon: const Icon(Icons.add),
-      fabText: l10n.addRecipe,
-      content: (context, padding) {
-        return recipesAsync.when(
-          loading: () => const Center(child: CircularProgressIndicator()),
-          error: (err, stack) =>
-              Center(child: Text(l10n.errorWithMessage('$err'))),
-          data: (recipes) {
-            final filteredRecipes = _searchQuery.isEmpty
-                ? recipes
-                : recipes.where((r) {
-                    final nameMatch = r.recipe.name.toLowerCase().contains(
-                      _searchQuery.toLowerCase(),
-                    );
-                    final ingredientMatch = r.ingredients.any(
-                      (ing) => ing.product.name.toLowerCase().contains(
-                        _searchQuery.toLowerCase(),
-                      ),
-                    );
-                    return nameMatch || ingredientMatch;
-                  }).toList();
-
-            return Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: ClearableSearchField(
-                    controller: _searchController,
-                    labelText: l10n.searchRecipes,
-                    onChanged: (val) {
-                      setState(() {
-                        _searchQuery = val;
-                      });
-                    },
-                  ),
+    return NexcPage(
+      title: l10n.recipesTab,
+      floatingActionButton: FloatingActionButton.extended(
+        onPressed: () => _createRecipe(products),
+        icon: const Icon(NexcIcons.add),
+        label: Text(l10n.addRecipe),
+      ),
+      body: NexcAsyncView<List<RecipeWithIngredients>>(
+        value: recipesAsync,
+        errorTitle: (Object error) => l10n.errorWithMessage('$error'),
+        onRetry: () => ref.invalidate(allRecipesProvider),
+        builder: (List<RecipeWithIngredients> recipes) {
+          final List<RecipeWithIngredients> filtered = _filter(recipes);
+          return Column(
+            children: <Widget>[
+              Padding(
+                padding: const EdgeInsets.all(NexcSpacing.lg),
+                child: ClearableSearchField(
+                  controller: _searchController,
+                  labelText: l10n.searchRecipes,
+                  onChanged: (String value) =>
+                      setState(() => _searchQuery = value),
                 ),
-                Expanded(
-                  child: filteredRecipes.isEmpty
-                      ? Center(child: Text(l10n.noRecipesFound))
-                      : ListView.builder(
-                          padding: const EdgeInsets.only(
-                            left: 16.0,
-                            right: 16.0,
-                            bottom: 80.0,
-                          ),
-                          itemCount: filteredRecipes.length,
-                          itemBuilder: (context, index) {
-                            final recipe = filteredRecipes[index];
-                            return Padding(
-                              key: ValueKey(recipe.recipe.id),
-                              padding: const EdgeInsets.only(bottom: 8.0),
-                              child: RecipeCard(
-                                recipeWithIngredients: recipe,
-                                onClick: () {
-                                  _showAddEditRecipe(context, recipe, products);
-                                },
-                                onDelete: () async {
-                                  final confirm = await showDialog<bool>(
-                                    context: context,
-                                    builder: (context) => AlertDialog(
-                                      title: Text(l10n.deleteRecipe),
-                                      content: Text(
-                                        l10n.deleteRecipeConfirm(
-                                          recipe.recipe.name,
-                                        ),
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, false),
-                                          child: Text(l10n.cancel),
-                                        ),
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context, true),
-                                          child: Text(
-                                            l10n.delete,
-                                            style: TextStyle(
-                                              color: theme.colorScheme.error,
-                                            ),
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  );
-                                  if (confirm == true) {
-                                    ref
-                                        .read(mealRepositoryProvider)
-                                        .deleteRecipe(recipe.recipe);
-                                  }
-                                },
-                              ),
-                            );
-                          },
+              ),
+              Expanded(
+                child: filtered.isEmpty
+                    ? NexcEmptyState(
+                        icon: NexcIcons.recipes,
+                        title: l10n.noRecipesFound,
+                        actionLabel: l10n.addRecipe,
+                        onAction: () => _createRecipe(products),
+                      )
+                    : ListView.separated(
+                        padding: const EdgeInsets.fromLTRB(
+                          NexcSpacing.lg,
+                          0,
+                          NexcSpacing.lg,
+                          NexcSpacing.section,
                         ),
-                ),
-              ],
-            );
-          },
-        );
-      },
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, _) =>
+                            const SizedBox(height: NexcSpacing.sm),
+                        itemBuilder: (BuildContext context, int index) {
+                          final RecipeWithIngredients recipe = filtered[index];
+                          return _RecipeFoodTile(
+                            key: ValueKey<int>(recipe.recipe.id),
+                            recipe: recipe,
+                            onTap: () => _openDetail(recipe),
+                            onDelete: () => _deleteRecipe(recipe),
+                          );
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
 
-class RecipeCard extends StatelessWidget {
-  final RecipeWithIngredients recipeWithIngredients;
-  final VoidCallback onClick;
+class _RecipeFoodTile extends StatelessWidget {
+  final RecipeWithIngredients recipe;
+  final VoidCallback onTap;
   final VoidCallback onDelete;
 
-  const RecipeCard({
+  const _RecipeFoodTile({
     super.key,
-    required this.recipeWithIngredients,
-    required this.onClick,
+    required this.recipe,
+    required this.onTap,
     required this.onDelete,
   });
 
+  String _preview(BuildContext context) {
+    final l10n = context.l10n;
+    return recipe.ingredients
+        .map(
+          (RecipeIngredientWithProduct ingredient) => l10n.ingredientWithAmount(
+            ingredient.product.name,
+            '${formatDecimal(ingredient.ingredient.amount)}'
+            '${ingredient.ingredient.amountUnits ?? l10n.unitG}',
+          ),
+        )
+        .join(', ');
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final ThemeData theme = Theme.of(context);
     final l10n = context.l10n;
-    final recipe = recipeWithIngredients.recipe;
-    final ingredients = recipeWithIngredients.ingredients;
+    final MacroTotals totals = recipeTotals(recipe);
 
-    // Totals calculations
-    double totalProt = 0.0;
-    double totalCarb = 0.0;
-    double totalFat = 0.0;
-    for (final item in ingredients) {
-      final scale = item.ingredient.amount / 100.0;
-      totalProt += item.product.proteins * scale;
-      totalCarb += item.product.carbs * scale;
-      totalFat += item.product.fats * scale;
-    }
-
-    return Card(
-      child: InkWell(
-        onTap: onClick,
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          recipe.name,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 6,
-                            vertical: 2,
-                          ),
-                          decoration: BoxDecoration(
-                            color: recipe.isPortable
-                                ? theme.colorScheme.primaryContainer.withValues(
-                                    alpha: 0.5,
-                                  )
-                                : theme.colorScheme.errorContainer.withValues(
-                                    alpha: 0.5,
-                                  ),
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            recipe.isPortable ? l10n.portable : l10n.homeOnly,
-                            style: TextStyle(
-                              fontSize: 10,
-                              color: recipe.isPortable
-                                  ? theme.colorScheme.onPrimaryContainer
-                                  : theme.colorScheme.onErrorContainer,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  IconButton(
-                    icon: Icon(
-                      Icons.delete_outline,
-                      color: theme.colorScheme.error,
-                    ),
-                    onPressed: onDelete,
-                  ),
-                ],
-              ),
-              if (ingredients.isNotEmpty) ...[
-                const SizedBox(height: 4),
-                Text(
-                  ingredients
-                      .map(
-                        (i) => l10n.ingredientWithAmount(
-                          i.product.name,
-                          '${i.ingredient.amount.toStringAsFixed(0)}${i.ingredient.amountUnits ?? 'g'}',
-                        ),
-                      )
-                      .join(", "),
-                  style: theme.textTheme.bodySmall?.copyWith(
-                    color: theme.colorScheme.onSurfaceVariant,
-                  ),
-                ),
-              ],
-              if (recipe.instructions.isNotEmpty) ...[
-                const SizedBox(height: 8),
-                Text(
-                  recipe.instructions,
-                  style: theme.textTheme.bodyMedium,
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-              const SizedBox(height: 8),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    l10n.macrosPrefixLine(
-                      totalProt.toStringAsFixed(1),
-                      totalCarb.toStringAsFixed(1),
-                      totalFat.toStringAsFixed(1),
-                    ),
-                    style: theme.textTheme.bodySmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+    return Material(
+      color: theme.colorScheme.surfaceContainerLow,
+      shape: const RoundedRectangleBorder(borderRadius: NexcShapes.mdRadius),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          NexcFoodTile(
+            name: recipe.recipe.name,
+            icon: NexcIcons.recipes,
+            subtitle: _preview(context),
+            badges: <NexcBadge>[
+              NexcBadge(
+                recipe.recipe.isPortable ? l10n.portable : l10n.homeOnly,
+                tone: recipe.recipe.isPortable
+                    ? NexcBadgeTone.neutral
+                    : NexcBadgeTone.warning,
               ),
             ],
+            onTap: onTap,
+            trailing: PopupMenuButton<String>(
+              tooltip: l10n.moreOptions,
+              icon: const Icon(NexcIcons.more),
+              onSelected: (String value) {
+                if (value == 'delete') onDelete();
+              },
+              itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+                PopupMenuItem<String>(
+                  value: 'delete',
+                  child: Row(
+                    children: <Widget>[
+                      Icon(NexcIcons.delete, color: theme.colorScheme.error),
+                      const SizedBox(width: NexcSpacing.md),
+                      Text(
+                        l10n.delete,
+                        style: TextStyle(color: theme.colorScheme.error),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
           ),
-        ),
+          InkWell(
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(
+                NexcSpacing.iconContainer + NexcSpacing.lg,
+                0,
+                NexcSpacing.md,
+                NexcSpacing.md,
+              ),
+              child: NexcMacroChips(
+                protein: totals.protein,
+                carbs: totals.carbs,
+                fats: totals.fats,
+                showCalories: true,
+                calories: totals.calories,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }

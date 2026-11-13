@@ -13,9 +13,9 @@ Merge gate: `flutter analyze` (0 issues) + `flutter test` (green) + scope review
 | 1 | T1 dataset sync (912 exercises) | `feat/upstream-dataset-912` | pending | pending | | |
 | 1 | T2 update routine after workout | `feat/upstream-routine-update` | pending | pending | | |
 | 1 | T3 reorder routines | `feat/upstream-routine-order` | pending | pending | | |
-| 1 | T4 rest alert ducking | `fix/rest-alert-ducking` | pending | pending | | |
-| 1 | T5 license compliance | `chore/license-attribution` | pending | pending | | |
-| 1 | T6 Flutter CI + validator | `chore/flutter-ci` | pending | pending | | |
+| 1 | T4 rest alert ducking | `fix/rest-alert-ducking` | merged | merged | `274d91a2` | 100 |
+| 1 | T5 license compliance | `chore/license-attribution` | merged | merged | `6f3b04b7` | 97 |
+| 1 | T6 Flutter CI + validator | `chore/flutter-ci` | merged | merged | `d1dab966` | 97 |
 | 2 | T7 images toggle | `feat/upstream-image-toggle` | pending | pending | | |
 | 3 | T8 units core | `feat/upstream-units-core` | pending | pending | | |
 | 3 | T9 units workout UI | `feat/upstream-units-workout-ui` | pending | pending | | |

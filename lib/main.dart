@@ -52,8 +52,11 @@ void main() async {
     ],
   );
 
-  // Initialize/prepopulate database on app launch
-  await container.read(datasetRepositoryProvider).updateDatasetOnAppUpdate(1);
+  // Initialize/prepopulate database on app launch. The bundled dataset is
+  // re-imported whenever its revision is newer than the last imported one.
+  await container
+      .read(datasetRepositoryProvider)
+      .updateDatasetOnAppUpdate(DatasetRepository.datasetRevision);
 
   // Run cleanups for temporal plans (routines and meal plans)
   await container.read(workoutRepositoryProvider).cleanupTemporalWorkoutPlans();

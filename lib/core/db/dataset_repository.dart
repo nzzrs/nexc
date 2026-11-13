@@ -25,6 +25,10 @@ class DatasetRepository {
 
   DatasetRepository(this.db, [this.ref]);
 
+  /// Bump when `assets/exercises.json` or `assets/foods.json` change so that
+  /// existing installs re-import the bundled dataset on the next launch.
+  static const int datasetRevision = 2;
+
   Stream<List<ExerciseDataDC>> getDataset() {
     return (db.select(db.exerciseData)..orderBy([(d) => OrderingTerm(expression: d.name)]))
         .watch();
@@ -77,7 +81,7 @@ class DatasetRepository {
     final productsCountResult = await productsCountQuery.getSingle();
     final productsCount = productsCountResult.read(productsCountExpr) ?? 0;
 
-    if (productsCount < 500 || pastVersion != currentVersionCode) {
+    if (productsCount < 500 || pastVersion < currentVersionCode) {
       final jsonString = await rootBundle.loadString('assets/foods.json');
       final List<dynamic> jsonList = json.decode(jsonString);
 
@@ -108,7 +112,7 @@ class DatasetRepository {
 
     final existingExercises = await db.select(db.exerciseData).get();
 
-    if (existingExercises.length < 500 || pastVersion != currentVersionCode) {
+    if (existingExercises.length < 500 || pastVersion < currentVersionCode) {
 
       // 2. Load and parse exercises.json
       final jsonString = await rootBundle.loadString('assets/exercises.json');

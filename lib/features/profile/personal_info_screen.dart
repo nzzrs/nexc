@@ -8,9 +8,23 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/components/nexc_page.dart';
+import '../../core/components/nexc_section.dart';
+import '../../core/components/nexc_snack.dart';
+import '../../core/components/nexc_tile.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/providers/profile_providers.dart';
 import '../../core/providers/settings_provider.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/shapes.dart';
+import '../../core/theme/spacing.dart';
+import '../../core/util/format.dart';
+import '../../core/util/unit_system.dart';
+import '../../l10n/app_localizations.dart';
+
+/// Height is stored in centimetres; the form edits the user's unit.
+const double _centimetresPerInch = 2.54;
 
 class PersonalInfoScreen extends ConsumerStatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -21,70 +35,124 @@ class PersonalInfoScreen extends ConsumerStatefulWidget {
 
 class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   final _heightController = TextEditingController();
-  late TextEditingController _preferencesController;
+  final _preferencesController = TextEditingController();
+
   DateTime? _selectedBirthDate;
+  DateTime? _savedBirthDate;
+  String _savedHeightText = '';
+  String _savedPreferences = '';
+  String? _heightError;
   bool _isLoading = true;
+  bool _saving = false;
 
   @override
   void initState() {
     super.initState();
-    _preferencesController = TextEditingController(
-      text: ref.read(settingsProvider).userPreferences,
-    );
+    _heightController.addListener(_onFieldChanged);
+    _preferencesController.addListener(_onFieldChanged);
     _loadUserData();
   }
 
   @override
   void dispose() {
-    _heightController.dispose();
-    _preferencesController.dispose();
+    _heightController
+      ..removeListener(_onFieldChanged)
+      ..dispose();
+    _preferencesController
+      ..removeListener(_onFieldChanged)
+      ..dispose();
     super.dispose();
+  }
+
+  void _onFieldChanged() {
+    if (mounted) setState(() {});
+  }
+
+  String _heightLabel(AppLocalizations l10n, UnitSystem system) {
+    if (system == UnitSystem.metric) return l10n.heightCm;
+    final String base = l10n.heightCm
+        .replaceAll(RegExp(r'\s*\([^)]*\)\s*$'), '')
+        .trim();
+    return '$base (in)';
+  }
+
+  String _displayHeight(double? centimetres, UnitSystem system) {
+    if (centimetres == null) return '';
+    final double value = system == UnitSystem.metric
+        ? centimetres
+        : centimetres / _centimetresPerInch;
+    return formatDecimal(value, maxDecimals: 1);
   }
 
   Future<void> _loadUserData() async {
     final user = await ref.read(userRepositoryProvider).getUser();
-    if (user != null) {
-      setState(() {
-        _selectedBirthDate = user.birthDate;
-        _heightController.text = user.height?.toStringAsFixed(1) ?? '';
-        _isLoading = false;
-      });
-    } else {
-      setState(() {
-        _isLoading = false;
-      });
-    }
+    if (!mounted) return;
+    final UnitSystem system = ref.read(settingsProvider).unitSystem;
+    final String heightText = _displayHeight(user?.height, system);
+    final String preferences = ref.read(settingsProvider).userPreferences;
+    _heightController.text = heightText;
+    _preferencesController.text = preferences;
+    setState(() {
+      _selectedBirthDate = user?.birthDate;
+      _savedBirthDate = user?.birthDate;
+      _savedHeightText = heightText;
+      _savedPreferences = preferences;
+      _isLoading = false;
+    });
   }
 
-  Future<void> _saveUserData() async {
-    final heightVal = double.tryParse(_heightController.text);
+  bool get _hasChanges =>
+      _heightController.text.trim() != _savedHeightText ||
+      _selectedBirthDate != _savedBirthDate ||
+      _preferencesController.text != _savedPreferences;
+
+  Future<void> _save() async {
+    if (_saving) return;
+    final SettingsState settings = ref.read(settingsProvider);
+    final AppLocalizations l10n = context.l10n;
+    final String heightText = _heightController.text.trim();
+
+    double? heightCentimetres;
+    if (heightText.isNotEmpty) {
+      final double? entered = double.tryParse(heightText.replaceAll(',', '.'));
+      if (entered == null || entered <= 0) {
+        setState(
+          () => _heightError = l10n.errorWithMessage(
+            _heightLabel(l10n, settings.unitSystem),
+          ),
+        );
+        return;
+      }
+      heightCentimetres = settings.unitSystem == UnitSystem.metric
+          ? entered
+          : entered * _centimetresPerInch;
+    }
+
+    setState(() {
+      _saving = true;
+      _heightError = null;
+    });
+
     await ref
         .read(userRepositoryProvider)
-        .saveUser(birthDate: _selectedBirthDate, height: heightVal);
-
-    await _loadUserData();
-
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.personalInfoSaved)));
-    }
-  }
-
-  Future<void> _savePreferences() async {
+        .saveUser(birthDate: _selectedBirthDate, height: heightCentimetres);
     await ref
         .read(settingsProvider.notifier)
         .setUserPreferences(_preferencesController.text);
-    if (mounted) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(context.l10n.preferencesSaved)));
-    }
+
+    if (!mounted) return;
+    setState(() {
+      _saving = false;
+      _savedHeightText = heightText;
+      _savedBirthDate = _selectedBirthDate;
+      _savedPreferences = _preferencesController.text;
+    });
+    NexcSnack.show(context, l10n.personalInfoSaved);
   }
 
   int? _calculateAge(DateTime? birthDate) {
     if (birthDate == null) return null;
-    final today = DateTime.now();
+    final DateTime today = DateTime.now();
     int age = today.year - birthDate.year;
     if (today.month < birthDate.month ||
         (today.month == birthDate.month && today.day < birthDate.day)) {
@@ -93,15 +161,15 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     return age;
   }
 
-  Future<void> _selectDate(BuildContext context) async {
-    final initialDate = _selectedBirthDate ?? DateTime(2000, 1, 1);
+  Future<void> _selectDate() async {
+    final DateTime initialDate = _selectedBirthDate ?? DateTime(2000, 1, 1);
     final DateTime? picked = await showDatePicker(
       context: context,
       initialDate: initialDate,
       firstDate: DateTime(1900),
       lastDate: DateTime.now(),
     );
-    if (picked != null && picked != _selectedBirthDate) {
+    if (picked != null) {
       setState(() {
         _selectedBirthDate = picked;
       });
@@ -110,176 +178,127 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final age = _calculateAge(_selectedBirthDate);
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    final UnitSystem system = ref.watch(settingsProvider).unitSystem;
+    final int? age = _calculateAge(_selectedBirthDate);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(l10n.personalInformation),
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
+    return NexcPage(
+      title: l10n.personalInformation,
       body: _isLoading
           ? const Center(child: CircularProgressIndicator())
           : ListView(
-              padding: const EdgeInsets.all(24.0),
+              padding: const EdgeInsets.only(
+                top: NexcSpacing.md,
+                bottom: NexcSpacing.xxl,
+              ),
               children: [
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Text(
-                          l10n.yourProfileMetrics,
-                          style: theme.textTheme.titleMedium?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
-                          textAlign: TextAlign.center,
-                        ),
-                        const SizedBox(height: 24),
-                        TextField(
-                          controller: _heightController,
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          decoration: InputDecoration(
-                            labelText: l10n.heightCm,
-                            prefixIcon: const Icon(Icons.height),
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
+                NexcSection(
+                  title: l10n.yourProfileMetrics,
+                  padded: true,
+                  children: [
+                    TextField(
+                      key: const ValueKey<String>('height'),
+                      controller: _heightController,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: InputDecoration(
+                        labelText: _heightLabel(l10n, system),
+                        prefixIcon: const Icon(NexcIcons.units, size: 20),
+                        errorText: _heightError,
+                      ),
+                      onChanged: (_) {
+                        if (_heightError != null) {
+                          setState(() => _heightError = null);
+                        }
+                      },
+                    ),
+                    const SizedBox(height: NexcSpacing.md),
+                    NexcTile(
+                      icon: NexcIcons.calendar,
+                      title: _selectedBirthDate == null
+                          ? l10n.selectBirthday
+                          : l10n.birthdayWithDate(
+                              context.formatMediumDate(_selectedBirthDate!),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        OutlinedButton.icon(
-                          onPressed: () => _selectDate(context),
-                          style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          icon: const Icon(Icons.cake_outlined),
-                          label: Text(
-                            _selectedBirthDate != null
-                                ? l10n.birthdayWithDate(
-                                    '${_selectedBirthDate!.day}/${_selectedBirthDate!.month}/${_selectedBirthDate!.year}',
-                                  )
-                                : l10n.selectBirthday,
-                          ),
-                        ),
-                        if (age != null) ...[
-                          const SizedBox(height: 24),
-                          Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.secondaryContainer
-                                  .withValues(alpha: 0.4),
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
-                                Icon(
-                                  Icons.hourglass_empty,
-                                  color: theme.colorScheme.onSecondaryContainer,
-                                ),
-                                const SizedBox(width: 12),
-                                Text(
+                      onTap: _selectDate,
+                      showChevron: true,
+                    ),
+                    if (age != null) ...[
+                      const SizedBox(height: NexcSpacing.md),
+                      Material(
+                        color: theme.colorScheme.secondaryContainer,
+                        borderRadius: NexcShapes.mdRadius,
+                        child: Padding(
+                          padding: const EdgeInsets.all(NexcSpacing.md),
+                          child: Row(
+                            children: [
+                              Icon(
+                                NexcIcons.calendar,
+                                size: 20,
+                                color: theme.colorScheme.onSecondaryContainer,
+                              ),
+                              const SizedBox(width: NexcSpacing.sm),
+                              Expanded(
+                                child: Text(
                                   l10n.calculatedAge(age),
-                                  style: theme.textTheme.titleMedium?.copyWith(
+                                  style: theme.textTheme.titleSmall?.copyWith(
                                     color:
                                         theme.colorScheme.onSecondaryContainer,
-                                    fontWeight: FontWeight.bold,
+                                    fontWeight: FontWeight.w700,
                                   ),
                                 ),
-                              ],
-                            ),
+                              ),
+                            ],
                           ),
-                        ],
-                        const SizedBox(height: 32),
-                        FilledButton.icon(
-                          onPressed: _saveUserData,
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          icon: const Icon(Icons.save_outlined),
-                          label: Text(l10n.saveDetails),
                         ),
-                      ],
-                    ),
-                  ),
+                      ),
+                    ],
+                  ],
                 ),
-                const SizedBox(height: 24),
-                Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
-                  elevation: 2,
-                  child: Padding(
-                    padding: const EdgeInsets.all(24.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              l10n.userPreferencesTitle,
-                              style: theme.textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              l10n.aiPreferencesContext,
-                              style: theme.textTheme.bodySmall?.copyWith(
-                                color: theme.colorScheme.onSurfaceVariant,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _preferencesController,
-                          minLines: 4,
-                          maxLines: 12,
-                          decoration: InputDecoration(
-                            hintText: l10n.preferencesHint,
-                            border: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 20),
-                        FilledButton.icon(
-                          onPressed: _savePreferences,
-                          style: FilledButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(vertical: 16),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          icon: const Icon(Icons.save_outlined),
-                          label: Text(l10n.savePreferences),
-                        ),
-                      ],
+                NexcSection(
+                  title: l10n.userPreferencesTitle,
+                  description: l10n.aiPreferencesContext,
+                  padded: true,
+                  children: [
+                    TextField(
+                      controller: _preferencesController,
+                      minLines: 4,
+                      maxLines: 12,
+                      decoration: InputDecoration(
+                        hintText: l10n.preferencesHint,
+                      ),
                     ),
-                  ),
+                  ],
                 ),
               ],
             ),
+      bottomBar: Row(
+        children: [
+          if (_hasChanges) ...[
+            Semantics(
+              label: l10n.saveChanges,
+              child: Container(
+                width: NexcSpacing.sm,
+                height: NexcSpacing.sm,
+                decoration: BoxDecoration(
+                  color: theme.colorScheme.primary,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+            const SizedBox(width: NexcSpacing.sm),
+          ],
+          Expanded(
+            child: FilledButton.icon(
+              onPressed: _hasChanges && !_saving ? _save : null,
+              icon: const Icon(NexcIcons.check),
+              label: Text(l10n.saveChanges),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

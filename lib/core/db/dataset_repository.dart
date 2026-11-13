@@ -77,7 +77,7 @@ class DatasetRepository {
     final productsCountResult = await productsCountQuery.getSingle();
     final productsCount = productsCountResult.read(productsCountExpr) ?? 0;
 
-    if (productsCount < 500 || pastVersion != currentVersionCode) {
+    if (productsCount < 500 || pastVersion < currentVersionCode) {
       final jsonString = await rootBundle.loadString('assets/foods.json');
       final List<dynamic> jsonList = json.decode(jsonString);
 
@@ -108,7 +108,7 @@ class DatasetRepository {
 
     final existingExercises = await db.select(db.exerciseData).get();
 
-    if (existingExercises.length < 500 || pastVersion != currentVersionCode) {
+    if (existingExercises.length < 500 || pastVersion < currentVersionCode) {
 
       // 2. Load and parse exercises.json
       final jsonString = await rootBundle.loadString('assets/exercises.json');

@@ -10,6 +10,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:dynamic_color/dynamic_color.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/theme.dart';
@@ -52,8 +53,13 @@ void main() async {
     ],
   );
 
-  // Initialize/prepopulate database on app launch
-  await container.read(datasetRepositoryProvider).updateDatasetOnAppUpdate(1);
+  // Initialize/prepopulate database on app launch. The dataset is re-imported
+  // whenever the installed build number is newer than the last imported one.
+  final packageInfo = await PackageInfo.fromPlatform();
+  final currentVersionCode = int.tryParse(packageInfo.buildNumber) ?? 0;
+  await container
+      .read(datasetRepositoryProvider)
+      .updateDatasetOnAppUpdate(currentVersionCode);
 
   // Run cleanups for temporal plans (routines and meal plans)
   await container.read(workoutRepositoryProvider).cleanupTemporalWorkoutPlans();

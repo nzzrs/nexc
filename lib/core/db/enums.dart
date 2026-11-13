@@ -35,6 +35,8 @@ enum Equipment {
   BARBELL,
   EXERCISE_BALL,
   E_Z_CURL_BAR,
+  PULL_UP_BAR,
+  RINGS,
   OTHER
 }
 
@@ -138,6 +140,8 @@ extension EquipmentExt on Equipment {
       case Equipment.BARBELL: return 'barbell';
       case Equipment.EXERCISE_BALL: return 'exercise ball';
       case Equipment.E_Z_CURL_BAR: return 'e-z curl bar';
+      case Equipment.PULL_UP_BAR: return 'pull-up bar';
+      case Equipment.RINGS: return 'rings';
       case Equipment.OTHER: return 'other';
     }
   }
@@ -155,6 +159,8 @@ extension EquipmentExt on Equipment {
       case 'barbell': return Equipment.BARBELL;
       case 'exercise ball': return Equipment.EXERCISE_BALL;
       case 'e-z curl bar': return Equipment.E_Z_CURL_BAR;
+      case 'pull-up bar': return Equipment.PULL_UP_BAR;
+      case 'rings': return Equipment.RINGS;
       case 'other': return Equipment.OTHER;
       default: throw ArgumentError('Unknown Equipment value: $value');
     }

@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../db/enums.dart';
 import '../db/relations.dart';
 import '../providers/settings_provider.dart';
+import '../util/unit_system.dart';
 
 class ExerciseCard extends ConsumerStatefulWidget {
   const ExerciseCard({
@@ -128,6 +129,9 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
     final sets = widget.exerciseWithSets.sets;
     final showImages = ref.watch(
       settingsProvider.select((s) => s.showExerciseImages),
+    );
+    final unitSystem = ref.watch(
+      settingsProvider.select((s) => s.unitSystem),
     );
 
     return Card(
@@ -492,6 +496,7 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                                   set: set,
                                   index: idx,
                                   setMode: ex.setMode,
+                                  unitSystem: unitSystem,
                                   workout: widget.workout,
                                   previousPerformances: widget.previousPerformances,
                                   showRpe: widget.showRpe,
@@ -541,6 +546,7 @@ class _SetRow extends StatefulWidget {
   final WorkoutSet set;
   final int index;
   final SetMode setMode;
+  final UnitSystem unitSystem;
   final bool workout;
   final List<dynamic>? previousPerformances;
   final bool showRpe;
@@ -561,6 +567,7 @@ class _SetRow extends StatefulWidget {
     required this.set,
     required this.index,
     required this.setMode,
+    required this.unitSystem,
     required this.workout,
     this.previousPerformances,
     required this.showRpe,
@@ -588,10 +595,15 @@ class _SetRowState extends State<_SetRow> {
   late TextEditingController _rpeController;
   late TextEditingController _rirController;
 
+  /// Formats a stored kilogram load for the user's unit system.
+  String _formatLoad(double load) {
+    return load == 0.0 ? '' : formatWeight(load, widget.unitSystem);
+  }
+
   @override
   void initState() {
     super.initState();
-    _loadController = TextEditingController(text: widget.set.load == 0.0 ? '' : widget.set.load.toString().replaceAll(RegExp(r'\.0$'), ''));
+    _loadController = TextEditingController(text: _formatLoad(widget.set.load));
     _repsController = TextEditingController(text: widget.set.reps == 0 ? '' : widget.set.reps.toString());
     _timeController = TextEditingController(text: _formatDuration(widget.set.elapsedTime));
     _rpeController = TextEditingController(text: widget.set.rpe == null ? '' : widget.set.rpe.toString().replaceAll(RegExp(r'\.0$'), ''));
@@ -601,9 +613,17 @@ class _SetRowState extends State<_SetRow> {
   @override
   void didUpdateWidget(covariant _SetRow oldWidget) {
     super.didUpdateWidget(oldWidget);
-    final double? currentLoad = double.tryParse(_loadController.text);
-    if (widget.set.load != currentLoad) {
-      _loadController.text = widget.set.load == 0.0 ? '' : widget.set.load.toString().replaceAll(RegExp(r'\.0$'), '');
+    // The field shows the user's unit system while the stored load stays in
+    // kilograms. Compare in kilograms with a tolerance of one hundredth of
+    // the displayed unit so rounding does not rewrite text while typing.
+    final bool unitChanged = oldWidget.unitSystem != widget.unitSystem;
+    final double? currentLoad =
+        parseWeight(_loadController.text, widget.unitSystem);
+    final double toleranceKg = toKilograms(0.01, widget.unitSystem);
+    final bool loadInSync = currentLoad != null &&
+        (currentLoad - widget.set.load).abs() <= toleranceKg;
+    if (unitChanged || !loadInSync) {
+      _loadController.text = _formatLoad(widget.set.load);
     }
     final int? currentReps = int.tryParse(_repsController.text);
     if (widget.set.reps != currentReps) {
@@ -692,6 +712,16 @@ class _SetRowState extends State<_SetRow> {
               isDense: true,
             );
             final inputStyle = TextStyle(color: contentColor, fontSize: 14, fontWeight: FontWeight.w600);
+            // Weight cells show the unit next to the value without adding
+            // another column to the compact row.
+            final loadInputDeco = inputDeco.copyWith(
+              suffixText: widget.unitSystem.suffix,
+              suffixStyle: TextStyle(
+                color: contentColor.withValues(alpha: 0.6),
+                fontSize: 11,
+                fontWeight: FontWeight.w500,
+              ),
+            );
 
             Widget buildCell(Widget child) {
               return Expanded(
@@ -732,9 +762,9 @@ class _SetRowState extends State<_SetRow> {
                         if (widget.setMode == SetMode.DURATION) {
                           displayVal = "${prevSet.elapsedTime}s";
                         } else if (widget.setMode == SetMode.DURATION_WITH_LOAD) {
-                          displayVal = "${prevSet.load.toString().replaceAll(RegExp(r'\.0$'), '')} - ${prevSet.elapsedTime}s";
+                          displayVal = "${formatWeight(prevSet.load, widget.unitSystem)} - ${prevSet.elapsedTime}s";
                         } else {
-                          displayVal = "${prevSet.load.toString().replaceAll(RegExp(r'\.0$'), '')}x${prevSet.reps}";
+                          displayVal = "${formatWeight(prevSet.load, widget.unitSystem)}x${prevSet.reps}";
                         }
                         return SizedBox(
                           width: 70,
@@ -787,9 +817,10 @@ class _SetRowState extends State<_SetRow> {
                       textAlign: TextAlign.center,
                       controller: _loadController,
                       style: inputStyle,
-                      decoration: inputDeco,
+                      decoration: loadInputDeco,
                       onChanged: (val) {
-                        final load = double.tryParse(val) ?? 0.0;
+                        // Store kilograms regardless of the unit shown.
+                        final load = parseWeight(val, widget.unitSystem) ?? 0.0;
                         widget.updateSetLoad(load, set.id);
                       },
                     ),
@@ -823,9 +854,10 @@ class _SetRowState extends State<_SetRow> {
                         textAlign: TextAlign.center,
                         controller: _loadController,
                         style: inputStyle,
-                        decoration: inputDeco,
+                        decoration: loadInputDeco,
                         onChanged: (val) {
-                          final load = double.tryParse(val) ?? 0.0;
+                          // Store kilograms regardless of the unit shown.
+                          final load = parseWeight(val, widget.unitSystem) ?? 0.0;
                           widget.updateSetLoad(load, set.id);
                         },
                       ),

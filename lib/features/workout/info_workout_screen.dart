@@ -16,6 +16,8 @@ import '../../core/db/workout_repository.dart';
 import '../../core/db/measurement_repository.dart';
 import '../../core/components/nexc_scaffold.dart';
 import '../../core/providers/profile_providers.dart';
+import '../../core/providers/settings_provider.dart';
+import '../../core/util/unit_system.dart';
 import '../../core/util/workout_stats_helper.dart';
 import '../profile/profile_screen.dart';
 
@@ -238,6 +240,7 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
     }
 
     final theme = Theme.of(context);
+    final unitSystem = ref.watch(settingsProvider.select((s) => s.unitSystem));
     final workout = _workoutData!.workout;
     final isRoutine = workout.state == WorkoutState.ROUTINE;
     final dateStr = isRoutine
@@ -309,14 +312,21 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
                       Text('Completed sets: $completedSets'),
                     ],
                     const SizedBox(height: 8),
-                    Text('Volume: ${_volume.toStringAsFixed(2)} kg'),
+                    Text(
+                      'Volume: '
+                      '${fromKilograms(_volume, unitSystem).toStringAsFixed(2)} '
+                      '${unitSystem.suffix}',
+                    ),
                   ],
                 ),
               ),
             ),
             if (!isRoutine) ...[
               const SizedBox(height: 16),
-              _PerformanceCard(workoutData: _workoutData!),
+              _PerformanceCard(
+                workoutData: _workoutData!,
+                unitSystem: unitSystem,
+              ),
             ],
             if (workout.notes.isNotEmpty) ...[
               const SizedBox(height: 16),
@@ -351,12 +361,26 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
             if (isRoutine && _completedWorkoutsForChart.isNotEmpty) ...[
               const SizedBox(height: 16),
               NexcCartesianChart(
-                points: _chartPoints,
+                points: _chartMode == WorkoutChart.volume
+                    ? _chartPoints
+                          .map(
+                            (point) => Point(
+                              yValues: point.yValues
+                                  .map(
+                                    (value) => fromKilograms(value, unitSystem),
+                                  )
+                                  .toList(),
+                              xValue: point.xValue,
+                              workoutId: point.workoutId,
+                            ),
+                          )
+                          .toList()
+                    : _chartPoints,
                 decimalCount: _chartMode == WorkoutChart.duration ? 0 : 2,
                 suffix: _chartMode == WorkoutChart.duration
                     ? "m"
                     : _chartMode == WorkoutChart.volume
-                    ? "kg"
+                    ? unitSystem.suffix
                     : "",
                 chartMode: _chartMode,
                 updateChartMode: (mode) async {
@@ -457,7 +481,11 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
               ),
             ),
             ..._workoutData!.exercisesWithSets.map((e) {
-              return _ReadOnlyExerciseCard(exe: e, isRoutine: isRoutine);
+              return _ReadOnlyExerciseCard(
+                exe: e,
+                isRoutine: isRoutine,
+                unitSystem: unitSystem,
+              );
             }),
           ],
         );
@@ -468,8 +496,9 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
 
 class _PerformanceCard extends StatelessWidget {
   final WorkoutWithExercisesAndSets workoutData;
+  final UnitSystem unitSystem;
 
-  const _PerformanceCard({required this.workoutData});
+  const _PerformanceCard({required this.workoutData, required this.unitSystem});
 
   static String _humanizeMuscleName(String value) {
     return value
@@ -494,12 +523,17 @@ class _PerformanceCard extends StatelessWidget {
       _PerformanceMetric(
         icon: Icons.scale_outlined,
         label: 'Tonnage',
-        value: '${tonnage.toStringAsFixed(0)} kg',
+        value:
+            '${fromKilograms(tonnage, unitSystem).toStringAsFixed(0)} '
+            '${unitSystem.suffix}',
       ),
       _PerformanceMetric(
         icon: Icons.speed_outlined,
         label: 'Density',
-        value: density > 0 ? '${density.toStringAsFixed(2)} kg/s' : '—',
+        value: density > 0
+            ? '${fromKilograms(density, unitSystem).toStringAsFixed(2)} '
+                  '${unitSystem.suffix}/s'
+            : '—',
       ),
       _PerformanceMetric(
         icon: Icons.local_fire_department_outlined,
@@ -517,7 +551,9 @@ class _PerformanceCard extends StatelessWidget {
           icon: Icons.trending_up_outlined,
           label: 'Best e1RM',
           value:
-              '${bestOneRm.exerciseName} · ${bestOneRm.estimatedOneRepMax.toStringAsFixed(1)} kg',
+              '${bestOneRm.exerciseName} · '
+              '${fromKilograms(bestOneRm.estimatedOneRepMax, unitSystem).toStringAsFixed(1)} '
+              '${unitSystem.suffix}',
         ),
     ];
 
@@ -626,8 +662,13 @@ class _PerformanceMetric extends StatelessWidget {
 class _ReadOnlyExerciseCard extends StatelessWidget {
   final ExerciseWithSets exe;
   final bool isRoutine;
+  final UnitSystem unitSystem;
 
-  const _ReadOnlyExerciseCard({required this.exe, required this.isRoutine});
+  const _ReadOnlyExerciseCard({
+    required this.exe,
+    required this.isRoutine,
+    required this.unitSystem,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -668,7 +709,9 @@ class _ReadOnlyExerciseCard extends StatelessWidget {
                     else ...[
                       if (exe.exercise.setMode == SetMode.LOAD ||
                           exe.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD)
-                        Text('${set.load} kg  x  '),
+                        Text(
+                          '${formatWeight(set.load, unitSystem, suffix: unitSystem.suffix)}  x  ',
+                        ),
                       Text('${set.reps} reps'),
                     ],
                     if (set.rpe != null) Text('  (RPE ${set.rpe})'),

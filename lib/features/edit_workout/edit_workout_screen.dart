@@ -366,8 +366,10 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
                         setList.add(
                           WorkoutSet(
                             id: DateTime.now().millisecondsSinceEpoch,
+                            // Loads stay canonical kilograms; ExerciseCard
+                            // converts them for display and input.
                             load: lastSet?.load ?? 0.0,
-                            weightUnit: lastSet?.weightUnit ?? WeightUnit.kg,
+                            weightUnit: WeightUnit.kg,
                             reps: lastSet?.reps ?? 0,
                             elapsedTime: lastSet?.elapsedTime ?? 0,
                             completed: false,

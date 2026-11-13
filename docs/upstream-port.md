@@ -11,8 +11,8 @@ Merge gate: `flutter analyze` (0 issues) + `flutter test` (green) + scope review
 | Wave | Task | Branch | Agent | Status | Merge commit | Tests |
 |---|---|---|---|---|---|---|
 | 1 | T1 dataset sync (912 exercises) | `feat/upstream-dataset-912` | merged | merged | `0b8b0cc5` | 106 |
-| 1 | T2 update routine after workout | `feat/upstream-routine-update` | pending | pending | | |
-| 1 | T3 reorder routines | `feat/upstream-routine-order` | pending | pending | | |
+| 1 | T2 update routine after workout | `feat/upstream-routine-update` | merged | merged | `e917d134` | 126 |
+| 1 | T3 reorder routines | `feat/upstream-routine-order` | merged | merged | `4389fd90` | 111 |
 | 1 | T4 rest alert ducking | `fix/rest-alert-ducking` | merged | merged | `274d91a2` | 100 |
 | 1 | T5 license compliance | `chore/license-attribution` | merged | merged | `6f3b04b7` | 97 |
 | 1 | T6 Flutter CI + validator | `chore/flutter-ci` | merged | merged | `d1dab966` | 97 |
@@ -38,3 +38,4 @@ Merge gate: `flutter analyze` (0 issues) + `flutter test` (green) + scope review
 ## Log
 
 - 2026-11-12: plan approved; baseline recorded.
+- 2026-11-12: wave 1 merged (T1-T6); dev at 126 tests, pushed.

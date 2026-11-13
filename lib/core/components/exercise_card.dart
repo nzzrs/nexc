@@ -13,6 +13,7 @@ import '../db/enums.dart';
 import '../db/relations.dart';
 import '../providers/settings_provider.dart';
 import '../util/unit_system.dart';
+import '../../features/workout/barbell_calculator_sheet.dart';
 
 class ExerciseCard extends ConsumerStatefulWidget {
   const ExerciseCard({
@@ -120,6 +121,20 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
     super.dispose();
   }
 
+  /// Set modes whose rows carry a barbell load.
+  static bool _setModeCarriesLoad(SetMode mode) {
+    return mode == SetMode.LOAD ||
+        mode == SetMode.BODYWEIGHT_WITH_LOAD ||
+        mode == SetMode.DURATION_WITH_LOAD;
+  }
+
+  /// Load of the exercise's last set in kilograms, or zero when unset.
+  double _lastSetLoadKg() {
+    final List<WorkoutSet> sets = widget.exerciseWithSets.sets;
+    if (sets.isEmpty) return 0.0;
+    return sets.last.load;
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -216,6 +231,16 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                     ),
                   ),
                 ),
+                // Plate calculator is only meaningful for sets that carry load.
+                if (_setModeCarriesLoad(ex.setMode))
+                  IconButton(
+                    tooltip: 'Plate calculator',
+                    icon: const Icon(Icons.calculate),
+                    onPressed: () => showBarbellCalculatorSheet(
+                      context,
+                      initialTargetWeightKg: _lastSetLoadKg(),
+                    ),
+                  ),
                 // Options menu button
                  PopupMenuButton<String>(
                   icon: const Icon(Icons.more_vert),

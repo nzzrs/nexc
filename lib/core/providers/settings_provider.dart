@@ -33,6 +33,9 @@ class SettingsState {
   final Language language;
   final RoutineUpdateMode routineUpdateMode;
   final UnitSystem unitSystem;
+
+  /// Last barbell weight chosen in the plate calculator, in kilograms.
+  final double? defaultBarWeightKg;
   
   // New Global Targets
   final double targetProtein;
@@ -92,6 +95,7 @@ class SettingsState {
     required this.language,
     required this.routineUpdateMode,
     required this.unitSystem,
+    this.defaultBarWeightKg,
     required this.targetProtein,
     required this.targetCarbs,
     required this.targetFats,
@@ -137,6 +141,7 @@ class SettingsState {
     Language? language,
     RoutineUpdateMode? routineUpdateMode,
     UnitSystem? unitSystem,
+    double? defaultBarWeightKg,
     double? targetProtein,
     double? targetCarbs,
     double? targetFats,
@@ -180,6 +185,7 @@ class SettingsState {
       language: language ?? this.language,
       routineUpdateMode: routineUpdateMode ?? this.routineUpdateMode,
       unitSystem: unitSystem ?? this.unitSystem,
+      defaultBarWeightKg: defaultBarWeightKg ?? this.defaultBarWeightKg,
       targetProtein: targetProtein ?? this.targetProtein,
       targetCarbs: targetCarbs ?? this.targetCarbs,
       targetFats: targetFats ?? this.targetFats,
@@ -249,6 +255,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       orElse: resolveDefaultUnitSystemFromPlatform,
     );
 
+    final defaultBarWeightKg = prefs.getDouble('default_bar_weight_kg');
+
     final targetProtein = prefs.getDouble('target_protein') ?? 150.0;
     final targetCarbs = prefs.getDouble('target_carbs') ?? 200.0;
     final targetFats = prefs.getDouble('target_fats') ?? 70.0;
@@ -298,6 +306,7 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       language: language,
       routineUpdateMode: routineUpdateMode,
       unitSystem: unitSystem,
+      defaultBarWeightKg: defaultBarWeightKg,
       targetProtein: targetProtein,
       targetCarbs: targetCarbs,
       targetFats: targetFats,
@@ -400,6 +409,12 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setUnitSystem(UnitSystem system) async {
     await _prefs.setString('unit_system', system.name);
     state = state.copyWith(unitSystem: system);
+  }
+
+  /// Remembers the barbell weight picked in the plate calculator.
+  Future<void> setDefaultBarWeightKg(double kilograms) async {
+    await _prefs.setDouble('default_bar_weight_kg', kilograms);
+    state = state.copyWith(defaultBarWeightKg: kilograms);
   }
 
   Future<void> setTargetMacros(double p, double c, double f) async {

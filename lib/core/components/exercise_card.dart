@@ -12,7 +12,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../db/enums.dart';
 import '../db/relations.dart';
 import '../providers/settings_provider.dart';
+import '../util/input_sheet_state.dart';
 import '../util/unit_system.dart';
+import 'input_modal_bottom_sheet.dart';
 import '../../features/workout/barbell_calculator_sheet.dart';
 
 class ExerciseCard extends ConsumerStatefulWidget {
@@ -147,6 +149,12 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
     );
     final unitSystem = ref.watch(
       settingsProvider.select((s) => s.unitSystem),
+    );
+    final useScrollWheelForInput = ref.watch(
+      settingsProvider.select((s) => s.useScrollWheelForInput),
+    );
+    final dismissScrollWheelInputAutomatically = ref.watch(
+      settingsProvider.select((s) => s.dismissScrollWheelInputAutomatically),
     );
 
     return Card(
@@ -522,6 +530,9 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
                                   index: idx,
                                   setMode: ex.setMode,
                                   unitSystem: unitSystem,
+                                  useScrollWheelForInput: useScrollWheelForInput,
+                                  dismissScrollWheelInputAutomatically:
+                                      dismissScrollWheelInputAutomatically,
                                   workout: widget.workout,
                                   previousPerformances: widget.previousPerformances,
                                   showRpe: widget.showRpe,
@@ -572,6 +583,8 @@ class _SetRow extends StatefulWidget {
   final int index;
   final SetMode setMode;
   final UnitSystem unitSystem;
+  final bool useScrollWheelForInput;
+  final bool dismissScrollWheelInputAutomatically;
   final bool workout;
   final List<dynamic>? previousPerformances;
   final bool showRpe;
@@ -593,6 +606,8 @@ class _SetRow extends StatefulWidget {
     required this.index,
     required this.setMode,
     required this.unitSystem,
+    required this.useScrollWheelForInput,
+    required this.dismissScrollWheelInputAutomatically,
     required this.workout,
     this.previousPerformances,
     required this.showRpe,
@@ -689,6 +704,61 @@ class _SetRowState extends State<_SetRow> {
       return m * 60 + s;
     }
     return int.tryParse(value) ?? 0;
+  }
+
+  Future<void> _editLoad() async {
+    final num? result = await showInputModalBottomSheet(
+      context,
+      state: InputSheetState.load(
+        kilograms: widget.set.load,
+        unitSystem: widget.unitSystem,
+      ),
+      dismissAutomatically: widget.dismissScrollWheelInputAutomatically,
+    );
+    if (result != null) {
+      widget.updateSetLoad(result.toDouble(), widget.set.id);
+    }
+  }
+
+  Future<void> _editReps() async {
+    final num? result = await showInputModalBottomSheet(
+      context,
+      state: InputSheetState.reps(reps: widget.set.reps),
+      dismissAutomatically: widget.dismissScrollWheelInputAutomatically,
+    );
+    if (result != null) {
+      widget.updateSetReps(result.toInt(), widget.set.id);
+    }
+  }
+
+  Future<void> _editTime() async {
+    final num? result = await showInputModalBottomSheet(
+      context,
+      state: InputSheetState.time(seconds: widget.set.elapsedTime),
+      dismissAutomatically: widget.dismissScrollWheelInputAutomatically,
+    );
+    if (result != null) {
+      widget.updateSetTime(result.toInt(), widget.set.id);
+    }
+  }
+
+  /// Makes [child] a tap target for the wheel sheet when the preference is on.
+  ///
+  /// The original field stays in the tree so its text and unit suffix remain
+  /// the single source of truth for the displayed value, but it no longer
+  /// receives taps or keyboard focus.
+  Widget _wheelCell({
+    required String keySuffix,
+    required VoidCallback onTap,
+    required Widget child,
+  }) {
+    if (!widget.useScrollWheelForInput) return child;
+    return GestureDetector(
+      key: ValueKey<String>('$keySuffix-${widget.set.id}'),
+      behavior: HitTestBehavior.opaque,
+      onTap: onTap,
+      child: IgnorePointer(child: child),
+    );
   }
 
   @override
@@ -823,58 +893,28 @@ class _SetRowState extends State<_SetRow> {
                       },
                     ),
                   buildCell(
-                    TextField(
-                      keyboardType: TextInputType.datetime,
-                      textAlign: TextAlign.center,
-                      controller: _timeController,
-                      style: inputStyle,
-                      decoration: inputDeco,
-                      onSubmitted: (val) {
-                        final secs = _parseDuration(val);
-                        widget.updateSetTime(secs, set.id);
-                      },
+                    _wheelCell(
+                      keySuffix: 'time-cell',
+                      onTap: _editTime,
+                      child: TextField(
+                        keyboardType: TextInputType.datetime,
+                        textAlign: TextAlign.center,
+                        controller: _timeController,
+                        style: inputStyle,
+                        decoration: inputDeco,
+                        onSubmitted: (val) {
+                          final secs = _parseDuration(val);
+                          widget.updateSetTime(secs, set.id);
+                        },
+                      ),
                     ),
                   ),
                 ] else if (widget.setMode == SetMode.DURATION_WITH_LOAD) ...[
                   buildCell(
-                    TextField(
-                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                      textAlign: TextAlign.center,
-                      controller: _loadController,
-                      style: inputStyle,
-                      decoration: loadInputDeco,
-                      onChanged: (val) {
-                        // Store kilograms regardless of the unit shown.
-                        final load = parseWeight(val, widget.unitSystem) ?? 0.0;
-                        widget.updateSetLoad(load, set.id);
-                      },
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  if (widget.workout)
-                    IconButton(
-                      icon: Icon(widget.isThisRunning ? Icons.pause : Icons.play_arrow, color: contentColor),
-                      onPressed: () {
-                        widget.updateIdSetWithRunningStopwatch?.call(widget.isThisRunning ? 0 : set.id);
-                      },
-                    ),
-                  buildCell(
-                    TextField(
-                      keyboardType: TextInputType.datetime,
-                      textAlign: TextAlign.center,
-                      controller: _timeController,
-                      style: inputStyle,
-                      decoration: inputDeco,
-                      onSubmitted: (val) {
-                        final secs = _parseDuration(val);
-                        widget.updateSetTime(secs, set.id);
-                      },
-                    ),
-                  ),
-                ] else ...[
-                  if (widget.setMode == SetMode.LOAD || widget.setMode == SetMode.BODYWEIGHT_WITH_LOAD)
-                    buildCell(
-                      TextField(
+                    _wheelCell(
+                      keySuffix: 'load-cell',
+                      onTap: _editLoad,
+                      child: TextField(
                         keyboardType: const TextInputType.numberWithOptions(decimal: true),
                         textAlign: TextAlign.center,
                         controller: _loadController,
@@ -887,18 +927,68 @@ class _SetRowState extends State<_SetRow> {
                         },
                       ),
                     ),
+                  ),
+                  const SizedBox(width: 8),
+                  if (widget.workout)
+                    IconButton(
+                      icon: Icon(widget.isThisRunning ? Icons.pause : Icons.play_arrow, color: contentColor),
+                      onPressed: () {
+                        widget.updateIdSetWithRunningStopwatch?.call(widget.isThisRunning ? 0 : set.id);
+                      },
+                    ),
+                  buildCell(
+                    _wheelCell(
+                      keySuffix: 'time-cell',
+                      onTap: _editTime,
+                      child: TextField(
+                        keyboardType: TextInputType.datetime,
+                        textAlign: TextAlign.center,
+                        controller: _timeController,
+                        style: inputStyle,
+                        decoration: inputDeco,
+                        onSubmitted: (val) {
+                          final secs = _parseDuration(val);
+                          widget.updateSetTime(secs, set.id);
+                        },
+                      ),
+                    ),
+                  ),
+                ] else ...[
+                  if (widget.setMode == SetMode.LOAD || widget.setMode == SetMode.BODYWEIGHT_WITH_LOAD)
+                    buildCell(
+                      _wheelCell(
+                        keySuffix: 'load-cell',
+                        onTap: _editLoad,
+                        child: TextField(
+                          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                          textAlign: TextAlign.center,
+                          controller: _loadController,
+                          style: inputStyle,
+                          decoration: loadInputDeco,
+                          onChanged: (val) {
+                            // Store kilograms regardless of the unit shown.
+                            final load = parseWeight(val, widget.unitSystem) ?? 0.0;
+                            widget.updateSetLoad(load, set.id);
+                          },
+                        ),
+                      ),
+                    ),
                   const SizedBox(width: 8),
                   buildCell(
-                    TextField(
-                      keyboardType: TextInputType.number,
-                      textAlign: TextAlign.center,
-                      controller: _repsController,
-                      style: inputStyle,
-                      decoration: inputDeco,
-                      onChanged: (val) {
-                        final reps = int.tryParse(val) ?? 0;
-                        widget.updateSetReps(reps, set.id);
-                      },
+                    _wheelCell(
+                      keySuffix: 'reps-cell',
+                      onTap: _editReps,
+                      child: TextField(
+                        keyboardType: TextInputType.number,
+                        textAlign: TextAlign.center,
+                        controller: _repsController,
+                        style: inputStyle,
+                        decoration: inputDeco,
+                        onChanged: (val) {
+                          final reps = int.tryParse(val) ?? 0;
+                          widget.updateSetReps(reps, set.id);
+                        },
+                      ),
                     ),
                   ),
                 ],

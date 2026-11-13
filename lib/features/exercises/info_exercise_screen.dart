@@ -86,7 +86,7 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(16),
-        side: BorderSide(color: colors.outlineVariant.withOpacity(0.5)),
+        side: BorderSide(color: colors.outlineVariant.withValues(alpha: 0.5)),
       ),
       color: colors.surfaceContainerLowest,
       child: Padding(
@@ -102,7 +102,7 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
                   label,
                   style: TextStyle(
                     fontSize: 11,
-                    color: colors.onSurfaceVariant.withOpacity(0.8),
+                    color: colors.onSurfaceVariant.withValues(alpha: 0.8),
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -166,7 +166,7 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
                           child: Icon(
                             Icons.fitness_center,
                             size: 80,
-                            color: colors.primary.withOpacity(0.5),
+                            color: colors.primary.withValues(alpha: 0.5),
                           ),
                         );
                       },
@@ -185,7 +185,7 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
                             width: _currentImageIndex == idx ? 12.0 : 8.0,
                             height: 8.0,
                             decoration: BoxDecoration(
-                              color: _currentImageIndex == idx ? colors.primary : colors.primary.withOpacity(0.3),
+                              color: _currentImageIndex == idx ? colors.primary : colors.primary.withValues(alpha: 0.3),
                               borderRadius: BorderRadius.circular(4.0),
                             ),
                           );
@@ -197,7 +197,7 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
                     child: Icon(
                       Icons.fitness_center,
                       size: 80,
-                      color: colors.primary.withOpacity(0.3),
+                      color: colors.primary.withValues(alpha: 0.3),
                     ),
                   ),
               ],
@@ -270,7 +270,7 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
                           children: ex.primaryMuscles.map((muscle) {
                             return Chip(
                               label: Text(_formatEnum(muscle.name)),
-                              backgroundColor: colors.primaryContainer.withOpacity(0.5),
+                              backgroundColor: colors.primaryContainer.withValues(alpha: 0.5),
                               labelStyle: TextStyle(color: colors.onPrimaryContainer, fontWeight: FontWeight.w600),
                             );
                           }).toList(),
@@ -289,7 +289,7 @@ class _InfoExerciseScreenState extends ConsumerState<InfoExerciseScreen> with Si
                           children: ex.secondaryMuscles.map((muscle) {
                             return Chip(
                               label: Text(_formatEnum(muscle.name)),
-                              backgroundColor: colors.secondaryContainer.withOpacity(0.5),
+                              backgroundColor: colors.secondaryContainer.withValues(alpha: 0.5),
                               labelStyle: TextStyle(color: colors.onSecondaryContainer, fontWeight: FontWeight.w600),
                             );
                           }).toList(),

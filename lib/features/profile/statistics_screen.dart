@@ -9,6 +9,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:fl_chart/fl_chart.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/providers/profile_providers.dart';
@@ -181,6 +182,8 @@ class StatisticsScreen extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 12),
+                    _buildMacrosChart(avgProt, avgCarb, avgFat, avgKcal, theme),
                   ],
                 );
               },
@@ -188,6 +191,129 @@ class StatisticsScreen extends ConsumerWidget {
           ],
         );
       },
+    );
+  }
+
+  Widget _buildMacrosChart(double prot, double carb, double fat, double totalKcal, ThemeData theme) {
+    final protKcal = prot * 4.0;
+    final carbKcal = carb * 4.0;
+    final fatKcal = fat * 9.0;
+
+    final protPct = totalKcal > 0 ? (protKcal / totalKcal * 100) : 0.0;
+    final carbPct = totalKcal > 0 ? (carbKcal / totalKcal * 100) : 0.0;
+    final fatPct = totalKcal > 0 ? (fatKcal / totalKcal * 100) : 0.0;
+
+    const protColor = Color(0xFF42A5F5); // Blue
+    const carbColor = Color(0xFFFFA726); // Orange
+    const fatColor = Color(0xFFAB47BC); // Purple
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(Icons.pie_chart_outline, color: theme.colorScheme.primary, size: 20),
+                const SizedBox(width: 8),
+                Text(
+                  "Macros Distribution",
+                  style: theme.textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            if (totalKcal <= 0)
+              const Center(
+                child: Padding(
+                  padding: EdgeInsets.symmetric(vertical: 24.0),
+                  child: Text("No macro data available"),
+                ),
+              )
+            else
+              Row(
+                children: [
+                  SizedBox(
+                    width: 120,
+                    height: 120,
+                    child: PieChart(
+                      PieChartData(
+                        sectionsSpace: 2,
+                        centerSpaceRadius: 32,
+                        sections: [
+                          PieChartSectionData(
+                            value: protKcal > 0 ? protKcal : 0.01,
+                            title: "${protPct.toStringAsFixed(0)}%",
+                            color: protColor,
+                            radius: 26,
+                            titleStyle: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          PieChartSectionData(
+                            value: carbKcal > 0 ? carbKcal : 0.01,
+                            title: "${carbPct.toStringAsFixed(0)}%",
+                            color: carbColor,
+                            radius: 26,
+                            titleStyle: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          PieChartSectionData(
+                            value: fatKcal > 0 ? fatKcal : 0.01,
+                            title: "${fatPct.toStringAsFixed(0)}%",
+                            color: fatColor,
+                            radius: 26,
+                            titleStyle: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildMacroLegendItem("Protein", "${prot.toStringAsFixed(1)}g", "${protPct.toStringAsFixed(0)}%", protColor, theme),
+                        const SizedBox(height: 8),
+                        _buildMacroLegendItem("Carbs", "${carb.toStringAsFixed(1)}g", "${carbPct.toStringAsFixed(0)}%", carbColor, theme),
+                        const SizedBox(height: 8),
+                        _buildMacroLegendItem("Fats", "${fat.toStringAsFixed(1)}g", "${fatPct.toStringAsFixed(0)}%", fatColor, theme),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMacroLegendItem(String label, String grams, String pct, Color color, ThemeData theme) {
+    return Row(
+      children: [
+        Container(
+          width: 12,
+          height: 12,
+          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+        ),
+        Text("$grams ($pct)", style: TextStyle(color: theme.colorScheme.onSurfaceVariant, fontSize: 12)),
+      ],
     );
   }
 

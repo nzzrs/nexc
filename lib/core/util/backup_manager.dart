@@ -7,16 +7,12 @@
  */
 
 import 'dart:convert';
-import 'dart:io';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:collection/collection.dart';
-import 'package:drift/drift.dart' show Value;
+import 'raw_database_backup/raw_database_backup.dart' as raw_db;
 
-import '../db/app_database.dart';
 import '../db/enums.dart';
 import '../db/relations.dart';
 import '../db/workout_repository.dart';
@@ -30,7 +26,7 @@ class ImportResult {
   final String? error;
   const ImportResult({required this.success, this.error});
   const ImportResult.ok() : success = true, error = null;
-  ImportResult.fail(String msg) : success = false, error = msg;
+  const ImportResult.fail(String msg) : success = false, error = msg;
 }
 
 class BackupManager {
@@ -48,36 +44,40 @@ class BackupManager {
     required this.stockRepo,
   });
 
-  Future<void> exportDatabase() async {
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final dbFile = File(p.join(dbFolder.path, 'nexc_database'));
-    if (await dbFile.exists()) {
-      final tempDir = await getTemporaryDirectory();
-      final backupFile = File(p.join(tempDir.path, 'nexc_database_backup.db'));
-      await dbFile.copy(backupFile.path);
-      await Share.shareXFiles([XFile(backupFile.path)], subject: 'Nexc Database Backup');
+  Future<void> _shareExport(String content, String fileName, String subject, {String mimeType = 'application/json'}) async {
+    await Share.shareXFiles([
+      XFile.fromData(
+        utf8.encode(content),
+        name: fileName,
+        mimeType: mimeType,
+      ),
+    ], subject: subject);
+  }
+
+  Future<String?> _pickAndReadText() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['json', 'md'],
+      withData: true,
+    );
+    if (result == null || result.files.isEmpty) return null;
+    final file = result.files.single;
+    if (file.bytes != null) {
+      return utf8.decode(file.bytes!);
     }
+    if (file.path != null) {
+      return await XFile(file.path!).readAsString();
+    }
+    return null;
+  }
+
+  Future<void> exportDatabase() async {
+    return raw_db.exportRawDatabase(db);
   }
 
   Future<bool> importDatabase() async {
-    final result = await FilePicker.platform.pickFiles();
-    if (result == null || result.files.single.path == null) return false;
-
-    final dbFolder = await getApplicationDocumentsDirectory();
-    final dbFile = File(p.join(dbFolder.path, 'nexc_database'));
-    final shmFile = File(p.join(dbFolder.path, 'nexc_database-shm'));
-    final walFile = File(p.join(dbFolder.path, 'nexc_database-wal'));
-
-    // Close connection to prevent sqlite corruption and handle lock
-    await db.close();
-
-    final selectedFile = File(result.files.single.path!);
-    await selectedFile.copy(dbFile.path);
-
-    if (await shmFile.exists()) await shmFile.delete();
-    if (await walFile.exists()) await walFile.delete();
-
-    return true;
+    final res = await raw_db.importRawDatabase(db);
+    return res.success;
   }
 
   Future<void> exportWorkoutPlans() async {
@@ -99,15 +99,16 @@ class BackupManager {
           'exercises': routineWithEx.exercisesWithSets.map((e) => {
             'exerciseId': e.exerciseDC.id,
             'name': e.exerciseDC.name,
-            'notes': e.exercise.notes,
             'setMode': e.exercise.setMode.name,
             'restTime': e.exercise.restTime,
             'supersetGroupId': e.exercise.supersetId?.toString(),
             'sets': e.sets.map((s) => {
               'load': s.load,
+              'weightUnit': s.weightUnit.name,
               'reps': s.reps,
               'elapsedTime': s.elapsedTime,
-              'rpe': s.rpe?.toString() ?? '',
+              'setType': s.setType.name,
+              'rpe': s.rpe,
               'rir': s.rir,
               'completed': s.completed,
             }).toList(),
@@ -117,19 +118,13 @@ class BackupManager {
     }
 
     final jsonString = jsonEncode(exportList);
-    final tempDir = await getTemporaryDirectory();
-    final file = File(p.join(tempDir.path, 'nexc_workout_plans.json'));
-    await file.writeAsString(jsonString);
-    await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Workout Plans');
+    await _shareExport(jsonString, 'nexc_workout_plans.json', 'Nexc Workout Plans');
   }
 
   Future<ImportResult> importWorkoutPlans() async {
     try {
-      final result = await FilePicker.platform.pickFiles();
-      if (result == null || result.files.single.path == null) return const ImportResult(success: false, error: 'No file selected');
-
-      final file = File(result.files.single.path!);
-      final content = await file.readAsString();
+      final content = await _pickAndReadText();
+      if (content == null) return const ImportResult(success: false, error: 'No file selected');
       final List<dynamic> data = jsonDecode(content);
 
       for (int i = 0; i < data.length; i++) {
@@ -176,21 +171,209 @@ class BackupManager {
           }
 
           final List<dynamic> setsJson = exJson['sets'] ?? [];
-          final List<WorkoutSet> sets = setsJson.map((s) => WorkoutSet(
-            id: 0,
-            load: (s['load'] as num?)?.toDouble() ?? 0.0,
-            reps: s['reps'] ?? 0,
-            elapsedTime: s['elapsedTime'] ?? 0,
-            completed: s['completed'] ?? true,
-            rpe: double.tryParse(s['rpe']?.toString() ?? ''),
-            rir: s['rir'] as int?,
-            exerciseId: 0,
-          )).toList();
+          final List<WorkoutSet> sets = setsJson.map((s) {
+            double? parsedRpe;
+            final rawRpe = s['rpe'];
+            if (rawRpe is num) {
+              parsedRpe = rawRpe.toDouble();
+            } else if (rawRpe is String && rawRpe.isNotEmpty) {
+              parsedRpe = double.tryParse(rawRpe);
+            }
+
+            int? parsedRir;
+            final rawRir = s['rir'];
+            if (rawRir is num) {
+              parsedRir = rawRir.toInt();
+            } else if (rawRir is String && rawRir.isNotEmpty) {
+              parsedRir = int.tryParse(rawRir);
+            }
+
+            return WorkoutSet(
+              id: 0,
+              load: (s['load'] as num?)?.toDouble() ?? 0.0,
+              weightUnit: WeightUnit.values.firstWhere(
+                (u) => u.name.toLowerCase() == (s['weightUnit']?.toString().toLowerCase()),
+                orElse: () => WeightUnit.kg,
+              ),
+              reps: (s['reps'] as num?)?.toInt() ?? 0,
+              elapsedTime: (s['elapsedTime'] as num?)?.toInt() ?? 0,
+              completed: s['completed'] ?? true,
+              setType: SetType.values.firstWhere(
+                (st) => st.name.toLowerCase() == (s['setType']?.toString().toLowerCase()),
+                orElse: () => SetType.NORMAL,
+              ),
+              rpe: parsedRpe,
+              rir: parsedRir,
+              exerciseId: 0,
+            );
+          }).toList();
 
           exercisesWithSets.add(ExerciseWithSets(
             exercise: Exercise(
               id: 0,
               exerciseDataId: exerciseId,
+              notes: exJson['notes'] ?? '',
+              setMode: SetMode.values.firstWhere(
+                (m) => m.name == exJson['setMode'],
+                orElse: () => SetMode.LOAD,
+              ),
+              restTime: exJson['restTime'] ?? 0,
+              supersetId: supersetId,
+              workoutId: 0,
+              position: exJson['position'] ?? 0,
+            ),
+            exerciseDC: exerciseDC,
+            sets: sets,
+          ));
+        }
+
+        await workoutRepo.addWorkoutWithExercisesAndSets(
+          WorkoutWithExercisesAndSets(
+            workout: workout,
+            exercisesWithSets: exercisesWithSets,
+          ),
+        );
+      }
+      return const ImportResult.ok();
+    } catch (e) {
+      return ImportResult.fail(e.toString());
+    }
+  }
+
+  Future<void> exportWorkoutHistory() async {
+    final workouts = await (db.select(db.workouts)
+          ..where((w) => w.state.equalsValue(WorkoutState.COMPLETED)))
+        .get();
+
+    final List<Map<String, dynamic>> exportList = [];
+    for (final completedWorkout in workouts) {
+      final wWithEx = await workoutRepo.getWorkoutWithExercisesAndSets(completedWorkout.id);
+      if (wWithEx != null) {
+        exportList.add({
+          'title': wWithEx.workout.title,
+          'notes': wWithEx.workout.notes,
+          'timeElapsed': wWithEx.workout.timeElapsed,
+          'created': wWithEx.workout.created.toIso8601String(),
+          'completed': wWithEx.workout.completed.toIso8601String(),
+          'state': wWithEx.workout.state.name,
+          'exercises': wWithEx.exercisesWithSets.map((e) => {
+            'exerciseId': e.exerciseDC.id,
+            'name': e.exerciseDC.name,
+            'setMode': e.exercise.setMode.name,
+            'restTime': e.exercise.restTime,
+            'position': e.exercise.position,
+            'supersetGroupId': e.exercise.supersetId?.toString(),
+            'sets': e.sets.map((s) => {
+              'load': s.load,
+              'weightUnit': s.weightUnit.name,
+              'reps': s.reps,
+              'elapsedTime': s.elapsedTime,
+              'setType': s.setType.name,
+              'rpe': s.rpe,
+              'rir': s.rir,
+              'completed': s.completed,
+            }).toList(),
+          }).toList(),
+        });
+      }
+    }
+
+    final jsonString = jsonEncode(exportList);
+    await _shareExport(
+      jsonString,
+      'nexc_workout_history_${DateTime.now().millisecondsSinceEpoch}.json',
+      'Nexc Workout History',
+    );
+  }
+
+  Future<ImportResult> importWorkoutHistory() async {
+    try {
+      final content = await _pickAndReadText();
+      if (content == null) return const ImportResult(success: false, error: 'No file selected');
+      final List<dynamic> data = jsonDecode(content);
+
+      for (int i = 0; i < data.length; i++) {
+        final item = data[i];
+        final workout = Workout(
+          id: 0,
+          routineId: 0,
+          notes: item['notes'] ?? '',
+          title: item['title'] ?? 'Workout #${i + 1}',
+          state: WorkoutState.COMPLETED,
+          timeElapsed: item['timeElapsed'] ?? 0,
+          created: DateTime.tryParse(item['created'] ?? '') ?? DateTime.now(),
+          completed: DateTime.tryParse(item['completed'] ?? '') ?? DateTime.now(),
+          isTemporal: false,
+        );
+
+        final List<dynamic> exercisesJson = item['exercises'] ?? [];
+        final List<ExerciseWithSets> exercisesWithSets = [];
+        final supersetMapping = <String, int>{};
+
+        for (int j = 0; j < exercisesJson.length; j++) {
+          final exJson = exercisesJson[j];
+          final exerciseId = exJson['exerciseId'] ?? '';
+          if (exerciseId.toString().isEmpty) {
+            return ImportResult.fail('Workout #${i + 1} exercise #${j + 1}: missing exerciseId');
+          }
+
+          final exerciseDC = await datasetRepo.getExerciseFromId(exerciseId.toString());
+          if (exerciseDC == null) {
+            final exName = exJson['name'] ?? exerciseId;
+            return ImportResult.fail(
+              'Workout #${i + 1} ("${workout.title}"): exercise "$exName" ($exerciseId) not found in database. '
+              'Please import or create this exercise first.',
+            );
+          }
+
+          final List<dynamic> setsJson = exJson['sets'] ?? [];
+          final sets = setsJson.map((s) {
+            double? parsedRpe;
+            final rawRpe = s['rpe'];
+            if (rawRpe is num) {
+              parsedRpe = rawRpe.toDouble();
+            } else if (rawRpe is String && rawRpe.isNotEmpty) {
+              parsedRpe = double.tryParse(rawRpe);
+            }
+
+            int? parsedRir;
+            final rawRir = s['rir'];
+            if (rawRir is num) {
+              parsedRir = rawRir.toInt();
+            } else if (rawRir is String && rawRir.isNotEmpty) {
+              parsedRir = int.tryParse(rawRir);
+            }
+
+            return WorkoutSet(
+              id: 0,
+              load: (s['load'] as num?)?.toDouble() ?? 0.0,
+              weightUnit: WeightUnit.values.firstWhere(
+                (u) => u.name.toLowerCase() == (s['weightUnit']?.toString().toLowerCase()),
+                orElse: () => WeightUnit.kg,
+              ),
+              reps: (s['reps'] as num?)?.toInt() ?? 0,
+              elapsedTime: (s['elapsedTime'] as num?)?.toInt() ?? 0,
+              completed: s['completed'] ?? true,
+              setType: SetType.values.firstWhere(
+                (st) => st.name.toLowerCase() == (s['setType']?.toString().toLowerCase()),
+                orElse: () => SetType.NORMAL,
+              ),
+              rpe: parsedRpe,
+              rir: parsedRir,
+              exerciseId: 0,
+            );
+          }).toList();
+
+          int? supersetId;
+          final supersetGroup = exJson['supersetGroupId']?.toString();
+          if (supersetGroup != null && supersetGroup.isNotEmpty) {
+            supersetId = supersetMapping.putIfAbsent(supersetGroup, () => supersetMapping.length + 1);
+          }
+
+          exercisesWithSets.add(ExerciseWithSets(
+            exercise: Exercise(
+              id: 0,
+              exerciseDataId: exerciseDC.id,
               notes: exJson['notes'] ?? '',
               setMode: SetMode.values.firstWhere(
                 (m) => m.name == exJson['setMode'],
@@ -237,19 +420,13 @@ class BackupManager {
     }).toList();
 
     final jsonString = jsonEncode(exportList);
-    final tempDir = await getTemporaryDirectory();
-    final file = File(p.join(tempDir.path, 'nexc_exercises.json'));
-    await file.writeAsString(jsonString);
-    await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Custom Exercises');
+    await _shareExport(jsonString, 'nexc_exercises.json', 'Nexc Custom Exercises');
   }
 
   Future<ImportResult> importExercises() async {
     try {
-      final result = await FilePicker.platform.pickFiles();
-      if (result == null || result.files.single.path == null) return const ImportResult(success: false, error: 'No file selected');
-
-      final file = File(result.files.single.path!);
-      final content = await file.readAsString();
+      final content = await _pickAndReadText();
+      if (content == null) return const ImportResult(success: false, error: 'No file selected');
       final List<dynamic> data = jsonDecode(content);
 
       for (int i = 0; i < data.length; i++) {
@@ -342,19 +519,13 @@ class BackupManager {
     }).toList();
 
     final jsonString = jsonEncode(exportList);
-    final tempDir = await getTemporaryDirectory();
-    final file = File(p.join(tempDir.path, 'nexc_meal_plans.json'));
-    await file.writeAsString(jsonString);
-    await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Meal Plans');
+    await _shareExport(jsonString, 'nexc_meal_plans.json', 'Nexc Meal Plans');
   }
 
   Future<ImportResult> importMealPlans() async {
     try {
-      final result = await FilePicker.platform.pickFiles();
-      if (result == null || result.files.single.path == null) return const ImportResult(success: false, error: 'No file selected');
-
-      final file = File(result.files.single.path!);
-      final content = await file.readAsString();
+      final content = await _pickAndReadText();
+      if (content == null) return const ImportResult(success: false, error: 'No file selected');
       final List<dynamic> data = jsonDecode(content);
 
       final productCache = await db.select(db.products).get();
@@ -496,6 +667,206 @@ class BackupManager {
     }
   }
 
+  Future<void> exportMealHistory() async {
+    final plansStream = mealRepo.getMealPlansWithMealsAndItemsByState(MealPlanState.LOGGED);
+    final plans = await plansStream.first;
+
+    final List<Map<String, dynamic>> exportList = plans.map((pPlan) => {
+      'title': pPlan.mealPlan.title,
+      'notes': pPlan.mealPlan.notes,
+      'state': pPlan.mealPlan.state.name,
+      'created': pPlan.mealPlan.created.toIso8601String(),
+      'completed': pPlan.mealPlan.completed.toIso8601String(),
+      'targetProtein': pPlan.mealPlan.targetProtein,
+      'targetCarbs': pPlan.mealPlan.targetCarbs,
+      'targetFats': pPlan.mealPlan.targetFats,
+      'meals': pPlan.meals.map((meal) => {
+        'name': meal.meal.name,
+        'time': meal.meal.time.toString(),
+        'notes': meal.meal.notes,
+        'position': meal.meal.position,
+        'atHome': meal.meal.atHome,
+        'items': meal.items.map((item) => {
+          'type': item.mealItem.type.name,
+          'targetId': item.mealItem.targetId,
+          'amount': item.mealItem.amount,
+          'amountUnit': item.mealItem.amountUnit.name,
+          'consumed': item.mealItem.consumed,
+          'position': item.mealItem.position,
+          'product': item.product == null ? null : {
+            'name': item.product!.name,
+            'defaultUnits': item.product!.defaultUnits,
+            'edibleQtyPerUnit': item.product!.edibleQtyPerUnit,
+            'proteins': item.product!.proteins,
+            'carbsAvailable': item.product!.carbsAvailable,
+            'fats': item.product!.fats,
+            'isSupplement': item.product!.isSupplement,
+            'isPortable': item.product!.isPortable,
+          },
+          'recipe': item.recipe == null ? null : {
+            'name': item.recipe!.recipe.name,
+          },
+        }).toList(),
+      }).toList(),
+    }).toList();
+
+    final jsonString = jsonEncode(exportList);
+    await _shareExport(
+      jsonString,
+      'nexc_meal_history_${DateTime.now().millisecondsSinceEpoch}.json',
+      'Nexc Meal History',
+    );
+  }
+
+  Future<ImportResult> importMealHistory() async {
+    try {
+      final content = await _pickAndReadText();
+      if (content == null) return const ImportResult(success: false, error: 'No file selected');
+      final List<dynamic> data = jsonDecode(content);
+
+      final productCache = await db.select(db.products).get();
+      final mutableProductCache = productCache.toList();
+
+      final recipesList = await mealRepo.getAllRecipes().first;
+      final mutableRecipeCache = recipesList.toList();
+
+      for (int pi = 0; pi < data.length; pi++) {
+        final item = data[pi];
+        final planTitle = item['title'] ?? 'Meal Log #${pi + 1}';
+        final mealPlan = MealPlan(
+          id: 0,
+          parentPlanId: 0,
+          title: planTitle,
+          notes: item['notes'] ?? '',
+          state: MealPlanState.LOGGED,
+          created: DateTime.tryParse(item['created'] ?? '') ?? DateTime.now(),
+          completed: DateTime.tryParse(item['completed'] ?? '') ?? DateTime.now(),
+          targetProtein: (item['targetProtein'] as num?)?.toDouble(),
+          targetCarbs: (item['targetCarbs'] as num?)?.toDouble(),
+          targetFats: (item['targetFats'] as num?)?.toDouble(),
+          isTemporal: true,
+        );
+
+        final List<dynamic> mealsJson = item['meals'] ?? [];
+        final List<MealWithItems> mealsWithItems = [];
+
+        for (int mi = 0; mi < mealsJson.length; mi++) {
+          final mJson = mealsJson[mi];
+          final meal = Meal(
+            id: 0,
+            mealPlanId: 0,
+            name: mJson['name'] ?? '',
+            time: LocalTime.parse(mJson['time'] ?? '12:00'),
+            notes: mJson['notes'] ?? '',
+            position: mJson['position'] ?? mi,
+            atHome: mJson['atHome'] ?? true,
+          );
+
+          final List<dynamic> itemsJson = mJson['items'] ?? [];
+          final List<MealItemWithDetails> items = [];
+
+          for (int ii = 0; ii < itemsJson.length; ii++) {
+            final itJson = itemsJson[ii];
+            final type = MealItemType.values.firstWhere(
+              (t) => t.name == itJson['type'],
+              orElse: () => MealItemType.PRODUCT,
+            );
+
+            int targetId = 0;
+            Product? itemProduct;
+            RecipeWithIngredients? itemRecipe;
+
+            if (type == MealItemType.PRODUCT) {
+              String? pName;
+              int? pId;
+              if (itJson['product'] != null) {
+                pName = itJson['product']['name'];
+              } else if (itJson['targetId'] != null) {
+                pId = itJson['targetId'] as int;
+              }
+
+              Product? matched;
+              if (pName != null && pName.isNotEmpty) {
+                matched = mutableProductCache.firstWhereOrNull((p) => p.name.toLowerCase() == pName?.toLowerCase());
+              } else if (pId != null) {
+                matched = mutableProductCache.firstWhereOrNull((p) => p.id == pId);
+              }
+
+              if (matched == null) {
+                final display = pName ?? 'ID $pId';
+                return ImportResult.fail(
+                  'Meal log "$planTitle", meal #${mi + 1}, item #${ii + 1}: '
+                  'product "$display" not found in database. Please import products first.',
+                );
+              }
+              targetId = matched.id;
+              itemProduct = matched;
+            } else if (type == MealItemType.RECIPE) {
+              String? rName;
+              int? rId;
+              if (itJson['recipe'] != null) {
+                rName = itJson['recipe']['name'];
+              } else if (itJson['targetId'] != null) {
+                rId = itJson['targetId'] as int;
+              }
+
+              RecipeWithIngredients? matched;
+              if (rName != null && rName.isNotEmpty) {
+                matched = mutableRecipeCache.firstWhereOrNull((r) => r.recipe.name.toLowerCase() == rName?.toLowerCase());
+              } else if (rId != null) {
+                matched = mutableRecipeCache.firstWhereOrNull((r) => r.recipe.id == rId);
+              }
+
+              if (matched == null) {
+                final display = rName ?? 'ID $rId';
+                return ImportResult.fail(
+                  'Meal log "$planTitle", meal #${mi + 1}, item #${ii + 1}: '
+                  'recipe "$display" not found in database. Please import recipes first.',
+                );
+              }
+              targetId = matched.recipe.id;
+              itemRecipe = matched;
+            }
+
+            items.add(MealItemWithDetails(
+              mealItem: MealItem(
+                id: 0,
+                mealId: 0,
+                type: type,
+                targetId: targetId,
+                amount: (itJson['amount'] as num?)?.toDouble() ?? 0.0,
+                amountUnit: AmountUnit.values.firstWhere(
+                  (au) => au.name == itJson['amountUnit'],
+                  orElse: () => AmountUnit.GRAMS,
+                ),
+                consumed: itJson['consumed'] ?? true,
+                position: itJson['position'] ?? 0,
+              ),
+              product: itemProduct,
+              recipe: itemRecipe,
+            ));
+          }
+
+          mealsWithItems.add(MealWithItems(
+            meal: meal,
+            items: items,
+          ));
+        }
+
+        await mealRepo.saveMealPlanWithMealsAndItems(
+          MealPlanWithMealsAndItems(
+            mealPlan: mealPlan,
+            meals: mealsWithItems,
+          ),
+        );
+      }
+
+      return const ImportResult.ok();
+    } catch (e) {
+      return ImportResult.fail(e.toString());
+    }
+  }
+
   Future<void> exportAvailableExercisesDocumentation() async {
     final list = await db.select(db.exerciseData).get();
     final buffer = StringBuffer();
@@ -508,10 +879,7 @@ class BackupManager {
       buffer.writeln('| `${ex.id}` | ${ex.name} | ${ex.category.name} | $muscles |');
     }
     
-    final tempDir = await getTemporaryDirectory();
-    final file = File(p.join(tempDir.path, 'nexc_available_exercises.md'));
-    await file.writeAsString(buffer.toString());
-    await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Available Exercises List');
+    await _shareExport(buffer.toString(), 'nexc_available_exercises.md', 'Nexc Available Exercises List', mimeType: 'text/markdown');
   }
 
   Future<void> exportProducts() async {
@@ -532,18 +900,13 @@ class BackupManager {
     }).toList();
     
     final jsonString = jsonEncode(exportList);
-    final tempDir = await getTemporaryDirectory();
-    final file = File(p.join(tempDir.path, 'nexc_products.json'));
-    await file.writeAsString(jsonString);
-    await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Products Backup');
+    await _shareExport(jsonString, 'nexc_products.json', 'Nexc Products Backup');
   }
 
   Future<ImportResult> importProducts() async {
     try {
-      final result = await FilePicker.platform.pickFiles();
-      if (result == null || result.files.single.path == null) return const ImportResult(success: false, error: 'No file selected');
-      final file = File(result.files.single.path!);
-      final content = await file.readAsString();
+      final content = await _pickAndReadText();
+      if (content == null) return const ImportResult(success: false, error: 'No file selected');
       final List<dynamic> data = jsonDecode(content);
       for (int i = 0; i < data.length; i++) {
         final item = data[i];
@@ -609,18 +972,13 @@ class BackupManager {
     }
     
     final jsonString = jsonEncode(exportList);
-    final tempDir = await getTemporaryDirectory();
-    final file = File(p.join(tempDir.path, 'nexc_recipes.json'));
-    await file.writeAsString(jsonString);
-    await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Recipes Backup');
+    await _shareExport(jsonString, 'nexc_recipes.json', 'Nexc Recipes Backup');
   }
 
   Future<ImportResult> importRecipes() async {
     try {
-      final result = await FilePicker.platform.pickFiles();
-      if (result == null || result.files.single.path == null) return const ImportResult(success: false, error: 'No file selected');
-      final file = File(result.files.single.path!);
-      final content = await file.readAsString();
+      final content = await _pickAndReadText();
+      if (content == null) return const ImportResult(success: false, error: 'No file selected');
       final List<dynamic> data = jsonDecode(content);
       
       final productCache = await db.select(db.products).get();
@@ -693,21 +1051,15 @@ class BackupManager {
     }
 
     final jsonString = jsonEncode(exportList);
-    final tempDir = await getTemporaryDirectory();
-    final file = File(p.join(tempDir.path, 'nexc_stock.json'));
-    await file.writeAsString(jsonString);
-    await Share.shareXFiles([XFile(file.path)], subject: 'Nexc Stock Backup');
+    await _shareExport(jsonString, 'nexc_stock.json', 'Nexc Stock Backup');
   }
 
   Future<ImportResult> importStock() async {
     try {
-      final result = await FilePicker.platform.pickFiles();
-      if (result == null || result.files.single.path == null) {
+      final content = await _pickAndReadText();
+      if (content == null) {
         return const ImportResult(success: false, error: 'No file selected');
       }
-
-      final file = File(result.files.single.path!);
-      final content = await file.readAsString();
       final List<dynamic> data = jsonDecode(content);
 
       final productCache = await db.select(db.products).get();

@@ -29,21 +29,23 @@ class SettingsScreen extends ConsumerWidget {
         return AlertDialog(
           title: Text(title),
           content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: options.map((option) {
-                return RadioListTile<T>(
-                  title: Text(labelBuilder(option)),
-                  value: option,
-                  groupValue: selectedValue,
-                  onChanged: (value) {
-                    if (value != null) {
-                      onSelected(value);
-                      Navigator.pop(context);
-                    }
-                  },
-                );
-              }).toList(),
+            child: RadioGroup<T>(
+              groupValue: selectedValue,
+              onChanged: (value) {
+                if (value != null) {
+                  onSelected(value);
+                  Navigator.pop(context);
+                }
+              },
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: options.map((option) {
+                  return RadioListTile<T>(
+                    title: Text(labelBuilder(option)),
+                    value: option,
+                  );
+                }).toList(),
+              ),
             ),
           ),
           actions: [
@@ -257,6 +259,31 @@ class SettingsScreen extends ConsumerWidget {
             isChecked: settings.enableMealTracking,
             onClick: () => notifier.setEnableMealTracking(!settings.enableMealTracking),
           ),
+          if (settings.enableMealTracking) ...[
+            _SettingItem(
+              settingName: 'Day start hour',
+              settingDesc: 'New day starts at ${settings.dayStartHour.toString().padLeft(2, '0')}:00',
+              icon: Icons.access_time,
+              onClick: () async {
+                final picked = await showTimePicker(
+                  context: context,
+                  initialTime: TimeOfDay(hour: settings.dayStartHour, minute: 0),
+                );
+                if (picked != null) {
+                  notifier.setDayStartHour(picked.hour);
+                }
+              },
+            ),
+            _SettingItem(
+              settingName: 'Default macros override plans',
+              settingDesc: settings.defaultMacrosOverrideMealPlan
+                  ? 'Default target macros always override meal plan targets'
+                  : 'Meal plan targets take precedence when available',
+              icon: Icons.lock_outline,
+              isChecked: settings.defaultMacrosOverrideMealPlan,
+              onClick: () => notifier.setDefaultMacrosOverrideMealPlan(!settings.defaultMacrosOverrideMealPlan),
+            ),
+          ],
           _SettingItem(
             settingName: 'Stock Tracking',
             settingDesc: !settings.enableMealTracking
@@ -287,11 +314,80 @@ class SettingsScreen extends ConsumerWidget {
             onClick: () => notifier.setEnableAiProductCreation(!settings.enableAiProductCreation),
           ),
 
-          if (settings.enableAiStockLogging || settings.enableAiProductCreation) ...[
+          // Workout AI Generator
+          _buildSectionHeader(context, 'AI Features & Privacy'),
+          _SettingItem(
+            settingName: 'AI Workout Creator',
+            settingDesc: settings.aiWorkoutGenerationEnabled
+                ? 'AI assisted workout generation enabled'
+                : 'AI assisted workout generation disabled',
+            icon: Icons.fitness_center_outlined,
+            isChecked: settings.aiWorkoutGenerationEnabled,
+            onClick: () => notifier.setAiWorkoutGenerationEnabled(!settings.aiWorkoutGenerationEnabled),
+          ),
+          if (settings.aiWorkoutGenerationEnabled) ...[
+            Padding(
+              padding: const EdgeInsets.only(left: 12.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _SettingItem(
+                    settingName: 'Include User Statistics',
+                    settingDesc: settings.aiAllowUserStats
+                        ? 'Workout volume, streak & metrics shared'
+                        : 'User statistics hidden from AI',
+                    icon: Icons.query_stats_outlined,
+                    isChecked: settings.aiAllowUserStats,
+                    onClick: () => notifier.setAiAllowUserStats(!settings.aiAllowUserStats),
+                  ),
+                  _SettingItem(
+                    settingName: 'Include Meal History',
+                    settingDesc: settings.aiAllowMealHistory
+                        ? 'Recent nutrition & logged meals shared'
+                        : 'Meal history hidden from AI',
+                    icon: Icons.restaurant_menu_outlined,
+                    isChecked: settings.aiAllowMealHistory,
+                    onClick: () => notifier.setAiAllowMealHistory(!settings.aiAllowMealHistory),
+                  ),
+                  _SettingItem(
+                    settingName: 'Include Workout History',
+                    settingDesc: settings.aiAllowWorkoutHistory
+                        ? 'Completed workouts & routine records shared'
+                        : 'Workout history hidden from AI',
+                    icon: Icons.history_outlined,
+                    isChecked: settings.aiAllowWorkoutHistory,
+                    onClick: () => notifier.setAiAllowWorkoutHistory(!settings.aiAllowWorkoutHistory),
+                  ),
+                  _SettingItem(
+                    settingName: 'Include User Preferences',
+                    settingDesc: settings.aiAllowUserPreferences
+                        ? 'Equipment & personal training notes shared'
+                        : 'User preferences hidden from AI',
+                    icon: Icons.person_pin_outlined,
+                    isChecked: settings.aiAllowUserPreferences,
+                    onClick: () => notifier.setAiAllowUserPreferences(!settings.aiAllowUserPreferences),
+                  ),
+                  _SettingItem(
+                    settingName: 'Include Measurements',
+                    settingDesc: settings.aiAllowMeasurements
+                        ? 'Weight & body measurements shared'
+                        : 'Measurements hidden from AI',
+                    icon: Icons.straighten_outlined,
+                    isChecked: settings.aiAllowMeasurements,
+                    onClick: () => notifier.setAiAllowMeasurements(!settings.aiAllowMeasurements),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          if (settings.enableAiStockLogging ||
+              settings.enableAiProductCreation ||
+              settings.aiWorkoutGenerationEnabled) ...[
             const SizedBox(height: 8),
             Card(
               elevation: 0,
-              color: Theme.of(context).colorScheme.surfaceVariant.withOpacity(0.3),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16.0)),
               child: Padding(
                 padding: const EdgeInsets.all(16.0),
@@ -304,7 +400,7 @@ class SettingsScreen extends ConsumerWidget {
                     ),
                     const SizedBox(height: 12),
                     DropdownButtonFormField<String>(
-                      value: settings.aiProvider,
+                      initialValue: settings.aiProvider,
                       decoration: const InputDecoration(
                         labelText: 'API Provider',
                         border: OutlineInputBorder(),
@@ -393,7 +489,7 @@ class _SettingItem extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.0),
         ),
-        color: theme.colorScheme.surfaceVariant.withOpacity(enabled ? 0.3 : 0.1),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: enabled ? 0.3 : 0.1),
         child: InkWell(
           borderRadius: BorderRadius.circular(16.0),
           onTap: enabled ? onClick : null,

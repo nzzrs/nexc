@@ -169,7 +169,7 @@ class _CalendarScreenState extends ConsumerState<CalendarScreen> {
                             Icon(
                               Icons.fitness_center,
                               size: 48,
-                              color: theme.colorScheme.onSurfaceVariant.withOpacity(0.4),
+                              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.4),
                             ),
                             const SizedBox(height: 12),
                             Text(
@@ -315,7 +315,7 @@ class _WorkoutSummaryCard extends StatelessWidget {
                     ),
                     padding: EdgeInsets.zero,
                     materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    backgroundColor: theme.colorScheme.surfaceVariant,
+                    backgroundColor: theme.colorScheme.surfaceContainerHighest,
                   );
                 }).toList()
                   ..addAll(
@@ -328,7 +328,7 @@ class _WorkoutSummaryCard extends StatelessWidget {
                               ),
                               padding: EdgeInsets.zero,
                               materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              backgroundColor: theme.colorScheme.surfaceVariant,
+                              backgroundColor: theme.colorScheme.surfaceContainerHighest,
                             )
                           ]
                         : [],

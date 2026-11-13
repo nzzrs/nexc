@@ -12,6 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/workout_repository.dart';
 import '../../core/providers/workout_providers.dart';
+import '../../core/providers/settings_provider.dart';
 
 class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
@@ -39,7 +40,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
     final theme = Theme.of(context);
     _borderColorAnimation = ColorTween(
       begin: Colors.transparent,
-      end: theme.colorScheme.secondary.withOpacity(0.8),
+      end: theme.colorScheme.secondary.withValues(alpha: 0.8),
     ).animate(_pulseController);
   }
 
@@ -58,7 +59,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
   void _showDiscardDialog(Workout workout) {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogCtx) {
         return AlertDialog(
           title: const Text('Discard running workout?'),
           content: const Text(
@@ -66,14 +67,15 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogCtx),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () async {
+                final nav = Navigator.of(dialogCtx);
                 final repo = ref.read(workoutRepositoryProvider);
                 await repo.deleteWorkout(workout);
-                if (mounted) Navigator.pop(context);
+                if (mounted) nav.pop();
               },
               child: const Text(
                 'Discard',
@@ -89,7 +91,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
   void _showDiscardAndStartRoutineDialog(Workout running, int routineId) {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogCtx) {
         return AlertDialog(
           title: const Text('Discard running workout?'),
           content: const Text(
@@ -97,16 +99,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () => Navigator.pop(dialogCtx),
               child: const Text('Cancel'),
             ),
             TextButton(
               onPressed: () async {
+                final nav = Navigator.of(dialogCtx);
                 final repo = ref.read(workoutRepositoryProvider);
                 await repo.deleteWorkout(running);
                 if (mounted) {
-                  Navigator.pop(context);
-                  Navigator.pushNamed(context, '/workout', arguments: routineId);
+                  nav.pop();
+                  nav.pushNamed('/workout', arguments: routineId);
                 }
               },
               child: const Text(
@@ -233,6 +236,32 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
+            ),
+            IconButton.filledTonal(
+              icon: Icon(
+                Icons.auto_awesome,
+                color: ref.watch(settingsProvider).aiWorkoutGenerationEnabled
+                    ? null
+                    : theme.disabledColor,
+              ),
+              tooltip: ref.watch(settingsProvider).aiWorkoutGenerationEnabled
+                  ? 'AI Workout Creator'
+                  : 'AI Workout Creator (Disabled in Settings)',
+              onPressed: () {
+                if (ref.read(settingsProvider).aiWorkoutGenerationEnabled) {
+                  Navigator.pushNamed(context, '/workout/ai-chat');
+                } else {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: const Text('AI workout generation is disabled in Settings.'),
+                      action: SnackBarAction(
+                        label: 'Settings',
+                        onPressed: () => Navigator.pushNamed(context, '/settings'),
+                      ),
+                    ),
+                  );
+                }
+              },
             ),
           ],
         ),

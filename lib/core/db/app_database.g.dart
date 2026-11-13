@@ -1509,6 +1509,15 @@ class $SetsTable extends Sets with TableInfo<$SetsTable, WorkoutSet> {
   late final GeneratedColumn<double> load = GeneratedColumn<double>(
       'load', aliasedName, false,
       type: DriftSqlType.double, requiredDuringInsert: true);
+  static const VerificationMeta _weightUnitMeta =
+      const VerificationMeta('weightUnit');
+  @override
+  late final GeneratedColumnWithTypeConverter<WeightUnit, String> weightUnit =
+      GeneratedColumn<String>('weightUnit', aliasedName, false,
+              type: DriftSqlType.string,
+              requiredDuringInsert: false,
+              defaultValue: const Constant('kg'))
+          .withConverter<WeightUnit>($SetsTable.$converterweightUnit);
   static const VerificationMeta _repsMeta = const VerificationMeta('reps');
   @override
   late final GeneratedColumn<int> reps = GeneratedColumn<int>(
@@ -1529,6 +1538,15 @@ class $SetsTable extends Sets with TableInfo<$SetsTable, WorkoutSet> {
       requiredDuringInsert: true,
       defaultConstraints:
           GeneratedColumn.constraintIsAlways('CHECK ("completed" IN (0, 1))'));
+  static const VerificationMeta _setTypeMeta =
+      const VerificationMeta('setType');
+  @override
+  late final GeneratedColumnWithTypeConverter<SetType, String> setType =
+      GeneratedColumn<String>('setType', aliasedName, false,
+              type: DriftSqlType.string,
+              requiredDuringInsert: false,
+              defaultValue: const Constant('NORMAL'))
+          .withConverter<SetType>($SetsTable.$convertersetType);
   static const VerificationMeta _rpeMeta = const VerificationMeta('rpe');
   @override
   late final GeneratedColumn<double> rpe = GeneratedColumn<double>(
@@ -1546,8 +1564,18 @@ class $SetsTable extends Sets with TableInfo<$SetsTable, WorkoutSet> {
       'exerciseId', aliasedName, false,
       type: DriftSqlType.int, requiredDuringInsert: true);
   @override
-  List<GeneratedColumn> get $columns =>
-      [id, load, reps, elapsedTime, completed, rpe, rir, exerciseId];
+  List<GeneratedColumn> get $columns => [
+        id,
+        load,
+        weightUnit,
+        reps,
+        elapsedTime,
+        completed,
+        setType,
+        rpe,
+        rir,
+        exerciseId
+      ];
   @override
   String get aliasedName => _alias ?? actualTableName;
   @override
@@ -1567,6 +1595,7 @@ class $SetsTable extends Sets with TableInfo<$SetsTable, WorkoutSet> {
     } else if (isInserting) {
       context.missing(_loadMeta);
     }
+    context.handle(_weightUnitMeta, const VerificationResult.success());
     if (data.containsKey('reps')) {
       context.handle(
           _repsMeta, reps.isAcceptableOrUnknown(data['reps']!, _repsMeta));
@@ -1587,6 +1616,7 @@ class $SetsTable extends Sets with TableInfo<$SetsTable, WorkoutSet> {
     } else if (isInserting) {
       context.missing(_completedMeta);
     }
+    context.handle(_setTypeMeta, const VerificationResult.success());
     if (data.containsKey('rpe')) {
       context.handle(
           _rpeMeta, rpe.isAcceptableOrUnknown(data['rpe']!, _rpeMeta));
@@ -1616,12 +1646,17 @@ class $SetsTable extends Sets with TableInfo<$SetsTable, WorkoutSet> {
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       load: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}load'])!,
+      weightUnit: $SetsTable.$converterweightUnit.fromSql(attachedDatabase
+          .typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}weightUnit'])!),
       reps: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}reps'])!,
       elapsedTime: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}elapsedTime'])!,
       completed: attachedDatabase.typeMapping
           .read(DriftSqlType.bool, data['${effectivePrefix}completed'])!,
+      setType: $SetsTable.$convertersetType.fromSql(attachedDatabase.typeMapping
+          .read(DriftSqlType.string, data['${effectivePrefix}setType'])!),
       rpe: attachedDatabase.typeMapping
           .read(DriftSqlType.double, data['${effectivePrefix}rpe']),
       rir: attachedDatabase.typeMapping
@@ -1635,23 +1670,32 @@ class $SetsTable extends Sets with TableInfo<$SetsTable, WorkoutSet> {
   $SetsTable createAlias(String alias) {
     return $SetsTable(attachedDatabase, alias);
   }
+
+  static TypeConverter<WeightUnit, String> $converterweightUnit =
+      const EnumNameConverter(WeightUnit.values);
+  static TypeConverter<SetType, String> $convertersetType =
+      const EnumNameConverter(SetType.values);
 }
 
 class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
   final int id;
   final double load;
+  final WeightUnit weightUnit;
   final int reps;
   final int elapsedTime;
   final bool completed;
+  final SetType setType;
   final double? rpe;
   final int? rir;
   final int exerciseId;
   const WorkoutSet(
       {required this.id,
       required this.load,
+      required this.weightUnit,
       required this.reps,
       required this.elapsedTime,
       required this.completed,
+      required this.setType,
       this.rpe,
       this.rir,
       required this.exerciseId});
@@ -1660,9 +1704,17 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     final map = <String, Expression>{};
     map['id'] = Variable<int>(id);
     map['load'] = Variable<double>(load);
+    {
+      map['weightUnit'] =
+          Variable<String>($SetsTable.$converterweightUnit.toSql(weightUnit));
+    }
     map['reps'] = Variable<int>(reps);
     map['elapsedTime'] = Variable<int>(elapsedTime);
     map['completed'] = Variable<bool>(completed);
+    {
+      map['setType'] =
+          Variable<String>($SetsTable.$convertersetType.toSql(setType));
+    }
     if (!nullToAbsent || rpe != null) {
       map['rpe'] = Variable<double>(rpe);
     }
@@ -1677,9 +1729,11 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     return SetsCompanion(
       id: Value(id),
       load: Value(load),
+      weightUnit: Value(weightUnit),
       reps: Value(reps),
       elapsedTime: Value(elapsedTime),
       completed: Value(completed),
+      setType: Value(setType),
       rpe: rpe == null && nullToAbsent ? const Value.absent() : Value(rpe),
       rir: rir == null && nullToAbsent ? const Value.absent() : Value(rir),
       exerciseId: Value(exerciseId),
@@ -1692,9 +1746,11 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     return WorkoutSet(
       id: serializer.fromJson<int>(json['id']),
       load: serializer.fromJson<double>(json['load']),
+      weightUnit: serializer.fromJson<WeightUnit>(json['weightUnit']),
       reps: serializer.fromJson<int>(json['reps']),
       elapsedTime: serializer.fromJson<int>(json['elapsedTime']),
       completed: serializer.fromJson<bool>(json['completed']),
+      setType: serializer.fromJson<SetType>(json['setType']),
       rpe: serializer.fromJson<double?>(json['rpe']),
       rir: serializer.fromJson<int?>(json['rir']),
       exerciseId: serializer.fromJson<int>(json['exerciseId']),
@@ -1706,9 +1762,11 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     return <String, dynamic>{
       'id': serializer.toJson<int>(id),
       'load': serializer.toJson<double>(load),
+      'weightUnit': serializer.toJson<WeightUnit>(weightUnit),
       'reps': serializer.toJson<int>(reps),
       'elapsedTime': serializer.toJson<int>(elapsedTime),
       'completed': serializer.toJson<bool>(completed),
+      'setType': serializer.toJson<SetType>(setType),
       'rpe': serializer.toJson<double?>(rpe),
       'rir': serializer.toJson<int?>(rir),
       'exerciseId': serializer.toJson<int>(exerciseId),
@@ -1718,18 +1776,22 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
   WorkoutSet copyWith(
           {int? id,
           double? load,
+          WeightUnit? weightUnit,
           int? reps,
           int? elapsedTime,
           bool? completed,
+          SetType? setType,
           Value<double?> rpe = const Value.absent(),
           Value<int?> rir = const Value.absent(),
           int? exerciseId}) =>
       WorkoutSet(
         id: id ?? this.id,
         load: load ?? this.load,
+        weightUnit: weightUnit ?? this.weightUnit,
         reps: reps ?? this.reps,
         elapsedTime: elapsedTime ?? this.elapsedTime,
         completed: completed ?? this.completed,
+        setType: setType ?? this.setType,
         rpe: rpe.present ? rpe.value : this.rpe,
         rir: rir.present ? rir.value : this.rir,
         exerciseId: exerciseId ?? this.exerciseId,
@@ -1739,9 +1801,11 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
     return (StringBuffer('WorkoutSet(')
           ..write('id: $id, ')
           ..write('load: $load, ')
+          ..write('weightUnit: $weightUnit, ')
           ..write('reps: $reps, ')
           ..write('elapsedTime: $elapsedTime, ')
           ..write('completed: $completed, ')
+          ..write('setType: $setType, ')
           ..write('rpe: $rpe, ')
           ..write('rir: $rir, ')
           ..write('exerciseId: $exerciseId')
@@ -1750,17 +1814,19 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, load, reps, elapsedTime, completed, rpe, rir, exerciseId);
+  int get hashCode => Object.hash(id, load, weightUnit, reps, elapsedTime,
+      completed, setType, rpe, rir, exerciseId);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is WorkoutSet &&
           other.id == this.id &&
           other.load == this.load &&
+          other.weightUnit == this.weightUnit &&
           other.reps == this.reps &&
           other.elapsedTime == this.elapsedTime &&
           other.completed == this.completed &&
+          other.setType == this.setType &&
           other.rpe == this.rpe &&
           other.rir == this.rir &&
           other.exerciseId == this.exerciseId);
@@ -1769,18 +1835,22 @@ class WorkoutSet extends DataClass implements Insertable<WorkoutSet> {
 class SetsCompanion extends UpdateCompanion<WorkoutSet> {
   final Value<int> id;
   final Value<double> load;
+  final Value<WeightUnit> weightUnit;
   final Value<int> reps;
   final Value<int> elapsedTime;
   final Value<bool> completed;
+  final Value<SetType> setType;
   final Value<double?> rpe;
   final Value<int?> rir;
   final Value<int> exerciseId;
   const SetsCompanion({
     this.id = const Value.absent(),
     this.load = const Value.absent(),
+    this.weightUnit = const Value.absent(),
     this.reps = const Value.absent(),
     this.elapsedTime = const Value.absent(),
     this.completed = const Value.absent(),
+    this.setType = const Value.absent(),
     this.rpe = const Value.absent(),
     this.rir = const Value.absent(),
     this.exerciseId = const Value.absent(),
@@ -1788,9 +1858,11 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
   SetsCompanion.insert({
     this.id = const Value.absent(),
     required double load,
+    this.weightUnit = const Value.absent(),
     required int reps,
     required int elapsedTime,
     required bool completed,
+    this.setType = const Value.absent(),
     this.rpe = const Value.absent(),
     this.rir = const Value.absent(),
     required int exerciseId,
@@ -1802,9 +1874,11 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
   static Insertable<WorkoutSet> custom({
     Expression<int>? id,
     Expression<double>? load,
+    Expression<String>? weightUnit,
     Expression<int>? reps,
     Expression<int>? elapsedTime,
     Expression<bool>? completed,
+    Expression<String>? setType,
     Expression<double>? rpe,
     Expression<int>? rir,
     Expression<int>? exerciseId,
@@ -1812,9 +1886,11 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (load != null) 'load': load,
+      if (weightUnit != null) 'weightUnit': weightUnit,
       if (reps != null) 'reps': reps,
       if (elapsedTime != null) 'elapsedTime': elapsedTime,
       if (completed != null) 'completed': completed,
+      if (setType != null) 'setType': setType,
       if (rpe != null) 'rpe': rpe,
       if (rir != null) 'rir': rir,
       if (exerciseId != null) 'exerciseId': exerciseId,
@@ -1824,18 +1900,22 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
   SetsCompanion copyWith(
       {Value<int>? id,
       Value<double>? load,
+      Value<WeightUnit>? weightUnit,
       Value<int>? reps,
       Value<int>? elapsedTime,
       Value<bool>? completed,
+      Value<SetType>? setType,
       Value<double?>? rpe,
       Value<int?>? rir,
       Value<int>? exerciseId}) {
     return SetsCompanion(
       id: id ?? this.id,
       load: load ?? this.load,
+      weightUnit: weightUnit ?? this.weightUnit,
       reps: reps ?? this.reps,
       elapsedTime: elapsedTime ?? this.elapsedTime,
       completed: completed ?? this.completed,
+      setType: setType ?? this.setType,
       rpe: rpe ?? this.rpe,
       rir: rir ?? this.rir,
       exerciseId: exerciseId ?? this.exerciseId,
@@ -1851,6 +1931,10 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
     if (load.present) {
       map['load'] = Variable<double>(load.value);
     }
+    if (weightUnit.present) {
+      map['weightUnit'] = Variable<String>(
+          $SetsTable.$converterweightUnit.toSql(weightUnit.value));
+    }
     if (reps.present) {
       map['reps'] = Variable<int>(reps.value);
     }
@@ -1859,6 +1943,10 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
     }
     if (completed.present) {
       map['completed'] = Variable<bool>(completed.value);
+    }
+    if (setType.present) {
+      map['setType'] =
+          Variable<String>($SetsTable.$convertersetType.toSql(setType.value));
     }
     if (rpe.present) {
       map['rpe'] = Variable<double>(rpe.value);
@@ -1877,9 +1965,11 @@ class SetsCompanion extends UpdateCompanion<WorkoutSet> {
     return (StringBuffer('SetsCompanion(')
           ..write('id: $id, ')
           ..write('load: $load, ')
+          ..write('weightUnit: $weightUnit, ')
           ..write('reps: $reps, ')
           ..write('elapsedTime: $elapsedTime, ')
           ..write('completed: $completed, ')
+          ..write('setType: $setType, ')
           ..write('rpe: $rpe, ')
           ..write('rir: $rir, ')
           ..write('exerciseId: $exerciseId')
@@ -8622,9 +8712,11 @@ class $$ExercisesTableOrderingComposer
 typedef $$SetsTableInsertCompanionBuilder = SetsCompanion Function({
   Value<int> id,
   required double load,
+  Value<WeightUnit> weightUnit,
   required int reps,
   required int elapsedTime,
   required bool completed,
+  Value<SetType> setType,
   Value<double?> rpe,
   Value<int?> rir,
   required int exerciseId,
@@ -8632,9 +8724,11 @@ typedef $$SetsTableInsertCompanionBuilder = SetsCompanion Function({
 typedef $$SetsTableUpdateCompanionBuilder = SetsCompanion Function({
   Value<int> id,
   Value<double> load,
+  Value<WeightUnit> weightUnit,
   Value<int> reps,
   Value<int> elapsedTime,
   Value<bool> completed,
+  Value<SetType> setType,
   Value<double?> rpe,
   Value<int?> rir,
   Value<int> exerciseId,
@@ -8661,9 +8755,11 @@ class $$SetsTableTableManager extends RootTableManager<
           getUpdateCompanionBuilder: ({
             Value<int> id = const Value.absent(),
             Value<double> load = const Value.absent(),
+            Value<WeightUnit> weightUnit = const Value.absent(),
             Value<int> reps = const Value.absent(),
             Value<int> elapsedTime = const Value.absent(),
             Value<bool> completed = const Value.absent(),
+            Value<SetType> setType = const Value.absent(),
             Value<double?> rpe = const Value.absent(),
             Value<int?> rir = const Value.absent(),
             Value<int> exerciseId = const Value.absent(),
@@ -8671,9 +8767,11 @@ class $$SetsTableTableManager extends RootTableManager<
               SetsCompanion(
             id: id,
             load: load,
+            weightUnit: weightUnit,
             reps: reps,
             elapsedTime: elapsedTime,
             completed: completed,
+            setType: setType,
             rpe: rpe,
             rir: rir,
             exerciseId: exerciseId,
@@ -8681,9 +8779,11 @@ class $$SetsTableTableManager extends RootTableManager<
           getInsertCompanionBuilder: ({
             Value<int> id = const Value.absent(),
             required double load,
+            Value<WeightUnit> weightUnit = const Value.absent(),
             required int reps,
             required int elapsedTime,
             required bool completed,
+            Value<SetType> setType = const Value.absent(),
             Value<double?> rpe = const Value.absent(),
             Value<int?> rir = const Value.absent(),
             required int exerciseId,
@@ -8691,9 +8791,11 @@ class $$SetsTableTableManager extends RootTableManager<
               SetsCompanion.insert(
             id: id,
             load: load,
+            weightUnit: weightUnit,
             reps: reps,
             elapsedTime: elapsedTime,
             completed: completed,
+            setType: setType,
             rpe: rpe,
             rir: rir,
             exerciseId: exerciseId,
@@ -8726,6 +8828,13 @@ class $$SetsTableFilterComposer
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
 
+  ColumnWithTypeConverterFilters<WeightUnit, WeightUnit, String>
+      get weightUnit => $state.composableBuilder(
+          column: $state.table.weightUnit,
+          builder: (column, joinBuilders) => ColumnWithTypeConverterFilters(
+              column,
+              joinBuilders: joinBuilders));
+
   ColumnFilters<int> get reps => $state.composableBuilder(
       column: $state.table.reps,
       builder: (column, joinBuilders) =>
@@ -8740,6 +8849,13 @@ class $$SetsTableFilterComposer
       column: $state.table.completed,
       builder: (column, joinBuilders) =>
           ColumnFilters(column, joinBuilders: joinBuilders));
+
+  ColumnWithTypeConverterFilters<SetType, SetType, String> get setType =>
+      $state.composableBuilder(
+          column: $state.table.setType,
+          builder: (column, joinBuilders) => ColumnWithTypeConverterFilters(
+              column,
+              joinBuilders: joinBuilders));
 
   ColumnFilters<double> get rpe => $state.composableBuilder(
       column: $state.table.rpe,
@@ -8770,6 +8886,11 @@ class $$SetsTableOrderingComposer
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 
+  ColumnOrderings<String> get weightUnit => $state.composableBuilder(
+      column: $state.table.weightUnit,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
   ColumnOrderings<int> get reps => $state.composableBuilder(
       column: $state.table.reps,
       builder: (column, joinBuilders) =>
@@ -8782,6 +8903,11 @@ class $$SetsTableOrderingComposer
 
   ColumnOrderings<bool> get completed => $state.composableBuilder(
       column: $state.table.completed,
+      builder: (column, joinBuilders) =>
+          ColumnOrderings(column, joinBuilders: joinBuilders));
+
+  ColumnOrderings<String> get setType => $state.composableBuilder(
+      column: $state.table.setType,
       builder: (column, joinBuilders) =>
           ColumnOrderings(column, joinBuilders: joinBuilders));
 

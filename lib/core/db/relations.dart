@@ -86,6 +86,8 @@ class MealItemWithDetails {
     this.recipe,
   });
 
+  String get displayName => product?.name ?? recipe?.recipe.name ?? 'Meal Item';
+
   MealItemWithDetails copyWith({
     MealItem? mealItem,
     Product? product,

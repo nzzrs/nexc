@@ -12,15 +12,21 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/app_database.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/dataset_repository.dart';
+import '../../core/integrations/ai_service.dart';
+import '../../core/providers/settings_provider.dart';
+import '../../core/components/clearable_search_field.dart';
 
 class ExercisesScreen extends ConsumerStatefulWidget {
-  final bool addExercises; // true if selecting multiple, false if selecting single
+  final bool
+  addExercises; // true if selecting multiple, false if selecting single
   final bool isSelectionMode; // true if selecting, false if browsing
+  final ExerciseDataDC? targetExerciseToReplace;
 
   const ExercisesScreen({
     super.key,
     this.addExercises = true,
     this.isSelectionMode = true,
+    this.targetExerciseToReplace,
   });
 
   @override
@@ -43,11 +49,95 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
 
   final Set<ExerciseDataDC> _selectedExercises = {};
   late final Stream<List<ExerciseDataDC>> _datasetStream;
+  List<ExerciseDataDC> _aiSuggestions = [];
+  bool _aiSuggestionsLoading = false;
 
   @override
   void initState() {
     super.initState();
     _datasetStream = ref.read(datasetRepositoryProvider).getDataset();
+    _loadAiSuggestions();
+  }
+
+  Future<void> _loadAiSuggestions() async {
+    final target = widget.targetExerciseToReplace;
+    if (target == null) return;
+
+    setState(() {
+      _aiSuggestionsLoading = true;
+    });
+
+    try {
+      final allExercises = await ref
+          .read(datasetRepositoryProvider)
+          .getExercises();
+      final targetPrimary = target.primaryMuscles.toSet();
+      final targetSecondary = target.secondaryMuscles.toSet();
+
+      int similarityScore(ExerciseDataDC ex) {
+        int score = 0;
+        for (final muscle in ex.primaryMuscles) {
+          if (targetPrimary.contains(muscle)) score += 5;
+          if (targetSecondary.contains(muscle)) score += 2;
+        }
+        for (final muscle in ex.secondaryMuscles) {
+          if (targetPrimary.contains(muscle)) score += 2;
+          if (targetSecondary.contains(muscle)) score += 1;
+        }
+        return score;
+      }
+
+      final candidates =
+          allExercises
+              .where((ex) => ex.id != target.id && similarityScore(ex) > 0)
+              .map(
+                (ex) => <String, dynamic>{
+                  'id': ex.id,
+                  'name': ex.name,
+                  'commonMuscles': similarityScore(ex),
+                },
+              )
+              .toList()
+            ..sort(
+              (a, b) => (b['commonMuscles'] as int).compareTo(
+                a['commonMuscles'] as int,
+              ),
+            );
+
+      final settings = ref.read(settingsProvider);
+      final ids = await AIService.getReplacementSuggestions(
+        provider: settings.aiProvider,
+        apiKey: settings.aiToken,
+        model: settings.aiModel,
+        targetExerciseName: target.name,
+        targetMuscles: {
+          ...target.primaryMuscles.map((m) => m.name),
+          ...target.secondaryMuscles.map((m) => m.name),
+        }.toList(),
+        availableExercises: candidates.take(80).toList(),
+      );
+
+      final byId = {for (final ex in allExercises) ex.id: ex};
+      final suggestions = <ExerciseDataDC>[];
+      for (final id in ids) {
+        final exercise = byId[id];
+        if (exercise != null && exercise.id != target.id) {
+          suggestions.add(exercise);
+        }
+        if (suggestions.length >= 5) break;
+      }
+
+      if (!mounted) return;
+      setState(() {
+        _aiSuggestions = suggestions;
+      });
+    } finally {
+      if (mounted) {
+        setState(() {
+          _aiSuggestionsLoading = false;
+        });
+      }
+    }
   }
 
   @override
@@ -79,9 +169,15 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
   bool _filterExercise(ExerciseDataDC ex) {
     if (_selectedLevel != null && ex.level != _selectedLevel) return false;
     if (_selectedForce != null && ex.force != _selectedForce) return false;
-    if (_selectedMechanic != null && ex.mechanic != _selectedMechanic) return false;
-    if (_selectedEquipment != null && ex.equipment != _selectedEquipment) return false;
-    if (_selectedCategory != null && ex.category != _selectedCategory) return false;
+    if (_selectedMechanic != null && ex.mechanic != _selectedMechanic) {
+      return false;
+    }
+    if (_selectedEquipment != null && ex.equipment != _selectedEquipment) {
+      return false;
+    }
+    if (_selectedCategory != null && ex.category != _selectedCategory) {
+      return false;
+    }
     if (_selectedMuscle != null) {
       final hasPrimary = ex.primaryMuscles.contains(_selectedMuscle);
       final hasSecondary = ex.secondaryMuscles.contains(_selectedMuscle);
@@ -91,19 +187,24 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     return true;
   }
 
-
-
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
+    final isReplacing = widget.targetExerciseToReplace != null;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.addExercises ? 'Add Exercises' : 'Select Exercise'),
+        title: Text(
+          widget.addExercises
+              ? 'Add Exercises'
+              : (isReplacing ? 'Replace Exercise' : 'Select Exercise'),
+        ),
         actions: [
           IconButton(
-            icon: Icon(_showFilters ? Icons.filter_alt : Icons.filter_alt_outlined),
+            icon: Icon(
+              _showFilters ? Icons.filter_alt : Icons.filter_alt_outlined,
+            ),
             onPressed: () {
               setState(() {
                 _showFilters = !_showFilters;
@@ -127,26 +228,9 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
           // Search Box
           Padding(
             padding: const EdgeInsets.all(12.0),
-            child: TextField(
+            child: ClearableSearchField(
               controller: _searchController,
-              decoration: InputDecoration(
-                hintText: 'Search exercise...',
-                prefixIcon: const Icon(Icons.search),
-                suffixIcon: _query.isNotEmpty
-                    ? IconButton(
-                        icon: const Icon(Icons.clear),
-                        onPressed: () {
-                          _searchController.clear();
-                          setState(() {
-                            _query = '';
-                          });
-                        },
-                      )
-                    : null,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-              ),
+              hintText: 'Search exercise...',
               onChanged: (val) {
                 setState(() {
                   _query = val;
@@ -159,85 +243,117 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
           if (_showFilters)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+              color: theme.colorScheme.surfaceContainerHighest.withValues(
+                alpha: 0.3,
+              ),
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: Row(
                   children: [
                     FilterChip(
-                      label: Text(_selectedLevel == null ? 'Level' : 'Level: ${_selectedLevel!.name}'),
+                      label: Text(
+                        _selectedLevel == null
+                            ? 'Level'
+                            : 'Level: ${_selectedLevel!.name}',
+                      ),
                       selected: _selectedLevel != null,
                       onSelected: (selected) {
                         _showFilterSelector<Level>(
                           title: 'Select Level',
                           values: Level.values,
                           current: _selectedLevel,
-                          onSelected: (val) => setState(() => _selectedLevel = val),
+                          onSelected: (val) =>
+                              setState(() => _selectedLevel = val),
                         );
                       },
                     ),
                     const SizedBox(width: 8),
                     FilterChip(
-                      label: Text(_selectedForce == null ? 'Force' : 'Force: ${_selectedForce!.name}'),
+                      label: Text(
+                        _selectedForce == null
+                            ? 'Force'
+                            : 'Force: ${_selectedForce!.name}',
+                      ),
                       selected: _selectedForce != null,
                       onSelected: (selected) {
                         _showFilterSelector<Force>(
                           title: 'Select Force',
                           values: Force.values,
                           current: _selectedForce,
-                          onSelected: (val) => setState(() => _selectedForce = val),
+                          onSelected: (val) =>
+                              setState(() => _selectedForce = val),
                         );
                       },
                     ),
                     const SizedBox(width: 8),
                     FilterChip(
-                      label: Text(_selectedMechanic == null ? 'Mechanic' : 'Mechanic: ${_selectedMechanic!.name}'),
+                      label: Text(
+                        _selectedMechanic == null
+                            ? 'Mechanic'
+                            : 'Mechanic: ${_selectedMechanic!.name}',
+                      ),
                       selected: _selectedMechanic != null,
                       onSelected: (selected) {
                         _showFilterSelector<Mechanic>(
                           title: 'Select Mechanic',
                           values: Mechanic.values,
                           current: _selectedMechanic,
-                          onSelected: (val) => setState(() => _selectedMechanic = val),
+                          onSelected: (val) =>
+                              setState(() => _selectedMechanic = val),
                         );
                       },
                     ),
                     const SizedBox(width: 8),
                     FilterChip(
-                      label: Text(_selectedEquipment == null ? 'Equipment' : 'Equipment: ${_selectedEquipment!.name}'),
+                      label: Text(
+                        _selectedEquipment == null
+                            ? 'Equipment'
+                            : 'Equipment: ${_selectedEquipment!.name}',
+                      ),
                       selected: _selectedEquipment != null,
                       onSelected: (selected) {
                         _showFilterSelector<Equipment>(
                           title: 'Select Equipment',
                           values: Equipment.values,
                           current: _selectedEquipment,
-                          onSelected: (val) => setState(() => _selectedEquipment = val),
+                          onSelected: (val) =>
+                              setState(() => _selectedEquipment = val),
                         );
                       },
                     ),
                     const SizedBox(width: 8),
                     FilterChip(
-                      label: Text(_selectedMuscle == null ? 'Muscle' : 'Muscle: ${_selectedMuscle!.name}'),
+                      label: Text(
+                        _selectedMuscle == null
+                            ? 'Muscle'
+                            : 'Muscle: ${_selectedMuscle!.name}',
+                      ),
                       selected: _selectedMuscle != null,
                       onSelected: (selected) {
                         _showFilterSelector<Muscle>(
                           title: 'Select Muscle',
                           values: Muscle.values,
                           current: _selectedMuscle,
-                          onSelected: (val) => setState(() => _selectedMuscle = val),
+                          onSelected: (val) =>
+                              setState(() => _selectedMuscle = val),
                         );
                       },
                     ),
                     const SizedBox(width: 8),
                     FilterChip(
-                      label: Text(_selectedCategory == null ? 'Category' : 'Category: ${_selectedCategory!.name}'),
+                      label: Text(
+                        _selectedCategory == null
+                            ? 'Category'
+                            : 'Category: ${_selectedCategory!.name}',
+                      ),
                       selected: _selectedCategory != null,
                       onSelected: (selected) {
                         _showFilterSelector<Category>(
                           title: 'Select Category',
                           values: Category.values,
                           current: _selectedCategory,
-                          onSelected: (val) => setState(() => _selectedCategory = val),
+                          onSelected: (val) =>
+                              setState(() => _selectedCategory = val),
                         );
                       },
                     ),
@@ -273,7 +389,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                         },
                         child: const Text('Reset'),
                       ),
-                    ]
+                    ],
                   ],
                 ),
               ),
@@ -298,13 +414,66 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   return _fuzzyScore(ex.name, _query) > 60;
                 }).toList();
 
-                // Sort: Selected first, then query/default order
+                final targetMuscles =
+                    widget.targetExerciseToReplace?.primaryMuscles.toSet() ??
+                    {};
+                final targetSecondary =
+                    widget.targetExerciseToReplace?.secondaryMuscles.toSet() ??
+                    {};
+
+                int computeSimilarity(ExerciseDataDC ex) {
+                  if (widget.targetExerciseToReplace == null ||
+                      ex.id == widget.targetExerciseToReplace!.id) {
+                    return 0;
+                  }
+                  int score = 0;
+                  for (final m in ex.primaryMuscles) {
+                    if (targetMuscles.contains(m)) score += 5;
+                    if (targetSecondary.contains(m)) score += 2;
+                  }
+                  for (final m in ex.secondaryMuscles) {
+                    if (targetMuscles.contains(m)) score += 2;
+                    if (targetSecondary.contains(m)) score += 1;
+                  }
+                  return score;
+                }
+
+                // AI suggestions when in replace mode and not searching with query
+                final List<ExerciseDataDC> aiSuggestions = [];
+                if (widget.targetExerciseToReplace != null && _query.isEmpty) {
+                  final filteredIds = filtered.map((ex) => ex.id).toSet();
+                  aiSuggestions.addAll(
+                    _aiSuggestions.where((ex) => filteredIds.contains(ex.id)),
+                  );
+                  if (aiSuggestions.isEmpty) {
+                    // Deterministic local fallback until the AI ranking arrives.
+                    final candidates = filtered
+                        .where(
+                          (ex) => ex.id != widget.targetExerciseToReplace!.id,
+                        )
+                        .map((ex) => MapEntry(ex, computeSimilarity(ex)))
+                        .where((entry) => entry.value > 0)
+                        .toList();
+                    candidates.sort((a, b) => b.value.compareTo(a.value));
+                    aiSuggestions.addAll(candidates.take(5).map((e) => e.key));
+                  }
+                }
+
+                // Sort full catalog list
                 final sorted = List<ExerciseDataDC>.from(filtered);
                 sorted.sort((a, b) {
                   final aSelected = _selectedExercises.contains(a);
                   final bSelected = _selectedExercises.contains(b);
                   if (aSelected && !bSelected) return -1;
                   if (!aSelected && bSelected) return 1;
+
+                  if (widget.targetExerciseToReplace != null &&
+                      _query.isEmpty) {
+                    final aScore = computeSimilarity(a);
+                    final bScore = computeSimilarity(b);
+                    if (aScore != bScore) return bScore.compareTo(aScore);
+                  }
+
                   if (_query.isNotEmpty) {
                     final scoreA = _fuzzyScore(a.name, _query);
                     final scoreB = _fuzzyScore(b.name, _query);
@@ -314,55 +483,140 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                 });
 
                 if (sorted.isEmpty) {
-                  return const Center(child: Text('No exercises found.'));
+                  return Center(
+                    child: Padding(
+                      padding: const EdgeInsets.all(24.0),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.search_off,
+                            size: 48,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'No exercises found',
+                            style: theme.textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 16),
+                          FilledButton.icon(
+                            icon: const Icon(Icons.add),
+                            label: const Text('Create Exercise'),
+                            onPressed: () =>
+                                _openCreateExerciseDialog(initialName: _query),
+                          ),
+                          const SizedBox(height: 8),
+                          OutlinedButton.icon(
+                            icon: const Icon(Icons.auto_awesome),
+                            label: const Text('Create with AI'),
+                            onPressed: () => _createWithAi(initialName: _query),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
                 }
 
-                return ListView.builder(
-                  itemCount: sorted.length,
-                  itemBuilder: (context, index) {
-                    final ex = sorted[index];
-                    final isSelected = _selectedExercises.any((e) => e.id == ex.id);
+                Widget buildExerciseTile(
+                  ExerciseDataDC ex, {
+                  bool isAiSuggestion = false,
+                }) {
+                  final isSelected = _selectedExercises.any(
+                    (e) => e.id == ex.id,
+                  );
 
-                    return Container(
-                      color: isSelected ? theme.colorScheme.primaryContainer.withOpacity(0.24) : null,
-                      child: ListTile(
-                        selected: isSelected,
-                        leading: Container(
-                          width: 48,
-                          height: 48,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.primaryContainer,
-                            borderRadius: BorderRadius.circular(12),
+                  return Container(
+                    color: isSelected
+                        ? theme.colorScheme.primaryContainer.withValues(
+                            alpha: 0.24,
+                          )
+                        : (isAiSuggestion
+                              ? theme.colorScheme.primaryContainer.withValues(
+                                  alpha: 0.08,
+                                )
+                              : null),
+                    child: ListTile(
+                      selected: isSelected,
+                      leading: Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: theme.colorScheme.primaryContainer,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child: ex.images.isNotEmpty
+                              ? Image.asset(
+                                  'assets/exercise_images/${ex.images.first.replaceAll('/', '_')}',
+                                  fit: BoxFit.cover,
+                                  errorBuilder: (context, error, stackTrace) =>
+                                      Icon(
+                                        Icons.fitness_center,
+                                        color: theme
+                                            .colorScheme
+                                            .onPrimaryContainer,
+                                      ),
+                                )
+                              : Icon(
+                                  Icons.fitness_center,
+                                  color: theme.colorScheme.onPrimaryContainer,
+                                ),
+                        ),
+                      ),
+                      title: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              ex.name,
+                              style: TextStyle(
+                                fontWeight: isSelected
+                                    ? FontWeight.bold
+                                    : FontWeight.normal,
+                              ),
+                            ),
                           ),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
-                            child: ex.images.isNotEmpty
-                                ? Image.asset(
-                                    'assets/exercise_images/${ex.images.first.replaceAll('/', '_')}',
-                                    fit: BoxFit.cover,
-                                    errorBuilder: (context, error, stackTrace) => Icon(
-                                      Icons.fitness_center,
-                                      color: theme.colorScheme.onPrimaryContainer,
-                                    ),
-                                  )
-                                : Icon(
-                                    Icons.fitness_center,
-                                    color: theme.colorScheme.onPrimaryContainer,
+                          if (isAiSuggestion)
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 6,
+                                vertical: 2,
+                              ),
+                              decoration: BoxDecoration(
+                                color: theme.colorScheme.primary.withValues(
+                                  alpha: 0.15,
+                                ),
+                                borderRadius: BorderRadius.circular(6),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(
+                                    Icons.auto_awesome,
+                                    size: 12,
+                                    color: theme.colorScheme.primary,
                                   ),
-                          ),
-                        ),
-                        title: Text(
-                          ex.name,
-                          style: TextStyle(
-                            fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                        subtitle: Text(
-                          '${ex.category.name} • ${ex.equipment?.name ?? "No Equipment"}',
-                          style: theme.textTheme.bodySmall,
-                        ),
-                        trailing: widget.isSelectionMode
-                            ? (widget.addExercises
+                                  const SizedBox(width: 4),
+                                  Text(
+                                    'AI MATCH',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                      color: theme.colorScheme.primary,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                        ],
+                      ),
+                      subtitle: Text(
+                        '${ex.category.name} • ${ex.equipment?.name ?? "No Equipment"} • ${ex.primaryMuscles.map((m) => m.name).join(', ')}',
+                        style: theme.textTheme.bodySmall,
+                      ),
+                      trailing: widget.isSelectionMode
+                          ? (widget.addExercises
                                 ? Checkbox(
                                     value: isSelected,
                                     onChanged: (val) {
@@ -370,7 +624,9 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                                         if (val == true) {
                                           _selectedExercises.add(ex);
                                         } else {
-                                          _selectedExercises.removeWhere((e) => e.id == ex.id);
+                                          _selectedExercises.removeWhere(
+                                            (e) => e.id == ex.id,
+                                          );
                                         }
                                       });
                                     },
@@ -381,15 +637,80 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                                       Navigator.pop(context, [ex]);
                                     },
                                   ))
-                            : null,
-                        onTap: () {
-                          Navigator.pushNamed(
-                            context,
-                            '/exercises/info',
-                            arguments: ex.id,
-                          );
-                        },
+                          : null,
+                      onTap: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/exercises/info',
+                          arguments: ex.id,
+                        );
+                      },
+                    ),
+                  );
+                }
+
+                if (aiSuggestions.isNotEmpty) {
+                  return ListView(
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.auto_awesome,
+                              size: 18,
+                              color: theme.colorScheme.primary,
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'AI SUGGESTIONS (SIMILAR MUSCLES)',
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                color: theme.colorScheme.primary,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 0.5,
+                              ),
+                            ),
+                            if (_aiSuggestionsLoading) ...[
+                              const SizedBox(width: 10),
+                              const SizedBox(
+                                width: 12,
+                                height: 12,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
+                      ...aiSuggestions.map(
+                        (ex) => buildExerciseTile(ex, isAiSuggestion: true),
+                      ),
+                      const Divider(height: 24),
+                      Padding(
+                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+                        child: Text(
+                          'ALL EXERCISES',
+                          style: theme.textTheme.labelMedium?.copyWith(
+                            color: theme.colorScheme.onSurfaceVariant,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                      ),
+                      ...sorted.map(
+                        (ex) => buildExerciseTile(ex, isAiSuggestion: false),
+                      ),
+                    ],
+                  );
+                }
+
+                return ListView.builder(
+                  itemCount: sorted.length,
+                  itemBuilder: (context, index) {
+                    return buildExerciseTile(
+                      sorted[index],
+                      isAiSuggestion: false,
                     );
                   },
                 );
@@ -399,7 +720,9 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
         ],
       ),
     );
-  }  void _showFilterSelector<T>({
+  }
+
+  void _showFilterSelector<T>({
     required String title,
     required List<T> values,
     required T? current,
@@ -416,7 +739,9 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
             children: [
               Text(
                 title,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                style: Theme.of(
+                  context,
+                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
@@ -425,7 +750,9 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   children: [
                     ListTile(
                       title: const Text('All'),
-                      trailing: current == null ? const Icon(Icons.check) : null,
+                      trailing: current == null
+                          ? const Icon(Icons.check)
+                          : null,
                       onTap: () {
                         onSelected(null);
                         Navigator.pop(context);
@@ -451,5 +778,185 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
       },
     );
   }
-}
 
+  Future<void> _openCreateExerciseDialog({String initialName = ''}) async {
+    final nameController = TextEditingController(text: initialName);
+    final categoryNotifier = ValueNotifier<Category>(Category.STRENGTH);
+    final muscleNotifier = ValueNotifier<Muscle>(
+      widget.targetExerciseToReplace?.primaryMuscles.firstOrNull ??
+          Muscle.CHEST,
+    );
+
+    final created = await showDialog<ExerciseDataDC>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Create Custom Exercise'),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: nameController,
+                decoration: const InputDecoration(
+                  labelText: 'Exercise Name',
+                  border: OutlineInputBorder(),
+                ),
+              ),
+              const SizedBox(height: 12),
+              ValueListenableBuilder<Category>(
+                valueListenable: categoryNotifier,
+                builder: (context, cat, _) => DropdownButtonFormField<Category>(
+                  initialValue: cat,
+                  decoration: const InputDecoration(
+                    labelText: 'Category',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: Category.values
+                      .map(
+                        (c) => DropdownMenuItem(value: c, child: Text(c.name)),
+                      )
+                      .toList(),
+                  onChanged: (val) {
+                    if (val != null) categoryNotifier.value = val;
+                  },
+                ),
+              ),
+              const SizedBox(height: 12),
+              ValueListenableBuilder<Muscle>(
+                valueListenable: muscleNotifier,
+                builder: (context, mus, _) => DropdownButtonFormField<Muscle>(
+                  initialValue: mus,
+                  decoration: const InputDecoration(
+                    labelText: 'Primary Muscle',
+                    border: OutlineInputBorder(),
+                  ),
+                  items: Muscle.values
+                      .map(
+                        (m) => DropdownMenuItem(value: m, child: Text(m.name)),
+                      )
+                      .toList(),
+                  onChanged: (val) {
+                    if (val != null) muscleNotifier.value = val;
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCEL'),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final name = nameController.text.trim();
+              if (name.isEmpty) return;
+              final newId = 'custom_${DateTime.now().millisecondsSinceEpoch}';
+              final ex = ExerciseDataDC(
+                id: newId,
+                name: name,
+                level: Level.BEGINNER,
+                category: categoryNotifier.value,
+                primaryMuscles: [muscleNotifier.value],
+                secondaryMuscles: const [],
+                instructions: const [],
+                images: const [],
+                isCustomExercise: true,
+              );
+              await ref.read(datasetRepositoryProvider).upsertExercise(ex);
+              if (ctx.mounted) Navigator.pop(ctx, ex);
+            },
+            child: const Text('SAVE'),
+          ),
+        ],
+      ),
+    );
+
+    if (created != null && mounted) {
+      if (widget.isSelectionMode) {
+        Navigator.of(context).pop([created]);
+      }
+    }
+  }
+
+  Future<void> _createWithAi({String initialName = ''}) async {
+    final promptController = TextEditingController(text: initialName);
+
+    final confirmed = await showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Row(
+          children: [
+            Icon(Icons.auto_awesome, color: Colors.amber),
+            SizedBox(width: 8),
+            Text('Create with AI'),
+          ],
+        ),
+        content: TextField(
+          controller: promptController,
+          decoration: const InputDecoration(
+            hintText:
+                'Describe exercise (e.g. Dumbbell rear delt fly on incline bench)',
+            border: OutlineInputBorder(),
+          ),
+          maxLines: 3,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('CANCEL'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(ctx, promptController.text.trim()),
+            child: const Text('GENERATE'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == null || confirmed.isEmpty || !mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Generating exercise with AI...')),
+    );
+
+    final settings = ref.read(settingsProvider);
+    final result = await AIService.generateCustomExercise(
+      provider: settings.aiProvider,
+      apiKey: settings.aiToken,
+      model: settings.aiModel,
+      exerciseDescription: confirmed,
+    );
+
+    if (result != null && mounted) {
+      final name = result['name'] as String? ?? confirmed;
+      final newId = 'custom_ai_${DateTime.now().millisecondsSinceEpoch}';
+      final ex = ExerciseDataDC(
+        id: newId,
+        name: name,
+        level: Level.BEGINNER,
+        category: Category.values.firstWhere(
+          (c) => c.name == result['category'],
+          orElse: () => Category.STRENGTH,
+        ),
+        primaryMuscles: [
+          widget.targetExerciseToReplace?.primaryMuscles.firstOrNull ??
+              Muscle.CHEST,
+        ],
+        secondaryMuscles: const [],
+        instructions:
+            (result['instructions'] as List<dynamic>?)
+                ?.map((e) => e.toString())
+                .toList() ??
+            const [],
+        images: const [],
+        isCustomExercise: true,
+      );
+      await ref.read(datasetRepositoryProvider).upsertExercise(ex);
+      if (mounted && widget.isSelectionMode) {
+        Navigator.of(context).pop([ex]);
+      }
+    }
+  }
+}

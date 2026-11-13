@@ -149,10 +149,10 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
           loading: () => const SizedBox(height: 200, child: Center(child: CircularProgressIndicator())),
           error: (err, stack) => SizedBox(height: 200, child: Center(child: Text("Error loading chart: $err"))),
           data: (points) {
-            final decimalCount = chartMode == WorkoutChart.DURATION ? 0 : 2;
-            final suffix = chartMode == WorkoutChart.DURATION
+            final decimalCount = chartMode == WorkoutChart.duration ? 0 : 2;
+            final suffix = chartMode == WorkoutChart.duration
                 ? "m"
-                : chartMode == WorkoutChart.VOLUME
+                : chartMode == WorkoutChart.volume
                     ? "kg"
                     : "";
             return NexcCartesianChart(
@@ -171,9 +171,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         ),
         const SizedBox(height: 24),
         // Your Workouts Section
-        Text(
-          "Your workouts",
-          style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              "Your workouts",
+              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+            ),
+            workoutsAsync.maybeWhen(
+              data: (workouts) => workouts.length > 5
+                  ? TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, '/profile/all-workouts');
+                      },
+                      child: const Text("View all"),
+                    )
+                  : const SizedBox.shrink(),
+              orElse: () => const SizedBox.shrink(),
+            ),
+          ],
         ),
         const SizedBox(height: 8),
         workoutsAsync.when(
@@ -186,7 +202,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   padding: const EdgeInsets.all(24.0),
                   child: Column(
                     children: [
-                      Icon(Icons.fitness_center, size: 48, color: theme.colorScheme.primary.withOpacity(0.5)),
+                      Icon(Icons.fitness_center, size: 48, color: theme.colorScheme.primary.withValues(alpha: 0.5)),
                       const SizedBox(height: 12),
                       const Text(
                         "Start completing workouts to see your history here.",
@@ -198,8 +214,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
               );
             }
 
+            final displayed = workouts.take(5).toList();
             return Column(
-              children: workouts.map((w) {
+              children: displayed.map((w) {
                 final durationStr = '${(w.workout.timeElapsed ~/ 60)} min';
                 final dateStr =
                     "${w.workout.completed.month}/${w.workout.completed.day}/${w.workout.completed.year}";
@@ -221,9 +238,25 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
         if (settings.enableMealTracking) ...[
           const SizedBox(height: 24),
           // Your Meals Section
-          Text(
-            "Your meals",
-            style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                "Your meals",
+                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              mealLogsAsync.maybeWhen(
+                data: (logs) => logs.length > 5
+                    ? TextButton(
+                        onPressed: () {
+                          Navigator.pushNamed(context, '/profile/all-meals');
+                        },
+                        child: const Text("View all"),
+                      )
+                    : const SizedBox.shrink(),
+                orElse: () => const SizedBox.shrink(),
+              ),
+            ],
           ),
           const SizedBox(height: 8),
           mealLogsAsync.when(
@@ -236,7 +269,7 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     padding: const EdgeInsets.all(24.0),
                     child: Column(
                       children: [
-                        Icon(Icons.restaurant, size: 48, color: theme.colorScheme.primary.withOpacity(0.5)),
+                        Icon(Icons.restaurant, size: 48, color: theme.colorScheme.primary.withValues(alpha: 0.5)),
                         const SizedBox(height: 12),
                         const Text(
                           "No meal log history yet",
@@ -248,8 +281,9 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 );
               }
 
+              final displayed = logs.take(5).toList();
               return Column(
-                children: logs.map((planWithMeals) {
+                children: displayed.map((planWithMeals) {
                   final plan = planWithMeals.mealPlan;
                   final meals = planWithMeals.meals;
 
@@ -263,19 +297,21 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                   for (final m in meals) {
                     for (final detail in m.items) {
                       totalItems++;
-                      if (detail.mealItem.consumed) consumedCount++;
+                      if (detail.mealItem.consumed) {
+                        consumedCount++;
 
-                      final scale = detail.macroScale;
-                      if (detail.mealItem.type == MealItemType.PRODUCT && detail.product != null) {
-                        totalProt += detail.product!.proteins * scale;
-                        totalCarb += detail.product!.carbs * scale;
-                        totalFat += detail.product!.fats * scale;
-                      } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
-                        for (final ing in detail.recipe!.ingredients) {
-                          final ingScale = (ing.ingredient.amount / 100.0) * scale;
-                          totalProt += ing.product.proteins * ingScale;
-                          totalCarb += ing.product.carbs * ingScale;
-                          totalFat += ing.product.fats * ingScale;
+                        final scale = detail.macroScale;
+                        if (detail.mealItem.type == MealItemType.PRODUCT && detail.product != null) {
+                          totalProt += detail.product!.proteins * scale;
+                          totalCarb += detail.product!.carbs * scale;
+                          totalFat += detail.product!.fats * scale;
+                        } else if (detail.mealItem.type == MealItemType.RECIPE && detail.recipe != null) {
+                          for (final ing in detail.recipe!.ingredients) {
+                            final ingScale = (ing.ingredient.amount / 100.0) * scale;
+                            totalProt += ing.product.proteins * ingScale;
+                            totalCarb += ing.product.carbs * ingScale;
+                            totalFat += ing.product.fats * ingScale;
+                          }
                         }
                       }
                     }
@@ -425,7 +461,7 @@ class _StreakCardState extends State<StreakCard> {
                 Icons.local_fire_department,
                 size: 48,
                 color: widget.weekStreak == 0
-                    ? theme.colorScheme.onSurfaceVariant.withOpacity(0.3)
+                    ? theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.3)
                     : Color.lerp(
                         Colors.orange,
                         Colors.red,
@@ -435,7 +471,7 @@ class _StreakCardState extends State<StreakCard> {
                     ? null
                     : [
                         BoxShadow(
-                          color: Colors.orange.withOpacity(0.4),
+                          color: Colors.orange.withValues(alpha: 0.4),
                           blurRadius: 12,
                           spreadRadius: 2,
                         ),
@@ -552,9 +588,9 @@ class NexcCartesianChart extends StatelessWidget {
                     return DropdownMenuItem(
                       value: mode,
                       child: Text(
-                        mode == WorkoutChart.DURATION
+                        mode == WorkoutChart.duration
                             ? "Duration"
-                            : mode == WorkoutChart.VOLUME
+                            : mode == WorkoutChart.volume
                                 ? "Volume"
                                 : "Reps",
                       ),

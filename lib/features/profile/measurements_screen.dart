@@ -17,6 +17,8 @@ import '../../core/providers/profile_providers.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/components/nexc_scaffold.dart';
 
+import 'log_measurement_screen.dart';
+
 String formatDoubleHours(double hours) {
   final totalMinutes = (hours * 60).round();
   final hrs = totalMinutes ~/ 60;
@@ -39,9 +41,9 @@ class MeasurementsScreen extends ConsumerStatefulWidget {
 
 class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
   void _showAddMeasurement(BuildContext context) {
-    showDialog(
-      context: context,
-      builder: (context) => const AddMeasurementDialog(),
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const LogMeasurementScreen()),
     );
   }
 
@@ -537,7 +539,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
           gradient: LinearGradient(
             colors: [
               theme.colorScheme.surface,
-              theme.colorScheme.surfaceVariant.withOpacity(0.4),
+              theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.4),
             ],
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
@@ -569,7 +571,7 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                     show: true,
                     drawVerticalLine: false,
                     getDrawingHorizontalLine: (value) => FlLine(
-                      color: theme.colorScheme.onSurfaceVariant.withOpacity(0.1),
+                      color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.1),
                       strokeWidth: 1,
                       dashArray: [4, 4],
                     ),
@@ -597,8 +599,8 @@ class _MeasurementsScreenState extends ConsumerState<MeasurementsScreen> {
                         show: true,
                         gradient: LinearGradient(
                           colors: [
-                            theme.colorScheme.primary.withOpacity(0.3),
-                            theme.colorScheme.primary.withOpacity(0.0),
+                            theme.colorScheme.primary.withValues(alpha: 0.3),
+                            theme.colorScheme.primary.withValues(alpha: 0.0),
                           ],
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
@@ -1143,7 +1145,7 @@ class _AddMeasurementDialogState extends ConsumerState<AddMeasurementDialog> {
               }
             }
 
-            if (mounted) {
+            if (context.mounted) {
               Navigator.pop(context);
             }
           },

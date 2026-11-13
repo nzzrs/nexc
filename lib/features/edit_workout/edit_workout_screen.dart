@@ -8,23 +8,19 @@
  */
 
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' show Value;
 import '../exercises/exercises_screen.dart';
-import '../../core/db/app_database.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/workout_repository.dart';
 import '../../core/components/exercise_card.dart';
+import '../../core/util/exercise_set_mode_helper.dart';
 
 class EditWorkoutScreen extends ConsumerStatefulWidget {
   final int workoutId; // 0 if new routine
 
-  const EditWorkoutScreen({
-    super.key,
-    required this.workoutId,
-  });
+  const EditWorkoutScreen({super.key, required this.workoutId});
 
   @override
   ConsumerState<EditWorkoutScreen> createState() => _EditWorkoutScreenState();
@@ -105,7 +101,9 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
     for (int i = 0; i < _exercises.length; i++) {
       final curEx = _exercises[i];
       final initEx = _initialExercises[i];
-      if (curEx.exercise.exerciseDataId != initEx.exercise.exerciseDataId) return true;
+      if (curEx.exercise.exerciseDataId != initEx.exercise.exerciseDataId) {
+        return true;
+      }
       if (curEx.exercise.notes != initEx.exercise.notes) return true;
       if (curEx.exercise.restTime != initEx.exercise.restTime) return true;
       if (curEx.exercise.setMode != initEx.exercise.setMode) return true;
@@ -138,11 +136,16 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
         final theme = Theme.of(context);
         return AlertDialog(
           title: const Text('Discard Changes?'),
-          content: const Text('Do you want to discard your changes or save them?'),
+          content: const Text(
+            'Do you want to discard your changes or save them?',
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, 'discard'),
-              child: Text('DISCARD', style: TextStyle(color: theme.colorScheme.error)),
+              child: Text(
+                'DISCARD',
+                style: TextStyle(color: theme.colorScheme.error),
+              ),
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, 'save'),
@@ -201,13 +204,19 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
     }
   }
 
-  void _addExercise(ExerciseDataDC dc) {
+  Future<void> _addExercise(ExerciseDataDC dc) async {
+    final repo = ref.read(workoutRepositoryProvider);
+    final storedMode = await repo.getLastSetModeForExercise(dc.id);
+    final initialSetMode = storedMode ?? _defaultSetMode(dc);
+    if (!mounted) return;
     setState(() {
       final newEx = Exercise(
-        id: DateTime.now().millisecondsSinceEpoch + _exercises.length, // local temp id
+        id:
+            DateTime.now().millisecondsSinceEpoch +
+            _exercises.length, // local temp id
         exerciseDataId: dc.id,
         notes: '',
-        setMode: _defaultSetMode(dc),
+        setMode: initialSetMode,
         restTime: 90,
         position: _exercises.length,
         workoutId: _workout.id,
@@ -215,43 +224,28 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
       final newSet = WorkoutSet(
         id: DateTime.now().millisecondsSinceEpoch + _exercises.length + 1000,
         load: 0.0,
+        weightUnit: WeightUnit.kg,
         reps: 0,
         elapsedTime: 0,
         completed: false,
+        setType: SetType.NORMAL,
         exerciseId: newEx.id,
       );
 
       _exercises.add(
-        ExerciseWithSets(
-          exercise: newEx,
-          exerciseDC: dc,
-          sets: [newSet],
-        ),
+        ExerciseWithSets(exercise: newEx, exerciseDC: dc, sets: [newSet]),
       );
     });
   }
 
-  SetMode _defaultSetMode(ExerciseDataDC dc) {
-    if (dc.category == Category.STRETCHING || dc.category == Category.CARDIO) {
-      return SetMode.DURATION;
-    }
-    if (dc.equipment == Equipment.BODY_ONLY ||
-        dc.equipment == Equipment.FOAM_ROLL ||
-        dc.equipment == Equipment.EXERCISE_BALL ||
-        dc.equipment == Equipment.BANDS) {
-      return SetMode.BODYWEIGHT;
-    }
-    return SetMode.LOAD;
-  }
+  SetMode _defaultSetMode(ExerciseDataDC dc) => defaultSetModeForExercise(dc);
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
     if (_isLoading) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return PopScope(
@@ -262,7 +256,9 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
       },
       child: Scaffold(
         appBar: AppBar(
-          title: Text(widget.workoutId == 0 ? 'Create Routine' : 'Edit Routine'),
+          title: Text(
+            widget.workoutId == 0 ? 'Create Routine' : 'Edit Routine',
+          ),
           leading: IconButton(
             icon: const Icon(Icons.arrow_back),
             onPressed: _handlePop,
@@ -271,234 +267,285 @@ class _EditWorkoutScreenState extends ConsumerState<EditWorkoutScreen> {
             if (_exercises.isNotEmpty)
               IconButton(
                 icon: Icon(_isReordering ? Icons.check : Icons.swap_vert),
-                tooltip: _isReordering ? "Done Reordering" : "Reorder Exercises",
+                tooltip: _isReordering
+                    ? "Done Reordering"
+                    : "Reorder Exercises",
                 onPressed: () {
                   setState(() {
                     _isReordering = !_isReordering;
                   });
                 },
               ),
-            IconButton(
-              icon: const Icon(Icons.check),
-              onPressed: _save,
+            IconButton(icon: const Icon(Icons.check), onPressed: _save),
+          ],
+        ),
+        body: ListView(
+          padding: const EdgeInsets.all(16.0),
+          children: [
+            // Routine details Card
+            Card(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Column(
+                  children: [
+                    TextField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(
+                        labelText: 'Routine title',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    TextField(
+                      controller: _notesController,
+                      decoration: const InputDecoration(
+                        labelText: 'Routine notes',
+                        border: OutlineInputBorder(),
+                      ),
+                      maxLines: 2,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+
+            // Routine Exercises Header
+            Text(
+              'Exercises',
+              style: theme.textTheme.headlineSmall?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            if (_exercises.isEmpty)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 40.0),
+                child: Text(
+                  'No exercises added yet. Tap Add Exercise below.',
+                  textAlign: TextAlign.center,
+                ),
+              )
+            else
+              ReorderableListView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                buildDefaultDragHandles: false,
+                itemCount: _exercises.length,
+                onReorder: (oldIndex, newIndex) {
+                  setState(() {
+                    if (oldIndex < newIndex) {
+                      newIndex -= 1;
+                    }
+                    final item = _exercises.removeAt(oldIndex);
+                    _exercises.insert(newIndex, item);
+                    for (int i = 0; i < _exercises.length; i++) {
+                      _exercises[i] = _exercises[i].copyWith(
+                        exercise: _exercises[i].exercise.copyWith(position: i),
+                      );
+                    }
+                  });
+                },
+                itemBuilder: (context, index) {
+                  final eWs = _exercises[index];
+                  return ExerciseCard(
+                    key: ValueKey('routine_ex_${eWs.exercise.id}'),
+                    index: index,
+                    exerciseWithSets: eWs,
+                    workout: false,
+                    isReordering: _isReordering,
+                    addSet: (exId) {
+                      setState(() {
+                        final setList = List<WorkoutSet>.from(eWs.sets);
+                        final lastSet = setList.lastOrNull;
+                        setList.add(
+                          WorkoutSet(
+                            id: DateTime.now().millisecondsSinceEpoch,
+                            load: lastSet?.load ?? 0.0,
+                            weightUnit: lastSet?.weightUnit ?? WeightUnit.kg,
+                            reps: lastSet?.reps ?? 0,
+                            elapsedTime: lastSet?.elapsedTime ?? 0,
+                            completed: false,
+                            setType: lastSet?.setType ?? SetType.NORMAL,
+                            exerciseId: exId,
+                          ),
+                        );
+                        _exercises[index] = eWs.copyWith(sets: setList);
+                      });
+                    },
+                    onDetail: (exId, dcId) {
+                      Navigator.pushNamed(
+                        context,
+                        '/exercises/info',
+                        arguments: dcId,
+                      );
+                    },
+                    onDelete: (exId) {
+                      setState(() {
+                        _exercises.removeAt(index);
+                      });
+                    },
+                    deleteSet: (setId) {
+                      setState(() {
+                        final setList = eWs.sets
+                            .where((s) => s.id != setId)
+                            .toList();
+                        _exercises[index] = eWs.copyWith(sets: setList);
+                      });
+                    },
+                    updateExerciseNotes: (text, exId) {
+                      setState(() {
+                        _exercises[index] = eWs.copyWith(
+                          exercise: eWs.exercise.copyWith(notes: text),
+                        );
+                      });
+                    },
+                    updateExerciseRestTime: (restTime, exId) {
+                      setState(() {
+                        _exercises[index] = eWs.copyWith(
+                          exercise: eWs.exercise.copyWith(restTime: restTime),
+                        );
+                      });
+                    },
+                    updateExerciseSetMode: (setMode, exId) {
+                      setState(() {
+                        _exercises[index] = eWs.copyWith(
+                          exercise: eWs.exercise.copyWith(setMode: setMode),
+                        );
+                      });
+                    },
+                    updateSetTime: (time, setId) {
+                      setState(() {
+                        _exercises[index] = eWs.copyWith(
+                          sets: eWs.sets
+                              .map(
+                                (s) => s.id == setId
+                                    ? s.copyWith(elapsedTime: time)
+                                    : s,
+                              )
+                              .toList(),
+                        );
+                      });
+                    },
+                    updateSetReps: (reps, setId) {
+                      setState(() {
+                        _exercises[index] = eWs.copyWith(
+                          sets: eWs.sets
+                              .map(
+                                (s) =>
+                                    s.id == setId ? s.copyWith(reps: reps) : s,
+                              )
+                              .toList(),
+                        );
+                      });
+                    },
+                    updateSetLoad: (load, setId) {
+                      setState(() {
+                        _exercises[index] = eWs.copyWith(
+                          sets: eWs.sets
+                              .map(
+                                (s) =>
+                                    s.id == setId ? s.copyWith(load: load) : s,
+                              )
+                              .toList(),
+                        );
+                      });
+                    },
+                    updateSetCompleted: (completed, setId) {},
+                    showInfo: (info) {},
+                    isFirst: index == 0,
+                    isLast: index == _exercises.length - 1,
+                    onMoveUp: (exId) {
+                      if (index > 0) {
+                        setState(() {
+                          final item = _exercises.removeAt(index);
+                          _exercises.insert(index - 1, item);
+                        });
+                      }
+                    },
+                    onMoveDown: (exId) {
+                      if (index < _exercises.length - 1) {
+                        setState(() {
+                          final item = _exercises.removeAt(index);
+                          _exercises.insert(index + 1, item);
+                        });
+                      }
+                    },
+                    onReplace: (exId) async {
+                      final result = await Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ExercisesScreen(
+                            addExercises: false,
+                            targetExerciseToReplace:
+                                _exercises[index].exerciseDC,
+                          ),
+                        ),
+                      );
+                      if (result != null &&
+                          result is List<ExerciseDataDC> &&
+                          result.isNotEmpty) {
+                        final newDC = result.first;
+                        final repo = ref.read(workoutRepositoryProvider);
+                        final storedMode = await repo.getLastSetModeForExercise(
+                          newDC.id,
+                        );
+                        final initialSetMode =
+                            storedMode ?? _defaultSetMode(newDC);
+                        if (!mounted) return;
+                        setState(() {
+                          final replaced = _exercises[index].copyWith(
+                            exerciseDC: newDC,
+                            exercise: _exercises[index].exercise.copyWith(
+                              exerciseDataId: newDC.id,
+                              setMode: initialSetMode,
+                            ),
+                          );
+                          _exercises[index] = replaced;
+                        });
+                      }
+                    },
+                    onSupersetToggle: (exId) {
+                      setState(() {
+                        final curr = eWs.exercise.supersetId;
+                        _exercises[index] = eWs.copyWith(
+                          exercise: eWs.exercise.copyWith(
+                            supersetId: Value(curr == null ? 1 : null),
+                          ),
+                        );
+                      });
+                    },
+                  );
+                },
+              ),
+            const SizedBox(height: 12),
+
+            // Add Exercise Button
+            OutlinedButton.icon(
+              onPressed: () async {
+                final result = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) =>
+                        const ExercisesScreen(addExercises: true),
+                  ),
+                );
+                if (result != null && result is List<ExerciseDataDC>) {
+                  for (final dc in result) {
+                    await _addExercise(dc);
+                  }
+                }
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Add Exercise'),
             ),
           ],
         ),
-      body: ListView(
-        padding: const EdgeInsets.all(16.0),
-        children: [
-          // Routine details Card
-          Card(
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                children: [
-                  TextField(
-                    controller: _titleController,
-                    decoration: const InputDecoration(
-                      labelText: 'Routine title',
-                      border: OutlineInputBorder(),
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  TextField(
-                    controller: _notesController,
-                    decoration: const InputDecoration(
-                      labelText: 'Routine notes',
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLines: 2,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          const SizedBox(height: 20),
-
-          // Routine Exercises Header
-          Text(
-            'Exercises',
-            style: theme.textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 12),
-
-          if (_exercises.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 40.0),
-              child: Text(
-                'No exercises added yet. Tap Add Exercise below.',
-                textAlign: TextAlign.center,
-              ),
-            )
-          else
-            ReorderableListView.builder(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              buildDefaultDragHandles: false,
-              itemCount: _exercises.length,
-              onReorder: (oldIndex, newIndex) {
-                setState(() {
-                  if (oldIndex < newIndex) {
-                    newIndex -= 1;
-                  }
-                  final item = _exercises.removeAt(oldIndex);
-                  _exercises.insert(newIndex, item);
-                  for (int i = 0; i < _exercises.length; i++) {
-                    _exercises[i] = _exercises[i].copyWith(
-                      exercise: _exercises[i].exercise.copyWith(position: i),
-                    );
-                  }
-                });
-              },
-              itemBuilder: (context, index) {
-                final eWs = _exercises[index];
-                return ExerciseCard(
-                  key: ValueKey('routine_ex_${eWs.exercise.id}'),
-                  index: index,
-                  exerciseWithSets: eWs,
-                  workout: false,
-                  isReordering: _isReordering,
-                  addSet: (exId) {
-                    setState(() {
-                      final setList = List<WorkoutSet>.from(eWs.sets);
-                      final lastSet = setList.lastOrNull;
-                      setList.add(
-                        WorkoutSet(
-                          id: DateTime.now().millisecondsSinceEpoch,
-                          load: lastSet?.load ?? 0.0,
-                          reps: lastSet?.reps ?? 0,
-                          elapsedTime: lastSet?.elapsedTime ?? 0,
-                          completed: false,
-                          exerciseId: exId,
-                        ),
-                      );
-                      _exercises[index] = eWs.copyWith(sets: setList);
-                    });
-                  },
-                  onDetail: (exId, dcId) {
-                    Navigator.pushNamed(
-                      context,
-                      '/exercises/info',
-                      arguments: dcId,
-                    );
-                  },
-                  onDelete: (exId) {
-                    setState(() {
-                      _exercises.removeAt(index);
-                    });
-                  },
-                  deleteSet: (setId) {
-                    setState(() {
-                      final setList = eWs.sets.where((s) => s.id != setId).toList();
-                      _exercises[index] = eWs.copyWith(sets: setList);
-                    });
-                  },
-                  updateExerciseNotes: (text, exId) {
-                    _exercises[index] = eWs.copyWith(
-                      exercise: eWs.exercise.copyWith(notes: text),
-                    );
-                  },
-                  updateExerciseRestTime: (restTime, exId) {
-                    _exercises[index] = eWs.copyWith(
-                      exercise: eWs.exercise.copyWith(restTime: restTime),
-                    );
-                  },
-                  updateExerciseSetMode: (setMode, exId) {
-                    _exercises[index] = eWs.copyWith(
-                      exercise: eWs.exercise.copyWith(setMode: setMode),
-                    );
-                  },
-                  updateSetTime: (time, setId) {
-                    _exercises[index] = eWs.copyWith(
-                      sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(elapsedTime: time) : s).toList(),
-                    );
-                  },
-                  updateSetReps: (reps, setId) {
-                    _exercises[index] = eWs.copyWith(
-                      sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(reps: reps) : s).toList(),
-                    );
-                  },
-                  updateSetLoad: (load, setId) {
-                    _exercises[index] = eWs.copyWith(
-                      sets: eWs.sets.map((s) => s.id == setId ? s.copyWith(load: load) : s).toList(),
-                    );
-                  },
-                  updateSetCompleted: (completed, setId) {},
-                  showInfo: (info) {},
-                  isFirst: index == 0,
-                  isLast: index == _exercises.length - 1,
-                  onMoveUp: (exId) {
-                    if (index > 0) {
-                      setState(() {
-                        final item = _exercises.removeAt(index);
-                        _exercises.insert(index - 1, item);
-                      });
-                    }
-                  },
-                  onMoveDown: (exId) {
-                    if (index < _exercises.length - 1) {
-                      setState(() {
-                        final item = _exercises.removeAt(index);
-                        _exercises.insert(index + 1, item);
-                      });
-                    }
-                  },
-                  onReplace: (exId) async {
-                    final result = await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ExercisesScreen(addExercises: false),
-                      ),
-                    );
-                    if (result != null && result is List<ExerciseDataDC> && result.isNotEmpty) {
-                      setState(() {
-                        final replaced = _exercises[index].copyWith(
-                          exerciseDC: result.first,
-                          exercise: _exercises[index].exercise.copyWith(
-                            exerciseDataId: result.first.id,
-                          ),
-                        );
-                        _exercises[index] = replaced;
-                      });
-                    }
-                  },
-                  onSupersetToggle: (exId) {
-                    setState(() {
-                      final curr = eWs.exercise.supersetId;
-                      _exercises[index] = eWs.copyWith(
-                        exercise: eWs.exercise.copyWith(
-                          supersetId: Value(curr == null ? 1 : null),
-                        ),
-                      );
-                    });
-                  },
-                );
-              },
-            ),
-          const SizedBox(height: 12),
-
-          // Add Exercise Button
-          OutlinedButton.icon(
-            onPressed: () async {
-              final result = await Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ExercisesScreen(addExercises: true),
-                ),
-              );
-              if (result != null && result is List<ExerciseDataDC>) {
-                for (final dc in result) {
-                  _addExercise(dc);
-                }
-              }
-            },
-            icon: const Icon(Icons.add),
-            label: const Text('Add Exercise'),
-          ),
-        ],
       ),
-    ),
-  );
-}
+    );
+  }
 }

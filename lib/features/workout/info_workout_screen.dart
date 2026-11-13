@@ -16,15 +16,13 @@ import '../../core/db/workout_repository.dart';
 import '../../core/db/measurement_repository.dart';
 import '../../core/components/nexc_scaffold.dart';
 import '../../core/providers/profile_providers.dart';
+import '../../core/util/workout_stats_helper.dart';
 import '../profile/profile_screen.dart';
 
 class InfoWorkoutScreen extends ConsumerStatefulWidget {
   final int workoutId;
 
-  const InfoWorkoutScreen({
-    super.key,
-    required this.workoutId,
-  });
+  const InfoWorkoutScreen({super.key, required this.workoutId});
 
   @override
   ConsumerState<InfoWorkoutScreen> createState() => _InfoWorkoutScreenState();
@@ -36,7 +34,7 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
   WorkoutWithExercisesAndSets? _linkedRoutineData;
   List<WorkoutWithExercisesAndSets> _completedWorkoutsForChart = [];
   double _volume = 0.0;
-  WorkoutChart _chartMode = WorkoutChart.DURATION;
+  WorkoutChart _chartMode = WorkoutChart.duration;
   List<Point> _chartPoints = [];
 
   @override
@@ -53,7 +51,9 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
     final workoutRepo = ref.read(workoutRepositoryProvider);
     final measurementRepo = ref.read(measurementRepositoryProvider);
 
-    final data = await workoutRepo.getWorkoutWithExercisesAndSets(widget.workoutId);
+    final data = await workoutRepo.getWorkoutWithExercisesAndSets(
+      widget.workoutId,
+    );
     if (data == null) {
       if (mounted) {
         Navigator.pop(context);
@@ -67,18 +67,24 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
     final isRoutine = data.workout.state == WorkoutState.ROUTINE;
 
     // Fetch bodyweight for volume calculation
-    final measurementDate = isRoutine ? data.workout.created : data.workout.completed;
-    final measurement = await measurementRepo.getLastMeasurementByCutoff(measurementDate);
+    final measurementDate = isRoutine
+        ? data.workout.created
+        : data.workout.completed;
+    final measurement = await measurementRepo.getLastMeasurementByCutoff(
+      measurementDate,
+    );
     final bodyWeight = measurement?.bodyWeight ?? 0.0;
 
     // Calculate volume
     double totalVol = 0.0;
     for (final exe in data.exercisesWithSets) {
-      final includeBodyweight = exe.exercise.setMode == SetMode.BODYWEIGHT ||
+      final includeBodyweight =
+          exe.exercise.setMode == SetMode.BODYWEIGHT ||
           exe.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD;
       for (final set in exe.sets) {
         if (isRoutine || set.completed) {
-          totalVol += (set.load + (includeBodyweight ? bodyWeight : 0.0)) * set.reps;
+          totalVol +=
+              (set.load + (includeBodyweight ? bodyWeight : 0.0)) * set.reps;
         }
       }
     }
@@ -86,12 +92,15 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
 
     if (isRoutine) {
       // Fetch past completed workouts of this routine for the performance chart
-      final past = await workoutRepo.getCompletedWorkoutsWithExercisesAndSetsFromRoutine(data.workout.id);
+      final past = await workoutRepo
+          .getCompletedWorkoutsWithExercisesAndSetsFromRoutine(data.workout.id);
       _completedWorkoutsForChart = past;
       await _updateChartPoints();
     } else if (data.workout.routineId != 0) {
       // Fetch linked routine details
-      final routine = await workoutRepo.getWorkoutWithExercisesAndSets(data.workout.routineId);
+      final routine = await workoutRepo.getWorkoutWithExercisesAndSets(
+        data.workout.routineId,
+      );
       _linkedRoutineData = routine;
     }
 
@@ -107,28 +116,33 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
     final List<Point> pts = [];
 
     for (final w in _completedWorkoutsForChart) {
-      final measurement = await measurementRepo.getLastMeasurementByCutoff(w.workout.completed);
+      final measurement = await measurementRepo.getLastMeasurementByCutoff(
+        w.workout.completed,
+      );
       final bodyWeight = measurement?.bodyWeight ?? 0.0;
 
       double yVal = 0.0;
       switch (_chartMode) {
-        case WorkoutChart.DURATION:
+        case WorkoutChart.duration:
           yVal = w.workout.timeElapsed / 60.0;
           break;
-        case WorkoutChart.VOLUME:
+        case WorkoutChart.volume:
           double totalVol = 0.0;
           for (final exe in w.exercisesWithSets) {
-            final includeBodyweight = exe.exercise.setMode == SetMode.BODYWEIGHT ||
+            final includeBodyweight =
+                exe.exercise.setMode == SetMode.BODYWEIGHT ||
                 exe.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD;
             for (final set in exe.sets) {
               if (set.completed) {
-                totalVol += (set.load + (includeBodyweight ? bodyWeight : 0.0)) * set.reps;
+                totalVol +=
+                    (set.load + (includeBodyweight ? bodyWeight : 0.0)) *
+                    set.reps;
               }
             }
           }
           yVal = totalVol;
           break;
-        case WorkoutChart.REPS:
+        case WorkoutChart.reps:
           int totalReps = 0;
           for (final exe in w.exercisesWithSets) {
             for (final set in exe.sets) {
@@ -141,12 +155,9 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
           break;
       }
 
-      final dateStr = "${w.workout.completed.month}/${w.workout.completed.day}/${w.workout.completed.year.toString().substring(max(0, w.workout.completed.year.toString().length - 2))}";
-      pts.add(Point(
-        yValues: [yVal],
-        xValue: dateStr,
-        workoutId: w.workout.id,
-      ));
+      final dateStr =
+          "${w.workout.completed.month}/${w.workout.completed.day}/${w.workout.completed.year.toString().substring(max(0, w.workout.completed.year.toString().length - 2))}";
+      pts.add(Point(yValues: [yVal], xValue: dateStr, workoutId: w.workout.id));
     }
 
     _chartPoints = pts.reversed.toList();
@@ -157,10 +168,16 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(_workoutData!.workout.state == WorkoutState.ROUTINE ? 'Delete Routine?' : 'Delete Workout?'),
-        content: Text(_workoutData!.workout.state == WorkoutState.ROUTINE
-            ? 'Are you sure you want to delete this routine? This action cannot be undone.'
-            : 'Are you sure you want to delete this workout? This action cannot be undone.'),
+        title: Text(
+          _workoutData!.workout.state == WorkoutState.ROUTINE
+              ? 'Delete Routine?'
+              : 'Delete Workout?',
+        ),
+        content: Text(
+          _workoutData!.workout.state == WorkoutState.ROUTINE
+              ? 'Are you sure you want to delete this routine? This action cannot be undone.'
+              : 'Are you sure you want to delete this workout? This action cannot be undone.',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -189,7 +206,9 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Unlink Routine?'),
-        content: const Text('Are you sure you want to unlink this workout from its routine?'),
+        content: const Text(
+          'Are you sure you want to unlink this workout from its routine?',
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
@@ -205,9 +224,7 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
 
     if (confirmed == true && mounted) {
       final repo = ref.read(workoutRepositoryProvider);
-      final updated = _workoutData!.workout.copyWith(
-        routineId: 0,
-      );
+      final updated = _workoutData!.workout.copyWith(routineId: 0);
       await repo.updateWorkout(updated);
       _linkedRoutineData = null;
       _loadData();
@@ -217,9 +234,7 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
   @override
   Widget build(BuildContext context) {
     if (_isLoading || _workoutData == null) {
-      return const Scaffold(
-        body: Center(child: CircularProgressIndicator()),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     final theme = Theme.of(context);
@@ -229,15 +244,25 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
         ? "${workout.created.month}/${workout.created.day}/${workout.created.year}"
         : "${workout.completed.month}/${workout.completed.day}/${workout.completed.year}";
 
-    final totalSets = _workoutData!.exercisesWithSets.fold<int>(0, (sum, e) => sum + e.sets.length);
-    final completedSets = _workoutData!.exercisesWithSets.fold<int>(0, (sum, e) => sum + e.sets.where((s) => s.completed).length);
+    final totalSets = _workoutData!.exercisesWithSets.fold<int>(
+      0,
+      (sum, e) => sum + e.sets.length,
+    );
+    final completedSets = _workoutData!.exercisesWithSets.fold<int>(
+      0,
+      (sum, e) => sum + e.sets.where((s) => s.completed).length,
+    );
 
     return NexcScaffold(
       title: Text(isRoutine ? 'Routine' : 'Workout'),
       navigateBack: () => Navigator.pop(context),
       actions: [
         () {
-          Navigator.pushNamed(context, '/edit-workout', arguments: workout.id).then((_) => _loadData());
+          Navigator.pushNamed(
+            context,
+            '/edit-workout',
+            arguments: workout.id,
+          ).then((_) => _loadData());
         },
         () => _deleteWorkout(),
       ],
@@ -251,7 +276,9 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
           padding: const EdgeInsets.all(16.0),
           children: [
             Card(
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
                 child: Column(
@@ -268,9 +295,13 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
                       Text('Duration: ${(workout.timeElapsed ~/ 60)} min'),
                       const SizedBox(height: 8),
                     ],
-                    Text(isRoutine ? 'Created: $dateStr' : 'Completed: $dateStr'),
+                    Text(
+                      isRoutine ? 'Created: $dateStr' : 'Completed: $dateStr',
+                    ),
                     const Divider(height: 24),
-                    Text('Exercises: ${_workoutData!.exercisesWithSets.length}'),
+                    Text(
+                      'Exercises: ${_workoutData!.exercisesWithSets.length}',
+                    ),
                     const SizedBox(height: 8),
                     Text('Total sets: $totalSets'),
                     if (!isRoutine) ...[
@@ -283,10 +314,16 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
                 ),
               ),
             ),
+            if (!isRoutine) ...[
+              const SizedBox(height: 16),
+              _PerformanceCard(workoutData: _workoutData!),
+            ],
             if (workout.notes.isNotEmpty) ...[
               const SizedBox(height: 16),
               Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(20.0),
                   child: Column(
@@ -315,12 +352,12 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
               const SizedBox(height: 16),
               NexcCartesianChart(
                 points: _chartPoints,
-                decimalCount: _chartMode == WorkoutChart.DURATION ? 0 : 2,
-                suffix: _chartMode == WorkoutChart.DURATION
+                decimalCount: _chartMode == WorkoutChart.duration ? 0 : 2,
+                suffix: _chartMode == WorkoutChart.duration
                     ? "m"
-                    : _chartMode == WorkoutChart.VOLUME
-                        ? "kg"
-                        : "",
+                    : _chartMode == WorkoutChart.volume
+                    ? "kg"
+                    : "",
                 chartMode: _chartMode,
                 updateChartMode: (mode) async {
                   setState(() {
@@ -330,7 +367,11 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
                   setState(() {});
                 },
                 onEntrySelection: (id) {
-                  Navigator.pushNamed(context, '/info-workout', arguments: id).then((_) => _loadData());
+                  Navigator.pushNamed(
+                    context,
+                    '/info-workout',
+                    arguments: id,
+                  ).then((_) => _loadData());
                 },
               ),
             ],
@@ -340,11 +381,15 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: Text(
                   'Linked routine',
-                  style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               Card(
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -363,7 +408,9 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
                                   ),
                                 ),
                                 const SizedBox(height: 4),
-                                Text('Created: ${_linkedRoutineData!.workout.created.month}/${_linkedRoutineData!.workout.created.day}/${_linkedRoutineData!.workout.created.year}'),
+                                Text(
+                                  'Created: ${_linkedRoutineData!.workout.created.month}/${_linkedRoutineData!.workout.created.day}/${_linkedRoutineData!.workout.created.year}',
+                                ),
                               ],
                             ),
                           ),
@@ -378,11 +425,17 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
                         width: double.infinity,
                         child: ElevatedButton.icon(
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: theme.colorScheme.secondaryContainer,
-                            foregroundColor: theme.colorScheme.onSecondaryContainer,
+                            backgroundColor:
+                                theme.colorScheme.secondaryContainer,
+                            foregroundColor:
+                                theme.colorScheme.onSecondaryContainer,
                           ),
                           onPressed: () {
-                            Navigator.pushNamed(context, '/info-workout', arguments: _linkedRoutineData!.workout.id).then((_) => _loadData());
+                            Navigator.pushNamed(
+                              context,
+                              '/info-workout',
+                              arguments: _linkedRoutineData!.workout.id,
+                            ).then((_) => _loadData());
                           },
                           icon: const Icon(Icons.open_in_new),
                           label: const Text('Open this routine'),
@@ -398,14 +451,13 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
               padding: const EdgeInsets.symmetric(vertical: 8.0),
               child: Text(
                 'Exercises',
-                style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             ..._workoutData!.exercisesWithSets.map((e) {
-              return _ReadOnlyExerciseCard(
-                exe: e,
-                isRoutine: isRoutine,
-              );
+              return _ReadOnlyExerciseCard(exe: e, isRoutine: isRoutine);
             }),
           ],
         );
@@ -414,14 +466,168 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
   }
 }
 
+class _PerformanceCard extends StatelessWidget {
+  final WorkoutWithExercisesAndSets workoutData;
+
+  const _PerformanceCard({required this.workoutData});
+
+  static String _humanizeMuscleName(String value) {
+    return value
+        .split('_')
+        .where((part) => part.isNotEmpty)
+        .map((part) => part[0] + part.substring(1).toLowerCase())
+        .join(' ');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    final tonnage = WorkoutStatsHelper.calculateWorkoutTonnage(workoutData);
+    final density = WorkoutStatsHelper.calculateWorkoutDensity(workoutData);
+    final hardSets = WorkoutStatsHelper.countHardSets(workoutData);
+    final primaryMuscle = WorkoutStatsHelper.getPrimaryMuscleImpacted(
+      workoutData,
+    );
+    final bestOneRm = WorkoutStatsHelper.getBestEstimatedOneRepMax(workoutData);
+
+    final metrics = <Widget>[
+      _PerformanceMetric(
+        icon: Icons.scale_outlined,
+        label: 'Tonnage',
+        value: '${tonnage.toStringAsFixed(0)} kg',
+      ),
+      _PerformanceMetric(
+        icon: Icons.speed_outlined,
+        label: 'Density',
+        value: density > 0 ? '${density.toStringAsFixed(2)} kg/s' : '—',
+      ),
+      _PerformanceMetric(
+        icon: Icons.local_fire_department_outlined,
+        label: 'Hard sets',
+        value: '$hardSets',
+      ),
+      if (primaryMuscle != null)
+        _PerformanceMetric(
+          icon: Icons.fitness_center_outlined,
+          label: 'Primary muscle',
+          value: _humanizeMuscleName(primaryMuscle.name),
+        ),
+      if (bestOneRm != null)
+        _PerformanceMetric(
+          icon: Icons.trending_up_outlined,
+          label: 'Best e1RM',
+          value:
+              '${bestOneRm.exerciseName} · ${bestOneRm.estimatedOneRepMax.toStringAsFixed(1)} kg',
+        ),
+    ];
+
+    return Card(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+      child: Padding(
+        padding: const EdgeInsets.all(20.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.insights_outlined),
+                const SizedBox(width: 8),
+                Text(
+                  'Performance',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 16),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                const spacing = 8.0;
+                final columns = constraints.maxWidth >= 520
+                    ? 3
+                    : constraints.maxWidth >= 320
+                    ? 2
+                    : 1;
+                final itemWidth =
+                    (constraints.maxWidth - spacing * (columns - 1)) / columns;
+                return Wrap(
+                  spacing: spacing,
+                  runSpacing: spacing,
+                  children: metrics
+                      .map(
+                        (metric) => SizedBox(width: itemWidth, child: metric),
+                      )
+                      .toList(),
+                );
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _PerformanceMetric extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _PerformanceMetric({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(12.0),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.labelMedium?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ReadOnlyExerciseCard extends StatelessWidget {
   final ExerciseWithSets exe;
   final bool isRoutine;
 
-  const _ReadOnlyExerciseCard({
-    required this.exe,
-    required this.isRoutine,
-  });
+  const _ReadOnlyExerciseCard({required this.exe, required this.isRoutine});
 
   @override
   Widget build(BuildContext context) {
@@ -439,7 +645,9 @@ class _ReadOnlyExerciseCard extends StatelessWidget {
           children: [
             Text(
               dc.name,
-              style: theme.textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              style: theme.textTheme.titleMedium?.copyWith(
+                fontWeight: FontWeight.bold,
+              ),
             ),
             const SizedBox(height: 12),
             ...List.generate(sets.length, (idx) {
@@ -448,12 +656,18 @@ class _ReadOnlyExerciseCard extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4.0),
                 child: Row(
                   children: [
-                    Text('Set ${idx + 1}', style: const TextStyle(fontWeight: FontWeight.w500)),
+                    Text(
+                      'Set ${idx + 1}',
+                      style: const TextStyle(fontWeight: FontWeight.w500),
+                    ),
                     const Spacer(),
                     if (exe.exercise.setMode == SetMode.DURATION)
-                      Text('${set.elapsedTime ~/ 60}:${(set.elapsedTime % 60).toString().padLeft(2, '0')}')
+                      Text(
+                        '${set.elapsedTime ~/ 60}:${(set.elapsedTime % 60).toString().padLeft(2, '0')}',
+                      )
                     else ...[
-                      if (exe.exercise.setMode == SetMode.LOAD || exe.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD)
+                      if (exe.exercise.setMode == SetMode.LOAD ||
+                          exe.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD)
                         Text('${set.load} kg  x  '),
                       Text('${set.reps} reps'),
                     ],
@@ -462,8 +676,14 @@ class _ReadOnlyExerciseCard extends StatelessWidget {
                     if (!isRoutine) ...[
                       const SizedBox(width: 12),
                       Icon(
-                        set.completed ? Icons.check_circle : Icons.radio_button_unchecked,
-                        color: set.completed ? theme.colorScheme.primary : theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
+                        set.completed
+                            ? Icons.check_circle
+                            : Icons.radio_button_unchecked,
+                        color: set.completed
+                            ? theme.colorScheme.primary
+                            : theme.colorScheme.onSurfaceVariant.withValues(
+                                alpha: 0.5,
+                              ),
                         size: 20,
                       ),
                     ],

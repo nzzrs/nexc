@@ -9,7 +9,6 @@
 
 import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'app_database.dart';
 import 'enums.dart';
 import 'relations.dart';
 import '../providers/db_provider.dart';
@@ -190,7 +189,6 @@ class WorkoutRepository {
       int workoutId;
 
       if (workout.id == 0) {
-        final now = DateTime.now();
         workoutId = await db.into(db.workouts).insert(
               WorkoutsCompanion.insert(
                 routineId: workout.routineId,
@@ -198,8 +196,8 @@ class WorkoutRepository {
                 title: workout.title,
                 state: workout.state,
                 timeElapsed: workout.timeElapsed,
-                created: workout.state == WorkoutState.ROUTINE ? now : now,
-                completed: now,
+                created: workout.created,
+                completed: workout.completed,
               ),
             );
       } else {
@@ -473,6 +471,15 @@ class WorkoutRepository {
             );
       }
     }
+  }
+
+  Future<SetMode?> getLastSetModeForExercise(String exerciseDataId) async {
+    final query = db.select(db.exercises)
+      ..where((e) => e.exerciseDataId.equals(exerciseDataId))
+      ..orderBy([(e) => OrderingTerm(expression: e.id, mode: OrderingMode.desc)])
+      ..limit(1);
+    final match = await query.getSingleOrNull();
+    return match?.setMode;
   }
 }
 

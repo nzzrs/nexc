@@ -21,13 +21,18 @@ import '../providers/settings_provider.dart';
 
 class DatasetRepository {
   final AppDatabase db;
-  final Ref ref;
+  final Ref? ref;
 
-  DatasetRepository(this.db, this.ref);
+  DatasetRepository(this.db, [this.ref]);
 
   Stream<List<ExerciseDataDC>> getDataset() {
     return (db.select(db.exerciseData)..orderBy([(d) => OrderingTerm(expression: d.name)]))
         .watch();
+  }
+
+  Future<List<ExerciseDataDC>> getExercises() {
+    return (db.select(db.exerciseData)..orderBy([(d) => OrderingTerm(expression: d.name)]))
+        .get();
   }
 
   Stream<List<ExerciseDataDC>> getCustomExercises() {
@@ -52,11 +57,13 @@ class DatasetRepository {
   }
 
   Future<void> updateDatasetOnAppUpdate(int currentVersionCode) async {
-    final settings = ref.read(settingsProvider);
-    final settingsNotifier = ref.read(settingsProvider.notifier);
-    final mealRepo = ref.read(mealRepositoryProvider);
-    final workoutRepo = ref.read(workoutRepositoryProvider);
-    final measurementRepo = ref.read(measurementRepositoryProvider);
+    final r = ref;
+    if (r == null) return;
+    final settings = r.read(settingsProvider);
+    final settingsNotifier = r.read(settingsProvider.notifier);
+    final mealRepo = r.read(mealRepositoryProvider);
+    final workoutRepo = r.read(workoutRepositoryProvider);
+    final measurementRepo = r.read(measurementRepositoryProvider);
 
     // Prepopulate defaults if database is empty
     await mealRepo.prepopulateDefaultMealPlans();
@@ -89,6 +96,7 @@ class DatasetRepository {
           fats: (map['fats'] as num?)?.toDouble() ?? 0.0,
           isSupplement: map['isSupplement'] as bool? ?? false,
           isPortable: map['isPortable'] as bool? ?? true,
+          unitWeight: map['unitWeight'] as int?,
           isStockRaw: map['isStockRaw'] as bool? ?? false,
         );
       }).toList();

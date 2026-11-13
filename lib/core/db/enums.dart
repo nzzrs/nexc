@@ -7,6 +7,8 @@
  * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
  */
 
+// ignore_for_file: constant_identifier_names
+ 
 enum WorkoutState { RUNNING, COMPLETED, ROUTINE, ARCHIVED, LIBRARY }
 
 enum SetMode { LOAD, BODYWEIGHT, BODYWEIGHT_WITH_LOAD, DURATION, DURATION_WITH_LOAD }
@@ -259,3 +261,50 @@ enum Language {
 
 /// Whether a meal item amount is expressed in grams or discrete units (e.g. 1 banana).
 enum AmountUnit { GRAMS, UNITS, ML }
+
+/// Set category distinguishing warmup, normal, drop sets, myo reps, and failure sets.
+enum SetType {
+  WARMUP,
+  NORMAL,
+  DROP,
+  MYO,
+  FAILURE;
+
+  String get displayName {
+    switch (this) {
+      case SetType.WARMUP:
+        return 'Warmup';
+      case SetType.NORMAL:
+        return 'Normal';
+      case SetType.DROP:
+        return 'Drop Set';
+      case SetType.MYO:
+        return 'Myo Reps';
+      case SetType.FAILURE:
+        return 'Failure';
+    }
+  }
+
+  String get shortName {
+    switch (this) {
+      case SetType.WARMUP:
+        return 'W';
+      case SetType.NORMAL:
+        return 'N';
+      case SetType.DROP:
+        return 'D';
+      case SetType.MYO:
+        return 'M';
+      case SetType.FAILURE:
+        return 'F';
+    }
+  }
+}
+
+/// Weight/Load metric unit.
+enum WeightUnit {
+  kg,
+  lbs;
+
+  String get label => name;
+}

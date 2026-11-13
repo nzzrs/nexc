@@ -8,14 +8,25 @@
  */
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import '../db/app_database.dart';
 import '../db/enums.dart';
 import '../db/relations.dart';
 import '../db/workout_repository.dart';
 import '../db/meal_repository.dart';
 import '../db/measurement_repository.dart';
+import '../db/user_repository.dart';
+import 'db_provider.dart';
 
-enum WorkoutChart { DURATION, VOLUME, REPS }
+final userRepositoryProvider = Provider<UserRepository>((ref) {
+  final db = ref.watch(dbProvider);
+  return UserRepository(db);
+});
+
+final userProvider = StreamProvider<UserData?>((ref) {
+  final repo = ref.watch(userRepositoryProvider);
+  return repo.watchUser();
+});
+
+enum WorkoutChart { duration, volume, reps }
 
 class Point {
   final List<double> yValues;
@@ -40,7 +51,7 @@ final profileMealLogsProvider = StreamProvider<List<MealPlanWithMealsAndItems>>(
 });
 
 final workoutChartModeProvider = StateProvider<WorkoutChart>((ref) {
-  return WorkoutChart.DURATION;
+  return WorkoutChart.duration;
 });
 
 final profilePointsProvider = FutureProvider<List<Point>>((ref) async {
@@ -56,10 +67,10 @@ final profilePointsProvider = FutureProvider<List<Point>>((ref) async {
 
     double yVal = 0.0;
     switch (chartMode) {
-      case WorkoutChart.DURATION:
+      case WorkoutChart.duration:
         yVal = w.workout.timeElapsed / 60.0;
         break;
-      case WorkoutChart.VOLUME:
+      case WorkoutChart.volume:
         double totalVol = 0.0;
         for (final exe in w.exercisesWithSets) {
           final includeBodyweight = exe.exercise.setMode == SetMode.BODYWEIGHT ||
@@ -75,7 +86,7 @@ final profilePointsProvider = FutureProvider<List<Point>>((ref) async {
         }
         yVal = totalVol;
         break;
-      case WorkoutChart.REPS:
+      case WorkoutChart.reps:
         int totalReps = 0;
         for (final exe in w.exercisesWithSets) {
           for (final set in exe.sets) {

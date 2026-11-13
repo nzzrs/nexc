@@ -9,6 +9,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../core/components/constrained_center_view.dart';
 import '../core/components/nexc_scaffold.dart';
 import '../core/providers/settings_provider.dart';
 import 'home/home_screen.dart';
@@ -41,7 +42,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     });
   }
 
-  void _onNavBarItemTapped(int index) {
+  void _onDestinationSelected(int index) {
     _pageController.animateToPage(
       index,
       duration: const Duration(milliseconds: 300),
@@ -58,6 +59,9 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   @override
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
+    final theme = Theme.of(context);
+    final screenWidth = MediaQuery.of(context).size.width;
+    final isWide = screenWidth >= 800;
 
     final tabs = [
       (
@@ -83,14 +87,84 @@ class _MainScreenState extends ConsumerState<MainScreen> {
 
     final currentIndex = _currentPageIndex.clamp(0, tabs.length - 1);
 
+    if (isWide) {
+      return Scaffold(
+        body: Row(
+          children: [
+            NavigationRail(
+              selectedIndex: currentIndex,
+              onDestinationSelected: _onDestinationSelected,
+              labelType: NavigationRailLabelType.all,
+              leading: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16.0),
+                child: Text(
+                  'Nexc',
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: -0.5,
+                  ),
+                ),
+              ),
+              trailing: Expanded(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.info_outline),
+                      tooltip: 'About',
+                      onPressed: () => Navigator.pushNamed(context, '/about'),
+                    ),
+                    IconButton(
+                      icon: const Icon(Icons.settings_outlined),
+                      tooltip: 'Settings',
+                      onPressed: () => Navigator.pushNamed(context, '/settings'),
+                    ),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+              destinations: tabs.map((tab) {
+                return NavigationRailDestination(
+                  icon: tab.icon,
+                  selectedIcon: tab.selectedIcon,
+                  label: Text(tab.label),
+                );
+              }).toList(),
+            ),
+            const VerticalDivider(thickness: 1, width: 1),
+            Expanded(
+              child: ConstrainedCenterView(
+                maxWidth: 1200,
+                child: PageView(
+                  controller: _pageController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  onPageChanged: _onPageChanged,
+                  children: tabs.map((tab) => tab.screen).toList(),
+                ),
+              ),
+            ),
+          ],
+        ),
+        floatingActionButton: currentIndex == 0
+            ? FloatingActionButton.extended(
+                onPressed: () {
+                  Navigator.pushNamed(context, '/edit-workout', arguments: 0);
+                },
+                icon: const Icon(Icons.add),
+                label: const Text('Create routine'),
+              )
+            : null,
+      );
+    }
+
     return NexcScaffold(
       title: RichText(
         text: TextSpan(
           text: 'Nexc',
-          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                fontWeight: FontWeight.w800,
-                letterSpacing: -0.5,
-              ),
+          style: theme.textTheme.titleLarge?.copyWith(
+            fontWeight: FontWeight.w800,
+            letterSpacing: -0.5,
+          ),
         ),
       ),
       actions: [
@@ -116,7 +190,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           borderRadius: BorderRadius.circular(24),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.black.withValues(alpha: 0.08),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -126,7 +200,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
           borderRadius: BorderRadius.circular(24),
           child: NavigationBar(
             selectedIndex: currentIndex,
-            onDestinationSelected: _onNavBarItemTapped,
+            onDestinationSelected: _onDestinationSelected,
             destinations: tabs.map((tab) {
               return NavigationDestination(
                 icon: tab.icon,

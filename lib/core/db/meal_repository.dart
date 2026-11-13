@@ -11,10 +11,10 @@ import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:collection/collection.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'app_database.dart';
 import 'enums.dart';
 import 'relations.dart';
 import '../providers/db_provider.dart';
+import '../util/day_window_helper.dart';
 
 class MealRepository {
   final AppDatabase db;
@@ -420,10 +420,7 @@ class MealRepository {
             ..where((mp) => mp.state.equalsValue(MealPlanState.ACTIVE)))
           .get();
       final existingTodayPlan = logsList.firstWhereOrNull(
-        (mp) =>
-            mp.created.year == now.year &&
-            mp.created.month == now.month &&
-            mp.created.day == now.day,
+        (mp) => DayWindowHelper.isWithinDayWindow(mp.created, now, 5, 0),
       );
 
       if (existingTodayPlan != null) {
@@ -640,7 +637,7 @@ class MealRepository {
       state: MealPlanState.ACTIVE,
       created: now,
       completed: now,
-      isTemporal: true,
+      isTemporal: false,
     );
     return saveMealPlanWithMealsAndItems(
       MealPlanWithMealsAndItems(mealPlan: newPlan, meals: []),
@@ -673,13 +670,13 @@ class MealRepository {
 
     // 1. Insert Products
     final productsList = [
-      const Product(id: 10001, name: "Whole Milk", defaultUnits: "ml", edibleQtyPerUnit: 1.0, proteins: 3.3, carbsAvailable: 4.7, fats: 3.6, isSupplement: false, isPortable: true, isStockRaw: false),
-      const Product(id: 10002, name: "Oatmeal Cookies", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 6.5, carbsAvailable: 65.0, fats: 15.0, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10001, name: "Whole Milk", defaultUnits: "ml", mlToGFactor: 1, edibleQtyPerUnit: 1.0, proteins: 3.3, carbsAvailable: 4.7, fats: 3.6, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10002, name: "Oatmeal Cookies", defaultUnits: "g", unitWeight: 30, edibleQtyPerUnit: 1.0, proteins: 6.5, carbsAvailable: 65.0, fats: 15.0, isSupplement: false, isPortable: true, isStockRaw: false),
       const Product(id: 10003, name: "Creatine Monohydrate", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 0.0, carbsAvailable: 0.0, fats: 0.0, isSupplement: true, isPortable: true, isStockRaw: false),
       const Product(id: 10004, name: "Chicken Breast", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 31.0, carbsAvailable: 0.0, fats: 3.6, isSupplement: false, isPortable: true, isStockRaw: false),
       const Product(id: 10005, name: "Cooked Rice", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 2.7, carbsAvailable: 28.0, fats: 0.3, isSupplement: false, isPortable: true, isStockRaw: false),
-      const Product(id: 10006, name: "Banana", defaultUnits: "g", edibleQtyPerUnit: 0.65, proteins: 1.1, carbsAvailable: 22.8, fats: 0.3, isSupplement: false, isPortable: true, isStockRaw: false),
-      const Product(id: 10007, name: "Whole Eggs", defaultUnits: "unit", edibleQtyPerUnit: 0.88, proteins: 13.0, carbsAvailable: 1.1, fats: 11.0, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10006, name: "Banana", defaultUnits: "unit", unitWeight: 120, edibleQtyPerUnit: 0.65, proteins: 1.1, carbsAvailable: 22.8, fats: 0.3, isSupplement: false, isPortable: true, isStockRaw: false),
+      const Product(id: 10007, name: "Whole Eggs", defaultUnits: "unit", unitWeight: 57, edibleQtyPerUnit: 0.88, proteins: 13.0, carbsAvailable: 1.1, fats: 11.0, isSupplement: false, isPortable: true, isStockRaw: false),
       const Product(id: 10008, name: "Fresh Spinach", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 2.9, carbsAvailable: 3.6, fats: 0.4, isSupplement: false, isPortable: false, isStockRaw: false),
       const Product(id: 10009, name: "Grilled Salmon", defaultUnits: "g", edibleQtyPerUnit: 1.0, proteins: 25.0, carbsAvailable: 0.0, fats: 13.0, isSupplement: false, isPortable: false, isStockRaw: false),
     ];

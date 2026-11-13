@@ -241,7 +241,7 @@ class _AboutItem extends StatelessWidget {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16.0),
         ),
-        color: theme.colorScheme.surfaceVariant.withOpacity(0.3),
+        color: theme.colorScheme.surfaceContainerHighest.withValues(alpha: 0.3),
         child: InkWell(
           borderRadius: BorderRadius.circular(16.0),
           onTap: onClick,
@@ -273,7 +273,7 @@ class _AboutItem extends StatelessWidget {
                 ),
                 Icon(
                   Icons.chevron_right,
-                  color: theme.colorScheme.onSurfaceVariant.withOpacity(0.5),
+                  color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.5),
                 ),
               ],
             ),

@@ -8,10 +8,18 @@
  */
 
 // ignore_for_file: constant_identifier_names
- 
+
+import 'package:flutter/widgets.dart' show Locale;
+
 enum WorkoutState { RUNNING, COMPLETED, ROUTINE, ARCHIVED, LIBRARY }
 
-enum SetMode { LOAD, BODYWEIGHT, BODYWEIGHT_WITH_LOAD, DURATION, DURATION_WITH_LOAD }
+enum SetMode {
+  LOAD,
+  BODYWEIGHT,
+  BODYWEIGHT_WITH_LOAD,
+  DURATION,
+  DURATION_WITH_LOAD,
+}
 
 enum MealPlanState { TEMPLATE, LOGGED, ARCHIVED, ACTIVE }
 
@@ -37,7 +45,7 @@ enum Equipment {
   E_Z_CURL_BAR,
   PULL_UP_BAR,
   RINGS,
-  OTHER
+  OTHER,
 }
 
 enum Muscle {
@@ -57,7 +65,7 @@ enum Muscle {
   QUADRICEPS,
   SHOULDERS,
   TRAPS,
-  TRICEPS
+  TRICEPS,
 }
 
 enum Category {
@@ -67,25 +75,32 @@ enum Category {
   CARDIO,
   OLYMPIC_WEIGHTLIFTING,
   STRONGMAN,
-  PLYOMETRICS
+  PLYOMETRICS,
 }
 
 // Extensions for JSON serialization matching Kotlin `@SerialName`
 extension ForceExt on Force {
   String toJson() {
     switch (this) {
-      case Force.STATIC: return 'static';
-      case Force.PULL: return 'pull';
-      case Force.PUSH: return 'push';
+      case Force.STATIC:
+        return 'static';
+      case Force.PULL:
+        return 'pull';
+      case Force.PUSH:
+        return 'push';
     }
   }
 
   static Force fromJson(String value) {
     switch (value.toLowerCase()) {
-      case 'static': return Force.STATIC;
-      case 'pull': return Force.PULL;
-      case 'push': return Force.PUSH;
-      default: throw ArgumentError('Unknown Force value: $value');
+      case 'static':
+        return Force.STATIC;
+      case 'pull':
+        return Force.PULL;
+      case 'push':
+        return Force.PUSH;
+      default:
+        throw ArgumentError('Unknown Force value: $value');
     }
   }
 }
@@ -93,18 +108,25 @@ extension ForceExt on Force {
 extension LevelExt on Level {
   String toJson() {
     switch (this) {
-      case Level.BEGINNER: return 'beginner';
-      case Level.INTERMEDIATE: return 'intermediate';
-      case Level.EXPERT: return 'expert';
+      case Level.BEGINNER:
+        return 'beginner';
+      case Level.INTERMEDIATE:
+        return 'intermediate';
+      case Level.EXPERT:
+        return 'expert';
     }
   }
 
   static Level fromJson(String value) {
     switch (value.toLowerCase()) {
-      case 'beginner': return Level.BEGINNER;
-      case 'intermediate': return Level.INTERMEDIATE;
-      case 'expert': return Level.EXPERT;
-      default: throw ArgumentError('Unknown Level value: $value');
+      case 'beginner':
+        return Level.BEGINNER;
+      case 'intermediate':
+        return Level.INTERMEDIATE;
+      case 'expert':
+        return Level.EXPERT;
+      default:
+        throw ArgumentError('Unknown Level value: $value');
     }
   }
 }
@@ -112,16 +134,21 @@ extension LevelExt on Level {
 extension MechanicExt on Mechanic {
   String toJson() {
     switch (this) {
-      case Mechanic.ISOLATION: return 'isolation';
-      case Mechanic.COMPOUND: return 'compound';
+      case Mechanic.ISOLATION:
+        return 'isolation';
+      case Mechanic.COMPOUND:
+        return 'compound';
     }
   }
 
   static Mechanic fromJson(String value) {
     switch (value.toLowerCase()) {
-      case 'isolation': return Mechanic.ISOLATION;
-      case 'compound': return Mechanic.COMPOUND;
-      default: throw ArgumentError('Unknown Mechanic value: $value');
+      case 'isolation':
+        return Mechanic.ISOLATION;
+      case 'compound':
+        return Mechanic.COMPOUND;
+      default:
+        throw ArgumentError('Unknown Mechanic value: $value');
     }
   }
 }
@@ -129,40 +156,69 @@ extension MechanicExt on Mechanic {
 extension EquipmentExt on Equipment {
   String toJson() {
     switch (this) {
-      case Equipment.MEDICINE_BALL: return 'medicine ball';
-      case Equipment.DUMBBELL: return 'dumbbell';
-      case Equipment.BODY_ONLY: return 'body only';
-      case Equipment.BANDS: return 'bands';
-      case Equipment.KETTLEBELLS: return 'kettlebells';
-      case Equipment.FOAM_ROLL: return 'foam roll';
-      case Equipment.CABLE: return 'cable';
-      case Equipment.MACHINE: return 'machine';
-      case Equipment.BARBELL: return 'barbell';
-      case Equipment.EXERCISE_BALL: return 'exercise ball';
-      case Equipment.E_Z_CURL_BAR: return 'e-z curl bar';
-      case Equipment.PULL_UP_BAR: return 'pull-up bar';
-      case Equipment.RINGS: return 'rings';
-      case Equipment.OTHER: return 'other';
+      case Equipment.MEDICINE_BALL:
+        return 'medicine ball';
+      case Equipment.DUMBBELL:
+        return 'dumbbell';
+      case Equipment.BODY_ONLY:
+        return 'body only';
+      case Equipment.BANDS:
+        return 'bands';
+      case Equipment.KETTLEBELLS:
+        return 'kettlebells';
+      case Equipment.FOAM_ROLL:
+        return 'foam roll';
+      case Equipment.CABLE:
+        return 'cable';
+      case Equipment.MACHINE:
+        return 'machine';
+      case Equipment.BARBELL:
+        return 'barbell';
+      case Equipment.EXERCISE_BALL:
+        return 'exercise ball';
+      case Equipment.E_Z_CURL_BAR:
+        return 'e-z curl bar';
+      case Equipment.PULL_UP_BAR:
+        return 'pull-up bar';
+      case Equipment.RINGS:
+        return 'rings';
+      case Equipment.OTHER:
+        return 'other';
     }
   }
 
   static Equipment fromJson(String value) {
     switch (value.toLowerCase()) {
-      case 'medicine ball': return Equipment.MEDICINE_BALL;
-      case 'dumbbell': return Equipment.DUMBBELL;
-      case 'body only': return Equipment.BODY_ONLY;
-      case 'bands': return Equipment.BANDS;
-      case 'kettlebells': return Equipment.KETTLEBELLS;
-      case 'foam roll': return Equipment.FOAM_ROLL;
-      case 'cable': return Equipment.CABLE;
-      case 'machine': return Equipment.MACHINE;
-      case 'barbell': return Equipment.BARBELL;
-      case 'exercise ball': return Equipment.EXERCISE_BALL;
-      case 'e-z curl bar': return Equipment.E_Z_CURL_BAR;
-      case 'pull-up bar': return Equipment.PULL_UP_BAR;
-      case 'rings': return Equipment.RINGS;
-      case 'other': return Equipment.OTHER;
-      default: throw ArgumentError('Unknown Equipment value: $value');
+      case 'medicine ball':
+        return Equipment.MEDICINE_BALL;
+      case 'dumbbell':
+        return Equipment.DUMBBELL;
+      case 'body only':
+        return Equipment.BODY_ONLY;
+      case 'bands':
+        return Equipment.BANDS;
+      case 'kettlebells':
+        return Equipment.KETTLEBELLS;
+      case 'foam roll':
+        return Equipment.FOAM_ROLL;
+      case 'cable':
+        return Equipment.CABLE;
+      case 'machine':
+        return Equipment.MACHINE;
+      case 'barbell':
+        return Equipment.BARBELL;
+      case 'exercise ball':
+        return Equipment.EXERCISE_BALL;
+      case 'e-z curl bar':
+        return Equipment.E_Z_CURL_BAR;
+      case 'pull-up bar':
+        return Equipment.PULL_UP_BAR;
+      case 'rings':
+        return Equipment.RINGS;
+      case 'other':
+        return Equipment.OTHER;
+      default:
+        throw ArgumentError('Unknown Equipment value: $value');
     }
   }
 }
@@ -170,46 +226,81 @@ extension EquipmentExt on Equipment {
 extension MuscleExt on Muscle {
   String toJson() {
     switch (this) {
-      case Muscle.ABDOMINALS: return 'abdominals';
-      case Muscle.ABDUCTORS: return 'abductors';
-      case Muscle.ADDUCTORS: return 'adductors';
-      case Muscle.BICEPS: return 'biceps';
-      case Muscle.CALVES: return 'calves';
-      case Muscle.CHEST: return 'chest';
-      case Muscle.FOREARMS: return 'forearms';
-      case Muscle.GLUTES: return 'glutes';
-      case Muscle.HAMSTRINGS: return 'hamstrings';
-      case Muscle.LATS: return 'lats';
-      case Muscle.LOWER_BACK: return 'lower back';
-      case Muscle.MIDDLE_BACK: return 'middle back';
-      case Muscle.NECK: return 'neck';
-      case Muscle.QUADRICEPS: return 'quadriceps';
-      case Muscle.SHOULDERS: return 'shoulders';
-      case Muscle.TRAPS: return 'traps';
-      case Muscle.TRICEPS: return 'triceps';
+      case Muscle.ABDOMINALS:
+        return 'abdominals';
+      case Muscle.ABDUCTORS:
+        return 'abductors';
+      case Muscle.ADDUCTORS:
+        return 'adductors';
+      case Muscle.BICEPS:
+        return 'biceps';
+      case Muscle.CALVES:
+        return 'calves';
+      case Muscle.CHEST:
+        return 'chest';
+      case Muscle.FOREARMS:
+        return 'forearms';
+      case Muscle.GLUTES:
+        return 'glutes';
+      case Muscle.HAMSTRINGS:
+        return 'hamstrings';
+      case Muscle.LATS:
+        return 'lats';
+      case Muscle.LOWER_BACK:
+        return 'lower back';
+      case Muscle.MIDDLE_BACK:
+        return 'middle back';
+      case Muscle.NECK:
+        return 'neck';
+      case Muscle.QUADRICEPS:
+        return 'quadriceps';
+      case Muscle.SHOULDERS:
+        return 'shoulders';
+      case Muscle.TRAPS:
+        return 'traps';
+      case Muscle.TRICEPS:
+        return 'triceps';
     }
   }
 
   static Muscle fromJson(String value) {
     switch (value.toLowerCase()) {
-      case 'abdominals': return Muscle.ABDOMINALS;
-      case 'abductors': return Muscle.ABDUCTORS;
-      case 'adductors': return Muscle.ADDUCTORS;
-      case 'biceps': return Muscle.BICEPS;
-      case 'calves': return Muscle.CALVES;
-      case 'chest': return Muscle.CHEST;
-      case 'forearms': return Muscle.FOREARMS;
-      case 'glutes': return Muscle.GLUTES;
-      case 'hamstrings': return Muscle.HAMSTRINGS;
-      case 'lats': return Muscle.LATS;
-      case 'lower back': return Muscle.LOWER_BACK;
-      case 'middle back': return Muscle.MIDDLE_BACK;
-      case 'neck': return Muscle.NECK;
-      case 'quadriceps': return Muscle.QUADRICEPS;
-      case 'shoulders': return Muscle.SHOULDERS;
-      case 'traps': return Muscle.TRAPS;
-      case 'triceps': return Muscle.TRICEPS;
-      default: throw ArgumentError('Unknown Muscle value: $value');
+      case 'abdominals':
+        return Muscle.ABDOMINALS;
+      case 'abductors':
+        return Muscle.ABDUCTORS;
+      case 'adductors':
+        return Muscle.ADDUCTORS;
+      case 'biceps':
+        return Muscle.BICEPS;
+      case 'calves':
+        return Muscle.CALVES;
+      case 'chest':
+        return Muscle.CHEST;
+      case 'forearms':
+        return Muscle.FOREARMS;
+      case 'glutes':
+        return Muscle.GLUTES;
+      case 'hamstrings':
+        return Muscle.HAMSTRINGS;
+      case 'lats':
+        return Muscle.LATS;
+      case 'lower back':
+        return Muscle.LOWER_BACK;
+      case 'middle back':
+        return Muscle.MIDDLE_BACK;
+      case 'neck':
+        return Muscle.NECK;
+      case 'quadriceps':
+        return Muscle.QUADRICEPS;
+      case 'shoulders':
+        return Muscle.SHOULDERS;
+      case 'traps':
+        return Muscle.TRAPS;
+      case 'triceps':
+        return Muscle.TRICEPS;
+      default:
+        throw ArgumentError('Unknown Muscle value: $value');
     }
   }
 }
@@ -217,26 +308,41 @@ extension MuscleExt on Muscle {
 extension CategoryExt on Category {
   String toJson() {
     switch (this) {
-      case Category.POWERLIFTING: return 'powerlifting';
-      case Category.STRENGTH: return 'strength';
-      case Category.STRETCHING: return 'stretching';
-      case Category.CARDIO: return 'cardio';
-      case Category.OLYMPIC_WEIGHTLIFTING: return 'olympic weightlifting';
-      case Category.STRONGMAN: return 'strongman';
-      case Category.PLYOMETRICS: return 'plyometrics';
+      case Category.POWERLIFTING:
+        return 'powerlifting';
+      case Category.STRENGTH:
+        return 'strength';
+      case Category.STRETCHING:
+        return 'stretching';
+      case Category.CARDIO:
+        return 'cardio';
+      case Category.OLYMPIC_WEIGHTLIFTING:
+        return 'olympic weightlifting';
+      case Category.STRONGMAN:
+        return 'strongman';
+      case Category.PLYOMETRICS:
+        return 'plyometrics';
     }
   }
 
   static Category fromJson(String value) {
     switch (value.toLowerCase()) {
-      case 'powerlifting': return Category.POWERLIFTING;
-      case 'strength': return Category.STRENGTH;
-      case 'stretching': return Category.STRETCHING;
-      case 'cardio': return Category.CARDIO;
-      case 'olympic weightlifting': return Category.OLYMPIC_WEIGHTLIFTING;
-      case 'strongman': return Category.STRONGMAN;
-      case 'plyometrics': return Category.PLYOMETRICS;
-      default: throw ArgumentError('Unknown Category value: $value');
+      case 'powerlifting':
+        return Category.POWERLIFTING;
+      case 'strength':
+        return Category.STRENGTH;
+      case 'stretching':
+        return Category.STRETCHING;
+      case 'cardio':
+        return Category.CARDIO;
+      case 'olympic weightlifting':
+        return Category.OLYMPIC_WEIGHTLIFTING;
+      case 'strongman':
+        return Category.STRONGMAN;
+      case 'plyometrics':
+        return Category.PLYOMETRICS;
+      default:
+        throw ArgumentError('Unknown Category value: $value');
     }
   }
 }
@@ -251,18 +357,61 @@ enum IntensityScale {
   const IntensityScale(this.value);
 }
 
+/// UI language.
+///
+/// [system] follows the device locale. Every other entry maps to one of the
+/// ARB bundles in `lib/l10n`, so [code] is the stored preference value and
+/// [locale] is what `MaterialApp.locale` receives.
 enum Language {
-  system(''),
-  english('en'),
-  italian('it'),
-  german('de'),
-  dutch('nl'),
+  system(null),
+  arabic('ar'),
+  catalan('ca'),
   czech('cs'),
-  simplifiedChinese('zh-rCN'),
-  spanish('es');
+  german('de'),
+  english('en'),
+  spanish('es'),
+  french('fr'),
+  galician('gl'),
+  hindi('hi'),
+  indonesian('id'),
+  italian('it'),
+  korean('ko'),
+  dutch('nl'),
+  polish('pl'),
+  portuguese('pt'),
+  portugueseBrazil('pt_BR'),
+  russian('ru'),
+  swedish('sv'),
+  ukrainian('uk'),
+  urdu('ur'),
+  simplifiedChinese('zh_CN');
 
-  final String code;
+  /// Stored preference code, or null for [system].
+  final String? code;
+
   const Language(this.code);
+
+  /// Locale passed to `MaterialApp.locale`, or null for the device locale.
+  Locale? get locale {
+    final String? value = code;
+    if (value == null) return null;
+    final List<String> parts = value.split('_');
+    if (parts.length == 1) return Locale(parts.first);
+    return Locale.fromSubtags(languageCode: parts.first, countryCode: parts[1]);
+  }
+
+  /// Reads a stored code, including the values written by older builds.
+  static Language fromCode(String? value) {
+    if (value == null || value.isEmpty) return Language.system;
+    // Legacy code used before the regional locales were added.
+    if (value == 'zh-rCN') return Language.simplifiedChinese;
+
+    final String normalized = value.replaceAll('-', '_');
+    for (final Language language in Language.values) {
+      if (language.code == normalized) return language;
+    }
+    return Language.system;
+  }
 }
 
 /// Whether completing a workout updates the linked routine with the values of

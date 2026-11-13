@@ -1,0 +1,277 @@
+{
+  "@@locale": "ar",
+  "appName": "Nexc",
+  "cancel": "Cancel",
+  "done": "Done",
+  "close": "Close",
+  "delete": "Delete",
+  "settingsTitle": "Settings",
+  "aboutTitle": "About",
+  "tabWorkout": "Workout",
+  "tabMeals": "Meals",
+  "tabProfile": "Profile",
+  "createRoutine": "Create routine",
+  "discardRunningWorkoutTitle": "Discard running workout?",
+  "discardWorkoutMessage": "Are you sure you want to discard this unsaved, ongoing workout? This action cannot be undone.",
+  "discard": "Discard",
+  "discardWorkoutAndStartRoutineMessage": "Are you sure you want to discard this unsaved, ongoing workout and start this routine instead? This action cannot be undone.",
+  "discardAndStart": "Discard & Start",
+  "startEmptyWorkout": "Start empty workout",
+  "resumeWorkout": "Resume workout",
+  "elapsedTime": "Elapsed time: {time}",
+  "@elapsedTime": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "errorLoadingActiveWorkout": "Error loading active workout: {error}",
+  "@errorLoadingActiveWorkout": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "yourRoutines": "Your routines",
+  "aiWorkoutCreator": "AI Workout Creator",
+  "aiWorkoutCreatorDisabled": "AI Workout Creator (Disabled in Settings)",
+  "aiWorkoutGenerationDisabled": "AI workout generation is disabled in Settings.",
+  "startByCreatingRoutine": "Start by creating a new routine",
+  "dragToReorder": "Drag to reorder",
+  "startRoutine": "Start routine",
+  "errorLoadingRoutines": "Error loading routines: {error}",
+  "@errorLoadingRoutines": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "appearance": "Appearance",
+  "theme": "Theme",
+  "selectTheme": "Select theme",
+  "themeModeSystem": "System",
+  "themeModeLight": "Light",
+  "themeModeDark": "Dark",
+  "materialYou": "Material You",
+  "dynamicColorEnabled": "Dynamic color enabled",
+  "dynamicColorDisabled": "Dynamic color disabled",
+  "showExerciseImages": "Show exercise images",
+  "imagesShown": "Images shown",
+  "imagesHidden": "Images hidden",
+  "generalSettings": "General settings",
+  "language": "Language",
+  "selectLanguage": "Select language",
+  "unitSystem": "Unit system",
+  "selectUnitSystem": "Select unit system",
+  "keepScreenOn": "Keep screen on",
+  "screenWillStayOn": "Screen will stay on",
+  "screenWillTurnOffNormally": "Screen will turn off normally",
+  "restTimerSound": "Rest timer sound",
+  "soundEnabled": "Sound enabled",
+  "soundDisabled": "Sound disabled",
+  "restTimerVibration": "Rest timer vibration",
+  "vibrationEnabled": "Vibration enabled",
+  "vibrationDisabled": "Vibration disabled",
+  "stickyWorkoutStatusBar": "Sticky workout status bar",
+  "statusBarIsSticky": "Status bar is sticky",
+  "statusBarIsNotSticky": "Status bar is not sticky",
+  "intensityScale": "Intensity scale",
+  "selectIntensityScale": "Select intensity scale",
+  "intensityScalesTitle": "Intensity Scales (RPE & RIR)",
+  "intensityScalesDescription": "• RPE (Rate of Perceived Exertion): A 1-10 scale measuring how hard a set felt. 10 is maximum effort (no more reps possible), 9 means you could do 1 more rep, 8 means 2 more, etc.\n\n• RIR (Reps in Reserve): The number of reps you could have performed before hitting failure. 0 RIR is equivalent to 10 RPE.\n\nUse them to monitor and adjust intensity dynamically without always going to absolute muscle failure.",
+  "intensityScaleNone": "None (disabled)",
+  "intensityScaleRpe": "RPE",
+  "intensityScaleRir": "RIR",
+  "intensityScaleBoth": "Both",
+  "updateRoutineAfterWorkout": "Update routine after workout",
+  "routineUpdateNever": "Never",
+  "routineUpdateAlways": "Always",
+  "routineUpdateAsk": "Ask",
+  "scrollWheelInput": "Scroll wheel input",
+  "tapValueToOpenPicker": "Tap a value to open the picker",
+  "inlineTextFields": "Inline text fields",
+  "dismissScrollWheelAutomatically": "Dismiss scroll wheel automatically",
+  "closesAfterShortPause": "Closes after a short pause",
+  "confirmWithDone": "Confirm with Done",
+  "dataAndConfiguration": "Data & Configuration",
+  "measurementsSettings": "Measurements Settings",
+  "configureMeasurementsDesc": "Configure which measurements to track",
+  "backupAndRestore": "Backup & Restore",
+  "backupAndRestoreDesc": "Backup and restore your data",
+  "featuresConfiguration": "Features Configuration",
+  "mealTracking": "Meal Tracking",
+  "mealTrackingEnabled": "Meal tracking enabled",
+  "mealTrackingDisabled": "Meal tracking disabled",
+  "dayStartHour": "Day start hour",
+  "newDayStartsAt": "New day starts at {time}:00",
+  "@newDayStartsAt": {
+    "placeholders": {
+      "time": {
+        "type": "String"
+      }
+    }
+  },
+  "defaultMacrosOverridePlans": "Default macros override plans",
+  "defaultMacrosOverrideEnabledDesc": "Default target macros always override meal plan targets",
+  "defaultMacrosOverrideDisabledDesc": "Meal plan targets take precedence when available",
+  "stockTracking": "Stock Tracking",
+  "requiresMealTracking": "Requires Meal Tracking",
+  "stockTrackingEnabled": "Stock tracking enabled",
+  "stockTrackingDisabled": "Stock tracking disabled",
+  "aiIntegrations": "AI Integrations",
+  "aiStockLogging": "AI Stock Logging",
+  "aiStockLoggingDesc": "Log stock via receipt photo uploads",
+  "aiProductCreation": "AI Product Creation",
+  "aiProductCreationDesc": "Autofill nutrition details using AI predictions",
+  "aiFeaturesAndPrivacy": "AI Features & Privacy",
+  "aiWorkoutGenerationEnabledDesc": "AI assisted workout generation enabled",
+  "aiWorkoutGenerationDisabledDesc": "AI assisted workout generation disabled",
+  "includeUserStatistics": "Include User Statistics",
+  "includeUserStatisticsEnabledDesc": "Workout volume, streak & metrics shared",
+  "includeUserStatisticsDisabledDesc": "User statistics hidden from AI",
+  "includeMealHistory": "Include Meal History",
+  "includeMealHistoryEnabledDesc": "Recent nutrition & logged meals shared",
+  "includeMealHistoryDisabledDesc": "Meal history hidden from AI",
+  "includeWorkoutHistory": "Include Workout History",
+  "includeWorkoutHistoryEnabledDesc": "Completed workouts & routine records shared",
+  "includeWorkoutHistoryDisabledDesc": "Workout history hidden from AI",
+  "includeUserPreferences": "Include User Preferences",
+  "includeUserPreferencesEnabledDesc": "Equipment & personal training notes shared",
+  "includeUserPreferencesDisabledDesc": "User preferences hidden from AI",
+  "includeMeasurements": "Include Measurements",
+  "includeMeasurementsEnabledDesc": "Weight & body measurements shared",
+  "includeMeasurementsDisabledDesc": "Measurements hidden from AI",
+  "aiApiConfiguration": "AI API Configuration",
+  "apiProvider": "API Provider",
+  "geminiApi": "Gemini API (AI Studio)",
+  "openRouter": "OpenRouter",
+  "apiTokenKey": "API Token / Key",
+  "modelName": "Model Name",
+  "languageSystem": "System",
+  "languageArabic": "Arabic",
+  "languageCatalan": "Catalan",
+  "languageCzech": "Czech",
+  "languageGerman": "German",
+  "languageEnglish": "English",
+  "languageSpanish": "Spanish",
+  "languageFrench": "French",
+  "languageGalician": "Galician",
+  "languageHindi": "Hindi",
+  "languageIndonesian": "Indonesian",
+  "languageItalian": "Italian",
+  "languageKorean": "Korean",
+  "languageDutch": "Dutch",
+  "languagePolish": "Polish",
+  "languagePortuguese": "Portuguese",
+  "languagePortugueseBrazil": "Portuguese (Brazil)",
+  "languageRussian": "Russian",
+  "languageSwedish": "Swedish",
+  "languageUkrainian": "Ukrainian",
+  "languageUrdu": "Urdu",
+  "languageSimplifiedChinese": "Simplified Chinese",
+  "unitSystemMetric": "Metric",
+  "unitSystemImperial": "Imperial",
+  "couldNotOpenUrl": "Could not open {url}",
+  "@couldNotOpenUrl": {
+    "placeholders": {
+      "url": {
+        "type": "String"
+      }
+    }
+  },
+  "versionWithBuild": "Version {version} ({build})",
+  "@versionWithBuild": {
+    "placeholders": {
+      "version": {
+        "type": "String"
+      },
+      "build": {
+        "type": "String"
+      }
+    }
+  },
+  "loadingVersion": "Loading version…",
+  "info": "Info",
+  "privacyPolicy": "Privacy Policy",
+  "privacyPolicyDescription": "No data leaves your device. Ever.",
+  "privacyPolicyBody": "Nexc does not collect, store, or transmit any personal data. All workout and nutrition data is stored exclusively on your device in a local database. No analytics, no crash reporting services, no third-party SDKs that phone home.\n\nYour data is your data.",
+  "gotIt": "Got it",
+  "license": "License",
+  "licenseDescription": "GNU General Public License v3.0",
+  "licenseLegalese": "© 2026 Nexc Contributors\nBased on LibreFit © IamDg and the LibreFit Contributors\nLicensed under the GNU General Public License v3.0",
+  "github": "GitHub",
+  "githubDescription": "View source code on GitHub",
+  "attribution": "Attribution",
+  "libreFitName": "LibreFit",
+  "libreFitDescription": "The open-source project Nexc is based on — by IamDg and contributors",
+  "contact": "Contact",
+  "reportBug": "Report a bug",
+  "reportBugDescription": "Open an issue on GitHub",
+  "suggestFeature": "Suggest a feature",
+  "suggestFeatureDescription": "Open a discussion on GitHub",
+  "madeWithLove": "Made with ❤️ — built on the shoulders of giants.",
+  "plateCalculator": "Plate calculator",
+  "unlinkSuperset": "Unlink superset",
+  "linkSuperset": "Link superset",
+  "replaceExercise": "Replace exercise",
+  "machineBusy": "Machine busy",
+  "notes": "Notes",
+  "restTimeLabel": "Rest time: ",
+  "type": "Type",
+  "setColumn": "Set",
+  "previousColumn": "Previous",
+  "timeColumn": "Time",
+  "weightColumn": "Weight",
+  "repsColumn": "Reps",
+  "rpe": "RPE",
+  "rir": "RIR",
+  "addSet": "Add set",
+  "decreaseBy": "Decrease by {amount}",
+  "@decreaseBy": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "increaseBy": "Increase by {amount}",
+  "@increaseBy": {
+    "placeholders": {
+      "amount": {
+        "type": "String"
+      }
+    }
+  },
+  "bar": "Bar",
+  "targetWeight": "Target weight",
+  "includeSmallPlates": "Include small plates",
+  "perSide": "Per side",
+  "noPlatesNeeded": "No plates needed",
+  "cannotHitExactly": "Cannot hit exactly — {remainder} left over per side",
+  "@cannotHitExactly": {
+    "placeholders": {
+      "remainder": {
+        "type": "String"
+      }
+    }
+  },
+  "closestAchievable": "Closest achievable: {weight}",
+  "@closestAchievable": {
+    "placeholders": {
+      "weight": {
+        "type": "String"
+      }
+    }
+  },
+  "plateCount": "× {count}",
+  "@plateCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  }
+}

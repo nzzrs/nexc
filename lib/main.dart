@@ -13,7 +13,9 @@ import 'package:dynamic_color/dynamic_color.dart';
 
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/theme/theme.dart';
+import 'core/l10n/l10n.dart';
 import 'core/providers/settings_provider.dart';
+import 'l10n/app_localizations.dart';
 import 'features/main_screen.dart';
 import 'features/about/about_screen.dart';
 import 'features/settings/settings_screen.dart';
@@ -47,9 +49,7 @@ void main() async {
   final prefs = await SharedPreferences.getInstance();
 
   final container = ProviderContainer(
-    overrides: [
-      sharedPreferencesProvider.overrideWithValue(prefs),
-    ],
+    overrides: [sharedPreferencesProvider.overrideWithValue(prefs)],
   );
 
   // Initialize/prepopulate database on app launch. The bundled dataset is
@@ -62,12 +62,7 @@ void main() async {
   await container.read(workoutRepositoryProvider).cleanupTemporalWorkoutPlans();
   await container.read(mealRepositoryProvider).cleanupTemporalMealPlans();
 
-  runApp(
-    UncontrolledProviderScope(
-      container: container,
-      child: const MyApp(),
-    ),
-  );
+  runApp(UncontrolledProviderScope(container: container, child: const MyApp()));
 }
 
 class MyApp extends ConsumerWidget {
@@ -81,7 +76,9 @@ class MyApp extends ConsumerWidget {
         ColorScheme lightScheme;
         ColorScheme darkScheme;
 
-        if (settings.materialMode && lightDynamic != null && darkDynamic != null) {
+        if (settings.materialMode &&
+            lightDynamic != null &&
+            darkDynamic != null) {
           lightScheme = lightDynamic.harmonized();
           darkScheme = darkDynamic.harmonized();
         } else {
@@ -90,7 +87,10 @@ class MyApp extends ConsumerWidget {
         }
 
         return MaterialApp(
-          title: 'Nexc',
+          onGenerateTitle: (context) => context.l10n.appName,
+          locale: settings.language.locale,
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
           scrollBehavior: const AppScrollBehavior(),
           theme: createNexcTheme(lightScheme),
           darkTheme: createNexcTheme(darkScheme),
@@ -101,20 +101,24 @@ class MyApp extends ConsumerWidget {
             '/settings': (context) => const SettingsScreen(),
             '/backup': (context) => const BackupScreen(),
             '/workout': (context) {
-              final args = ModalRoute.of(context)!.settings.arguments as int? ?? 0;
+              final args =
+                  ModalRoute.of(context)!.settings.arguments as int? ?? 0;
               return WorkoutScreen(workoutId: args);
             },
             '/workout/ai-chat': (context) => const WorkoutAiChatScreen(),
             '/info-workout': (context) {
-              final args = ModalRoute.of(context)!.settings.arguments as int? ?? 0;
+              final args =
+                  ModalRoute.of(context)!.settings.arguments as int? ?? 0;
               return InfoWorkoutScreen(workoutId: args);
             },
             '/edit-workout': (context) {
-              final args = ModalRoute.of(context)!.settings.arguments as int? ?? 0;
+              final args =
+                  ModalRoute.of(context)!.settings.arguments as int? ?? 0;
               return EditWorkoutScreen(workoutId: args);
             },
             '/exercises': (context) {
-              final args = ModalRoute.of(context)!.settings.arguments as bool? ?? true;
+              final args =
+                  ModalRoute.of(context)!.settings.arguments as bool? ?? true;
               return ExercisesScreen(
                 addExercises: args,
                 isSelectionMode: false,
@@ -125,11 +129,13 @@ class MyApp extends ConsumerWidget {
               return InfoExerciseScreen(exerciseId: args);
             },
             '/meals/edit-plan': (context) {
-              final args = ModalRoute.of(context)!.settings.arguments as int? ?? 0;
+              final args =
+                  ModalRoute.of(context)!.settings.arguments as int? ?? 0;
               return EditMealPlanScreen(mealPlanId: args);
             },
             '/meals/track-plan': (context) {
-              final args = ModalRoute.of(context)!.settings.arguments as int? ?? 0;
+              final args =
+                  ModalRoute.of(context)!.settings.arguments as int? ?? 0;
               return TrackMealPlanScreen(mealPlanId: args);
             },
             '/meals/products': (context) => const ProductsLibraryScreen(),
@@ -140,10 +146,12 @@ class MyApp extends ConsumerWidget {
             '/biometrics': (context) => const BiometricsScreen(),
             '/profile/personal-info': (context) => const PersonalInfoScreen(),
             '/profile/stock': (context) => const StockScreen(),
-            '/profile/all-workouts': (context) => const AllWorkoutsHistoryScreen(),
+            '/profile/all-workouts': (context) =>
+                const AllWorkoutsHistoryScreen(),
             '/profile/all-meals': (context) => const AllMealsHistoryScreen(),
             '/pantry': (context) => const PantryScreen(),
-            '/settings/measurements': (context) => const MeasurementsSettingsScreen(),
+            '/settings/measurements': (context) =>
+                const MeasurementsSettingsScreen(),
           },
           debugShowCheckedModeBanner: false,
         );

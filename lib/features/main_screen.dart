@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/components/constrained_center_view.dart';
 import '../core/components/nexc_scaffold.dart';
+import '../core/l10n/l10n.dart';
 import '../core/providers/settings_provider.dart';
 import 'home/home_screen.dart';
 import 'meals/meals_dashboard_screen.dart';
@@ -60,6 +61,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
   Widget build(BuildContext context) {
     final settings = ref.watch(settingsProvider);
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final screenWidth = MediaQuery.of(context).size.width;
     final isWide = screenWidth >= 800;
 
@@ -67,20 +69,20 @@ class _MainScreenState extends ConsumerState<MainScreen> {
       (
         icon: const Icon(Icons.fitness_center_outlined),
         selectedIcon: const Icon(Icons.fitness_center),
-        label: 'Workout',
+        label: l10n.tabWorkout,
         screen: const HomeScreen(),
       ),
       if (settings.enableMealTracking)
         (
           icon: const Icon(Icons.restaurant_outlined),
           selectedIcon: const Icon(Icons.restaurant),
-          label: 'Meals',
+          label: l10n.tabMeals,
           screen: const MealsDashboardScreen(),
         ),
       (
         icon: const Icon(Icons.person_outline),
         selectedIcon: const Icon(Icons.person),
-        label: 'Profile',
+        label: l10n.tabProfile,
         screen: const ProfileScreen(),
       ),
     ];
@@ -98,7 +100,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
               leading: Padding(
                 padding: const EdgeInsets.symmetric(vertical: 16.0),
                 child: Text(
-                  'Nexc',
+                  l10n.appName,
                   style: theme.textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.w800,
                     letterSpacing: -0.5,
@@ -111,13 +113,14 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   children: [
                     IconButton(
                       icon: const Icon(Icons.info_outline),
-                      tooltip: 'About',
+                      tooltip: l10n.aboutTitle,
                       onPressed: () => Navigator.pushNamed(context, '/about'),
                     ),
                     IconButton(
                       icon: const Icon(Icons.settings_outlined),
-                      tooltip: 'Settings',
-                      onPressed: () => Navigator.pushNamed(context, '/settings'),
+                      tooltip: l10n.settingsTitle,
+                      onPressed: () =>
+                          Navigator.pushNamed(context, '/settings'),
                     ),
                     const SizedBox(height: 16),
                   ],
@@ -151,7 +154,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
                   Navigator.pushNamed(context, '/edit-workout', arguments: 0);
                 },
                 icon: const Icon(Icons.add),
-                label: const Text('Create routine'),
+                label: Text(l10n.createRoutine),
               )
             : null,
       );
@@ -160,7 +163,7 @@ class _MainScreenState extends ConsumerState<MainScreen> {
     return NexcScaffold(
       title: RichText(
         text: TextSpan(
-          text: 'Nexc',
+          text: l10n.appName,
           style: theme.textTheme.titleLarge?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: -0.5,
@@ -182,8 +185,8 @@ class _MainScreenState extends ConsumerState<MainScreen> {
             }
           : null,
       fabIcon: const Icon(Icons.add),
-      fabDescription: 'Create routine',
-      fabText: 'Create routine',
+      fabDescription: l10n.createRoutine,
+      fabText: l10n.createRoutine,
       bottomBar: Container(
         margin: const EdgeInsets.fromLTRB(16, 0, 16, 16),
         decoration: BoxDecoration(

@@ -11,6 +11,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/workout_repository.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/workout_providers.dart';
 import '../../core/providers/settings_provider.dart';
 
@@ -21,7 +22,8 @@ class HomeScreen extends ConsumerStatefulWidget {
   ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProviderStateMixin {
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with SingleTickerProviderStateMixin {
   late AnimationController _pulseController;
   late Animation<Color?> _borderColorAnimation;
 
@@ -66,9 +68,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
       _localOrderIds = reordered.map((item) => item.workout.id).toList();
     });
 
-    await ref.read(workoutRepositoryProvider).updateRoutinePositions(
-      reordered.map((item) => item.workout).toList(),
-    );
+    await ref
+        .read(workoutRepositoryProvider)
+        .updateRoutinePositions(reordered.map((item) => item.workout).toList());
   }
 
   @override
@@ -103,18 +105,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
   }
 
   void _showDiscardDialog(Workout workout) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          title: const Text('Discard running workout?'),
-          content: const Text(
-            'Are you sure you want to discard this unsaved, ongoing workout? This action cannot be undone.',
-          ),
+          title: Text(l10n.discardRunningWorkoutTitle),
+          content: Text(l10n.discardWorkoutMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             TextButton(
               onPressed: () async {
@@ -123,9 +124,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                 await repo.deleteWorkout(workout);
                 if (mounted) nav.pop();
               },
-              child: const Text(
-                'Discard',
-                style: TextStyle(color: Colors.red),
+              child: Text(
+                l10n.discard,
+                style: const TextStyle(color: Colors.red),
               ),
             ),
           ],
@@ -135,18 +136,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
   }
 
   void _showDiscardAndStartRoutineDialog(Workout running, int routineId) {
+    final l10n = context.l10n;
     showDialog(
       context: context,
       builder: (dialogCtx) {
         return AlertDialog(
-          title: const Text('Discard running workout?'),
-          content: const Text(
-            'Are you sure you want to discard this unsaved, ongoing workout and start this routine instead? This action cannot be undone.',
-          ),
+          title: Text(l10n.discardRunningWorkoutTitle),
+          content: Text(l10n.discardWorkoutAndStartRoutineMessage),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogCtx),
-              child: const Text('Cancel'),
+              child: Text(l10n.cancel),
             ),
             TextButton(
               onPressed: () async {
@@ -158,9 +158,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                   nav.pushNamed('/workout', arguments: routineId);
                 }
               },
-              child: const Text(
-                'Discard & Start',
-                style: TextStyle(color: Colors.red),
+              child: Text(
+                l10n.discardAndStart,
+                style: const TextStyle(color: Colors.red),
               ),
             ),
           ],
@@ -172,6 +172,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final l10n = context.l10n;
     final routinesAsync = ref.watch(routinesProvider);
     final runningWorkoutAsync = ref.watch(runningWorkoutProvider);
 
@@ -187,18 +188,20 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                 padding: const EdgeInsets.symmetric(vertical: 8.0),
                 child: FilledButton.icon(
                   style: FilledButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 24),
-                    textStyle: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 18,
+                      horizontal: 24,
+                    ),
+                    textStyle: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   onPressed: () {
-                    Navigator.pushNamed(
-                      context,
-                      '/workout',
-                      arguments: 0,
-                    );
+                    Navigator.pushNamed(context, '/workout', arguments: 0);
                   },
                   icon: const Icon(Icons.play_arrow, size: 24),
-                  label: const Text('Start empty workout'),
+                  label: Text(l10n.startEmptyWorkout),
                 ),
               );
             }
@@ -235,19 +238,24 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                               );
                             },
                             icon: const Icon(Icons.play_arrow),
-                            label: const Text('Resume workout'),
+                            label: Text(l10n.resumeWorkout),
                           ),
                           const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                'Elapsed time: ${_formatTime(runningWorkout.workout.timeElapsed)}',
+                                l10n.elapsedTime(
+                                  _formatTime(
+                                    runningWorkout.workout.timeElapsed,
+                                  ),
+                                ),
                                 style: theme.textTheme.bodyMedium,
                               ),
                               IconButton(
                                 icon: const Icon(Icons.delete_outline),
-                                onPressed: () => _showDiscardDialog(runningWorkout.workout),
+                                onPressed: () =>
+                                    _showDiscardDialog(runningWorkout.workout),
                               ),
                             ],
                           ),
@@ -268,7 +276,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
           error: (err, stack) => Center(
             child: Padding(
               padding: const EdgeInsets.all(16.0),
-              child: Text('Error loading active workout: $err'),
+              child: Text(l10n.errorLoadingActiveWorkout('$err')),
             ),
           ),
         ),
@@ -278,7 +286,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(
-              'Your routines',
+              l10n.yourRoutines,
               style: theme.textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -291,18 +299,19 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                     : theme.disabledColor,
               ),
               tooltip: ref.watch(settingsProvider).aiWorkoutGenerationEnabled
-                  ? 'AI Workout Creator'
-                  : 'AI Workout Creator (Disabled in Settings)',
+                  ? l10n.aiWorkoutCreator
+                  : l10n.aiWorkoutCreatorDisabled,
               onPressed: () {
                 if (ref.read(settingsProvider).aiWorkoutGenerationEnabled) {
                   Navigator.pushNamed(context, '/workout/ai-chat');
                 } else {
                   ScaffoldMessenger.of(context).showSnackBar(
                     SnackBar(
-                      content: const Text('AI workout generation is disabled in Settings.'),
+                      content: Text(l10n.aiWorkoutGenerationDisabled),
                       action: SnackBarAction(
-                        label: 'Settings',
-                        onPressed: () => Navigator.pushNamed(context, '/settings'),
+                        label: l10n.settingsTitle,
+                        onPressed: () =>
+                            Navigator.pushNamed(context, '/settings'),
                       ),
                     ),
                   );
@@ -317,10 +326,10 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
         routinesAsync.when(
           data: (routines) {
             if (routines.isEmpty) {
-              return const Padding(
-                padding: EdgeInsets.symmetric(vertical: 40.0),
+              return Padding(
+                padding: const EdgeInsets.symmetric(vertical: 40.0),
                 child: Text(
-                  'Start by creating a new routine',
+                  l10n.startByCreatingRoutine,
                   textAlign: TextAlign.center,
                 ),
               );
@@ -377,12 +386,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                                 ReorderableDragStartListener(
                                   index: index,
                                   child: Tooltip(
-                                    message: 'Drag to reorder',
+                                    message: l10n.dragToReorder,
                                     child: Padding(
                                       padding: const EdgeInsets.only(left: 8.0),
                                       child: Icon(
                                         Icons.drag_handle,
-                                        color: theme.colorScheme.onSurfaceVariant,
+                                        color:
+                                            theme.colorScheme.onSurfaceVariant,
                                       ),
                                     ),
                                   ),
@@ -392,13 +402,18 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                             const SizedBox(height: 12),
                             FilledButton.icon(
                               style: FilledButton.styleFrom(
-                                backgroundColor: theme.colorScheme.secondaryContainer,
-                                foregroundColor: theme.colorScheme.onSecondaryContainer,
+                                backgroundColor:
+                                    theme.colorScheme.secondaryContainer,
+                                foregroundColor:
+                                    theme.colorScheme.onSecondaryContainer,
                               ),
                               onPressed: () {
                                 final running = runningWorkoutAsync.value;
                                 if (running != null) {
-                                  _showDiscardAndStartRoutineDialog(running.workout, routine.id);
+                                  _showDiscardAndStartRoutineDialog(
+                                    running.workout,
+                                    routine.id,
+                                  );
                                 } else {
                                   Navigator.pushNamed(
                                     context,
@@ -408,7 +423,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
                                 }
                               },
                               icon: const Icon(Icons.play_arrow),
-                              label: const Text('Start routine'),
+                              label: Text(l10n.startRoutine),
                             ),
                           ],
                         ),
@@ -422,7 +437,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> with SingleTickerProvid
           loading: () => const Center(child: CircularProgressIndicator()),
           error: (err, stack) => Padding(
             padding: const EdgeInsets.all(16.0),
-            child: Text('Error loading routines: $err'),
+            child: Text(l10n.errorLoadingRoutines('$err')),
           ),
         ),
       ],

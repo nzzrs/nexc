@@ -7,19 +7,27 @@
  * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
  */
 
-import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../core/components/nexc_badge.dart';
+import '../../core/components/nexc_confirm_sheet.dart';
+import '../../core/components/nexc_page.dart';
+import '../../core/components/nexc_section.dart';
 import '../../core/db/enums.dart';
+import '../../core/db/measurement_repository.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/workout_repository.dart';
-import '../../core/db/measurement_repository.dart';
-import '../../core/components/nexc_scaffold.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/providers/profile_providers.dart';
 import '../../core/providers/settings_provider.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/shapes.dart';
+import '../../core/theme/spacing.dart';
+import '../../core/util/format.dart';
 import '../../core/util/unit_system.dart';
 import '../../core/util/workout_stats_helper.dart';
+import '../../l10n/app_localizations.dart';
 import '../profile/profile_screen.dart';
 
 class InfoWorkoutScreen extends ConsumerStatefulWidget {
@@ -35,10 +43,11 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
   bool _isLoading = true;
   WorkoutWithExercisesAndSets? _workoutData;
   WorkoutWithExercisesAndSets? _linkedRoutineData;
-  List<WorkoutWithExercisesAndSets> _completedWorkoutsForChart = [];
+  List<WorkoutWithExercisesAndSets> _completedWorkoutsForChart =
+      <WorkoutWithExercisesAndSets>[];
   double _volume = 0.0;
   WorkoutChart _chartMode = WorkoutChart.duration;
-  List<Point> _chartPoints = [];
+  List<Point> _chartPoints = <Point>[];
 
   @override
   void initState() {
@@ -51,60 +60,40 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
       _isLoading = true;
     });
 
-    final workoutRepo = ref.read(workoutRepositoryProvider);
-    final measurementRepo = ref.read(measurementRepositoryProvider);
-
-    final data = await workoutRepo.getWorkoutWithExercisesAndSets(
-      widget.workoutId,
+    final WorkoutRepository workoutRepo = ref.read(workoutRepositoryProvider);
+    final MeasurementRepository measurementRepo = ref.read(
+      measurementRepositoryProvider,
     );
+
+    final WorkoutWithExercisesAndSets? data = await workoutRepo
+        .getWorkoutWithExercisesAndSets(widget.workoutId);
     if (data == null) {
-      if (mounted) {
-        Navigator.pop(context);
-      }
+      if (mounted) Navigator.pop(context);
       return;
     }
 
     _workoutData = data;
-
-    // Determine if it is a routine
-    final isRoutine = data.workout.state == WorkoutState.ROUTINE;
-
-    // Fetch bodyweight for volume calculation
-    final measurementDate = isRoutine
+    final bool isRoutine = data.workout.state == WorkoutState.ROUTINE;
+    final DateTime measurementDate = isRoutine
         ? data.workout.created
         : data.workout.completed;
-    final measurement = await measurementRepo.getLastMeasurementByCutoff(
-      measurementDate,
+    final BodyMeasurement? measurement = await measurementRepo
+        .getLastMeasurementByCutoff(measurementDate);
+    final double bodyWeight = measurement?.bodyWeight ?? 0.0;
+    _volume = _volumeOf(
+      data,
+      bodyWeight: bodyWeight,
+      onlyCompleted: !isRoutine,
     );
-    final bodyWeight = measurement?.bodyWeight ?? 0.0;
-
-    // Calculate volume
-    double totalVol = 0.0;
-    for (final exe in data.exercisesWithSets) {
-      final includeBodyweight =
-          exe.exercise.setMode == SetMode.BODYWEIGHT ||
-          exe.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD;
-      for (final set in exe.sets) {
-        if (isRoutine || set.completed) {
-          totalVol +=
-              (set.load + (includeBodyweight ? bodyWeight : 0.0)) * set.reps;
-        }
-      }
-    }
-    _volume = totalVol;
 
     if (isRoutine) {
-      // Fetch past completed workouts of this routine for the performance chart
-      final past = await workoutRepo
+      _completedWorkoutsForChart = await workoutRepo
           .getCompletedWorkoutsWithExercisesAndSetsFromRoutine(data.workout.id);
-      _completedWorkoutsForChart = past;
       await _updateChartPoints();
     } else if (data.workout.routineId != 0) {
-      // Fetch linked routine details
-      final routine = await workoutRepo.getWorkoutWithExercisesAndSets(
+      _linkedRoutineData = await workoutRepo.getWorkoutWithExercisesAndSets(
         data.workout.routineId,
       );
-      _linkedRoutineData = routine;
     }
 
     if (mounted) {
@@ -114,124 +103,125 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
     }
   }
 
+  /// Total tonnage, including body-weight contribution for body-weight modes.
+  double _volumeOf(
+    WorkoutWithExercisesAndSets data, {
+    required double bodyWeight,
+    required bool onlyCompleted,
+  }) {
+    double total = 0;
+    for (final ExerciseWithSets exercise in data.exercisesWithSets) {
+      final bool includeBodyweight =
+          exercise.exercise.setMode == SetMode.BODYWEIGHT ||
+          exercise.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD;
+      for (final WorkoutSet set in exercise.sets) {
+        if (onlyCompleted && !set.completed) continue;
+        total += (set.load + (includeBodyweight ? bodyWeight : 0.0)) * set.reps;
+      }
+    }
+    return total;
+  }
+
   Future<void> _updateChartPoints() async {
-    final measurementRepo = ref.read(measurementRepositoryProvider);
-    final List<Point> pts = [];
+    final MeasurementRepository measurementRepo = ref.read(
+      measurementRepositoryProvider,
+    );
+    final MaterialLocalizations localizations = MaterialLocalizations.of(
+      context,
+    );
+    final List<Point> points = <Point>[];
 
-    for (final w in _completedWorkoutsForChart) {
-      final measurement = await measurementRepo.getLastMeasurementByCutoff(
-        w.workout.completed,
-      );
-      final bodyWeight = measurement?.bodyWeight ?? 0.0;
+    for (final WorkoutWithExercisesAndSets workout
+        in _completedWorkoutsForChart) {
+      final BodyMeasurement? measurement = await measurementRepo
+          .getLastMeasurementByCutoff(workout.workout.completed);
+      final double bodyWeight = measurement?.bodyWeight ?? 0.0;
 
-      double yVal = 0.0;
+      double value = 0;
       switch (_chartMode) {
         case WorkoutChart.duration:
-          yVal = w.workout.timeElapsed / 60.0;
+          value = workout.workout.timeElapsed / 60.0;
           break;
         case WorkoutChart.volume:
-          double totalVol = 0.0;
-          for (final exe in w.exercisesWithSets) {
-            final includeBodyweight =
-                exe.exercise.setMode == SetMode.BODYWEIGHT ||
-                exe.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD;
-            for (final set in exe.sets) {
-              if (set.completed) {
-                totalVol +=
-                    (set.load + (includeBodyweight ? bodyWeight : 0.0)) *
-                    set.reps;
-              }
-            }
-          }
-          yVal = totalVol;
+          value = _volumeOf(
+            workout,
+            bodyWeight: bodyWeight,
+            onlyCompleted: true,
+          );
           break;
         case WorkoutChart.reps:
           int totalReps = 0;
-          for (final exe in w.exercisesWithSets) {
-            for (final set in exe.sets) {
-              if (set.completed) {
-                totalReps += set.reps;
-              }
+          for (final ExerciseWithSets exercise in workout.exercisesWithSets) {
+            for (final WorkoutSet set in exercise.sets) {
+              if (set.completed) totalReps += set.reps;
             }
           }
-          yVal = totalReps.toDouble();
+          value = totalReps.toDouble();
           break;
       }
 
-      final dateStr =
-          "${w.workout.completed.month}/${w.workout.completed.day}/${w.workout.completed.year.toString().substring(max(0, w.workout.completed.year.toString().length - 2))}";
-      pts.add(Point(yValues: [yVal], xValue: dateStr, workoutId: w.workout.id));
+      final String date = localizations.formatShortDate(
+        workout.workout.completed,
+      );
+      points.add(
+        Point(
+          yValues: <double>[value],
+          xValue: date,
+          workoutId: workout.workout.id,
+        ),
+      );
     }
 
-    _chartPoints = pts.reversed.toList();
+    _chartPoints = points.reversed.toList();
   }
 
   Future<void> _deleteWorkout() async {
     if (_workoutData == null) return;
-    final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
+    final AppLocalizations l10n = context.l10n;
+    final bool? confirmed = await NexcConfirmSheet.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(
-          _workoutData!.workout.state == WorkoutState.ROUTINE
-              ? l10n.deleteRoutineTitle
-              : l10n.deleteWorkoutTitle,
-        ),
-        content: Text(
-          _workoutData!.workout.state == WorkoutState.ROUTINE
-              ? l10n.deleteRoutineMessage
-              : l10n.deleteWorkoutMessage,
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.delete, style: const TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
+      title: _workoutData!.workout.state == WorkoutState.ROUTINE
+          ? l10n.deleteRoutineTitle
+          : l10n.deleteWorkoutTitle,
+      message: _workoutData!.workout.state == WorkoutState.ROUTINE
+          ? l10n.deleteRoutineMessage
+          : l10n.deleteWorkoutMessage,
+      confirmLabel: l10n.delete,
+      cancelLabel: l10n.cancel,
+      destructive: true,
     );
-
     if (confirmed == true && mounted) {
-      final repo = ref.read(workoutRepositoryProvider);
-      await repo.deleteWorkout(_workoutData!.workout);
-      if (mounted) {
-        Navigator.pop(context);
-      }
+      await ref
+          .read(workoutRepositoryProvider)
+          .deleteWorkout(_workoutData!.workout);
+      if (mounted) Navigator.pop(context);
     }
   }
 
   Future<void> _unlinkRoutine() async {
     if (_workoutData == null) return;
-    final l10n = context.l10n;
-    final confirmed = await showDialog<bool>(
+    final AppLocalizations l10n = context.l10n;
+    final bool? confirmed = await NexcConfirmSheet.show(
       context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.unlinkRoutineTitle),
-        content: Text(l10n.unlinkRoutineMessage),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.unlink),
-          ),
-        ],
-      ),
+      title: l10n.unlinkRoutineTitle,
+      message: l10n.unlinkRoutineMessage,
+      confirmLabel: l10n.unlink,
+      cancelLabel: l10n.cancel,
     );
-
     if (confirmed == true && mounted) {
-      final repo = ref.read(workoutRepositoryProvider);
-      final updated = _workoutData!.workout.copyWith(routineId: 0);
-      await repo.updateWorkout(updated);
+      final Workout updated = _workoutData!.workout.copyWith(routineId: 0);
+      await ref.read(workoutRepositoryProvider).updateWorkout(updated);
       _linkedRoutineData = null;
       _loadData();
     }
+  }
+
+  void _openEditor() {
+    Navigator.pushNamed(
+      context,
+      '/edit-workout',
+      arguments: _workoutData!.workout.id,
+    ).then((_) => _loadData());
   }
 
   @override
@@ -240,304 +230,254 @@ class _InfoWorkoutScreenState extends ConsumerState<InfoWorkoutScreen> {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final unitSystem = ref.watch(settingsProvider.select((s) => s.unitSystem));
-    final workout = _workoutData!.workout;
-    final isRoutine = workout.state == WorkoutState.ROUTINE;
-    final dateStr = isRoutine
-        ? "${workout.created.month}/${workout.created.day}/${workout.created.year}"
-        : "${workout.completed.month}/${workout.completed.day}/${workout.completed.year}";
-
-    final totalSets = _workoutData!.exercisesWithSets.fold<int>(
-      0,
-      (sum, e) => sum + e.sets.length,
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    final UnitSystem unitSystem = ref.watch(
+      settingsProvider.select((SettingsState s) => s.unitSystem),
     );
-    final completedSets = _workoutData!.exercisesWithSets.fold<int>(
+    final Workout workout = _workoutData!.workout;
+    final bool isRoutine = workout.state == WorkoutState.ROUTINE;
+    final DateTime displayDate = isRoutine
+        ? workout.created
+        : workout.completed;
+    final String dateStr = context.formatMediumDate(displayDate);
+
+    final int totalSets = _workoutData!.exercisesWithSets.fold<int>(
       0,
-      (sum, e) => sum + e.sets.where((s) => s.completed).length,
+      (int sum, ExerciseWithSets e) => sum + e.sets.length,
+    );
+    final int completedSets = _workoutData!.exercisesWithSets.fold<int>(
+      0,
+      (int sum, ExerciseWithSets e) =>
+          sum + e.sets.where((WorkoutSet s) => s.completed).length,
     );
 
-    return NexcScaffold(
-      title: Text(isRoutine ? l10n.routineLabel : l10n.tabWorkout),
-      navigateBack: () => Navigator.pop(context),
-      actions: [
-        () {
-          Navigator.pushNamed(
-            context,
-            '/edit-workout',
-            arguments: workout.id,
-          ).then((_) => _loadData());
-        },
-        () => _deleteWorkout(),
-      ],
-      actionsIcons: const [
-        Icon(Icons.edit_outlined),
-        Icon(Icons.delete_outline),
-      ],
-      actionsElevated: const [false, false],
-      content: (context, padding) {
-        return ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            Card(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      workout.title,
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const Divider(height: 24),
-                    if (!isRoutine) ...[
-                      Text(l10n.durationMinutes(workout.timeElapsed ~/ 60)),
-                      const SizedBox(height: 8),
-                    ],
-                    Text(
-                      isRoutine
-                          ? l10n.createdWithDate(dateStr)
-                          : l10n.completedWithDate(dateStr),
-                    ),
-                    const Divider(height: 24),
-                    Text(
-                      l10n.exercisesWithCount(
-                        _workoutData!.exercisesWithSets.length,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(l10n.totalSetsCount(totalSets)),
-                    if (!isRoutine) ...[
-                      const SizedBox(height: 8),
-                      Text(l10n.completedSetsCount(completedSets)),
-                    ],
-                    const SizedBox(height: 8),
-                    Text(
-                      l10n.volumeWithValue(
-                        '${fromKilograms(_volume, unitSystem).toStringAsFixed(2)} '
-                        '${unitSystem.suffix}',
-                      ),
-                    ),
-                  ],
+    return NexcPage(
+      title: isRoutine ? l10n.routineLabel : l10n.tabWorkout,
+      subtitle: workout.title,
+      actions: <Widget>[
+        IconButton(
+          tooltip: l10n.edit,
+          icon: const Icon(NexcIcons.edit),
+          onPressed: _openEditor,
+        ),
+        PopupMenuButton<String>(
+          tooltip: l10n.moreOptions,
+          icon: const Icon(NexcIcons.more),
+          onSelected: (String value) {
+            if (value == 'delete') _deleteWorkout();
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            PopupMenuItem<String>(
+              value: 'delete',
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(NexcIcons.delete, color: theme.colorScheme.error),
+                title: Text(
+                  l10n.delete,
+                  style: TextStyle(color: theme.colorScheme.error),
                 ),
               ),
             ),
-            if (!isRoutine) ...[
-              const SizedBox(height: 16),
-              _PerformanceCard(
-                workoutData: _workoutData!,
-                unitSystem: unitSystem,
-              ),
-            ],
-            if (workout.notes.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          const Icon(Icons.info_outline),
-                          const SizedBox(width: 8),
-                          Text(
-                            l10n.notes,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 10),
-                      Text(workout.notes),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-            if (isRoutine && _completedWorkoutsForChart.isNotEmpty) ...[
-              const SizedBox(height: 16),
-              NexcCartesianChart(
-                points: _chartMode == WorkoutChart.volume
-                    ? _chartPoints
-                          .map(
-                            (point) => Point(
-                              yValues: point.yValues
-                                  .map(
-                                    (value) => fromKilograms(value, unitSystem),
-                                  )
-                                  .toList(),
-                              xValue: point.xValue,
-                              workoutId: point.workoutId,
-                            ),
-                          )
-                          .toList()
-                    : _chartPoints,
-                decimalCount: _chartMode == WorkoutChart.duration ? 0 : 2,
-                suffix: _chartMode == WorkoutChart.duration
-                    ? "m"
-                    : _chartMode == WorkoutChart.volume
-                    ? unitSystem.suffix
-                    : "",
-                chartMode: _chartMode,
-                updateChartMode: (mode) async {
-                  setState(() {
-                    _chartMode = mode;
-                  });
-                  await _updateChartPoints();
-                  setState(() {});
-                },
-                onEntrySelection: (id) {
-                  Navigator.pushNamed(
-                    context,
-                    '/info-workout',
-                    arguments: id,
-                  ).then((_) => _loadData());
-                },
-              ),
-            ],
-            if (!isRoutine && _linkedRoutineData != null) ...[
-              const SizedBox(height: 16),
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8.0),
-                child: Text(
-                  l10n.linkedRoutine,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              Card(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(24),
-                ),
-                child: Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  _linkedRoutineData!.workout.title,
-                                  style: theme.textTheme.titleLarge?.copyWith(
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  l10n.createdWithDate(
-                                    '${_linkedRoutineData!.workout.created.month}/${_linkedRoutineData!.workout.created.day}/${_linkedRoutineData!.workout.created.year}',
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.link_off),
-                            onPressed: () => _unlinkRoutine(),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                theme.colorScheme.secondaryContainer,
-                            foregroundColor:
-                                theme.colorScheme.onSecondaryContainer,
-                          ),
-                          onPressed: () {
-                            Navigator.pushNamed(
-                              context,
-                              '/info-workout',
-                              arguments: _linkedRoutineData!.workout.id,
-                            ).then((_) => _loadData());
-                          },
-                          icon: const Icon(Icons.open_in_new),
-                          label: Text(l10n.openThisRoutine),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ],
-            const SizedBox(height: 24),
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8.0),
-              child: Text(
-                l10n.exercisesLabel,
-                style: theme.textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            ..._workoutData!.exercisesWithSets.map((e) {
-              return _ReadOnlyExerciseCard(
-                exe: e,
-                isRoutine: isRoutine,
-                unitSystem: unitSystem,
-              );
-            }),
           ],
-        );
-      },
+        ),
+      ],
+      body: ListView(
+        padding: const EdgeInsets.all(NexcSpacing.lg),
+        children: <Widget>[
+          _HeaderCard(
+            workout: workout,
+            dateStr: dateStr,
+            isRoutine: isRoutine,
+            l10n: l10n,
+          ),
+          const SizedBox(height: NexcSpacing.xl),
+          _MetricsSection(
+            workoutData: _workoutData!,
+            unitSystem: unitSystem,
+            volumeKg: _volume,
+            totalSets: totalSets,
+            completedSets: completedSets,
+            isRoutine: isRoutine,
+          ),
+          if (workout.notes.isNotEmpty) ...<Widget>[
+            const SizedBox(height: NexcSpacing.xl),
+            _NotesSection(notes: workout.notes),
+          ],
+          if (isRoutine && _completedWorkoutsForChart.isNotEmpty) ...<Widget>[
+            const SizedBox(height: NexcSpacing.lg),
+            NexcCartesianChart(
+              points: _chartMode == WorkoutChart.volume
+                  ? _chartPoints
+                        .map(
+                          (Point point) => Point(
+                            yValues: point.yValues
+                                .map(
+                                  (double value) =>
+                                      fromKilograms(value, unitSystem),
+                                )
+                                .toList(),
+                            xValue: point.xValue,
+                            workoutId: point.workoutId,
+                          ),
+                        )
+                        .toList()
+                  : _chartPoints,
+              decimalCount: _chartMode == WorkoutChart.duration ? 0 : 2,
+              suffix: _chartMode == WorkoutChart.duration
+                  ? 'm'
+                  : _chartMode == WorkoutChart.volume
+                  ? unitSystem.suffix
+                  : '',
+              chartMode: _chartMode,
+              updateChartMode: (WorkoutChart mode) async {
+                setState(() => _chartMode = mode);
+                await _updateChartPoints();
+                if (mounted) setState(() {});
+              },
+              onEntrySelection: (int id) {
+                Navigator.pushNamed(
+                  context,
+                  '/info-workout',
+                  arguments: id,
+                ).then((_) => _loadData());
+              },
+            ),
+          ],
+          if (!isRoutine && _linkedRoutineData != null) ...<Widget>[
+            const SizedBox(height: NexcSpacing.xl),
+            _LinkedRoutineSection(
+              routine: _linkedRoutineData!,
+              onOpen: () {
+                Navigator.pushNamed(
+                  context,
+                  '/info-workout',
+                  arguments: _linkedRoutineData!.workout.id,
+                ).then((_) => _loadData());
+              },
+              onUnlink: _unlinkRoutine,
+            ),
+          ],
+          const SizedBox(height: NexcSpacing.xl),
+          NexcSection(
+            title: l10n.exercisesLabel,
+            children: _workoutData!.exercisesWithSets
+                .map(
+                  (ExerciseWithSets exercise) => _ReadOnlyExercise(
+                    exercise: exercise,
+                    isRoutine: isRoutine,
+                    unitSystem: unitSystem,
+                  ),
+                )
+                .toList(),
+          ),
+        ],
+      ),
     );
   }
 }
 
-class _PerformanceCard extends StatelessWidget {
-  final WorkoutWithExercisesAndSets workoutData;
-  final UnitSystem unitSystem;
+class _HeaderCard extends StatelessWidget {
+  final Workout workout;
+  final String dateStr;
+  final bool isRoutine;
+  final AppLocalizations l10n;
 
-  const _PerformanceCard({required this.workoutData, required this.unitSystem});
-
-  static String _humanizeMuscleName(String value) {
-    return value
-        .split('_')
-        .where((part) => part.isNotEmpty)
-        .map((part) => part[0] + part.substring(1).toLowerCase())
-        .join(' ');
-  }
+  const _HeaderCard({
+    required this.workout,
+    required this.dateStr,
+    required this.isRoutine,
+    required this.l10n,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final tonnage = WorkoutStatsHelper.calculateWorkoutTonnage(workoutData);
-    final density = WorkoutStatsHelper.calculateWorkoutDensity(workoutData);
-    final hardSets = WorkoutStatsHelper.countHardSets(workoutData);
-    final primaryMuscle = WorkoutStatsHelper.getPrimaryMuscleImpacted(
+    final ThemeData theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(NexcSpacing.lg),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.primaryContainer,
+        borderRadius: NexcShapes.lgRadius,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            workout.title,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              fontWeight: FontWeight.w700,
+              color: theme.colorScheme.onPrimaryContainer,
+            ),
+          ),
+          const SizedBox(height: NexcSpacing.sm),
+          Text(
+            isRoutine
+                ? l10n.createdWithDate(dateStr)
+                : l10n.completedWithDate(dateStr),
+            style: theme.textTheme.bodyMedium?.copyWith(
+              color: theme.colorScheme.onPrimaryContainer,
+            ),
+          ),
+          if (!isRoutine) ...<Widget>[
+            const SizedBox(height: NexcSpacing.xs),
+            Text(
+              l10n.durationWithTime(formatDurationShort(workout.timeElapsed)),
+              style: theme.textTheme.bodyMedium?.copyWith(
+                color: theme.colorScheme.onPrimaryContainer,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MetricsSection extends StatelessWidget {
+  final WorkoutWithExercisesAndSets workoutData;
+  final UnitSystem unitSystem;
+  final double volumeKg;
+  final int totalSets;
+  final int completedSets;
+  final bool isRoutine;
+
+  const _MetricsSection({
+    required this.workoutData,
+    required this.unitSystem,
+    required this.volumeKg,
+    required this.totalSets,
+    required this.completedSets,
+    required this.isRoutine,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = context.l10n;
+    final double density = WorkoutStatsHelper.calculateWorkoutDensity(
       workoutData,
     );
-    final bestOneRm = WorkoutStatsHelper.getBestEstimatedOneRepMax(workoutData);
+    final int hardSets = WorkoutStatsHelper.countHardSets(workoutData);
+    final BestEstimatedOneRepMax? bestOneRm =
+        WorkoutStatsHelper.getBestEstimatedOneRepMax(workoutData);
+    final Muscle? primaryMuscle = WorkoutStatsHelper.getPrimaryMuscleImpacted(
+      workoutData,
+    );
 
-    final metrics = <Widget>[
-      _PerformanceMetric(
+    final List<_MetricData> metrics = <_MetricData>[
+      if (!isRoutine)
+        _MetricData(
+          icon: NexcIcons.timer,
+          label: l10n.durationLabel,
+          value: formatDurationShort(workoutData.workout.timeElapsed),
+        ),
+      _MetricData(
         icon: Icons.scale_outlined,
         label: l10n.tonnageLabel,
         value:
-            '${fromKilograms(tonnage, unitSystem).toStringAsFixed(0)} '
+            '${fromKilograms(volumeKg, unitSystem).toStringAsFixed(0)} '
             '${unitSystem.suffix}',
       ),
-      _PerformanceMetric(
+      _MetricData(
         icon: Icons.speed_outlined,
         label: l10n.densityLabel,
         value: density > 0
@@ -545,19 +485,24 @@ class _PerformanceCard extends StatelessWidget {
                   '${unitSystem.suffix}/s'
             : '—',
       ),
-      _PerformanceMetric(
+      _MetricData(
+        icon: NexcIcons.check,
+        label: l10n.setsCompletedLabel,
+        value: isRoutine ? '$totalSets' : '$completedSets / $totalSets',
+      ),
+      _MetricData(
         icon: Icons.local_fire_department_outlined,
         label: l10n.hardSetsMetricLabel,
         value: '$hardSets',
       ),
       if (primaryMuscle != null)
-        _PerformanceMetric(
-          icon: Icons.fitness_center_outlined,
+        _MetricData(
+          icon: NexcIcons.workout,
           label: l10n.primaryMuscleLabel,
-          value: _humanizeMuscleName(primaryMuscle.name),
+          value: l10n.muscleWithValue(_humanize(primaryMuscle.name)),
         ),
       if (bestOneRm != null)
-        _PerformanceMetric(
+        _MetricData(
           icon: Icons.trending_up_outlined,
           label: l10n.bestE1rmLabel,
           value:
@@ -567,85 +512,95 @@ class _PerformanceCard extends StatelessWidget {
         ),
     ];
 
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-      child: Padding(
-        padding: const EdgeInsets.all(20.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                const Icon(Icons.insights_outlined),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.performance,
-                  style: theme.textTheme.titleMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
+        Padding(
+          padding: const EdgeInsets.only(
+            left: NexcSpacing.xs,
+            bottom: NexcSpacing.sm,
+          ),
+          child: Text(
+            l10n.performance,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Theme.of(context).colorScheme.primary,
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 16),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                const spacing = 8.0;
-                final columns = constraints.maxWidth >= 520
-                    ? 3
-                    : constraints.maxWidth >= 320
-                    ? 2
-                    : 1;
-                final itemWidth =
-                    (constraints.maxWidth - spacing * (columns - 1)) / columns;
-                return Wrap(
-                  spacing: spacing,
-                  runSpacing: spacing,
-                  children: metrics
-                      .map(
-                        (metric) => SizedBox(width: itemWidth, child: metric),
-                      )
-                      .toList(),
-                );
-              },
-            ),
-          ],
+          ),
         ),
-      ),
+        LayoutBuilder(
+          builder: (BuildContext context, BoxConstraints constraints) {
+            final int columns = constraints.maxWidth >= 340 ? 2 : 1;
+            const double spacing = NexcSpacing.sm;
+            final double width =
+                (constraints.maxWidth - spacing * (columns - 1)) / columns;
+            return Wrap(
+              spacing: spacing,
+              runSpacing: spacing,
+              children: <Widget>[
+                for (final _MetricData metric in metrics)
+                  SizedBox(
+                    width: width,
+                    child: _MetricTile(data: metric),
+                  ),
+              ],
+            );
+          },
+        ),
+      ],
     );
+  }
+
+  static String _humanize(String value) {
+    return value
+        .split('_')
+        .where((String part) => part.isNotEmpty)
+        .map(
+          (String part) =>
+              part[0].toUpperCase() + part.substring(1).toLowerCase(),
+        )
+        .join(' ');
   }
 }
 
-class _PerformanceMetric extends StatelessWidget {
+class _MetricData {
   final IconData icon;
   final String label;
   final String value;
 
-  const _PerformanceMetric({
+  const _MetricData({
     required this.icon,
     required this.label,
     required this.value,
   });
+}
+
+class _MetricTile extends StatelessWidget {
+  final _MetricData data;
+
+  const _MetricTile({required this.data});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final ThemeData theme = Theme.of(context);
     return Container(
-      padding: const EdgeInsets.all(12.0),
+      padding: const EdgeInsets.all(NexcSpacing.md),
       decoration: BoxDecoration(
-        color: theme.colorScheme.surfaceContainerHighest,
-        borderRadius: BorderRadius.circular(12),
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: NexcShapes.mdRadius,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
           Row(
-            children: [
-              Icon(icon, size: 18, color: theme.colorScheme.primary),
-              const SizedBox(width: 6),
+            children: <Widget>[
+              Icon(data.icon, size: 18, color: theme.colorScheme.primary),
+              const SizedBox(width: NexcSpacing.xs),
               Expanded(
                 child: Text(
-                  label,
-                  maxLines: 1,
+                  data.label,
+                  maxLines: 2,
                   overflow: TextOverflow.ellipsis,
                   style: theme.textTheme.labelMedium?.copyWith(
                     color: theme.colorScheme.onSurfaceVariant,
@@ -654,13 +609,13 @@ class _PerformanceMetric extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 6),
+          const SizedBox(height: NexcSpacing.xs),
           Text(
-            value,
-            maxLines: 2,
+            data.value,
+            maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: theme.textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
+              fontWeight: FontWeight.w700,
             ),
           ),
         ],
@@ -669,85 +624,224 @@ class _PerformanceMetric extends StatelessWidget {
   }
 }
 
-class _ReadOnlyExerciseCard extends StatelessWidget {
-  final ExerciseWithSets exe;
+class _NotesSection extends StatelessWidget {
+  final String notes;
+
+  const _NotesSection({required this.notes});
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    return Container(
+      padding: const EdgeInsets.all(NexcSpacing.lg),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: NexcShapes.lgRadius,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(NexcIcons.notes, color: theme.colorScheme.onSurfaceVariant),
+              const SizedBox(width: NexcSpacing.sm),
+              Text(
+                l10n.notes,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: NexcSpacing.sm),
+          Text(notes, style: theme.textTheme.bodyMedium),
+        ],
+      ),
+    );
+  }
+}
+
+class _LinkedRoutineSection extends StatelessWidget {
+  final WorkoutWithExercisesAndSets routine;
+  final VoidCallback onOpen;
+  final VoidCallback onUnlink;
+
+  const _LinkedRoutineSection({
+    required this.routine,
+    required this.onOpen,
+    required this.onUnlink,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    return Container(
+      padding: const EdgeInsets.all(NexcSpacing.lg),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerLow,
+        borderRadius: NexcShapes.lgRadius,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Expanded(
+                child: Text(
+                  l10n.linkedRoutine,
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: l10n.unlink,
+                icon: const Icon(Icons.link_off),
+                onPressed: onUnlink,
+              ),
+            ],
+          ),
+          const SizedBox(height: NexcSpacing.xs),
+          Text(
+            routine.workout.title,
+            style: theme.textTheme.titleLarge?.copyWith(
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          const SizedBox(height: NexcSpacing.xs),
+          Text(
+            l10n.createdWithDate(
+              context.formatMediumDate(routine.workout.created),
+            ),
+            style: theme.textTheme.bodySmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: NexcSpacing.md),
+          FilledButton.tonalIcon(
+            onPressed: onOpen,
+            icon: const Icon(Icons.open_in_new),
+            label: Text(l10n.openThisRoutine),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ReadOnlyExercise extends StatelessWidget {
+  final ExerciseWithSets exercise;
   final bool isRoutine;
   final UnitSystem unitSystem;
 
-  const _ReadOnlyExerciseCard({
-    required this.exe,
+  const _ReadOnlyExercise({
+    required this.exercise,
     required this.isRoutine,
     required this.unitSystem,
   });
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final dc = exe.exerciseDC;
-    final sets = exe.sets;
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    final ExerciseDataDC dc = exercise.exerciseDC;
 
-    return Card(
-      margin: const EdgeInsets.only(bottom: 12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              dc.name,
-              style: theme.textTheme.titleMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-              ),
+    return Padding(
+      padding: const EdgeInsets.symmetric(
+        horizontal: NexcSpacing.lg,
+        vertical: NexcSpacing.md,
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          Text(
+            dc.name,
+            style: theme.textTheme.titleMedium?.copyWith(
+              fontWeight: FontWeight.w700,
             ),
-            const SizedBox(height: 12),
-            ...List.generate(sets.length, (idx) {
-              final set = sets[idx];
-              return Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4.0),
-                child: Row(
-                  children: [
-                    Text(
-                      l10n.setNumber(idx + 1),
-                      style: const TextStyle(fontWeight: FontWeight.w500),
-                    ),
-                    const Spacer(),
-                    if (exe.exercise.setMode == SetMode.DURATION)
-                      Text(
-                        '${set.elapsedTime ~/ 60}:${(set.elapsedTime % 60).toString().padLeft(2, '0')}',
-                      )
-                    else ...[
-                      if (exe.exercise.setMode == SetMode.LOAD ||
-                          exe.exercise.setMode == SetMode.BODYWEIGHT_WITH_LOAD)
-                        Text(
-                          '${formatWeight(set.load, unitSystem, suffix: unitSystem.suffix)}  x  ',
-                        ),
-                      Text(l10n.repsCount(set.reps)),
-                    ],
-                    if (set.rpe != null) Text(l10n.rpeWithValue('${set.rpe}')),
-                    if (set.rir != null) Text(l10n.rirWithValue('${set.rir}')),
-                    if (!isRoutine) ...[
-                      const SizedBox(width: 12),
-                      Icon(
-                        set.completed
-                            ? Icons.check_circle
-                            : Icons.radio_button_unchecked,
-                        color: set.completed
-                            ? theme.colorScheme.primary
-                            : theme.colorScheme.onSurfaceVariant.withValues(
-                                alpha: 0.5,
-                              ),
-                        size: 20,
+          ),
+          const SizedBox(height: NexcSpacing.sm),
+          ...List<Widget>.generate(exercise.sets.length, (int index) {
+            final WorkoutSet set = exercise.sets[index];
+            return Padding(
+              padding: const EdgeInsets.only(bottom: NexcSpacing.sm),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  SizedBox(
+                    width: 48,
+                    child: Text(
+                      '${index + 1}',
+                      style: theme.textTheme.labelLarge?.copyWith(
+                        color: theme.colorScheme.onSurfaceVariant,
                       ),
-                    ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          _setValue(context, set),
+                          style: theme.textTheme.bodyMedium,
+                        ),
+                        if (set.setType != SetType.NORMAL) ...<Widget>[
+                          const SizedBox(height: NexcSpacing.xs),
+                          Wrap(
+                            spacing: NexcSpacing.xs,
+                            runSpacing: NexcSpacing.xs,
+                            children: <Widget>[
+                              NexcBadge(
+                                set.setType.displayName,
+                                tone: NexcBadgeTone.warning,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                  if (set.rpe != null)
+                    NexcBadge(l10n.rpeWithValue('${set.rpe}')),
+                  if (set.rir != null) ...<Widget>[
+                    const SizedBox(width: NexcSpacing.xs),
+                    NexcBadge(l10n.rirWithValue('${set.rir}')),
                   ],
-                ),
-              );
-            }),
-          ],
-        ),
+                  if (!isRoutine) ...<Widget>[
+                    const SizedBox(width: NexcSpacing.sm),
+                    Icon(
+                      set.completed ? NexcIcons.check : NexcIcons.close,
+                      size: 18,
+                      color: set.completed
+                          ? theme.colorScheme.primary
+                          : theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }),
+        ],
       ),
     );
+  }
+
+  String _setValue(BuildContext context, WorkoutSet set) {
+    final String reps = context.l10n.repsCount(set.reps);
+    switch (exercise.exercise.setMode) {
+      case SetMode.DURATION:
+        return formatClock(set.elapsedTime);
+      case SetMode.DURATION_WITH_LOAD:
+        return '${formatWeight(set.load, unitSystem, suffix: unitSystem.suffix)}'
+            ' × ${formatClock(set.elapsedTime)}';
+      case SetMode.BODYWEIGHT:
+        return reps;
+      case SetMode.BODYWEIGHT_WITH_LOAD:
+      case SetMode.LOAD:
+        return '${formatWeight(set.load, unitSystem, suffix: unitSystem.suffix)}'
+            ' × $reps';
+    }
   }
 }

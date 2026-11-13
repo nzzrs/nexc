@@ -21,7 +21,11 @@ import '../../core/db/relations.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/util/exercise_set_mode_helper.dart';
 import '../../core/util/workout_stats_helper.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/shapes.dart';
+import '../../core/theme/spacing.dart';
 import '../../core/util/unit_system.dart';
+import '../../l10n/app_localizations.dart';
 
 /// Formats the latest body-weight measurement for the AI user context.
 ///
@@ -84,7 +88,7 @@ class ProposedRoutine {
   factory ProposedRoutine.fromJson(Map<String, dynamic> json) {
     final list = (json['exercises'] as List? ?? json['workout'] as List? ?? []);
     return ProposedRoutine(
-      title: (json['title'] ?? json['name'] ?? 'Custom Routine').toString(),
+      title: (json['title'] ?? json['name'] ?? '').toString(),
       notes:
           (json['notes'] ??
                   json['description'] ??
@@ -108,15 +112,37 @@ class WorkoutAiChatScreen extends ConsumerStatefulWidget {
 class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  final List<Map<String, String>> _messages = [
-    {
-      'role': 'model',
-      'content':
-          'Hi! I am your AI Workout Assistant. Tell me what kind of workout routine or guidance you need today, and I will tailor it based on your fitness preferences and history.',
-    },
-  ];
+  final List<Map<String, String>> _messages = <Map<String, String>>[];
   bool _isLoading = false;
-  final Set<int> _savedProposalMessageIndices = {};
+  bool _greetingAdded = false;
+  String? _error;
+  String? _lastUserMessage;
+  final Set<int> _savedProposalMessageIndices = <int>{};
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_greetingAdded) return;
+    _greetingAdded = true;
+    _messages.add(<String, String>{
+      'role': 'model',
+      'content': context.l10n.aiTryAsking,
+    });
+  }
+
+  void _clearChat() {
+    setState(() {
+      _messages
+        ..clear()
+        ..add(<String, String>{
+          'role': 'model',
+          'content': context.l10n.aiTryAsking,
+        });
+      _savedProposalMessageIndices.clear();
+      _error = null;
+      _lastUserMessage = null;
+    });
+  }
 
   @override
   void dispose() {
@@ -177,9 +203,9 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
 
     final exerciseMatches = exerciseLineRegExp.allMatches(content).toList();
     if (exerciseMatches.length >= 2) {
-      final title = titleMatch != null
+      final String title = titleMatch != null
           ? titleMatch.group(1)!.trim()
-          : 'AI Tailored Routine';
+          : '';
       final exercises = exerciseMatches.map((m) {
         final name = m.group(1)!.trim();
         final sets = int.tryParse(m.group(2) ?? '3') ?? 3;
@@ -187,11 +213,7 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
         return ProposedExerciseItem(name: name, sets: sets, reps: reps);
       }).toList();
 
-      return ProposedRoutine(
-        title: title,
-        notes: 'AI generated routine proposal',
-        exercises: exercises,
-      );
+      return ProposedRoutine(title: title, notes: '', exercises: exercises);
     }
 
     return null;
@@ -203,6 +225,7 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
   ) async {
     final datasetRepo = ref.read(datasetRepositoryProvider);
     final workoutRepo = ref.read(workoutRepositoryProvider);
+    final AppLocalizations l10n = context.l10n;
 
     try {
       final allExercises = await datasetRepo.getExercises();
@@ -282,11 +305,13 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
         );
       }
 
-      final workout = Workout(
+      final Workout workout = Workout(
         id: 0,
         routineId: 0,
         notes: proposal.notes,
-        title: proposal.title,
+        title: proposal.title.trim().isEmpty
+            ? l10n.createRoutineTitle
+            : proposal.title,
         state: WorkoutState.ROUTINE,
         timeElapsed: 0,
         position: 0,
@@ -308,7 +333,6 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
         _savedProposalMessageIndices.add(messageIndex);
       });
 
-      final l10n = context.l10n;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(l10n.routineSavedToRoutines(proposal.title)),
@@ -332,14 +356,18 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
     }
   }
 
-  Future<void> _sendMessage() async {
-    final text = _textController.text.trim();
+  Future<void> _sendMessage({String? retryText}) async {
+    final text = (retryText ?? _textController.text).trim();
     if (text.isEmpty || _isLoading) return;
 
     _textController.clear();
     setState(() {
-      _messages.add({'role': 'user', 'content': text});
+      if (retryText == null) {
+        _messages.add(<String, String>{'role': 'user', 'content': text});
+      }
+      _lastUserMessage = text;
       _isLoading = true;
+      _error = null;
     });
     _scrollToBottom();
 
@@ -480,66 +508,93 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
 
     final historyForApi = _messages.sublist(0, _messages.length - 1);
 
-    final response = await AIService.chatWithWorkoutAssistant(
-      provider: settings.aiProvider,
-      apiKey: settings.aiToken,
-      model: settings.aiModel,
-      userContext: contextPrompt,
-      conversationHistory: historyForApi,
-      userMessage: text,
-      exerciseCatalog: exerciseCatalog,
-    );
+    try {
+      final response = await AIService.chatWithWorkoutAssistant(
+        provider: settings.aiProvider,
+        apiKey: settings.aiToken,
+        model: settings.aiModel,
+        userContext: contextPrompt,
+        conversationHistory: historyForApi,
+        userMessage: text,
+        exerciseCatalog: exerciseCatalog,
+      );
 
-    if (!mounted) return;
+      if (!mounted) return;
 
-    setState(() {
-      _messages.add({'role': 'model', 'content': response});
-      _isLoading = false;
-    });
-    _scrollToBottom();
+      setState(() {
+        _messages.add(<String, String>{'role': 'model', 'content': response});
+        _isLoading = false;
+        _error = null;
+      });
+      _scrollToBottom();
+    } catch (error) {
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _error = context.l10n.aiError('$error');
+      });
+    }
+  }
+
+  void _sendSuggestion(String prompt) {
+    _textController.text = prompt;
+    _sendMessage();
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final settings = ref.watch(settingsProvider);
-    final isAiEnabled = settings.aiWorkoutGenerationEnabled;
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    final SettingsState settings = ref.watch(settingsProvider);
+    final bool isAiEnabled = settings.aiWorkoutGenerationEnabled;
+    final List<String> suggestions = <String>[
+      l10n.createRoutineTitle,
+      l10n.startEmptyWorkout,
+      l10n.aiWorkoutCreator,
+    ];
 
     return Scaffold(
       appBar: AppBar(
         title: Text(l10n.aiWorkoutCreator),
-        actions: [
+        actions: <Widget>[
           IconButton(
-            icon: const Icon(Icons.settings_outlined),
+            icon: const Icon(NexcIcons.delete),
+            tooltip: l10n.aiClearChat,
+            onPressed: _messages.length <= 1 && _error == null
+                ? null
+                : _clearChat,
+          ),
+          IconButton(
+            icon: const Icon(NexcIcons.settings),
             tooltip: l10n.aiPreferences,
-            onPressed: () {
-              Navigator.pushNamed(context, '/settings');
-            },
+            onPressed: () => Navigator.pushNamed(context, '/settings'),
           ),
         ],
       ),
       body: Column(
-        children: [
+        children: <Widget>[
           if (!isAiEnabled)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(
+                horizontal: NexcSpacing.lg,
+                vertical: NexcSpacing.sm,
+              ),
               color: theme.colorScheme.errorContainer,
               child: Row(
-                children: [
+                children: <Widget>[
                   Icon(
-                    Icons.info_outline,
+                    NexcIcons.warning,
                     size: 20,
                     color: theme.colorScheme.onErrorContainer,
                   ),
-                  const SizedBox(width: 10),
+                  const SizedBox(width: NexcSpacing.sm),
                   Expanded(
                     child: Text(
                       l10n.aiGenerationTurnedOff,
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.onErrorContainer,
-                        fontWeight: FontWeight.bold,
+                        fontWeight: FontWeight.w700,
                       ),
                     ),
                   ),
@@ -549,164 +604,134 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
                       l10n.enableAction,
                       style: TextStyle(
                         color: theme.colorScheme.onErrorContainer,
-                        fontWeight: FontWeight.bold,
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-          Expanded(
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: const EdgeInsets.all(16),
-              itemCount: _messages.length,
-              itemBuilder: (context, index) {
-                final message = _messages[index];
-                final isUser = message['role'] == 'user';
-                final content = message['content'] ?? '';
-                final proposal = isUser ? null : _parseProposal(content);
-                final isProposalSaved = _savedProposalMessageIndices.contains(
-                  index,
-                );
-
-                return Align(
-                  alignment: isUser
-                      ? Alignment.centerRight
-                      : Alignment.centerLeft,
-                  child: Container(
-                    constraints: BoxConstraints(
-                      maxWidth: MediaQuery.of(context).size.width * 0.85,
-                    ),
-                    margin: const EdgeInsets.symmetric(vertical: 6),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isUser
-                          ? theme.colorScheme.primary
-                          : theme.colorScheme.surfaceContainerHighest,
-                      borderRadius: BorderRadius.only(
-                        topLeft: const Radius.circular(16),
-                        topRight: const Radius.circular(16),
-                        bottomLeft: Radius.circular(isUser ? 16 : 4),
-                        bottomRight: Radius.circular(isUser ? 4 : 16),
+          if (_error != null)
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(
+                NexcSpacing.lg,
+                NexcSpacing.sm,
+                NexcSpacing.lg,
+                0,
+              ),
+              padding: const EdgeInsets.all(NexcSpacing.md),
+              decoration: BoxDecoration(
+                color: theme.colorScheme.errorContainer,
+                borderRadius: NexcShapes.mdRadius,
+              ),
+              child: Row(
+                children: <Widget>[
+                  Icon(
+                    NexcIcons.warning,
+                    color: theme.colorScheme.onErrorContainer,
+                  ),
+                  const SizedBox(width: NexcSpacing.sm),
+                  Expanded(
+                    child: Text(
+                      _error!,
+                      style: theme.textTheme.bodySmall?.copyWith(
+                        color: theme.colorScheme.onErrorContainer,
                       ),
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          content,
-                          style: theme.textTheme.bodyMedium?.copyWith(
-                            color: isUser
-                                ? theme.colorScheme.onPrimary
-                                : theme.colorScheme.onSurfaceVariant,
+                  ),
+                  TextButton(
+                    onPressed: _lastUserMessage == null || _isLoading
+                        ? null
+                        : () => _sendMessage(retryText: _lastUserMessage),
+                    child: Text(l10n.aiRetry),
+                  ),
+                ],
+              ),
+            ),
+          Expanded(
+            child: LayoutBuilder(
+              builder: (BuildContext context, BoxConstraints constraints) {
+                final double bubbleWidth = constraints.maxWidth.isFinite
+                    ? constraints.maxWidth * 0.82
+                    : 280;
+                return ListView.builder(
+                  controller: _scrollController,
+                  padding: const EdgeInsets.all(NexcSpacing.lg),
+                  itemCount: _messages.length,
+                  itemBuilder: (BuildContext context, int index) {
+                    final Map<String, String> message = _messages[index];
+                    final bool isUser = message['role'] == 'user';
+                    final String content = message['content'] ?? '';
+                    final ProposedRoutine? proposal = isUser
+                        ? null
+                        : _parseProposal(content);
+                    final bool isProposalSaved = _savedProposalMessageIndices
+                        .contains(index);
+
+                    return Align(
+                      alignment: isUser
+                          ? Alignment.centerRight
+                          : Alignment.centerLeft,
+                      child: Container(
+                        constraints: BoxConstraints(maxWidth: bubbleWidth),
+                        margin: const EdgeInsets.symmetric(
+                          vertical: NexcSpacing.xs,
+                        ),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: NexcSpacing.lg,
+                          vertical: NexcSpacing.md,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isUser
+                              ? theme.colorScheme.primary
+                              : theme.colorScheme.surfaceContainerHigh,
+                          borderRadius: BorderRadius.only(
+                            topLeft: NexcShapes.mdRadius.topLeft,
+                            topRight: NexcShapes.mdRadius.topRight,
+                            bottomLeft: Radius.circular(isUser ? 16 : 4),
+                            bottomRight: Radius.circular(isUser ? 4 : 16),
                           ),
                         ),
-                        if (proposal != null) ...[
-                          const SizedBox(height: 12),
-                          Container(
-                            padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(
-                              color: theme.colorScheme.surface,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: theme.colorScheme.primary.withValues(
-                                  alpha: 0.3,
-                                ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: <Widget>[
+                            Text(
+                              content,
+                              style: theme.textTheme.bodyMedium?.copyWith(
+                                color: isUser
+                                    ? theme.colorScheme.onPrimary
+                                    : theme.colorScheme.onSurface,
                               ),
                             ),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Row(
-                                  children: [
-                                    Icon(
-                                      Icons.fitness_center,
-                                      size: 18,
-                                      color: theme.colorScheme.primary,
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Expanded(
-                                      child: Text(
-                                        proposal.title,
-                                        style: theme.textTheme.titleSmall
-                                            ?.copyWith(
-                                              fontWeight: FontWeight.bold,
-                                              color: theme.colorScheme.primary,
-                                            ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  l10n.exercisesWithList(
-                                    proposal.exercises.length,
-                                    proposal.exercises
-                                        .map(
-                                          (e) =>
-                                              '${e.name} (${e.sets}x${e.reps})',
-                                        )
-                                        .join(', '),
-                                  ),
-                                  style: theme.textTheme.bodySmall?.copyWith(
-                                    color: theme.colorScheme.onSurfaceVariant,
-                                  ),
-                                ),
-                                const SizedBox(height: 10),
-                                FilledButton.icon(
-                                  style: FilledButton.styleFrom(
-                                    visualDensity: VisualDensity.compact,
-                                    backgroundColor: isProposalSaved
-                                        ? theme
-                                              .colorScheme
-                                              .surfaceContainerHighest
-                                        : theme.colorScheme.primary,
-                                    foregroundColor: isProposalSaved
-                                        ? theme.colorScheme.onSurfaceVariant
-                                        : theme.colorScheme.onPrimary,
-                                  ),
-                                  onPressed: isProposalSaved
-                                      ? null
-                                      : () => _saveRoutineToDb(proposal, index),
-                                  icon: Icon(
-                                    isProposalSaved
-                                        ? Icons.check
-                                        : Icons.bookmark_add_outlined,
-                                    size: 16,
-                                  ),
-                                  label: Text(
-                                    isProposalSaved
-                                        ? l10n.routineSaved
-                                        : l10n.saveAsRoutine,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
+                            if (proposal != null) ...<Widget>[
+                              const SizedBox(height: NexcSpacing.md),
+                              _ProposalCard(
+                                proposal: proposal,
+                                saved: isProposalSaved,
+                                onSave: () => _saveRoutineToDb(proposal, index),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 );
               },
             ),
           ),
           if (_isLoading)
             Padding(
-              padding: const EdgeInsets.symmetric(vertical: 8),
+              padding: const EdgeInsets.symmetric(vertical: NexcSpacing.sm),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
-                children: [
+                children: <Widget>[
                   const SizedBox(
                     width: 18,
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: NexcSpacing.md),
                   Text(
                     l10n.aiCoachThinking,
                     style: theme.textTheme.bodySmall?.copyWith(
@@ -717,48 +742,151 @@ class _WorkoutAiChatScreenState extends ConsumerState<WorkoutAiChatScreen> {
                 ],
               ),
             ),
+          if (_messages.length <= 1 && !_isLoading && isAiEnabled)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(
+                NexcSpacing.lg,
+                NexcSpacing.sm,
+                NexcSpacing.lg,
+                0,
+              ),
+              child: Wrap(
+                spacing: NexcSpacing.sm,
+                runSpacing: NexcSpacing.sm,
+                children: <Widget>[
+                  for (final String suggestion in suggestions)
+                    ActionChip(
+                      label: Text(suggestion),
+                      onPressed: () => _sendSuggestion(suggestion),
+                    ),
+                ],
+              ),
+            ),
           SafeArea(
+            top: false,
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(
+                horizontal: NexcSpacing.md,
+                vertical: NexcSpacing.sm,
+              ),
               decoration: BoxDecoration(
                 color: theme.colorScheme.surface,
                 border: Border(
-                  top: BorderSide(
-                    color: theme.dividerColor.withValues(alpha: 0.2),
-                  ),
+                  top: BorderSide(color: theme.colorScheme.outlineVariant),
                 ),
               ),
               child: Row(
-                children: [
+                children: <Widget>[
                   Expanded(
                     child: TextField(
                       controller: _textController,
                       enabled: isAiEnabled && !_isLoading,
+                      minLines: 1,
+                      maxLines: 4,
                       decoration: InputDecoration(
                         hintText: isAiEnabled
                             ? l10n.askOrCreateWorkout
                             : l10n.aiGenerationDisabledHint,
-                        border: const OutlineInputBorder(
-                          borderRadius: BorderRadius.all(Radius.circular(24)),
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 10,
-                        ),
                       ),
                       onSubmitted: (_) => _sendMessage(),
                     ),
                   ),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: NexcSpacing.sm),
                   IconButton.filled(
+                    tooltip: l10n.confirmAction,
                     onPressed: (isAiEnabled && !_isLoading)
-                        ? _sendMessage
+                        ? () => _sendMessage()
                         : null,
                     icon: const Icon(Icons.send),
                   ),
                 ],
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProposalCard extends StatelessWidget {
+  final ProposedRoutine proposal;
+  final bool saved;
+  final VoidCallback onSave;
+
+  const _ProposalCard({
+    required this.proposal,
+    required this.saved,
+    required this.onSave,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    final String title = proposal.title.trim().isEmpty
+        ? l10n.createRoutineTitle
+        : proposal.title;
+
+    return Container(
+      padding: const EdgeInsets.all(NexcSpacing.md),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: NexcShapes.mdRadius,
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: <Widget>[
+          Row(
+            children: <Widget>[
+              Icon(
+                NexcIcons.workout,
+                size: 18,
+                color: theme.colorScheme.primary,
+              ),
+              const SizedBox(width: NexcSpacing.sm),
+              Expanded(
+                child: Text(
+                  title,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.primary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: NexcSpacing.sm),
+          for (final ProposedExerciseItem item in proposal.exercises)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Icon(
+                    NexcIcons.chevron,
+                    size: 16,
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                  const SizedBox(width: NexcSpacing.xs),
+                  Expanded(
+                    child: Text(
+                      '${item.name} · ${item.sets} × ${item.reps}',
+                      style: theme.textTheme.bodySmall,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          const SizedBox(height: NexcSpacing.sm),
+          FilledButton.icon(
+            onPressed: saved ? null : onSave,
+            icon: Icon(
+              saved ? NexcIcons.check : Icons.bookmark_add_outlined,
+              size: 16,
+            ),
+            label: Text(saved ? l10n.routineSaved : l10n.saveAsRoutine),
           ),
         ],
       ),

@@ -16,6 +16,8 @@ import '../../core/integrations/ai_service.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/components/clearable_search_field.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/spacing.dart';
 
 class ExercisesScreen extends ConsumerStatefulWidget {
   final bool
@@ -207,8 +209,9 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
         ),
         actions: [
           IconButton(
+            tooltip: l10n.moreOptions,
             icon: Icon(
-              _showFilters ? Icons.filter_alt : Icons.filter_alt_outlined,
+              _showFilters ? NexcIcons.filter : Icons.filter_alt_outlined,
             ),
             onPressed: () {
               setState(() {
@@ -259,15 +262,19 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                       label: Text(
                         _selectedLevel == null
                             ? l10n.levelLabel
-                            : l10n.levelWithValue(_selectedLevel!.name),
+                            : _optionLabel(context, _selectedLevel!),
                       ),
                       selected: _selectedLevel != null,
-                      onSelected: (selected) {
+                      onSelected: (bool selected) {
+                        if (!selected) {
+                          setState(() => _selectedLevel = null);
+                          return;
+                        }
                         _showFilterSelector<Level>(
                           title: l10n.selectLevel,
                           values: Level.values,
                           current: _selectedLevel,
-                          onSelected: (val) =>
+                          onSelected: (Level? val) =>
                               setState(() => _selectedLevel = val),
                         );
                       },
@@ -277,15 +284,19 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                       label: Text(
                         _selectedForce == null
                             ? l10n.forceLabel
-                            : l10n.forceWithValue(_selectedForce!.name),
+                            : _optionLabel(context, _selectedForce!),
                       ),
                       selected: _selectedForce != null,
-                      onSelected: (selected) {
+                      onSelected: (bool selected) {
+                        if (!selected) {
+                          setState(() => _selectedForce = null);
+                          return;
+                        }
                         _showFilterSelector<Force>(
                           title: l10n.selectForce,
                           values: Force.values,
                           current: _selectedForce,
-                          onSelected: (val) =>
+                          onSelected: (Force? val) =>
                               setState(() => _selectedForce = val),
                         );
                       },
@@ -295,15 +306,19 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                       label: Text(
                         _selectedMechanic == null
                             ? l10n.mechanicLabel
-                            : l10n.mechanicWithValue(_selectedMechanic!.name),
+                            : _optionLabel(context, _selectedMechanic!),
                       ),
                       selected: _selectedMechanic != null,
-                      onSelected: (selected) {
+                      onSelected: (bool selected) {
+                        if (!selected) {
+                          setState(() => _selectedMechanic = null);
+                          return;
+                        }
                         _showFilterSelector<Mechanic>(
                           title: l10n.selectMechanic,
                           values: Mechanic.values,
                           current: _selectedMechanic,
-                          onSelected: (val) =>
+                          onSelected: (Mechanic? val) =>
                               setState(() => _selectedMechanic = val),
                         );
                       },
@@ -313,15 +328,19 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                       label: Text(
                         _selectedEquipment == null
                             ? l10n.equipmentLabel
-                            : l10n.equipmentWithValue(_selectedEquipment!.name),
+                            : _optionLabel(context, _selectedEquipment!),
                       ),
                       selected: _selectedEquipment != null,
-                      onSelected: (selected) {
+                      onSelected: (bool selected) {
+                        if (!selected) {
+                          setState(() => _selectedEquipment = null);
+                          return;
+                        }
                         _showFilterSelector<Equipment>(
                           title: l10n.selectEquipment,
                           values: Equipment.values,
                           current: _selectedEquipment,
-                          onSelected: (val) =>
+                          onSelected: (Equipment? val) =>
                               setState(() => _selectedEquipment = val),
                         );
                       },
@@ -331,15 +350,19 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                       label: Text(
                         _selectedMuscle == null
                             ? l10n.muscleLabel
-                            : l10n.muscleWithValue(_selectedMuscle!.name),
+                            : _optionLabel(context, _selectedMuscle!),
                       ),
                       selected: _selectedMuscle != null,
-                      onSelected: (selected) {
+                      onSelected: (bool selected) {
+                        if (!selected) {
+                          setState(() => _selectedMuscle = null);
+                          return;
+                        }
                         _showFilterSelector<Muscle>(
                           title: l10n.selectMuscle,
                           values: Muscle.values,
                           current: _selectedMuscle,
-                          onSelected: (val) =>
+                          onSelected: (Muscle? val) =>
                               setState(() => _selectedMuscle = val),
                         );
                       },
@@ -349,15 +372,19 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                       label: Text(
                         _selectedCategory == null
                             ? l10n.categoryLabel
-                            : l10n.categoryWithValue(_selectedCategory!.name),
+                            : _optionLabel(context, _selectedCategory!),
                       ),
                       selected: _selectedCategory != null,
-                      onSelected: (selected) {
+                      onSelected: (bool selected) {
+                        if (!selected) {
+                          setState(() => _selectedCategory = null);
+                          return;
+                        }
                         _showFilterSelector<Category>(
                           title: l10n.selectCategory,
                           values: Category.values,
                           current: _selectedCategory,
-                          onSelected: (val) =>
+                          onSelected: (Category? val) =>
                               setState(() => _selectedCategory = val),
                         );
                       },
@@ -392,7 +419,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                             _onlyCustom = false;
                           });
                         },
-                        child: Text(l10n.reset),
+                        child: Text(l10n.clearFilters),
                       ),
                     ],
                   ],
@@ -466,8 +493,17 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                   }
                 }
 
-                // Sort full catalog list
-                final sorted = List<ExerciseDataDC>.from(filtered);
+                // Sort full catalog list, excluding suggestions already shown
+                // in the AI section above.
+                final Set<String> suggestionIds = aiSuggestions
+                    .map((ExerciseDataDC exercise) => exercise.id)
+                    .toSet();
+                final sorted = filtered
+                    .where(
+                      (ExerciseDataDC exercise) =>
+                          !suggestionIds.contains(exercise.id),
+                    )
+                    .toList();
                 sorted.sort((a, b) {
                   final aSelected = _selectedExercises.contains(a);
                   final bSelected = _selectedExercises.contains(b);
@@ -626,35 +662,28 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
                         ),
                         style: theme.textTheme.bodySmall,
                       ),
-                      trailing: widget.isSelectionMode
-                          ? (widget.addExercises
-                                ? Checkbox(
-                                    value: isSelected,
-                                    onChanged: (val) {
-                                      setState(() {
-                                        if (val == true) {
-                                          _selectedExercises.add(ex);
-                                        } else {
-                                          _selectedExercises.removeWhere(
-                                            (e) => e.id == ex.id,
-                                          );
-                                        }
-                                      });
-                                    },
-                                  )
-                                : IconButton(
-                                    icon: const Icon(Icons.check),
-                                    onPressed: () {
-                                      Navigator.pop(context, [ex]);
-                                    },
-                                  ))
-                          : null,
                       onTap: () {
-                        Navigator.pushNamed(
-                          context,
-                          '/exercises/info',
-                          arguments: ex.id,
-                        );
+                        if (!widget.isSelectionMode) {
+                          Navigator.pushNamed(
+                            context,
+                            '/exercises/info',
+                            arguments: ex.id,
+                          );
+                          return;
+                        }
+                        if (widget.addExercises) {
+                          setState(() {
+                            if (isSelected) {
+                              _selectedExercises.removeWhere(
+                                (ExerciseDataDC e) => e.id == ex.id,
+                              );
+                            } else {
+                              _selectedExercises.add(ex);
+                            }
+                          });
+                        } else {
+                          Navigator.pop(context, <ExerciseDataDC>[ex]);
+                        }
                       },
                     ),
                   );
@@ -733,58 +762,127 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
     );
   }
 
-  void _showFilterSelector<T>({
+  String _optionLabel<T>(BuildContext context, T value) {
+    final String name = value.toString().split('.').last;
+    final String human = name
+        .split('_')
+        .where((String part) => part.isNotEmpty)
+        .map(
+          (String part) =>
+              part[0].toUpperCase() + part.substring(1).toLowerCase(),
+        )
+        .join(' ');
+    final l10n = context.l10n;
+    if (value is Level) return l10n.levelWithValue(human);
+    if (value is Force) return l10n.forceWithValue(human);
+    if (value is Mechanic) return l10n.mechanicWithValue(human);
+    if (value is Equipment) return l10n.equipmentWithValue(human);
+    if (value is Muscle) return l10n.muscleWithValue(human);
+    if (value is Category) return l10n.categoryWithValue(human);
+    return human;
+  }
+
+  Future<void> _showFilterSelector<T>({
     required String title,
     required List<T> values,
     required T? current,
     required Function(T?) onSelected,
-  }) {
-    showModalBottomSheet(
+  }) async {
+    final l10n = context.l10n;
+    T? pending = current;
+    await showModalBottomSheet<void>(
       context: context,
-      builder: (context) {
-        return Container(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Text(
-                title,
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 12),
-              Expanded(
-                child: ListView(
-                  children: [
-                    ListTile(
-                      title: Text(context.l10n.all),
-                      trailing: current == null
-                          ? const Icon(Icons.check)
-                          : null,
-                      onTap: () {
-                        onSelected(null);
-                        Navigator.pop(context);
-                      },
-                    ),
-                    ...values.map((v) {
-                      final name = v.toString().split('.').last;
-                      return ListTile(
-                        title: Text(name),
-                        trailing: current == v ? const Icon(Icons.check) : null,
-                        onTap: () {
-                          onSelected(v);
-                          Navigator.pop(context);
-                        },
-                      );
-                    }),
-                  ],
+      isScrollControlled: true,
+      useSafeArea: true,
+      builder: (BuildContext sheetContext) {
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            final double maxHeight = MediaQuery.sizeOf(context).height * 0.72;
+            return SafeArea(
+              top: false,
+              child: ConstrainedBox(
+                constraints: BoxConstraints(maxHeight: maxHeight),
+                child: Padding(
+                  padding: const EdgeInsets.fromLTRB(
+                    NexcSpacing.xl,
+                    NexcSpacing.sm,
+                    NexcSpacing.xl,
+                    NexcSpacing.lg,
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: <Widget>[
+                      Text(
+                        title,
+                        style: Theme.of(context).textTheme.headlineSmall,
+                      ),
+                      const SizedBox(height: NexcSpacing.md),
+                      Flexible(
+                        child: ListView(
+                          shrinkWrap: true,
+                          children: <Widget>[
+                            ListTile(
+                              shape: const RoundedRectangleBorder(
+                                borderRadius: BorderRadius.all(
+                                  Radius.circular(12),
+                                ),
+                              ),
+                              title: Text(l10n.all),
+                              trailing: pending == null
+                                  ? const Icon(NexcIcons.check)
+                                  : null,
+                              onTap: () {
+                                setModalState(() => pending = null);
+                              },
+                            ),
+                            for (final T value in values)
+                              ListTile(
+                                shape: const RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.all(
+                                    Radius.circular(12),
+                                  ),
+                                ),
+                                title: Text(_optionLabel(context, value)),
+                                trailing: pending == value
+                                    ? const Icon(NexcIcons.check)
+                                    : null,
+                                onTap: () {
+                                  setModalState(() => pending = value);
+                                },
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: NexcSpacing.md),
+                      Row(
+                        children: <Widget>[
+                          Expanded(
+                            child: OutlinedButton(
+                              onPressed: () {
+                                setModalState(() => pending = null);
+                              },
+                              child: Text(l10n.reset),
+                            ),
+                          ),
+                          const SizedBox(width: NexcSpacing.sm),
+                          Expanded(
+                            child: FilledButton(
+                              onPressed: () {
+                                onSelected(pending);
+                                Navigator.pop(context);
+                              },
+                              child: Text(l10n.apply),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ],
-          ),
+            );
+          },
         );
       },
     );
@@ -900,7 +998,7 @@ class _ExercisesScreenState extends ConsumerState<ExercisesScreen> {
       builder: (ctx) => AlertDialog(
         title: Row(
           children: [
-            const Icon(Icons.auto_awesome, color: Colors.amber),
+            Icon(Icons.auto_awesome, color: Theme.of(ctx).colorScheme.primary),
             const SizedBox(width: 8),
             Text(context.l10n.createWithAi),
           ],

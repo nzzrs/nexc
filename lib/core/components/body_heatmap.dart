@@ -8,8 +8,10 @@
  */
 
 import 'package:flutter/material.dart';
+
 import '../db/enums.dart';
 import '../l10n/l10n.dart';
+import '../theme/spacing.dart';
 
 class BodyHeatmap extends StatelessWidget {
   final Map<Muscle, double> intensities; // values 0.0 to 1.0
@@ -18,83 +20,187 @@ class BodyHeatmap extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final ThemeData theme = Theme.of(context);
     final l10n = context.l10n;
-    final isDark = theme.brightness == Brightness.dark;
+    final bool isDark = theme.brightness == Brightness.dark;
 
     return LayoutBuilder(
-      builder: (context, constraints) {
-        final double width = constraints.maxWidth;
-        final double height = width * 0.7; // Aspect ratio
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final double width = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : NexcSpacing.pageMaxWidth;
+        final double height = width * 0.82;
 
         return Container(
           width: width,
           height: height,
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.all(NexcSpacing.sm),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(NexcSpacing.xl),
             color: theme.colorScheme.surfaceContainerHighest.withValues(
               alpha: 0.15,
             ),
           ),
-          child: Row(
+          child: Column(
             children: [
               Expanded(
-                child: Column(
+                child: Row(
                   children: [
-                    Text(
-                      l10n.frontView,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
+                    Expanded(
+                      child: Semantics(
+                        container: true,
+                        label: _semanticsLabel(l10n.frontView),
+                        child: Column(
+                          children: [
+                            Text(
+                              l10n.frontView,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: NexcSpacing.sm),
+                            Expanded(
+                              child: ExcludeSemantics(
+                                child: CustomPaint(
+                                  painter: BodyOutlinePainter(
+                                    intensities: intensities,
+                                    isFront: true,
+                                    theme: theme,
+                                    isDark: isDark,
+                                  ),
+                                  child: const SizedBox.expand(),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    VerticalDivider(
+                      width: NexcSpacing.md,
+                      thickness: 1,
+                      color: theme.colorScheme.outlineVariant,
+                    ),
                     Expanded(
-                      child: CustomPaint(
-                        painter: BodyOutlinePainter(
-                          intensities: intensities,
-                          isFront: true,
-                          theme: theme,
-                          isDark: isDark,
+                      child: Semantics(
+                        container: true,
+                        label: _semanticsLabel(l10n.backView),
+                        child: Column(
+                          children: [
+                            Text(
+                              l10n.backView,
+                              style: theme.textTheme.labelMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: NexcSpacing.sm),
+                            Expanded(
+                              child: ExcludeSemantics(
+                                child: CustomPaint(
+                                  painter: BodyOutlinePainter(
+                                    intensities: intensities,
+                                    isFront: false,
+                                    theme: theme,
+                                    isDark: isDark,
+                                  ),
+                                  child: const SizedBox.expand(),
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
-                        child: Container(),
                       ),
                     ),
                   ],
                 ),
               ),
-              VerticalDivider(
-                width: 1,
-                color: theme.colorScheme.outlineVariant,
-              ),
-              Expanded(
-                child: Column(
-                  children: [
-                    Text(
-                      l10n.backView,
-                      style: theme.textTheme.labelMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Expanded(
-                      child: CustomPaint(
-                        painter: BodyOutlinePainter(
-                          intensities: intensities,
-                          isFront: false,
-                          theme: theme,
-                          isDark: isDark,
-                        ),
-                        child: Container(),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
+              const SizedBox(height: NexcSpacing.sm),
+              _HeatLegend(theme: theme, l10nLabel: l10n.intensityScale),
             ],
           ),
         );
       },
+    );
+  }
+
+  /// Screen-reader summary: only muscles with a non-zero intensity, highest
+  /// first, so the painted silhouette is still usable without sight.
+  String _semanticsLabel(String view) {
+    final List<MapEntry<Muscle, double>> active =
+        intensities.entries
+            .where((MapEntry<Muscle, double> entry) => entry.value > 0)
+            .toList()
+          ..sort(
+            (MapEntry<Muscle, double> a, MapEntry<Muscle, double> b) =>
+                b.value.compareTo(a.value),
+          );
+    if (active.isEmpty) return view;
+    final String details = active
+        .map(
+          (MapEntry<Muscle, double> entry) =>
+              '${_humanize(entry.key.name)} ${(entry.value * 100).round()}%',
+        )
+        .join(', ');
+    return '$view: $details';
+  }
+}
+
+String _humanize(String value) {
+  return value
+      .split('_')
+      .where((String part) => part.isNotEmpty)
+      .map(
+        (String part) =>
+            part[0].toUpperCase() + part.substring(1).toLowerCase(),
+      )
+      .join(' ');
+}
+
+/// Low-to-high heat scale legend.
+class _HeatLegend extends StatelessWidget {
+  final ThemeData theme;
+  final String l10nLabel;
+
+  const _HeatLegend({required this.theme, required this.l10nLabel});
+
+  @override
+  Widget build(BuildContext context) {
+    final ColorScheme scheme = theme.colorScheme;
+    return Row(
+      children: [
+        Text(
+          l10nLabel,
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(width: NexcSpacing.sm),
+        Expanded(
+          child: Container(
+            height: 8,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(NexcSpacing.xs),
+              gradient: LinearGradient(
+                colors: [scheme.primary.withValues(alpha: 0.2), scheme.primary],
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: NexcSpacing.sm),
+        Text(
+          '0%',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+        const SizedBox(width: NexcSpacing.xs),
+        Text(
+          '100%',
+          style: theme.textTheme.labelSmall?.copyWith(
+            color: scheme.onSurfaceVariant,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -113,13 +219,13 @@ class BodyOutlinePainter extends CustomPainter {
   });
 
   Color _getHeatColor(Muscle muscle) {
-    final intensity = intensities[muscle] ?? 0.0;
+    final double raw = intensities[muscle] ?? 0.0;
+    final double intensity = raw.isFinite ? raw.clamp(0.0, 1.0) : 0.0;
     if (intensity == 0.0) {
-      return isDark
-          ? Colors.white.withValues(alpha: 0.08)
-          : Colors.black.withValues(alpha: 0.06);
+      return theme.colorScheme.onSurface.withValues(
+        alpha: isDark ? 0.08 : 0.06,
+      );
     }
-    // Color scale: Primary color at different opacities or HSL gradient
     return Color.lerp(
       theme.colorScheme.primary.withValues(alpha: 0.2),
       theme.colorScheme.primary,
@@ -128,7 +234,7 @@ class BodyOutlinePainter extends CustomPainter {
   }
 
   Color _getOutlineColor() {
-    return isDark ? Colors.white24 : Colors.black26;
+    return theme.colorScheme.outline.withValues(alpha: isDark ? 0.4 : 0.3);
   }
 
   @override
@@ -558,8 +664,23 @@ class BodyOutlinePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant BodyOutlinePainter oldDelegate) {
-    return oldDelegate.intensities != intensities ||
+    return !_sameIntensities(oldDelegate.intensities, intensities) ||
         oldDelegate.isFront != isFront ||
-        oldDelegate.isDark != isDark;
+        oldDelegate.isDark != isDark ||
+        oldDelegate.theme.colorScheme.brightness !=
+            theme.colorScheme.brightness ||
+        oldDelegate.theme.colorScheme.primary != theme.colorScheme.primary ||
+        oldDelegate.theme.colorScheme.outline != theme.colorScheme.outline;
+  }
+
+  static bool _sameIntensities(Map<Muscle, double> a, Map<Muscle, double> b) {
+    if (identical(a, b)) return true;
+    if (a.length != b.length) return false;
+    for (final MapEntry<Muscle, double> entry in a.entries) {
+      if (!b.containsKey(entry.key) || b[entry.key] != entry.value) {
+        return false;
+      }
+    }
+    return true;
   }
 }

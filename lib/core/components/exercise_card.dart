@@ -9,14 +9,40 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import '../../l10n/app_localizations.dart';
+import '../../features/workout/barbell_calculator_sheet.dart';
 import '../db/enums.dart';
 import '../db/relations.dart';
 import '../l10n/l10n.dart';
 import '../providers/settings_provider.dart';
+import '../theme/iconography.dart';
+import '../theme/shapes.dart';
+import '../theme/spacing.dart';
 import '../util/input_sheet_state.dart';
 import '../util/unit_system.dart';
 import 'input_modal_bottom_sheet.dart';
-import '../../features/workout/barbell_calculator_sheet.dart';
+import 'nexc_confirm_sheet.dart';
+
+/// Localized label for a [SetMode] using the existing string keys.
+///
+/// The l10n bundle has no dedicated set-mode keys, so the label is composed
+/// from the localized column names instead of showing the raw enum name.
+String localizedSetModeLabel(BuildContext context, SetMode mode) {
+  final l10n = context.l10n;
+  switch (mode) {
+    case SetMode.LOAD:
+      return l10n.weightColumn;
+    case SetMode.BODYWEIGHT:
+      return l10n.bodyWeightWithUnit(l10n.unitKg);
+    case SetMode.BODYWEIGHT_WITH_LOAD:
+      return '${l10n.bodyWeightWithUnit(l10n.unitKg)} + ${l10n.weightColumn}';
+    case SetMode.DURATION:
+      return l10n.durationLabel;
+    case SetMode.DURATION_WITH_LOAD:
+      return '${l10n.durationLabel} + ${l10n.weightColumn}';
+  }
+}
 
 class ExerciseCard extends ConsumerStatefulWidget {
   const ExerciseCard({
@@ -37,7 +63,7 @@ class ExerciseCard extends ConsumerStatefulWidget {
     required this.updateSetReps,
     required this.updateSetLoad,
     required this.updateSetCompleted,
-    required this.showInfo,
+    this.showInfo,
     this.showRpe = false,
     this.intensityScale = IntensityScale.rpe,
     this.updateSetRpe,
@@ -47,10 +73,6 @@ class ExerciseCard extends ConsumerStatefulWidget {
     this.onSupersetToggle,
     this.onReplace,
     this.onMachineBusy,
-    this.onMoveUp,
-    this.onMoveDown,
-    this.isFirst = false,
-    this.isLast = false,
     this.supersetLabel,
     this.supersetColor,
     this.isReordering = false,
@@ -58,8 +80,7 @@ class ExerciseCard extends ConsumerStatefulWidget {
 
   final int index;
   final ExerciseWithSets exerciseWithSets;
-  final List<dynamic>?
-  previousPerformances; // Matches Compose previous performances
+  final List<dynamic>? previousPerformances;
   final int? idSetWithRunningStopwatch;
   final bool workout;
   final Function(int) addSet;
@@ -73,7 +94,11 @@ class ExerciseCard extends ConsumerStatefulWidget {
   final Function(int, int) updateSetReps;
   final Function(double, int) updateSetLoad;
   final Function(bool, int) updateSetCompleted;
-  final Function(String) showInfo;
+
+  /// Retained for source compatibility with older call sites; the card now
+  /// surfaces information inline and no longer opens a generic info dialog.
+  final Function(String)? showInfo;
+
   final bool showRpe;
   final IntensityScale intensityScale;
   final Function(String, int)? updateSetRpe;
@@ -83,10 +108,6 @@ class ExerciseCard extends ConsumerStatefulWidget {
   final Function(int)? onSupersetToggle;
   final Function(int)? onReplace;
   final Function(int)? onMachineBusy;
-  final Function(int)? onMoveUp;
-  final Function(int)? onMoveDown;
-  final bool isFirst;
-  final bool isLast;
   final String? supersetLabel;
   final Color? supersetColor;
   final bool isReordering;
@@ -146,29 +167,56 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
     return sets.last.load;
   }
 
+  Future<void> _confirmDelete() async {
+    final l10n = context.l10n;
+    final bool? confirmed = await NexcConfirmSheet.show(
+      context: context,
+      title: l10n.delete,
+      message: widget.exerciseWithSets.exerciseDC.name,
+      confirmLabel: l10n.delete,
+      cancelLabel: l10n.cancel,
+      destructive: true,
+    );
+    if (confirmed == true && mounted) {
+      widget.onDelete(widget.exerciseWithSets.exercise.id);
+    }
+  }
+
+  void _submitRestTime() {
+    final int parsed =
+        int.tryParse(_restTimeController.text) ??
+        widget.exerciseWithSets.exercise.restTime;
+    widget.updateExerciseRestTime(parsed, widget.exerciseWithSets.exercise.id);
+  }
+
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final ThemeData theme = Theme.of(context);
     final l10n = context.l10n;
-    final ex = widget.exerciseWithSets.exercise;
-    final dc = widget.exerciseWithSets.exerciseDC;
-    final sets = widget.exerciseWithSets.sets;
-    final showImages = ref.watch(
-      settingsProvider.select((s) => s.showExerciseImages),
+    final Exercise ex = widget.exerciseWithSets.exercise;
+    final ExerciseDataDC dc = widget.exerciseWithSets.exerciseDC;
+    final List<WorkoutSet> sets = widget.exerciseWithSets.sets;
+    final bool showImages = ref.watch(
+      settingsProvider.select((SettingsState s) => s.showExerciseImages),
     );
-    final unitSystem = ref.watch(settingsProvider.select((s) => s.unitSystem));
-    final useScrollWheelForInput = ref.watch(
-      settingsProvider.select((s) => s.useScrollWheelForInput),
+    final UnitSystem unitSystem = ref.watch(
+      settingsProvider.select((SettingsState s) => s.unitSystem),
     );
-    final dismissScrollWheelInputAutomatically = ref.watch(
-      settingsProvider.select((s) => s.dismissScrollWheelInputAutomatically),
+    final bool useScrollWheelForInput = ref.watch(
+      settingsProvider.select((SettingsState s) => s.useScrollWheelForInput),
+    );
+    final bool dismissScrollWheelInputAutomatically = ref.watch(
+      settingsProvider.select(
+        (SettingsState s) => s.dismissScrollWheelInputAutomatically,
+      ),
     );
 
     return Card(
       color: theme.colorScheme.surfaceContainerHigh,
-      margin: const EdgeInsets.only(left: 0, right: 0, bottom: 16),
+      margin: const EdgeInsets.only(bottom: NexcSpacing.lg),
+      elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: NexcShapes.lgRadius,
         side: ex.supersetId != null
             ? BorderSide(
                 color: widget.supersetColor ?? theme.colorScheme.primary,
@@ -176,536 +224,402 @@ class _ExerciseCardState extends ConsumerState<ExerciseCard> {
               )
             : BorderSide.none,
       ),
-      elevation: 2,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (widget.supersetLabel != null) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-              child: Text(
-                widget.supersetLabel!,
-                style: theme.textTheme.labelMedium?.copyWith(
+      child: Padding(
+        padding: const EdgeInsets.all(NexcSpacing.md),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (widget.supersetLabel != null) ...[
+              Align(
+                alignment: Alignment.centerLeft,
+                child: _SupersetChip(
+                  label: widget.supersetLabel!,
                   color: widget.supersetColor ?? theme.colorScheme.primary,
-                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: NexcSpacing.sm),
+            ],
+            _buildHeader(
+              context,
+              ex: ex,
+              dc: dc,
+              showImages: showImages,
+              theme: theme,
+              l10n: l10n,
+            ),
+            if (_isNotesExpanded) ...[
+              const SizedBox(height: NexcSpacing.sm),
+              TextField(
+                key: ValueKey<String>('exercise-notes-${ex.id}'),
+                controller: _notesController,
+                minLines: 2,
+                maxLines: 4,
+                decoration: InputDecoration(
+                  labelText: l10n.notes,
+                  hintText: l10n.addNoteHint,
+                ),
+                onChanged: (String text) =>
+                    widget.updateExerciseNotes(text, ex.id),
+              ),
+            ],
+            if (!widget.isReordering) ...[
+              const SizedBox(height: NexcSpacing.sm),
+              _buildSettingsRow(context, ex: ex, theme: theme, l10n: l10n),
+              const SizedBox(height: NexcSpacing.sm),
+              Divider(height: 1, color: theme.colorScheme.outlineVariant),
+              const SizedBox(height: NexcSpacing.sm),
+              ...List<Widget>.generate(sets.length, (int idx) {
+                final WorkoutSet set = sets[idx];
+                return _SetRow(
+                  key: ValueKey<int>(set.id),
+                  set: set,
+                  index: idx,
+                  setMode: ex.setMode,
+                  unitSystem: unitSystem,
+                  useScrollWheelForInput: useScrollWheelForInput,
+                  dismissScrollWheelInputAutomatically:
+                      dismissScrollWheelInputAutomatically,
+                  workout: widget.workout,
+                  previousSet: _previousSetAt(idx),
+                  onApplyPrevious: widget.applyPreviousSetPerformance == null
+                      ? null
+                      : () => widget.applyPreviousSetPerformance!(set.id),
+                  showRpe: widget.showRpe,
+                  intensityScale: widget.intensityScale,
+                  isThisRunning: widget.idSetWithRunningStopwatch == set.id,
+                  updateSetTime: widget.updateSetTime,
+                  updateSetLoad: widget.updateSetLoad,
+                  updateSetReps: widget.updateSetReps,
+                  updateSetRpe: widget.updateSetRpe,
+                  updateSetRir: widget.updateSetRir,
+                  updateSetCompleted: widget.updateSetCompleted,
+                  deleteSet: widget.deleteSet,
+                  updateIdSetWithRunningStopwatch:
+                      widget.updateIdSetWithRunningStopwatch,
+                );
+              }),
+              const SizedBox(height: NexcSpacing.sm),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  backgroundColor: theme.colorScheme.secondaryContainer,
+                  foregroundColor: theme.colorScheme.onSecondaryContainer,
+                  side: BorderSide.none,
+                ),
+                onPressed: () => widget.addSet(ex.id),
+                icon: const Icon(NexcIcons.add, size: 18),
+                label: Text(l10n.addSet),
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Previous set matching the row index, when one was recorded.
+  WorkoutSet? _previousSetAt(int index) {
+    final List<dynamic>? previous = widget.previousPerformances;
+    if (previous == null || index >= previous.length) return null;
+    final dynamic candidate = previous[index];
+    return candidate is WorkoutSet ? candidate : null;
+  }
+
+  Widget _buildHeader(
+    BuildContext context, {
+    required Exercise ex,
+    required ExerciseDataDC dc,
+    required bool showImages,
+    required ThemeData theme,
+    required AppLocalizations l10n,
+  }) {
+    final String notes = ex.notes.trim();
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        ReorderableDragStartListener(
+          index: widget.index,
+          child: Padding(
+            padding: const EdgeInsets.only(top: NexcSpacing.sm),
+            child: Icon(
+              NexcIcons.drag,
+              color: theme.colorScheme.onSurfaceVariant.withValues(alpha: 0.6),
+            ),
+          ),
+        ),
+        const SizedBox(width: NexcSpacing.sm),
+        GestureDetector(
+          onTap: () => widget.onDetail(ex.id, dc.id),
+          child: Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: theme.colorScheme.surfaceContainerHighest,
+              borderRadius: NexcShapes.smRadius,
+            ),
+            child: ClipRRect(
+              borderRadius: NexcShapes.smRadius,
+              child: showImages && dc.images.isNotEmpty
+                  ? Image.asset(
+                      'assets/exercise_images/${dc.images.first.replaceAll('/', '_')}',
+                      fit: BoxFit.cover,
+                      errorBuilder:
+                          (
+                            BuildContext context,
+                            Object error,
+                            StackTrace? stack,
+                          ) => Icon(
+                            NexcIcons.workout,
+                            color: theme.colorScheme.onSurfaceVariant,
+                          ),
+                    )
+                  : Icon(
+                      NexcIcons.workout,
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+            ),
+          ),
+        ),
+        const SizedBox(width: NexcSpacing.sm),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                dc.name,
+                style: theme.textTheme.titleMedium?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+              ),
+              if (notes.isNotEmpty && !_isNotesExpanded)
+                Text(
+                  notes,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    color: theme.colorScheme.onSurfaceVariant,
+                  ),
+                ),
+            ],
+          ),
+        ),
+        if (_setModeCarriesLoad(ex.setMode))
+          IconButton(
+            tooltip: l10n.plateCalculator,
+            icon: const Icon(Icons.calculate, size: 20),
+            onPressed: () => showBarbellCalculatorSheet(
+              context,
+              initialTargetWeightKg: _lastSetLoadKg(),
+            ),
+          ),
+        IconButton(
+          tooltip: l10n.notes,
+          icon: Icon(
+            _isNotesExpanded ? NexcIcons.expand : NexcIcons.notes,
+            size: 20,
+          ),
+          onPressed: () {
+            setState(() => _isNotesExpanded = !_isNotesExpanded);
+          },
+        ),
+        PopupMenuButton<String>(
+          tooltip: l10n.moreOptions,
+          icon: const Icon(NexcIcons.more, size: 20),
+          onSelected: (String value) {
+            switch (value) {
+              case 'superset':
+                widget.onSupersetToggle?.call(ex.id);
+                break;
+              case 'replace':
+                widget.onReplace?.call(ex.id);
+                break;
+              case 'machine_busy':
+                widget.onMachineBusy?.call(ex.id);
+                break;
+              case 'delete':
+                _confirmDelete();
+                break;
+            }
+          },
+          itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+            if (widget.index > 0 || ex.supersetId != null)
+              PopupMenuItem<String>(
+                value: 'superset',
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    ex.supersetId != null ? Icons.link_off : Icons.link,
+                  ),
+                  title: Text(
+                    ex.supersetId != null
+                        ? l10n.unlinkSuperset
+                        : l10n.linkSuperset,
+                  ),
+                ),
+              ),
+            PopupMenuItem<String>(
+              value: 'replace',
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.swap_horiz),
+                title: Text(l10n.replaceExercise),
+              ),
+            ),
+            PopupMenuItem<String>(
+              value: 'machine_busy',
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(Icons.access_time),
+                title: Text(l10n.machineBusy),
+              ),
+            ),
+            const PopupMenuDivider(),
+            PopupMenuItem<String>(
+              value: 'delete',
+              child: ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: Icon(NexcIcons.delete, color: theme.colorScheme.error),
+                title: Text(
+                  l10n.delete,
+                  style: TextStyle(color: theme.colorScheme.error),
                 ),
               ),
             ),
           ],
-          // Header Row
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
-            child: Row(
-              children: [
-                ReorderableDragStartListener(
-                  index: widget.index,
-                  child: Icon(
-                    Icons.drag_handle,
-                    color: theme.colorScheme.onSurfaceVariant.withValues(
-                      alpha: 0.5,
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => widget.onDetail(ex.id, dc.id),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 50,
-                          height: 50,
-                          decoration: BoxDecoration(
-                            color: theme.colorScheme.surfaceContainerHighest,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: showImages && dc.images.isNotEmpty
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.asset(
-                                    'assets/exercise_images/${dc.images.first.replaceAll('/', '_')}',
-                                    fit: BoxFit.cover,
-                                    errorBuilder:
-                                        (context, error, stackTrace) => Icon(
-                                          Icons.fitness_center,
-                                          color: theme
-                                              .colorScheme
-                                              .onSurfaceVariant,
-                                        ),
-                                  ),
-                                )
-                              : Icon(
-                                  Icons.fitness_center,
-                                  color: theme.colorScheme.onSurfaceVariant,
-                                ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            dc.name,
-                            style: theme.textTheme.titleMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                // Plate calculator is only meaningful for sets that carry load.
-                if (_setModeCarriesLoad(ex.setMode))
-                  IconButton(
-                    tooltip: l10n.plateCalculator,
-                    icon: const Icon(Icons.calculate),
-                    onPressed: () => showBarbellCalculatorSheet(
-                      context,
-                      initialTargetWeightKg: _lastSetLoadKg(),
-                    ),
-                  ),
-                // Options menu button
-                PopupMenuButton<String>(
-                  icon: const Icon(Icons.more_vert),
-                  onSelected: (value) {
-                    switch (value) {
-                      case 'superset':
-                        widget.onSupersetToggle?.call(ex.id);
-                        break;
-                      case 'replace':
-                        widget.onReplace?.call(ex.id);
-                        break;
-                      case 'machine_busy':
-                        widget.onMachineBusy?.call(ex.id);
-                        break;
-                      case 'delete':
-                        widget.onDelete(ex.id);
-                        break;
-                    }
-                  },
-                  itemBuilder: (context) => [
-                    if (widget.index > 0 || ex.supersetId != null)
-                      PopupMenuItem(
-                        value: 'superset',
-                        child: Row(
-                          children: [
-                            Icon(
-                              ex.supersetId != null
-                                  ? Icons.link_off
-                                  : Icons.link,
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              ex.supersetId != null
-                                  ? l10n.unlinkSuperset
-                                  : l10n.linkSuperset,
-                            ),
-                          ],
-                        ),
-                      ),
-                    PopupMenuItem(
-                      value: 'replace',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.swap_horiz),
-                          const SizedBox(width: 8),
-                          Text(l10n.replaceExercise),
-                        ],
-                      ),
-                    ),
-                    PopupMenuItem(
-                      value: 'machine_busy',
-                      child: Row(
-                        children: [
-                          const Icon(Icons.access_time),
-                          const SizedBox(width: 8),
-                          Text(l10n.machineBusy),
-                        ],
-                      ),
-                    ),
-                    const PopupMenuDivider(),
-                    PopupMenuItem(
-                      value: 'delete',
-                      child: Row(
-                        children: [
-                          Icon(Icons.delete, color: theme.colorScheme.error),
-                          const SizedBox(width: 8),
-                          Text(
-                            l10n.delete,
-                            style: TextStyle(color: theme.colorScheme.error),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 12),
+        ),
+      ],
+    );
+  }
 
-          // Notes TextField
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: TextField(
-              controller: _notesController,
-              maxLines: _isNotesExpanded ? null : 1,
-              minLines: _isNotesExpanded ? 3 : 1,
-              decoration: InputDecoration(
-                labelText: l10n.notes,
-                border: const OutlineInputBorder(),
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _isNotesExpanded ? Icons.expand_less : Icons.expand_more,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _isNotesExpanded = !_isNotesExpanded;
-                    });
-                  },
-                ),
+  Widget _buildSettingsRow(
+    BuildContext context, {
+    required Exercise ex,
+    required ThemeData theme,
+    required AppLocalizations l10n,
+  }) {
+    return Wrap(
+      spacing: NexcSpacing.sm,
+      runSpacing: NexcSpacing.sm,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.restTimeLabel,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
               ),
-              onChanged: (text) => widget.updateExerciseNotes(text, ex.id),
             ),
-          ),
-          const SizedBox(height: 12),
-
-          AnimatedSize(
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: widget.isReordering
-                ? const SizedBox.shrink()
-                : Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 12),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Row(
-                          children: [
-                            Text(
-                              l10n.restTimeLabel,
-                              style: theme.textTheme.bodyMedium,
-                            ),
-                            SizedBox(
-                              width: 60,
-                              child: TextFormField(
-                                controller: _restTimeController,
-                                keyboardType: TextInputType.number,
-                                textAlign: TextAlign.center,
-                                style: theme.textTheme.bodyMedium?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                ),
-                                decoration: const InputDecoration(
-                                  isDense: true,
-                                  contentPadding: EdgeInsets.symmetric(
-                                    horizontal: 4,
-                                    vertical: 8,
-                                  ),
-                                  border: OutlineInputBorder(
-                                    borderRadius: BorderRadius.all(
-                                      Radius.circular(8),
-                                    ),
-                                  ),
-                                ),
-                                onFieldSubmitted: (val) {
-                                  final parsed =
-                                      int.tryParse(val) ?? ex.restTime;
-                                  widget.updateExerciseRestTime(parsed, ex.id);
-                                },
-                                onTapOutside: (_) {
-                                  final parsed =
-                                      int.tryParse(_restTimeController.text) ??
-                                      ex.restTime;
-                                  widget.updateExerciseRestTime(parsed, ex.id);
-                                  FocusManager.instance.primaryFocus?.unfocus();
-                                },
-                              ),
-                            ),
-                            const SizedBox(width: 6),
-                            Text(
-                              's',
-                              style: theme.textTheme.bodyMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 8),
-                      const Divider(),
-
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Row(
-                                children: [
-                                  Flexible(
-                                    child: Text(
-                                      l10n.type,
-                                      style: theme.textTheme.labelMedium
-                                          ?.copyWith(
-                                            color: theme
-                                                .colorScheme
-                                                .onSurfaceVariant,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            DropdownButton<SetMode>(
-                              value: ex.setMode,
-                              underline: const SizedBox(),
-                              isDense: true,
-                              style: theme.textTheme.labelMedium?.copyWith(
-                                color: theme.colorScheme.onSurface,
-                              ),
-                              onChanged: (mode) {
-                                if (mode != null) {
-                                  widget.updateExerciseSetMode(mode, ex.id);
-                                }
-                              },
-                              items: SetMode.values.map((mode) {
-                                return DropdownMenuItem(
-                                  value: mode,
-                                  child: Text(
-                                    mode.name
-                                        .replaceAll('_', ' ')
-                                        .toUpperCase(),
-                                    style: theme.textTheme.labelSmall?.copyWith(
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                                  ),
-                                );
-                              }).toList(),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Sets Table (Header + Rows)
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Card(
-                          color: theme.colorScheme.surfaceContainerLow,
-                          elevation: 0,
-                          clipBehavior: Clip.antiAlias,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                          margin: EdgeInsets.zero,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 8,
-                                  horizontal: 16,
-                                ),
-                                decoration: BoxDecoration(
-                                  color:
-                                      theme.colorScheme.surfaceContainerHighest,
-                                ),
-                                child: Row(
-                                  children: [
-                                    if (!widget.workout)
-                                      SizedBox(
-                                        width: 30,
-                                        child: Text(
-                                          l10n.setColumn,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    if (widget.previousPerformances != null)
-                                      SizedBox(
-                                        width: 70,
-                                        child: Text(
-                                          l10n.previousColumn,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    if (ex.setMode == SetMode.DURATION)
-                                      Expanded(
-                                        child: Text(
-                                          l10n.timeColumn,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      )
-                                    else if (ex.setMode ==
-                                        SetMode.DURATION_WITH_LOAD) ...[
-                                      Expanded(
-                                        child: Text(
-                                          l10n.weightColumn,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          l10n.timeColumn,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ] else ...[
-                                      if (ex.setMode == SetMode.LOAD ||
-                                          ex.setMode ==
-                                              SetMode.BODYWEIGHT_WITH_LOAD)
-                                        Expanded(
-                                          child: Text(
-                                            l10n.weightColumn,
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          l10n.repsColumn,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                    if (widget.showRpe) ...[
-                                      const SizedBox(width: 8),
-                                      if (widget.intensityScale ==
-                                          IntensityScale.both) ...[
-                                        Expanded(
-                                          child: Text(
-                                            l10n.rpe,
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(width: 8),
-                                        Expanded(
-                                          child: Text(
-                                            l10n.rir,
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                      ] else
-                                        Expanded(
-                                          child: Text(
-                                            widget.intensityScale ==
-                                                    IntensityScale.rir
-                                                ? l10n.rir
-                                                : l10n.rpe,
-                                            textAlign: TextAlign.center,
-                                            style: const TextStyle(
-                                              fontWeight: FontWeight.bold,
-                                            ),
-                                          ),
-                                        ),
-                                    ],
-                                    if (widget.workout) ...[
-                                      const SizedBox(width: 8),
-                                      SizedBox(
-                                        width: 45,
-                                        child: Text(
-                                          l10n.done,
-                                          textAlign: TextAlign.center,
-                                          style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              ...List.generate(sets.length, (idx) {
-                                final set = sets[idx];
-                                final isThisRunning =
-                                    widget.idSetWithRunningStopwatch == set.id;
-
-                                return _SetRow(
-                                  key: ValueKey(set.id),
-                                  set: set,
-                                  index: idx,
-                                  setMode: ex.setMode,
-                                  unitSystem: unitSystem,
-                                  useScrollWheelForInput:
-                                      useScrollWheelForInput,
-                                  dismissScrollWheelInputAutomatically:
-                                      dismissScrollWheelInputAutomatically,
-                                  workout: widget.workout,
-                                  previousPerformances:
-                                      widget.previousPerformances,
-                                  showRpe: widget.showRpe,
-                                  intensityScale: widget.intensityScale,
-                                  isThisRunning: isThisRunning,
-                                  updateSetTime: widget.updateSetTime,
-                                  updateSetLoad: widget.updateSetLoad,
-                                  updateSetReps: widget.updateSetReps,
-                                  updateSetRpe: widget.updateSetRpe,
-                                  updateSetRir: widget.updateSetRir,
-                                  updateSetCompleted: widget.updateSetCompleted,
-                                  deleteSet: widget.deleteSet,
-                                  updateIdSetWithRunningStopwatch:
-                                      widget.updateIdSetWithRunningStopwatch,
-                                  applyPreviousSetPerformance:
-                                      widget.applyPreviousSetPerformance,
-                                );
-                              }),
-                            ],
-                          ),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
-
-                      // Add Set Button
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                        child: ElevatedButton.icon(
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor:
-                                theme.colorScheme.secondaryContainer,
-                            foregroundColor:
-                                theme.colorScheme.onSecondaryContainer,
-                            elevation: 0,
-                          ),
-                          onPressed: () => widget.addSet(ex.id),
-                          icon: const Icon(Icons.add_circle_outline),
-                          label: Text(l10n.addSet),
-                        ),
-                      ),
-                    ],
+            const SizedBox(width: NexcSpacing.xs),
+            SizedBox(
+              width: 64,
+              child: TextFormField(
+                controller: _restTimeController,
+                keyboardType: TextInputType.number,
+                textAlign: TextAlign.center,
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w600,
+                ),
+                decoration: const InputDecoration(
+                  isDense: true,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: NexcSpacing.xs,
+                    vertical: NexcSpacing.sm,
                   ),
-          ),
-        ],
+                  suffixText: 's',
+                ),
+                onFieldSubmitted: (_) => _submitRestTime(),
+                onTapOutside: (_) {
+                  _submitRestTime();
+                  FocusManager.instance.primaryFocus?.unfocus();
+                },
+              ),
+            ),
+          ],
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              l10n.type,
+              style: theme.textTheme.labelMedium?.copyWith(
+                color: theme.colorScheme.onSurfaceVariant,
+              ),
+            ),
+            const SizedBox(width: NexcSpacing.xs),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 168),
+              child: DropdownButton<SetMode>(
+                value: ex.setMode,
+                underline: const SizedBox.shrink(),
+                isDense: true,
+                isExpanded: true,
+                borderRadius: NexcShapes.smRadius,
+                style: theme.textTheme.labelLarge?.copyWith(
+                  color: theme.colorScheme.onSurface,
+                ),
+                selectedItemBuilder: (BuildContext context) => SetMode.values
+                    .map(
+                      (SetMode mode) => Align(
+                        alignment: Alignment.centerLeft,
+                        child: Text(
+                          localizedSetModeLabel(context, mode),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+                onChanged: (SetMode? mode) {
+                  if (mode != null) widget.updateExerciseSetMode(mode, ex.id);
+                },
+                items: SetMode.values
+                    .map(
+                      (SetMode mode) => DropdownMenuItem<SetMode>(
+                        value: mode,
+                        child: Text(
+                          localizedSetModeLabel(context, mode),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    )
+                    .toList(),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _SupersetChip extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _SupersetChip({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: NexcSpacing.sm,
+        vertical: 2,
+      ),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.14),
+        borderRadius: NexcShapes.xsRadius,
+      ),
+      child: Text(
+        label,
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: color,
+          fontWeight: FontWeight.w700,
+        ),
       ),
     );
   }
@@ -719,7 +633,8 @@ class _SetRow extends StatefulWidget {
   final bool useScrollWheelForInput;
   final bool dismissScrollWheelInputAutomatically;
   final bool workout;
-  final List<dynamic>? previousPerformances;
+  final WorkoutSet? previousSet;
+  final VoidCallback? onApplyPrevious;
   final bool showRpe;
   final IntensityScale intensityScale;
   final bool isThisRunning;
@@ -731,7 +646,6 @@ class _SetRow extends StatefulWidget {
   final Function(bool, int) updateSetCompleted;
   final Function(int) deleteSet;
   final Function(int)? updateIdSetWithRunningStopwatch;
-  final Function(int)? applyPreviousSetPerformance;
 
   const _SetRow({
     super.key,
@@ -742,7 +656,8 @@ class _SetRow extends StatefulWidget {
     required this.useScrollWheelForInput,
     required this.dismissScrollWheelInputAutomatically,
     required this.workout,
-    this.previousPerformances,
+    this.previousSet,
+    this.onApplyPrevious,
     required this.showRpe,
     required this.intensityScale,
     required this.isThisRunning,
@@ -754,7 +669,6 @@ class _SetRow extends StatefulWidget {
     required this.updateSetCompleted,
     required this.deleteSet,
     this.updateIdSetWithRunningStopwatch,
-    this.applyPreviousSetPerformance,
   });
 
   @override
@@ -783,16 +697,15 @@ class _SetRowState extends State<_SetRow> {
     _timeController = TextEditingController(
       text: _formatDuration(widget.set.elapsedTime),
     );
-    _rpeController = TextEditingController(
-      text: widget.set.rpe == null
-          ? ''
-          : widget.set.rpe.toString().replaceAll(RegExp(r'\.0$'), ''),
-    );
+    _rpeController = TextEditingController(text: _formatRpe(widget.set.rpe));
     _rirController = TextEditingController(
-      text: widget.set.rir == null
-          ? ''
-          : widget.set.rir.toString().replaceAll(RegExp(r'\.0$'), ''),
+      text: widget.set.rir == null ? '' : widget.set.rir.toString(),
     );
+  }
+
+  String _formatRpe(double? value) {
+    if (value == null) return '';
+    return value.toString().replaceAll(RegExp(r'\.0$'), '');
   }
 
   @override
@@ -823,14 +736,12 @@ class _SetRowState extends State<_SetRow> {
       _timeController.text = _formatDuration(widget.set.elapsedTime);
     }
     if (oldWidget.set.rpe != widget.set.rpe) {
-      _rpeController.text = widget.set.rpe == null
-          ? ''
-          : widget.set.rpe.toString().replaceAll(RegExp(r'\.0$'), '');
+      _rpeController.text = _formatRpe(widget.set.rpe);
     }
     if (oldWidget.set.rir != widget.set.rir) {
       _rirController.text = widget.set.rir == null
           ? ''
-          : widget.set.rir.toString().replaceAll(RegExp(r'\.0$'), '');
+          : widget.set.rir.toString();
     }
   }
 
@@ -845,17 +756,17 @@ class _SetRowState extends State<_SetRow> {
   }
 
   String _formatDuration(int seconds) {
-    final m = (seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (seconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
+    final String minutes = (seconds ~/ 60).toString().padLeft(2, '0');
+    final String remainder = (seconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$remainder';
   }
 
   int _parseDuration(String value) {
-    final parts = value.split(':');
+    final List<String> parts = value.split(':');
     if (parts.length == 2) {
-      final m = int.tryParse(parts[0]) ?? 0;
-      final s = int.tryParse(parts[1]) ?? 0;
-      return m * 60 + s;
+      final int minutes = int.tryParse(parts[0]) ?? 0;
+      final int seconds = int.tryParse(parts[1]) ?? 0;
+      return minutes * 60 + seconds;
     }
     return int.tryParse(value) ?? 0;
   }
@@ -896,384 +807,434 @@ class _SetRowState extends State<_SetRow> {
     }
   }
 
-  /// Makes [child] a tap target for the wheel sheet when the preference is on.
-  ///
-  /// The original field stays in the tree so its text and unit suffix remain
-  /// the single source of truth for the displayed value, but it no longer
-  /// receives taps or keyboard focus.
-  Widget _wheelCell({
-    required String keySuffix,
-    required VoidCallback onTap,
-    required Widget child,
-  }) {
-    if (!widget.useScrollWheelForInput) return child;
-    return GestureDetector(
-      key: ValueKey<String>('$keySuffix-${widget.set.id}'),
-      behavior: HitTestBehavior.opaque,
-      onTap: onTap,
-      child: IgnorePointer(child: child),
+  Future<bool> _confirmDismiss(DismissDirection direction) async {
+    if (direction == DismissDirection.startToEnd) return false;
+    final l10n = context.l10n;
+    final bool? confirmed = await NexcConfirmSheet.show(
+      context: context,
+      title: l10n.delete,
+      message: l10n.setNumber(widget.index + 1),
+      confirmLabel: l10n.delete,
+      cancelLabel: l10n.cancel,
+      destructive: true,
     );
+    return confirmed == true;
   }
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final set = widget.set;
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    final WorkoutSet set = widget.set;
+    final Color contentColor = set.completed
+        ? theme.colorScheme.onPrimaryContainer
+        : theme.colorScheme.onSurface;
+
     return Dismissible(
-      key: ValueKey(set.id),
+      key: ValueKey<int>(set.id),
       direction: DismissDirection.endToStart,
-      dismissThresholds: const {DismissDirection.endToStart: 0.75},
-      background: Container(
-        alignment: Alignment.centerLeft,
-        padding: const EdgeInsets.only(left: 20),
-        color: theme.colorScheme.errorContainer,
-        child: Icon(Icons.delete, color: theme.colorScheme.onErrorContainer),
-      ),
-      secondaryBackground: Container(
-        alignment: Alignment.centerRight,
-        padding: const EdgeInsets.only(right: 20),
-        color: theme.colorScheme.errorContainer,
-        child: Icon(Icons.delete, color: theme.colorScheme.onErrorContainer),
-      ),
-      onDismissed: (dir) => widget.deleteSet(set.id),
+      dismissThresholds: const <DismissDirection, double>{
+        DismissDirection.endToStart: 0.75,
+      },
+      confirmDismiss: _confirmDismiss,
+      background: _deleteBackground(theme, Alignment.centerLeft),
+      secondaryBackground: _deleteBackground(theme, Alignment.centerRight),
+      onDismissed: (DismissDirection direction) => widget.deleteSet(set.id),
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+        margin: const EdgeInsets.only(bottom: NexcSpacing.xs),
+        padding: const EdgeInsets.symmetric(
+          vertical: NexcSpacing.sm,
+          horizontal: NexcSpacing.sm,
+        ),
         decoration: BoxDecoration(
           color: set.completed
               ? theme.colorScheme.primaryContainer
-              : Colors.transparent,
-          border: Border(
-            bottom: BorderSide(
-              color: theme.dividerColor.withValues(alpha: 0.1),
-            ),
-          ),
+              : theme.colorScheme.surfaceContainerLow,
+          borderRadius: NexcShapes.mdRadius,
         ),
-        child: Builder(
-          builder: (context) {
-            final contentColor = set.completed
-                ? theme.colorScheme.onPrimaryContainer
-                : theme.colorScheme.onSurface;
-
-            final inputDeco = InputDecoration(
-              contentPadding: const EdgeInsets.symmetric(vertical: 10),
-              filled: false,
-              border: InputBorder.none,
-              enabledBorder: InputBorder.none,
-              focusedBorder: InputBorder.none,
-              isDense: true,
-            );
-            final inputStyle = TextStyle(
-              color: contentColor,
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-            );
-            // Weight cells show the unit next to the value without adding
-            // another column to the compact row.
-            final loadInputDeco = inputDeco.copyWith(
-              suffixText: widget.unitSystem.suffix,
-              suffixStyle: TextStyle(
-                color: contentColor.withValues(alpha: 0.6),
-                fontSize: 11,
-                fontWeight: FontWeight.w500,
-              ),
-            );
-
-            Widget buildCell(Widget child) {
-              return Expanded(
-                child: Container(
-                  height: 38,
-                  alignment: Alignment.center,
-                  decoration: BoxDecoration(
-                    color: set.completed
-                        ? theme.colorScheme.primaryContainer.withValues(
-                            alpha: 0.5,
-                          )
-                        : theme.colorScheme.surface,
-                    borderRadius: BorderRadius.circular(8),
-                    border: Border.all(
-                      color: set.completed
-                          ? theme.colorScheme.primary.withValues(alpha: 0.4)
-                          : theme.colorScheme.outlineVariant,
-                      width: 1,
-                    ),
-                  ),
-                  child: child,
-                ),
-              );
-            }
-
-            return Row(
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                if (!widget.workout)
-                  SizedBox(
-                    width: 30,
-                    child: Text(
-                      '${widget.index + 1}',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        color: contentColor,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                if (widget.previousPerformances != null &&
-                    widget.previousPerformances!.isNotEmpty) ...[
-                  Builder(
-                    builder: (context) {
-                      final prevSets = widget.previousPerformances!;
-                      if (widget.index < prevSets.length) {
-                        final prevSet = prevSets[widget.index] as WorkoutSet;
-                        final String displayVal;
-                        if (widget.setMode == SetMode.DURATION) {
-                          displayVal = "${prevSet.elapsedTime}s";
-                        } else if (widget.setMode ==
-                            SetMode.DURATION_WITH_LOAD) {
-                          displayVal =
-                              "${formatWeight(prevSet.load, widget.unitSystem)} - ${prevSet.elapsedTime}s";
-                        } else {
-                          displayVal =
-                              "${formatWeight(prevSet.load, widget.unitSystem)}x${prevSet.reps}";
-                        }
-                        return SizedBox(
-                          width: 70,
-                          child: TextButton(
-                            style: TextButton.styleFrom(
-                              padding: EdgeInsets.zero,
-                              minimumSize: Size.zero,
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
-                            onPressed: () => widget.applyPreviousSetPerformance
-                                ?.call(set.id),
-                            child: Text(
-                              displayVal,
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: set.completed
-                                    ? theme.colorScheme.onPrimaryContainer
-                                          .withValues(alpha: 0.8)
-                                    : theme.colorScheme.tertiary,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        );
-                      } else {
-                        return SizedBox(
-                          width: 70,
-                          child: Text(
-                            '-',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(color: contentColor),
-                          ),
-                        );
-                      }
-                    },
-                  ),
-                ] else if (widget.previousPerformances != null) ...[
-                  SizedBox(
-                    width: 70,
-                    child: Text(
-                      '-',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(color: contentColor),
-                    ),
-                  ),
-                ],
-                if (widget.setMode == SetMode.DURATION) ...[
-                  if (widget.workout)
-                    IconButton(
-                      icon: Icon(
-                        widget.isThisRunning ? Icons.pause : Icons.play_arrow,
-                        color: contentColor,
-                      ),
-                      onPressed: () {
-                        widget.updateIdSetWithRunningStopwatch?.call(
-                          widget.isThisRunning ? 0 : set.id,
-                        );
-                      },
-                    ),
-                  buildCell(
-                    _wheelCell(
-                      keySuffix: 'time-cell',
-                      onTap: _editTime,
-                      child: TextField(
-                        keyboardType: TextInputType.datetime,
-                        textAlign: TextAlign.center,
-                        controller: _timeController,
-                        style: inputStyle,
-                        decoration: inputDeco,
-                        onSubmitted: (val) {
-                          final secs = _parseDuration(val);
-                          widget.updateSetTime(secs, set.id);
+                _SetIndex(number: widget.index + 1, completed: set.completed),
+                const SizedBox(width: NexcSpacing.sm),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder:
+                        (BuildContext context, BoxConstraints constraints) {
+                          final List<Widget> fields = _buildFields(
+                            context,
+                            theme: theme,
+                            l10n: l10n,
+                            contentColor: contentColor,
+                          );
+                          return _fieldWrap(constraints.maxWidth, fields);
                         },
-                      ),
-                    ),
                   ),
-                ] else if (widget.setMode == SetMode.DURATION_WITH_LOAD) ...[
-                  buildCell(
-                    _wheelCell(
-                      keySuffix: 'load-cell',
-                      onTap: _editLoad,
-                      child: TextField(
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        textAlign: TextAlign.center,
-                        controller: _loadController,
-                        style: inputStyle,
-                        decoration: loadInputDeco,
-                        onChanged: (val) {
-                          // Store kilograms regardless of the unit shown.
-                          final load =
-                              parseWeight(val, widget.unitSystem) ?? 0.0;
-                          widget.updateSetLoad(load, set.id);
-                        },
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  if (widget.workout)
-                    IconButton(
-                      icon: Icon(
-                        widget.isThisRunning ? Icons.pause : Icons.play_arrow,
-                        color: contentColor,
-                      ),
-                      onPressed: () {
-                        widget.updateIdSetWithRunningStopwatch?.call(
-                          widget.isThisRunning ? 0 : set.id,
-                        );
-                      },
-                    ),
-                  buildCell(
-                    _wheelCell(
-                      keySuffix: 'time-cell',
-                      onTap: _editTime,
-                      child: TextField(
-                        keyboardType: TextInputType.datetime,
-                        textAlign: TextAlign.center,
-                        controller: _timeController,
-                        style: inputStyle,
-                        decoration: inputDeco,
-                        onSubmitted: (val) {
-                          final secs = _parseDuration(val);
-                          widget.updateSetTime(secs, set.id);
-                        },
-                      ),
-                    ),
-                  ),
-                ] else ...[
-                  if (widget.setMode == SetMode.LOAD ||
-                      widget.setMode == SetMode.BODYWEIGHT_WITH_LOAD)
-                    buildCell(
-                      _wheelCell(
-                        keySuffix: 'load-cell',
-                        onTap: _editLoad,
-                        child: TextField(
-                          keyboardType: const TextInputType.numberWithOptions(
-                            decimal: true,
-                          ),
-                          textAlign: TextAlign.center,
-                          controller: _loadController,
-                          style: inputStyle,
-                          decoration: loadInputDeco,
-                          onChanged: (val) {
-                            // Store kilograms regardless of the unit shown.
-                            final load =
-                                parseWeight(val, widget.unitSystem) ?? 0.0;
-                            widget.updateSetLoad(load, set.id);
-                          },
-                        ),
-                      ),
-                    ),
-                  const SizedBox(width: 8),
-                  buildCell(
-                    _wheelCell(
-                      keySuffix: 'reps-cell',
-                      onTap: _editReps,
-                      child: TextField(
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        controller: _repsController,
-                        style: inputStyle,
-                        decoration: inputDeco,
-                        onChanged: (val) {
-                          final reps = int.tryParse(val) ?? 0;
-                          widget.updateSetReps(reps, set.id);
-                        },
-                      ),
-                    ),
-                  ),
-                ],
-                if (widget.showRpe) ...[
-                  const SizedBox(width: 8),
-                  if (widget.intensityScale == IntensityScale.both) ...[
-                    buildCell(
-                      TextField(
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        textAlign: TextAlign.center,
-                        controller: _rpeController,
-                        style: inputStyle,
-                        decoration: inputDeco,
-                        onChanged: (val) =>
-                            widget.updateSetRpe?.call(val, set.id),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    buildCell(
-                      TextField(
-                        keyboardType: TextInputType.number,
-                        textAlign: TextAlign.center,
-                        controller: _rirController,
-                        style: inputStyle,
-                        decoration: inputDeco,
-                        onChanged: (val) =>
-                            widget.updateSetRir?.call(val, set.id),
-                      ),
-                    ),
-                  ] else
-                    buildCell(
-                      TextField(
-                        keyboardType: const TextInputType.numberWithOptions(
-                          decimal: true,
-                        ),
-                        textAlign: TextAlign.center,
-                        controller: widget.intensityScale == IntensityScale.rir
-                            ? _rirController
-                            : _rpeController,
-                        style: inputStyle,
-                        decoration: inputDeco,
-                        onChanged: (val) {
-                          if (widget.intensityScale == IntensityScale.rir) {
-                            widget.updateSetRir?.call(val, set.id);
-                          } else {
-                            widget.updateSetRpe?.call(val, set.id);
-                          }
-                        },
-                      ),
-                    ),
-                ],
+                ),
                 if (widget.workout) ...[
-                  const SizedBox(width: 8),
+                  const SizedBox(width: NexcSpacing.xs),
                   SizedBox(
-                    width: 45,
+                    width: 40,
+                    height: 40,
                     child: Checkbox(
+                      key: ValueKey<String>('set-done-${set.id}'),
                       value: set.completed,
-                      activeColor: theme.colorScheme.primary,
-                      checkColor: theme.colorScheme.onPrimary,
-                      onChanged: (val) {
-                        if (val != null) {
-                          widget.updateSetCompleted(val, set.id);
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      onChanged: (bool? value) {
+                        if (value != null) {
+                          widget.updateSetCompleted(value, set.id);
                         }
                       },
                     ),
                   ),
                 ],
               ],
-            );
-          },
+            ),
+            if (widget.previousSet != null) ...[
+              const SizedBox(height: NexcSpacing.xs),
+              _PreviousPerformance(
+                label: _previousLabel(context),
+                onApply: widget.onApplyPrevious,
+              ),
+            ],
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _deleteBackground(ThemeData theme, Alignment alignment) {
+    return Container(
+      alignment: alignment,
+      padding: const EdgeInsets.symmetric(horizontal: NexcSpacing.lg),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.errorContainer,
+        borderRadius: NexcShapes.mdRadius,
+      ),
+      child: Icon(NexcIcons.delete, color: theme.colorScheme.onErrorContainer),
+    );
+  }
+
+  /// Fields wrap instead of sharing a fixed six-column row, so a 360dp phone
+  /// with 1.3 text scale never has to squeeze or overflow them.
+  Widget _fieldWrap(double maxWidth, List<Widget> fields) {
+    if (fields.isEmpty) return const SizedBox.shrink();
+    const double gap = NexcSpacing.sm;
+    final bool canUseTwoColumns = maxWidth >= 2 * 72 + gap;
+    final double rawWidth = canUseTwoColumns ? (maxWidth - gap) / 2 : maxWidth;
+    final double fieldWidth = rawWidth.clamp(72.0, 148.0);
+    return Wrap(
+      spacing: gap,
+      runSpacing: NexcSpacing.xs,
+      children: [
+        for (final Widget field in fields)
+          SizedBox(width: fieldWidth, child: field),
+      ],
+    );
+  }
+
+  List<Widget> _buildFields(
+    BuildContext context, {
+    required ThemeData theme,
+    required AppLocalizations l10n,
+    required Color contentColor,
+  }) {
+    final List<Widget> fields = <Widget>[];
+    final InputDecoration decoration = InputDecoration(
+      isDense: true,
+      filled: false,
+      border: InputBorder.none,
+      enabledBorder: InputBorder.none,
+      focusedBorder: InputBorder.none,
+      contentPadding: EdgeInsets.zero,
+    );
+    final TextStyle style =
+        theme.textTheme.titleSmall?.copyWith(
+          color: contentColor,
+          fontWeight: FontWeight.w700,
+          fontFeatures: const <FontFeature>[FontFeature.tabularFigures()],
+        ) ??
+        TextStyle(color: contentColor);
+
+    Widget numberField({
+      required TextEditingController controller,
+      required String label,
+      required ValueChanged<String> onChanged,
+      String? suffix,
+      TextInputType? keyboardType,
+      Key? wheelKey,
+      VoidCallback? onWheelTap,
+      ValueChanged<String>? onSubmitted,
+    }) {
+      final Widget field = TextField(
+        keyboardType: keyboardType,
+        textAlign: TextAlign.center,
+        controller: controller,
+        style: style,
+        decoration: decoration.copyWith(
+          suffixText: suffix,
+          suffixStyle: theme.textTheme.labelSmall?.copyWith(
+            color: contentColor.withValues(alpha: 0.7),
+          ),
+        ),
+        onChanged: onChanged,
+        onSubmitted: onSubmitted,
+      );
+      final bool wheelEnabled =
+          widget.useScrollWheelForInput &&
+          wheelKey != null &&
+          onWheelTap != null;
+      return _SetInputField(
+        label: label,
+        child: !wheelEnabled
+            ? field
+            : GestureDetector(
+                key: wheelKey,
+                behavior: HitTestBehavior.opaque,
+                onTap: onWheelTap,
+                child: IgnorePointer(child: field),
+              ),
+      );
+    }
+
+    if (widget.setMode == SetMode.DURATION) {
+      fields.add(
+        numberField(
+          controller: _timeController,
+          label: l10n.timeColumn,
+          keyboardType: TextInputType.datetime,
+          wheelKey: ValueKey<String>('time-cell-${widget.set.id}'),
+          onWheelTap: _editTime,
+          onChanged: (String value) =>
+              widget.updateSetTime(_parseDuration(value), widget.set.id),
+          onSubmitted: (String value) =>
+              widget.updateSetTime(_parseDuration(value), widget.set.id),
+        ),
+      );
+      if (widget.workout) fields.add(_stopwatchButton(context, l10n));
+    } else if (widget.setMode == SetMode.DURATION_WITH_LOAD) {
+      fields.add(
+        numberField(
+          controller: _loadController,
+          label: l10n.weightColumn,
+          suffix: widget.unitSystem.suffix,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          wheelKey: ValueKey<String>('load-cell-${widget.set.id}'),
+          onWheelTap: _editLoad,
+          onChanged: (String value) => widget.updateSetLoad(
+            parseWeight(value, widget.unitSystem) ?? 0.0,
+            widget.set.id,
+          ),
+        ),
+      );
+      fields.add(
+        numberField(
+          controller: _timeController,
+          label: l10n.timeColumn,
+          keyboardType: TextInputType.datetime,
+          wheelKey: ValueKey<String>('time-cell-${widget.set.id}'),
+          onWheelTap: _editTime,
+          onChanged: (String value) =>
+              widget.updateSetTime(_parseDuration(value), widget.set.id),
+        ),
+      );
+      if (widget.workout) fields.add(_stopwatchButton(context, l10n));
+    } else {
+      if (widget.setMode == SetMode.LOAD ||
+          widget.setMode == SetMode.BODYWEIGHT_WITH_LOAD) {
+        fields.add(
+          numberField(
+            controller: _loadController,
+            label: l10n.weightColumn,
+            suffix: widget.unitSystem.suffix,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            wheelKey: ValueKey<String>('load-cell-${widget.set.id}'),
+            onWheelTap: _editLoad,
+            onChanged: (String value) => widget.updateSetLoad(
+              parseWeight(value, widget.unitSystem) ?? 0.0,
+              widget.set.id,
+            ),
+          ),
+        );
+      }
+      fields.add(
+        numberField(
+          controller: _repsController,
+          label: l10n.repsColumn,
+          keyboardType: TextInputType.number,
+          wheelKey: ValueKey<String>('reps-cell-${widget.set.id}'),
+          onWheelTap: _editReps,
+          onChanged: (String value) =>
+              widget.updateSetReps(int.tryParse(value) ?? 0, widget.set.id),
+        ),
+      );
+    }
+
+    if (widget.showRpe) {
+      final bool showRpeValue =
+          widget.intensityScale == IntensityScale.rpe ||
+          widget.intensityScale == IntensityScale.both;
+      final bool showRirValue =
+          widget.intensityScale == IntensityScale.rir ||
+          widget.intensityScale == IntensityScale.both;
+      if (showRpeValue) {
+        fields.add(
+          numberField(
+            controller: _rpeController,
+            label: l10n.rpe,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            onChanged: (String value) =>
+                widget.updateSetRpe?.call(value, widget.set.id),
+          ),
+        );
+      }
+      if (showRirValue) {
+        fields.add(
+          numberField(
+            controller: _rirController,
+            label: l10n.rir,
+            keyboardType: TextInputType.number,
+            onChanged: (String value) =>
+                widget.updateSetRir?.call(value, widget.set.id),
+          ),
+        );
+      }
+    }
+    return fields;
+  }
+
+  Widget _stopwatchButton(BuildContext context, AppLocalizations l10n) {
+    return IconButton.filledTonal(
+      tooltip: l10n.timeColumn,
+      onPressed: () {
+        widget.updateIdSetWithRunningStopwatch?.call(
+          widget.isThisRunning ? 0 : widget.set.id,
+        );
+      },
+      icon: Icon(widget.isThisRunning ? Icons.pause : NexcIcons.play, size: 18),
+    );
+  }
+
+  String _previousLabel(BuildContext context) {
+    final WorkoutSet previous = widget.previousSet!;
+    final String value;
+    switch (widget.setMode) {
+      case SetMode.DURATION:
+        value = _formatDuration(previous.elapsedTime);
+        break;
+      case SetMode.DURATION_WITH_LOAD:
+        value =
+            '${formatWeight(previous.load, widget.unitSystem)} × '
+            '${_formatDuration(previous.elapsedTime)}';
+        break;
+      default:
+        value =
+            '${formatWeight(previous.load, widget.unitSystem)} × '
+            '${previous.reps}';
+    }
+    return '${context.l10n.previousColumn}: $value';
+  }
+}
+
+class _SetInputField extends StatelessWidget {
+  final String label;
+  final Widget child;
+
+  const _SetInputField({required this.label, required this.child});
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: NexcSpacing.sm,
+        vertical: NexcSpacing.xs,
+      ),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surface,
+        borderRadius: NexcShapes.xsRadius,
+        border: Border.all(color: theme.colorScheme.outlineVariant),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.labelSmall?.copyWith(
+              color: theme.colorScheme.onSurfaceVariant,
+            ),
+          ),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+class _SetIndex extends StatelessWidget {
+  final int number;
+  final bool completed;
+
+  const _SetIndex({required this.number, required this.completed});
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    return Container(
+      width: 28,
+      height: 28,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: completed
+            ? theme.colorScheme.primary
+            : theme.colorScheme.surfaceContainerHighest,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        '$number',
+        style: theme.textTheme.labelMedium?.copyWith(
+          color: completed
+              ? theme.colorScheme.onPrimary
+              : theme.colorScheme.onSurfaceVariant,
+          fontWeight: FontWeight.w700,
+        ),
+      ),
+    );
+  }
+}
+
+class _PreviousPerformance extends StatelessWidget {
+  final String label;
+  final VoidCallback? onApply;
+
+  const _PreviousPerformance({required this.label, this.onApply});
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final TextStyle? style = theme.textTheme.labelSmall?.copyWith(
+      color: theme.colorScheme.onSurfaceVariant,
+    );
+    if (onApply == null) {
+      return Text(label, style: style);
+    }
+    return Align(
+      alignment: Alignment.centerLeft,
+      child: TextButton.icon(
+        style: TextButton.styleFrom(
+          padding: const EdgeInsets.symmetric(horizontal: NexcSpacing.xs),
+          minimumSize: const Size(0, 32),
+          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        ),
+        onPressed: onApply,
+        icon: const Icon(NexcIcons.check, size: 14),
+        label: Text(label, style: style),
       ),
     );
   }

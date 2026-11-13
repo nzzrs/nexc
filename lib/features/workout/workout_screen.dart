@@ -8,30 +8,40 @@
  */
 
 import 'dart:async';
+
 import 'package:audioplayers/audioplayers.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:vibration/vibration.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
-import 'package:drift/drift.dart' show Value;
-import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:permission_handler/permission_handler.dart';
+
+import '../../core/components/exercise_card.dart';
+import '../../core/components/nexc_empty_state.dart';
+import '../../core/components/nexc_page.dart';
+import '../../core/components/nexc_snack.dart';
+import '../../core/components/wavy_progress_indicators.dart';
 import '../../core/db/enums.dart';
-import '../../core/l10n/l10n.dart';
-import 'workout_summary_screen.dart';
 import '../../core/db/relations.dart';
 import '../../core/db/workout_repository.dart';
 import '../../core/integrations/ai_service.dart';
-import '../../core/components/exercise_card.dart';
+import '../../core/l10n/l10n.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/providers/workout_providers.dart';
-import '../exercises/exercises_screen.dart';
-import '../../core/components/wavy_progress_indicators.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/motion.dart';
+import '../../core/theme/shapes.dart';
+import '../../core/theme/spacing.dart';
 import '../../core/util/exercise_set_mode_helper.dart';
+import '../../core/util/format.dart';
 import '../../core/util/rest_alert_audio.dart';
-import '../meals/edit_meal_plan_screen.dart';
+import '../../l10n/app_localizations.dart';
+import '../exercises/exercises_screen.dart';
+import 'workout_summary_screen.dart';
 
 /// Asks whether the linked routine should copy the completed set values.
 ///
@@ -40,12 +50,12 @@ Future<bool> showUpdateRoutineDialog(BuildContext context) async {
   final result = await showDialog<bool>(
     context: context,
     barrierDismissible: true,
-    builder: (context) {
+    builder: (BuildContext context) {
       final l10n = context.l10n;
       return AlertDialog(
         title: Text(l10n.updateRoutineTitle),
         content: Text(l10n.updateRoutineMessage),
-        actions: [
+        actions: <Widget>[
           TextButton(
             onPressed: () => Navigator.pop(context, false),
             child: Text(l10n.dontUpdate),
@@ -59,6 +69,80 @@ Future<bool> showUpdateRoutineDialog(BuildContext context) async {
     },
   );
   return result ?? false;
+}
+
+/// Superset label and accent color for one exercise in the current list.
+class SupersetInfo {
+  final String? label;
+  final Color? color;
+
+  const SupersetInfo({this.label, this.color});
+}
+
+/// Derives the group letter and accent for every exercise from the current
+/// order, so the normal list and the drag proxy never disagree.
+SupersetInfo supersetInfoFor(
+  List<ExerciseWithSets> exercises,
+  int index,
+  ColorScheme scheme,
+) {
+  if (index < 0 || index >= exercises.length) {
+    return const SupersetInfo();
+  }
+  final int? groupId = exercises[index].exercise.supersetId;
+  if (groupId == null) return const SupersetInfo();
+  final List<int> groups = <int>[];
+  for (final ExerciseWithSets exercise in exercises) {
+    final int? id = exercise.exercise.supersetId;
+    if (id != null && !groups.contains(id)) groups.add(id);
+  }
+  final int groupIndex = groups.indexOf(groupId);
+  if (groupIndex < 0) return const SupersetInfo();
+  final List<Color> colors = <Color>[
+    scheme.primary,
+    scheme.tertiary,
+    scheme.secondary,
+    scheme.error,
+    scheme.inversePrimary,
+    scheme.onTertiaryContainer,
+  ];
+  return SupersetInfo(
+    label: String.fromCharCode(65 + groupIndex),
+    color: colors[groupIndex % colors.length],
+  );
+}
+
+/// Reports the laid-out height of [child] once per frame it changes.
+class MeasuredHeight extends StatefulWidget {
+  final Widget child;
+  final ValueChanged<double> onHeight;
+
+  const MeasuredHeight({
+    super.key,
+    required this.child,
+    required this.onHeight,
+  });
+
+  @override
+  State<MeasuredHeight> createState() => _MeasuredHeightState();
+}
+
+class _MeasuredHeightState extends State<MeasuredHeight> {
+  double _lastHeight = -1;
+
+  @override
+  Widget build(BuildContext context) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final RenderObject? renderObject = context.findRenderObject();
+      if (renderObject is! RenderBox || !renderObject.hasSize) return;
+      final double height = renderObject.size.height;
+      if ((height - _lastHeight).abs() < 0.5) return;
+      _lastHeight = height;
+      widget.onHeight(height);
+    });
+    return widget.child;
+  }
 }
 
 class WorkoutScreen extends ConsumerStatefulWidget {
@@ -75,11 +159,15 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
     with WidgetsBindingObserver {
   bool _isLoading = true;
   late Workout _workout;
-  List<ExerciseWithSets> _exercises = [];
-  final Map<String, List<WorkoutSet>> _previousPerformances = {};
-  final Set<int> _startedSetIds = {};
+  List<ExerciseWithSets> _exercises = <ExerciseWithSets>[];
+  final Map<String, List<WorkoutSet>> _previousPerformances =
+      <String, List<WorkoutSet>>{};
+  final Set<int> _startedSetIds = <int>{};
   bool _isReordering = false;
   late final ScrollController _scrollController;
+  double _headerHeight = 0;
+  double _restBarHeight = 0;
+  String _emptyWorkoutTitle = 'Workout';
 
   // Timers
   Timer? _stopwatchTimer;
@@ -95,6 +183,12 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
   final AudioPlayer _audioPlayer = AudioPlayer();
   final FlutterLocalNotificationsPlugin _notificationsPlugin =
       FlutterLocalNotificationsPlugin();
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _emptyWorkoutTitle = context.l10n.tabWorkout;
+  }
 
   @override
   void initState() {
@@ -124,6 +218,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
   }
 
   Future<void> _updateWorkoutForegroundService() async {
+    if (!mounted) return;
     final l10n = context.l10n;
     final androidDetails = AndroidNotificationDetails(
       'workout_session_channel',
@@ -146,7 +241,9 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
             body: l10n.durationWithTime(_formatTime(_elapsedSeconds)),
             notificationDetails: androidDetails,
           );
-    } catch (_) {}
+    } catch (_) {
+      // Notifications are optional on platforms without the plugin.
+    }
   }
 
   Future<void> _stopWorkoutForegroundService() async {
@@ -156,7 +253,9 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
             AndroidFlutterLocalNotificationsPlugin
           >()
           ?.stopForegroundService();
-    } catch (_) {}
+    } catch (_) {
+      // Ignore platforms without a foreground service.
+    }
   }
 
   Future<void> _configureAudioMixing() async {
@@ -230,38 +329,21 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
     final repo = ref.read(workoutRepositoryProvider);
 
     if (widget.workoutId == 0) {
-      // 1. Empty Workout
       ref.read(activeWorkoutScrollOffsetProvider.notifier).state = 0.0;
-      _workout = Workout(
-        id: 0,
-        routineId: 0,
-        notes: '',
-        title: 'Empty Workout',
-        state: WorkoutState.RUNNING,
-        timeElapsed: 0,
-        position: 0,
-        created: DateTime.now(),
-        completed: DateTime.now(),
-        isTemporal: false,
-      );
-      _exercises = [];
-      _elapsedSeconds = 0;
-      _startStopwatch();
+      _initNewEmpty();
     } else {
       final potential = await repo.getWorkoutWithExercisesAndSets(
         widget.workoutId,
       );
       if (potential != null) {
         if (potential.workout.state == WorkoutState.RUNNING) {
-          // 2. Resuming running workout
           _workout = potential.workout;
-          _exercises = List.from(potential.exercisesWithSets);
+          _exercises = List<ExerciseWithSets>.from(potential.exercisesWithSets);
           _elapsedSeconds = _workout.timeElapsed;
           _startStopwatch();
         } else if (potential.workout.state == WorkoutState.ROUTINE) {
-          // 3. Starting new workout from routine
           ref.read(activeWorkoutScrollOffsetProvider.notifier).state = 0.0;
-          final now = DateTime.now();
+          final DateTime now = DateTime.now();
           _workout = Workout(
             id: 0,
             routineId: potential.workout.id,
@@ -274,17 +356,16 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
             completed: now,
             isTemporal: potential.workout.isTemporal,
           );
-          // Clone exercises & sets
           int tempExId = -1;
           int tempSetId = -1;
-          _exercises = potential.exercisesWithSets.map((eWs) {
-            final clonedEx = eWs.exercise.copyWith(
+          _exercises = potential.exercisesWithSets.map((ExerciseWithSets eWs) {
+            final Exercise clonedEx = eWs.exercise.copyWith(
               id: tempExId--,
               workoutId: 0,
             );
-            final clonedSets = eWs.sets
+            final List<WorkoutSet> clonedSets = eWs.sets
                 .map(
-                  (s) => s.copyWith(
+                  (WorkoutSet s) => s.copyWith(
                     id: tempSetId--,
                     exerciseId: clonedEx.id,
                     completed: false,
@@ -306,17 +387,19 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       }
     }
 
-    // Fetch previous performances
-    for (final eWs in _exercises) {
-      final lastSets = await repo.getLastPerformanceSets(eWs.exerciseDC.id);
+    for (final ExerciseWithSets eWs in _exercises) {
+      final List<WorkoutSet> lastSets = await repo.getLastPerformanceSets(
+        eWs.exerciseDC.id,
+      );
       _previousPerformances[eWs.exerciseDC.id] = lastSets;
     }
 
+    if (!mounted) return;
     setState(() {
       _isLoading = false;
     });
 
-    final savedOffset = ref.read(activeWorkoutScrollOffsetProvider);
+    final double savedOffset = ref.read(activeWorkoutScrollOffsetProvider);
     if (savedOffset > 0) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _scrollController.hasClients) {
@@ -336,7 +419,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       id: 0,
       routineId: 0,
       notes: '',
-      title: 'Empty Workout',
+      title: '',
       state: WorkoutState.RUNNING,
       timeElapsed: 0,
       position: 0,
@@ -344,14 +427,15 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       completed: DateTime.now(),
       isTemporal: false,
     );
-    _exercises = [];
+    _exercises = <ExerciseWithSets>[];
     _elapsedSeconds = 0;
     _startStopwatch();
   }
 
   void _startStopwatch() {
     _stopwatchTimer?.cancel();
-    _stopwatchTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _stopwatchTimer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
+      if (!mounted) return;
       setState(() {
         _elapsedSeconds++;
       });
@@ -368,14 +452,13 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       await _showRestFinishedNotification();
     }
     if (!mounted) return;
-    final settings = ref.read(settingsProvider);
+    final SettingsState settings = ref.read(settingsProvider);
 
-    // Vibration
     if (settings.restTimerVibrationOn) {
       if (!kIsWeb) {
-        final hasVibrator = await Vibration.hasVibrator();
+        final bool hasVibrator = await Vibration.hasVibrator();
         if (hasVibrator) {
-          Vibration.vibrate(pattern: [0, 400, 100, 400, 100, 400]);
+          Vibration.vibrate(pattern: <int>[0, 400, 100, 400, 100, 400]);
         } else {
           HapticFeedback.heavyImpact();
         }
@@ -384,7 +467,6 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       }
     }
 
-    // Sound
     if (settings.restTimerSoundOn) {
       try {
         await playRestAlert(_audioPlayer, AssetSource(restAlertSoundAsset));
@@ -402,7 +484,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       _restSecondsRemaining = seconds;
     });
     _updateRestNotification(seconds, seconds);
-    _restTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _restTimer = Timer.periodic(const Duration(seconds: 1), (Timer timer) {
       if (_restSecondsRemaining <= 1) {
         _restTimer?.cancel();
         setState(() {
@@ -419,28 +501,25 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
     });
   }
 
-  void _modifyRestTime(bool addTenSeconds) {
+  void _modifyRestTime(int secondsToAdd) {
     if (_restSecondsRemaining <= 0) return;
     setState(() {
-      if (addTenSeconds) {
-        _restSecondsRemaining += 10;
-        if (_restSecondsRemaining > _initialRestTime) {
-          _initialRestTime = _restSecondsRemaining;
-        }
-      } else {
-        if (_restSecondsRemaining > 10) {
-          _restSecondsRemaining -= 10;
-        } else {
-          _restSecondsRemaining = 0;
-          _initialRestTime = 0;
-          _restTimer?.cancel();
-          _cancelRestNotification();
-        }
+      _restSecondsRemaining += secondsToAdd;
+      if (_restSecondsRemaining > _initialRestTime) {
+        _initialRestTime = _restSecondsRemaining;
       }
     });
-    if (_restSecondsRemaining > 0) {
-      _updateRestNotification(_restSecondsRemaining, _initialRestTime);
-    }
+    _updateRestNotification(_restSecondsRemaining, _initialRestTime);
+  }
+
+  void _cancelRestTimer() {
+    _restTimer?.cancel();
+    _cancelRestNotification();
+    setState(() {
+      _restSecondsRemaining = 0;
+      _initialRestTime = 0;
+    });
+    NexcSnack.show(context, context.l10n.timerCanceled);
   }
 
   void _startSetStopwatch(int setId) {
@@ -450,9 +529,9 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       if (!_startedSetIds.contains(setId)) {
         _startedSetIds.add(setId);
         for (int i = 0; i < _exercises.length; i++) {
-          final eWs = _exercises[i];
-          final setsList = List<WorkoutSet>.from(eWs.sets);
-          final idx = setsList.indexWhere((s) => s.id == setId);
+          final ExerciseWithSets eWs = _exercises[i];
+          final List<WorkoutSet> setsList = List<WorkoutSet>.from(eWs.sets);
+          final int idx = setsList.indexWhere((WorkoutSet s) => s.id == setId);
           if (idx != -1) {
             setsList[idx] = setsList[idx].copyWith(elapsedTime: 0);
             _exercises[i] = eWs.copyWith(sets: setsList);
@@ -461,12 +540,14 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
         }
       }
     });
-    _setStopwatchTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _setStopwatchTimer = Timer.periodic(const Duration(seconds: 1), (
+      Timer timer,
+    ) {
       bool found = false;
       for (int i = 0; i < _exercises.length; i++) {
-        final eWs = _exercises[i];
-        final setsList = List<WorkoutSet>.from(eWs.sets);
-        final idx = setsList.indexWhere((s) => s.id == setId);
+        final ExerciseWithSets eWs = _exercises[i];
+        final List<WorkoutSet> setsList = List<WorkoutSet>.from(eWs.sets);
+        final int idx = setsList.indexWhere((WorkoutSet s) => s.id == setId);
         if (idx != -1) {
           setsList[idx] = setsList[idx].copyWith(
             elapsedTime: setsList[idx].elapsedTime + 1,
@@ -478,10 +559,12 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       }
       if (!found) {
         _setStopwatchTimer?.cancel();
-        setState(() {
-          _idSetWithRunningStopwatch = null;
-        });
-      } else {
+        if (mounted) {
+          setState(() {
+            _idSetWithRunningStopwatch = null;
+          });
+        }
+      } else if (mounted) {
         setState(() {});
       }
     });
@@ -494,19 +577,12 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
     });
   }
 
-  Future<void> _saveProgressToDb() async {
-    if (!mounted) return;
-    final repo = ref.read(workoutRepositoryProvider);
-    final currentWorkout = _workout.copyWith(
-      timeElapsed: _elapsedSeconds,
-      state: WorkoutState.RUNNING,
-    );
-
-    final settings = ref.read(settingsProvider);
-    final intensityScale = settings.intensityScale;
-
-    final sanitizedExercises = _exercises.map((eWs) {
-      final updatedSets = eWs.sets.map((s) {
+  List<ExerciseWithSets> _sanitizedExercises() {
+    final IntensityScale intensityScale = ref
+        .read(settingsProvider)
+        .intensityScale;
+    return _exercises.map((ExerciseWithSets eWs) {
+      final List<WorkoutSet> updatedSets = eWs.sets.map((WorkoutSet s) {
         double? rpe = s.rpe;
         int? rir = s.rir;
         if (intensityScale == IntensityScale.none) {
@@ -517,15 +593,39 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
         } else if (intensityScale == IntensityScale.rir) {
           rpe = null;
         }
-        return s.copyWith(rpe: Value(rpe), rir: Value(rir));
+        return s.copyWith(rpe: Value<double?>(rpe), rir: Value<int?>(rir));
       }).toList();
       return eWs.copyWith(sets: updatedSets);
     }).toList();
+  }
 
-    final id = await repo.addWorkoutWithExercisesAndSets(
+  String _displayTitle(AppLocalizations l10n) {
+    final String raw = _workout.title.trim();
+    if (raw.isEmpty || raw == 'Empty Workout') return l10n.tabWorkout;
+    return raw;
+  }
+
+  /// Title stored with the workout; does not touch [BuildContext] so it is
+  /// safe during the initial synchronous load.
+  String get _titleForStorage {
+    final String raw = _workout.title.trim();
+    if (raw.isEmpty || raw == 'Empty Workout') return _emptyWorkoutTitle;
+    return raw;
+  }
+
+  Future<void> _saveProgressToDb() async {
+    if (!mounted) return;
+    final repo = ref.read(workoutRepositoryProvider);
+    final Workout currentWorkout = _workout.copyWith(
+      timeElapsed: _elapsedSeconds,
+      state: WorkoutState.RUNNING,
+      title: _titleForStorage,
+    );
+
+    final int id = await repo.addWorkoutWithExercisesAndSets(
       WorkoutWithExercisesAndSets(
         workout: currentWorkout,
-        exercisesWithSets: sanitizedExercises,
+        exercisesWithSets: _sanitizedExercises(),
       ),
     );
 
@@ -533,12 +633,122 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       _workout = _workout.copyWith(id: id);
     }
 
-    final updated = await repo.getWorkoutWithExercisesAndSets(id);
+    final WorkoutWithExercisesAndSets? updated = await repo
+        .getWorkoutWithExercisesAndSets(id);
     if (updated != null && mounted) {
       setState(() {
-        _exercises = List.from(updated.exercisesWithSets);
+        _exercises = List<ExerciseWithSets>.from(updated.exercisesWithSets);
       });
     }
+  }
+
+  Future<void> _pickExercises() async {
+    final dynamic result = await Navigator.push<dynamic>(
+      context,
+      MaterialPageRoute<dynamic>(
+        builder: (BuildContext context) =>
+            const ExercisesScreen(addExercises: true),
+      ),
+    );
+    if (!mounted) return;
+    if (result is List<ExerciseDataDC>) {
+      for (final ExerciseDataDC dc in result) {
+        await _addExercise(dc);
+      }
+    }
+  }
+
+  Future<void> _addExercise(ExerciseDataDC dc) async {
+    final repo = ref.read(workoutRepositoryProvider);
+    final List<WorkoutSet> lastSets = await repo.getLastPerformanceSets(dc.id);
+    final SetMode? storedMode = await repo.getLastSetModeForExercise(dc.id);
+    final SetMode initialSetMode = storedMode ?? _defaultSetMode(dc);
+    if (!mounted) return;
+    setState(() {
+      _previousPerformances[dc.id] = lastSets;
+      final Exercise newEx = Exercise(
+        id: DateTime.now().millisecondsSinceEpoch + _exercises.length,
+        exerciseDataId: dc.id,
+        notes: '',
+        setMode: initialSetMode,
+        restTime: 90,
+        position: _exercises.length,
+        workoutId: _workout.id,
+      );
+      final WorkoutSet newSet = WorkoutSet(
+        id: DateTime.now().millisecondsSinceEpoch + _exercises.length + 1000,
+        load: 0.0,
+        weightUnit: WeightUnit.kg,
+        reps: 0,
+        elapsedTime: 0,
+        completed: false,
+        setType: SetType.NORMAL,
+        exerciseId: newEx.id,
+      );
+      _exercises.add(
+        ExerciseWithSets(
+          exercise: newEx,
+          exerciseDC: dc,
+          sets: <WorkoutSet>[newSet],
+        ),
+      );
+    });
+    _saveProgressToDb();
+  }
+
+  SetMode _defaultSetMode(ExerciseDataDC dc) => defaultSetModeForExercise(dc);
+
+  void _deleteExercise(int index) {
+    if (index < 0 || index >= _exercises.length) return;
+    setState(() {
+      _exercises.removeAt(index);
+      for (int i = 0; i < _exercises.length; i++) {
+        _exercises[i] = _exercises[i].copyWith(
+          exercise: _exercises[i].exercise.copyWith(position: i),
+        );
+      }
+    });
+    _saveProgressToDb();
+  }
+
+  void _deleteSet(int exerciseIndex, int setId) {
+    if (exerciseIndex < 0 || exerciseIndex >= _exercises.length) return;
+    final ExerciseWithSets target = _exercises[exerciseIndex];
+    setState(() {
+      _exercises[exerciseIndex] = target.copyWith(
+        sets: target.sets.where((WorkoutSet s) => s.id != setId).toList(),
+      );
+    });
+    _saveProgressToDb();
+  }
+
+  void _applyPreviousPerformance(int exerciseIndex, int setId) {
+    if (exerciseIndex < 0 || exerciseIndex >= _exercises.length) return;
+    final ExerciseWithSets target = _exercises[exerciseIndex];
+    final List<WorkoutSet>? previous =
+        _previousPerformances[target.exerciseDC.id];
+    if (previous == null) return;
+    final int setIndex = target.sets.indexWhere(
+      (WorkoutSet s) => s.id == setId,
+    );
+    if (setIndex < 0 || setIndex >= previous.length) return;
+    final WorkoutSet source = previous[setIndex];
+    setState(() {
+      _exercises[exerciseIndex] = target.copyWith(
+        sets: target.sets
+            .map(
+              (WorkoutSet s) => s.id == setId
+                  ? s.copyWith(
+                      load: source.load,
+                      reps: source.reps,
+                      elapsedTime: source.elapsedTime,
+                    )
+                  : s,
+            )
+            .toList(),
+      );
+    });
+    _saveProgressToDb();
   }
 
   Future<void> _finishWorkout() async {
@@ -546,187 +756,86 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
     _restTimer?.cancel();
     _setStopwatchTimer?.cancel();
 
-    final completedSets = _exercises.fold(
+    final int completedSets = _exercises.fold(
       0,
-      (sum, item) => sum + item.sets.where((s) => s.completed).length,
+      (int sum, ExerciseWithSets item) =>
+          sum + item.sets.where((WorkoutSet s) => s.completed).length,
     );
-    final totalSets = _exercises.fold(0, (sum, item) => sum + item.sets.length);
-    final timeStr = _formatTime(_elapsedSeconds);
+    final int totalSets = _exercises.fold(
+      0,
+      (int sum, ExerciseWithSets item) => sum + item.sets.length,
+    );
+    final String timeStr = _formatTime(_elapsedSeconds);
 
     if (!mounted) return;
 
-    final l10n = context.l10n;
-    final confirmed = await showDialog<String>(
+    final String? confirmed = await showDialog<String>(
       context: context,
       barrierDismissible: true,
-      builder: (context) {
-        final theme = Theme.of(context);
-        return Dialog(
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(28),
-          ),
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 480),
-            child: SingleChildScrollView(
-              child: Padding(
-                padding: const EdgeInsets.all(24.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          l10n.finishWorkoutTitle,
-                          style: theme.textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: theme.colorScheme.primary,
-                          ),
-                        ),
-                        IconButton(
-                          icon: const Icon(Icons.close),
-                          onPressed: () => Navigator.pop(context, 'cancel'),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.timer_outlined,
-                            color: theme.colorScheme.secondary,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              l10n.durationWithTime(timeStr),
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: theme.colorScheme.surfaceContainerHighest,
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.check_circle_outline,
-                            color: theme.colorScheme.tertiary,
-                          ),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Text(
-                              l10n.completedSetsRatio(completedSets, totalSets),
-                              style: theme.textTheme.bodyLarge?.copyWith(
-                                fontWeight: FontWeight.w600,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            style: OutlinedButton.styleFrom(
-                              foregroundColor: theme.colorScheme.error,
-                              side: BorderSide(color: theme.colorScheme.error),
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            onPressed: () => Navigator.pop(context, 'discard'),
-                            child: Text(
-                              l10n.discardAction,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: FilledButton(
-                            style: FilledButton.styleFrom(
-                              backgroundColor: theme.colorScheme.primary,
-                              foregroundColor: theme.colorScheme.onPrimary,
-                              padding: const EdgeInsets.symmetric(vertical: 16),
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                            ),
-                            onPressed: () => Navigator.pop(context, 'save'),
-                            child: Text(
-                              l10n.saveAction,
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+      builder: (BuildContext context) {
+        final ThemeData theme = Theme.of(context);
+        final AppLocalizations dialogL10n = context.l10n;
+        return AlertDialog(
+          scrollable: true,
+          title: Text(
+            dialogL10n.finishWorkoutTitle,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: theme.textTheme.headlineSmall?.copyWith(
+              color: theme.colorScheme.onSurface,
             ),
           ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: <Widget>[
+              _FinishSummaryRow(
+                icon: NexcIcons.timer,
+                text: dialogL10n.durationWithTime(timeStr),
+              ),
+              const SizedBox(height: NexcSpacing.sm),
+              _FinishSummaryRow(
+                icon: NexcIcons.check,
+                text: dialogL10n.completedSetsRatio(completedSets, totalSets),
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              style: TextButton.styleFrom(
+                foregroundColor: theme.colorScheme.error,
+              ),
+              onPressed: () => Navigator.pop(context, 'discard'),
+              child: Text(dialogL10n.discardAction),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, 'save'),
+              child: Text(dialogL10n.saveAction),
+            ),
+          ],
         );
       },
     );
 
     if (confirmed == 'save') {
       final repo = ref.read(workoutRepositoryProvider);
-      final completedWorkout = _workout.copyWith(
+      final Workout completedWorkout = _workout.copyWith(
+        title: _titleForStorage,
         timeElapsed: _elapsedSeconds,
         state: WorkoutState.COMPLETED,
         completed: DateTime.now(),
       );
-
-      final settings = ref.read(settingsProvider);
-      final intensityScale = settings.intensityScale;
-      final sanitizedExercises = _exercises.map((eWs) {
-        final updatedSets = eWs.sets.map((s) {
-          double? rpe = s.rpe;
-          int? rir = s.rir;
-          if (intensityScale == IntensityScale.none) {
-            rpe = null;
-            rir = null;
-          } else if (intensityScale == IntensityScale.rpe) {
-            rir = null;
-          } else if (intensityScale == IntensityScale.rir) {
-            rpe = null;
-          }
-          return s.copyWith(rpe: Value(rpe), rir: Value(rir));
-        }).toList();
-        return eWs.copyWith(sets: updatedSets);
-      }).toList();
-
-      final workoutData = WorkoutWithExercisesAndSets(
-        workout: completedWorkout,
-        exercisesWithSets: sanitizedExercises,
-      );
+      final SettingsState settings = ref.read(settingsProvider);
+      final List<ExerciseWithSets> sanitized = _sanitizedExercises();
+      final WorkoutWithExercisesAndSets workoutData =
+          WorkoutWithExercisesAndSets(
+            workout: completedWorkout,
+            exercisesWithSets: sanitized,
+          );
       await repo.addWorkoutWithExercisesAndSets(workoutData);
 
       if (_workout.routineId != 0) {
-        var updateRoutine =
+        bool updateRoutine =
             settings.routineUpdateMode == RoutineUpdateMode.always;
         if (settings.routineUpdateMode == RoutineUpdateMode.ask) {
           if (!mounted) return;
@@ -735,7 +844,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
         if (updateRoutine) {
           await repo.updateRoutineWithCompletedSetValues(
             routineId: _workout.routineId,
-            workoutExercises: sanitizedExercises,
+            workoutExercises: sanitized,
           );
         }
       }
@@ -744,8 +853,8 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       if (mounted) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(
-            builder: (context) =>
+          MaterialPageRoute<void>(
+            builder: (BuildContext context) =>
                 WorkoutSummaryScreen(workoutData: workoutData),
           ),
         );
@@ -758,7 +867,7 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
         Navigator.pop(context);
       }
     } else {
-      // cancel / resume
+      // Dismissing the dialog is the single cancel path: resume everything.
       _startStopwatch();
       if (_idSetWithRunningStopwatch != null) {
         _startSetStopwatch(_idSetWithRunningStopwatch!);
@@ -791,65 +900,24 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
     }
   }
 
-  String _formatTime(int seconds) {
-    final m = (seconds ~/ 60).toString().padLeft(2, '0');
-    final s = (seconds % 60).toString().padLeft(2, '0');
-    return '$m:$s';
-  }
-
-  Future<void> _addExercise(ExerciseDataDC dc) async {
-    final repo = ref.read(workoutRepositoryProvider);
-    final lastSets = await repo.getLastPerformanceSets(dc.id);
-    final storedMode = await repo.getLastSetModeForExercise(dc.id);
-    final initialSetMode = storedMode ?? _defaultSetMode(dc);
-    if (!mounted) return;
-    setState(() {
-      _previousPerformances[dc.id] = lastSets;
-      final newEx = Exercise(
-        id: DateTime.now().millisecondsSinceEpoch + _exercises.length,
-        exerciseDataId: dc.id,
-        notes: '',
-        setMode: initialSetMode,
-        restTime: 90,
-        position: _exercises.length,
-        workoutId: _workout.id,
-      );
-      final newSet = WorkoutSet(
-        id: DateTime.now().millisecondsSinceEpoch + _exercises.length + 1000,
-        load: 0.0,
-        weightUnit: WeightUnit.kg,
-        reps: 0,
-        elapsedTime: 0,
-        completed: false,
-        setType: SetType.NORMAL,
-        exerciseId: newEx.id,
-      );
-
-      _exercises.add(
-        ExerciseWithSets(exercise: newEx, exerciseDC: dc, sets: [newSet]),
-      );
-    });
-    _saveProgressToDb();
-  }
-
-  SetMode _defaultSetMode(ExerciseDataDC dc) => defaultSetModeForExercise(dc);
+  String _formatTime(int seconds) => formatClock(seconds);
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final l10n = context.l10n;
-    final settings = ref.watch(settingsProvider);
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    final SettingsState settings = ref.watch(settingsProvider);
 
-    ref.listen<bool>(settingsProvider.select((s) => s.workoutScreenOn), (
-      previous,
-      next,
-    ) {
-      if (next) {
-        WakelockPlus.enable();
-      } else {
-        WakelockPlus.disable();
-      }
-    });
+    ref.listen<bool>(
+      settingsProvider.select((SettingsState s) => s.workoutScreenOn),
+      (bool? previous, bool next) {
+        if (next) {
+          WakelockPlus.enable();
+        } else {
+          WakelockPlus.disable();
+        }
+      },
+    );
 
     if (_isLoading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
@@ -857,51 +925,19 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
 
     final int completedSets = _exercises.fold(
       0,
-      (sum, item) => sum + item.sets.where((s) => s.completed).length,
+      (int sum, ExerciseWithSets item) =>
+          sum + item.sets.where((WorkoutSet s) => s.completed).length,
     );
     final int totalSets = _exercises.fold(
       0,
-      (sum, item) => sum + item.sets.length,
+      (int sum, ExerciseWithSets item) => sum + item.sets.length,
     );
 
-    final headerCard = Card(
-      margin: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      elevation: settings.isWorkoutHeaderSticky ? 6 : 0,
-      color: theme.colorScheme.primaryContainer,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  l10n.setsRatio(completedSets, totalSets),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
-                Text(
-                  _formatTime(_elapsedSeconds),
-                  style: theme.textTheme.bodyMedium?.copyWith(
-                    fontWeight: FontWeight.bold,
-                    color: theme.colorScheme.onPrimaryContainer,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 12),
-            LinearWavyProgressIndicator(
-              value: totalSets > 0 ? (completedSets / totalSets) : 0.0,
-              color: theme.colorScheme.onPrimaryContainer,
-              backgroundColor: theme.colorScheme.onPrimaryContainer.withValues(
-                alpha: 0.2,
-              ),
-            ),
-          ],
-        ),
-      ),
+    final Widget headerCard = _WorkoutProgressCard(
+      completedSets: completedSets,
+      totalSets: totalSets,
+      elapsed: _formatTime(_elapsedSeconds),
+      elevated: settings.isWorkoutHeaderSticky,
     );
 
     Future<void> handlePop() async {
@@ -912,7 +948,10 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       final repo = ref.read(workoutRepositoryProvider);
       await repo.addWorkoutWithExercisesAndSets(
         WorkoutWithExercisesAndSets(
-          workout: _workout.copyWith(timeElapsed: _elapsedSeconds),
+          workout: _workout.copyWith(
+            title: _titleForStorage,
+            timeElapsed: _elapsedSeconds,
+          ),
           exercisesWithSets: _exercises,
         ),
       );
@@ -921,570 +960,598 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
       }
     }
 
+    final bool sticky = settings.isWorkoutHeaderSticky;
+    final double bottomInset =
+        (_restSecondsRemaining > 0 ? _restBarHeight : 0) + NexcSpacing.lg;
+
+    Widget buildList() {
+      final EdgeInsets padding = EdgeInsets.fromLTRB(
+        NexcSpacing.lg,
+        sticky ? _headerHeight + NexcSpacing.sm : NexcSpacing.sm,
+        NexcSpacing.lg,
+        bottomInset,
+      );
+
+      if (_exercises.isEmpty) {
+        return SingleChildScrollView(
+          padding: padding,
+          child: NexcEmptyState(
+            icon: NexcIcons.workoutIdle,
+            title: l10n.tabWorkout,
+            message: l10n.emptyWorkoutHint,
+            actionLabel: l10n.addExercise,
+            onAction: _pickExercises,
+          ),
+        );
+      }
+
+      return ReorderableListView.builder(
+        key: const PageStorageKey<String>('active_workout_reorderable_list'),
+        scrollController: _scrollController,
+        buildDefaultDragHandles: false,
+        padding: padding,
+        itemCount: _exercises.length + (sticky ? 0 : 1),
+        onReorderStart: (int index) {},
+        onReorderEnd: (int index) {},
+        onReorder: (int oldIndex, int newIndex) {
+          if (!sticky) {
+            if (oldIndex == 0 || newIndex == 0) return;
+          }
+          final int offset = sticky ? 0 : 1;
+          int from = oldIndex - offset;
+          int to = newIndex - offset;
+          if (to < 0) return;
+          if (to > from) to -= 1;
+          if (from < 0 || from >= _exercises.length) return;
+          to = to.clamp(0, _exercises.length - 1);
+          setState(() {
+            final ExerciseWithSets item = _exercises.removeAt(from);
+            _exercises.insert(to, item);
+            for (int i = 0; i < _exercises.length; i++) {
+              _exercises[i] = _exercises[i].copyWith(
+                exercise: _exercises[i].exercise.copyWith(position: i),
+              );
+            }
+          });
+          _saveProgressToDb();
+        },
+        proxyDecorator: (Widget child, int index, Animation<double> animation) {
+          final int exerciseIndex = sticky ? index : index - 1;
+          final SupersetInfo info = supersetInfoFor(
+            _exercises,
+            exerciseIndex,
+            theme.colorScheme,
+          );
+          final ExerciseWithSets eWs = _exercises[exerciseIndex];
+          return Material(
+            color: theme.colorScheme.surfaceContainerHigh,
+            elevation: 8,
+            borderRadius: NexcShapes.lgRadius,
+            child: ExerciseCard(
+              key: ValueKey<String>('ex_drag_${eWs.exercise.id}'),
+              index: exerciseIndex,
+              exerciseWithSets: eWs,
+              workout: true,
+              isReordering: true,
+              previousPerformances: _previousPerformances[eWs.exerciseDC.id],
+              idSetWithRunningStopwatch: _idSetWithRunningStopwatch,
+              showRpe: settings.intensityScale != IntensityScale.none,
+              intensityScale: settings.intensityScale,
+              supersetLabel: info.label,
+              supersetColor: info.color,
+              addSet: (int id) {},
+              onDetail: (int id, String dcId) {},
+              onDelete: (int id) {},
+              deleteSet: (int id) {},
+              updateExerciseNotes: (String text, int id) {},
+              updateExerciseRestTime: (int val, int id) {},
+              updateExerciseSetMode: (SetMode mode, int id) {},
+              updateSetTime: (int t, int id) {},
+              updateSetReps: (int r, int id) {},
+              updateSetLoad: (double l, int id) {},
+              updateSetCompleted: (bool c, int id) {},
+            ),
+          );
+        },
+        itemBuilder: (BuildContext context, int index) {
+          if (!sticky && index == 0) {
+            return Padding(
+              key: const ValueKey<String>('header_card_wrapper'),
+              padding: const EdgeInsets.only(bottom: NexcSpacing.md),
+              child: headerCard,
+            );
+          }
+          final int exIndex = sticky ? index : index - 1;
+          final ExerciseWithSets eWs = _exercises[exIndex];
+          final SupersetInfo info = supersetInfoFor(
+            _exercises,
+            exIndex,
+            theme.colorScheme,
+          );
+          return _buildExerciseCard(
+            context,
+            eWs: eWs,
+            exIndex: exIndex,
+            info: info,
+            settings: settings,
+          );
+        },
+      );
+    }
+
+    final Widget body;
+    if (sticky) {
+      body = Stack(
+        children: <Widget>[
+          buildList(),
+          Positioned(
+            top: NexcSpacing.sm,
+            left: NexcSpacing.lg,
+            right: NexcSpacing.lg,
+            child: MeasuredHeight(
+              onHeight: (double height) {
+                if ((height - _headerHeight).abs() < 0.5) return;
+                setState(() => _headerHeight = height);
+              },
+              child: headerCard,
+            ),
+          ),
+          if (_restSecondsRemaining > 0)
+            Positioned(
+              left: NexcSpacing.lg,
+              right: NexcSpacing.lg,
+              bottom: NexcSpacing.md,
+              child: MeasuredHeight(
+                onHeight: (double height) {
+                  if ((height - _restBarHeight).abs() < 0.5) return;
+                  setState(() => _restBarHeight = height);
+                },
+                child: RestTimerBar(
+                  remainingSeconds: _restSecondsRemaining,
+                  initialSeconds: _initialRestTime,
+                  onCancel: _cancelRestTimer,
+                  onAddTime: () => _modifyRestTime(10),
+                ),
+              ),
+            ),
+        ],
+      );
+    } else {
+      body = Stack(
+        children: <Widget>[
+          buildList(),
+          if (_restSecondsRemaining > 0)
+            Positioned(
+              left: NexcSpacing.lg,
+              right: NexcSpacing.lg,
+              bottom: NexcSpacing.md,
+              child: MeasuredHeight(
+                onHeight: (double height) {
+                  if ((height - _restBarHeight).abs() < 0.5) return;
+                  setState(() => _restBarHeight = height);
+                },
+                child: RestTimerBar(
+                  remainingSeconds: _restSecondsRemaining,
+                  initialSeconds: _initialRestTime,
+                  onCancel: _cancelRestTimer,
+                  onAddTime: () => _modifyRestTime(10),
+                ),
+              ),
+            ),
+        ],
+      );
+    }
+
+    final bool aiEnabled = settings.aiWorkoutGenerationEnabled;
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, result) async {
+      onPopInvokedWithResult: (bool didPop, Object? result) async {
         if (didPop) return;
         await handlePop();
       },
-      child: Scaffold(
-        appBar: AppBar(
-          title: Text(l10n.tabWorkout),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: handlePop,
-          ),
-          actions: [
-            IconButton(
-              icon: Icon(
-                Icons.auto_awesome,
-                color: settings.aiWorkoutGenerationEnabled
-                    ? null
-                    : theme.disabledColor,
-              ),
-              tooltip: settings.aiWorkoutGenerationEnabled
-                  ? l10n.aiWorkoutCreator
-                  : l10n.aiWorkoutCreatorDisabled,
-              onPressed: () {
-                if (settings.aiWorkoutGenerationEnabled) {
-                  Navigator.pushNamed(context, '/workout/ai-chat');
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(l10n.aiWorkoutGenerationDisabled),
-                      action: SnackBarAction(
-                        label: l10n.settingsTitle,
-                        onPressed: () =>
-                            Navigator.pushNamed(context, '/settings'),
-                      ),
+      child: NexcPage(
+        title: _displayTitle(l10n),
+        subtitle:
+            '${l10n.exercisesWithCount(_exercises.length)} · '
+            '${_formatTime(_elapsedSeconds)}',
+        actions: <Widget>[
+          PopupMenuButton<String>(
+            tooltip: l10n.moreOptions,
+            icon: const Icon(NexcIcons.more),
+            onSelected: (String value) {
+              switch (value) {
+                case 'reorder':
+                  setState(() => _isReordering = !_isReordering);
+                  break;
+                case 'ai':
+                  if (aiEnabled) {
+                    Navigator.pushNamed(context, '/workout/ai-chat');
+                  } else {
+                    NexcSnack.show(
+                      context,
+                      l10n.aiWorkoutGenerationDisabled,
+                      actionLabel: l10n.settingsTitle,
+                      onAction: () => Navigator.pushNamed(context, '/settings'),
+                    );
+                  }
+                  break;
+              }
+            },
+            itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[
+              if (_exercises.isNotEmpty)
+                PopupMenuItem<String>(
+                  value: 'reorder',
+                  child: ListTile(
+                    contentPadding: EdgeInsets.zero,
+                    leading: Icon(
+                      _isReordering ? NexcIcons.check : NexcIcons.sort,
                     ),
-                  );
-                }
-              },
-            ),
-            if (_exercises.isNotEmpty) ...[
-              IconButton(
-                icon: Icon(_isReordering ? Icons.check : Icons.swap_vert),
-                tooltip: _isReordering
-                    ? l10n.doneReordering
-                    : l10n.reorderExercises,
-                onPressed: () {
-                  setState(() {
-                    _isReordering = !_isReordering;
-                  });
-                },
-              ),
-              TextButton(
-                onPressed: _finishWorkout,
-                child: Text(
-                  l10n.doneAction,
-                  style: const TextStyle(fontWeight: FontWeight.bold),
+                    title: Text(
+                      _isReordering
+                          ? l10n.doneReordering
+                          : l10n.reorderExercises,
+                    ),
+                  ),
+                ),
+              PopupMenuItem<String>(
+                value: 'ai',
+                enabled: aiEnabled,
+                child: ListTile(
+                  contentPadding: EdgeInsets.zero,
+                  leading: Icon(
+                    NexcIcons.ai,
+                    color: aiEnabled
+                        ? null
+                        : theme.colorScheme.onSurface.withValues(alpha: 0.38),
+                  ),
+                  title: Text(
+                    aiEnabled
+                        ? l10n.aiWorkoutCreator
+                        : l10n.aiWorkoutCreatorDisabled,
+                  ),
                 ),
               ),
             ],
+          ),
+        ],
+        body: SafeArea(top: false, child: body),
+        bottomBar: Row(
+          children: <Widget>[
+            Expanded(
+              child: OutlinedButton(
+                onPressed: _pickExercises,
+                child: Text(
+                  l10n.addExercise,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
+            const SizedBox(width: NexcSpacing.sm),
+            Expanded(
+              child: FilledButton(
+                onPressed: _finishWorkout,
+                child: Text(
+                  l10n.doneAction,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ),
           ],
         ),
-        body: Stack(
-          children: [
-            _exercises.isEmpty
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 60.0),
-                      child: Text(
-                        l10n.emptyWorkoutHint,
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-                  )
-                : ReorderableListView.builder(
-                    key: const PageStorageKey(
-                      'active_workout_reorderable_list',
-                    ),
-                    scrollController: _scrollController,
-                    buildDefaultDragHandles: false,
-                    padding: EdgeInsets.fromLTRB(
-                      16,
-                      settings.isWorkoutHeaderSticky ? 120 : 16,
-                      16,
-                      100,
-                    ),
-                    itemCount: settings.isWorkoutHeaderSticky
-                        ? _exercises.length
-                        : _exercises.length + 1,
-                    onReorderStart: (index) {},
-                    onReorderEnd: (index) {},
-                    onReorder: (oldIndex, newIndex) {
-                      final isSticky = settings.isWorkoutHeaderSticky;
-                      if (!isSticky) {
-                        if (oldIndex == 0 || newIndex == 0) return;
-                        oldIndex -= 1;
-                        if (newIndex > oldIndex) {
-                          newIndex -= 1;
-                        }
-                      }
-                      setState(() {
-                        if (oldIndex < newIndex) {
-                          newIndex -= 1;
-                        }
-                        final item = _exercises.removeAt(oldIndex);
-                        _exercises.insert(newIndex, item);
-                        for (int i = 0; i < _exercises.length; i++) {
-                          _exercises[i] = _exercises[i].copyWith(
-                            exercise: _exercises[i].exercise.copyWith(
-                              position: i,
-                            ),
-                          );
-                        }
-                      });
-                      _saveProgressToDb();
-                    },
-                    proxyDecorator:
-                        (Widget child, int index, Animation<double> animation) {
-                          final settings = ref.read(settingsProvider);
-                          final eWs = _exercises[index];
-                          final List<Color> supersetColors = [
-                            theme.colorScheme.primary,
-                            theme.colorScheme.tertiary,
-                            theme.colorScheme.secondary,
-                            theme.colorScheme.error,
-                            theme.colorScheme.inversePrimary,
-                            theme.colorScheme.tertiaryContainer,
-                          ];
-                          final uniqueSupersets = _exercises
-                              .map((e) => e.exercise.supersetId)
-                              .where((id) => id != null)
-                              .toSet()
-                              .toList();
-                          final sId = eWs.exercise.supersetId;
-                          String? supersetLabel;
-                          Color? supersetColor;
-                          if (sId != null) {
-                            final sIndex = uniqueSupersets.indexOf(sId);
-                            if (sIndex != -1) {
-                              final letter = String.fromCharCode(65 + sIndex);
-                              supersetLabel = letter;
-                              supersetColor =
-                                  supersetColors[sIndex %
-                                      supersetColors.length];
-                            }
-                          }
-                          return Material(
-                            color: Colors.transparent,
-                            elevation: 8,
-                            child: ExerciseCard(
-                              key: ValueKey('ex_drag_${eWs.exercise.id}'),
-                              index: index,
-                              exerciseWithSets: eWs,
-                              workout: true,
-                              isReordering: true,
-                              previousPerformances:
-                                  _previousPerformances[eWs.exerciseDC.id],
-                              idSetWithRunningStopwatch:
-                                  _idSetWithRunningStopwatch,
-                              showRpe:
-                                  settings.intensityScale !=
-                                  IntensityScale.none,
-                              intensityScale: settings.intensityScale,
-                              supersetLabel: supersetLabel,
-                              supersetColor: supersetColor,
-                              addSet: (id) {},
-                              onDetail: (id, dcId) {},
-                              onDelete: (id) {},
-                              deleteSet: (id) {},
-                              updateExerciseNotes: (text, id) {},
-                              updateExerciseRestTime: (val, id) {},
-                              updateExerciseSetMode: (mode, id) {},
-                              updateSetTime: (t, id) {},
-                              updateSetReps: (r, id) {},
-                              updateSetLoad: (l, id) {},
-                              updateSetCompleted: (c, id) {},
-                              showInfo: (info) {},
-                            ),
-                          );
-                        },
-                    itemBuilder: (context, index) {
-                      final isSticky = settings.isWorkoutHeaderSticky;
-                      if (!isSticky && index == 0) {
-                        return Padding(
-                          key: const ValueKey('header_card_wrapper'),
-                          padding: const EdgeInsets.only(bottom: 16.0),
-                          child: headerCard,
-                        );
-                      }
-                      final exIndex = isSticky ? index : index - 1;
-                      final eWs = _exercises[exIndex];
-                      final List<Color> supersetColors = [
-                        theme.colorScheme.primary,
-                        theme.colorScheme.tertiary,
-                        theme.colorScheme.secondary,
-                        theme.colorScheme.error,
-                        theme.colorScheme.inversePrimary,
-                        theme.colorScheme.tertiaryContainer,
-                      ];
-                      final uniqueSupersets = _exercises
-                          .map((e) => e.exercise.supersetId)
-                          .where((id) => id != null)
-                          .toSet()
-                          .toList();
-                      final sId = eWs.exercise.supersetId;
-                      String? supersetLabel;
-                      Color? supersetColor;
-                      if (sId != null) {
-                        final sIndex = uniqueSupersets.indexOf(sId);
-                        if (sIndex != -1) {
-                          final letter = String.fromCharCode(65 + sIndex);
-                          supersetLabel = letter;
-                          supersetColor =
-                              supersetColors[sIndex % supersetColors.length];
-                        }
-                      }
+      ),
+    );
+  }
 
-                      return ExerciseCard(
-                        key: ValueKey('ex_${eWs.exercise.id}'),
-                        index: exIndex,
-                        exerciseWithSets: eWs,
-                        workout: true,
-                        isReordering: _isReordering,
-                        previousPerformances:
-                            _previousPerformances[eWs.exerciseDC.id],
-                        idSetWithRunningStopwatch: _idSetWithRunningStopwatch,
-                        showRpe: settings.intensityScale != IntensityScale.none,
-                        intensityScale: settings.intensityScale,
-                        supersetLabel: supersetLabel,
-                        supersetColor: supersetColor,
-                        updateSetRpe: (val, setId) {
-                          final rpe = double.tryParse(val);
-                          setState(() {
-                            _exercises[exIndex] = eWs.copyWith(
-                              sets: eWs.sets
-                                  .map(
-                                    (s) => s.id == setId
-                                        ? s.copyWith(rpe: Value(rpe))
-                                        : s,
-                                  )
-                                  .toList(),
-                            );
-                          });
-                          _saveProgressToDb();
-                        },
-                        updateSetRir: (val, setId) {
-                          final rir = int.tryParse(val);
-                          setState(() {
-                            _exercises[exIndex] = eWs.copyWith(
-                              sets: eWs.sets
-                                  .map(
-                                    (s) => s.id == setId
-                                        ? s.copyWith(rir: Value(rir))
-                                        : s,
-                                  )
-                                  .toList(),
-                            );
-                          });
-                          _saveProgressToDb();
-                        },
-                        addSet: (exId) {
-                          setState(() {
-                            final setList = List<WorkoutSet>.from(eWs.sets);
-                            final lastSet = setList.lastOrNull;
-                            setList.add(
-                              WorkoutSet(
-                                id: DateTime.now().millisecondsSinceEpoch,
-                                // Loads stay canonical kilograms; the card
-                                // converts them for display and input.
-                                load: lastSet?.load ?? 0.0,
-                                weightUnit: WeightUnit.kg,
-                                reps: lastSet?.reps ?? 0,
-                                elapsedTime: 0,
-                                completed: false,
-                                setType: lastSet?.setType ?? SetType.NORMAL,
-                                exerciseId: exId,
-                              ),
-                            );
-                            _exercises[exIndex] = eWs.copyWith(sets: setList);
-                          });
-                          _saveProgressToDb();
-                        },
-                        onDetail: (exId, dcId) {
-                          Navigator.pushNamed(
-                            context,
-                            '/exercises/info',
-                            arguments: dcId,
-                          );
-                        },
-                        onDelete: (exId) {
-                          setState(() {
-                            _exercises.removeAt(exIndex);
-                          });
-                          _saveProgressToDb();
-                        },
-                        deleteSet: (setId) {
-                          setState(() {
-                            final setList = eWs.sets
-                                .where((s) => s.id != setId)
-                                .toList();
-                            _exercises[exIndex] = eWs.copyWith(sets: setList);
-                          });
-                          _saveProgressToDb();
-                        },
-                        updateExerciseNotes: (text, exId) {
-                          setState(() {
-                            _exercises[exIndex] = eWs.copyWith(
-                              exercise: eWs.exercise.copyWith(notes: text),
-                            );
-                          });
-                          _saveProgressToDb();
-                        },
-                        updateExerciseRestTime: (restTime, exId) {
-                          setState(() {
-                            _exercises[exIndex] = eWs.copyWith(
-                              exercise: eWs.exercise.copyWith(
-                                restTime: restTime,
-                              ),
-                            );
-                          });
-                          _saveProgressToDb();
-                        },
-                        updateExerciseSetMode: (setMode, exId) {
-                          setState(() {
-                            _exercises[exIndex] = eWs.copyWith(
-                              exercise: eWs.exercise.copyWith(setMode: setMode),
-                            );
-                          });
-                          _saveProgressToDb();
-                        },
-                        updateSetTime: (time, setId) {
-                          setState(() {
-                            _exercises[exIndex] = eWs.copyWith(
-                              sets: eWs.sets
-                                  .map(
-                                    (s) => s.id == setId
-                                        ? s.copyWith(elapsedTime: time)
-                                        : s,
-                                  )
-                                  .toList(),
-                            );
-                          });
-                          _saveProgressToDb();
-                        },
-                        updateSetReps: (reps, setId) {
-                          setState(() {
-                            _exercises[exIndex] = eWs.copyWith(
-                              sets: eWs.sets
-                                  .map(
-                                    (s) => s.id == setId
-                                        ? s.copyWith(reps: reps)
-                                        : s,
-                                  )
-                                  .toList(),
-                            );
-                          });
-                          _saveProgressToDb();
-                        },
-                        updateSetLoad: (load, setId) {
-                          setState(() {
-                            _exercises[exIndex] = eWs.copyWith(
-                              sets: eWs.sets
-                                  .map(
-                                    (s) => s.id == setId
-                                        ? s.copyWith(load: load)
-                                        : s,
-                                  )
-                                  .toList(),
-                            );
-                          });
-                          _saveProgressToDb();
-                        },
-                        updateSetCompleted: (completed, setId) {
-                          setState(() {
-                            _exercises[exIndex] = eWs.copyWith(
-                              sets: eWs.sets
-                                  .map(
-                                    (s) => s.id == setId
-                                        ? s.copyWith(completed: completed)
-                                        : s,
-                                  )
-                                  .toList(),
-                            );
-                          });
-                          if (completed && eWs.exercise.restTime > 0) {
-                            _startRestTimer(eWs.exercise.restTime);
-                          }
-                          _saveProgressToDb();
-                        },
-                        showInfo: (info) {},
-                        updateIdSetWithRunningStopwatch: (setId) {
-                          if (setId == 0) {
-                            _stopSetStopwatch();
-                          } else {
-                            _startSetStopwatch(setId);
-                          }
-                        },
-                        isFirst: exIndex == 0,
-                        onMachineBusy: (exId) {
-                          if (_exercises.length <= 1) return;
-                          final newOrder = AIService.reorderMachineBusy(
-                            busyIndex: exIndex,
-                            totalExercises: _exercises.length,
-                          );
-                          setState(() {
-                            final reordered = newOrder
-                                .map((idx) => _exercises[idx])
-                                .toList();
-                            for (int i = 0; i < reordered.length; i++) {
-                              reordered[i] = reordered[i].copyWith(
-                                exercise: reordered[i].exercise.copyWith(
-                                  position: i,
-                                ),
-                              );
-                            }
-                            _exercises = reordered;
-                          });
-                          _saveProgressToDb();
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(
-                                l10n.pushedExerciseForLater(
-                                  eWs.exerciseDC.name,
-                                ),
-                              ),
-                            ),
-                          );
-                        },
-                        onReplace: (exId) async {
-                          final result = await Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => ExercisesScreen(
-                                addExercises: false,
-                                targetExerciseToReplace: eWs.exerciseDC,
-                              ),
-                            ),
-                          );
-                          if (!mounted) return;
-                          if (result != null &&
-                              result is List<ExerciseDataDC> &&
-                              result.isNotEmpty) {
-                            final newDC = result.first;
-                            final storedMode = await ref
-                                .read(workoutRepositoryProvider)
-                                .getLastSetModeForExercise(newDC.id);
-                            final initialSetMode =
-                                storedMode ?? _defaultSetMode(newDC);
-                            if (!mounted) return;
-                            setState(() {
-                              final replaced = _exercises[exIndex].copyWith(
-                                exerciseDC: newDC,
-                                exercise: _exercises[exIndex].exercise.copyWith(
-                                  exerciseDataId: newDC.id,
-                                  setMode: initialSetMode,
-                                ),
-                              );
-                              _exercises[exIndex] = replaced;
-                            });
-                            _saveProgressToDb();
-                          }
-                        },
-                        onSupersetToggle: (exId) {
-                          setState(() {
-                            final currentSupersetId = eWs.exercise.supersetId;
-                            if (currentSupersetId != null) {
-                              // Unlink
-                              _exercises[exIndex] = eWs.copyWith(
-                                exercise: eWs.exercise.copyWith(
-                                  supersetId: const Value(null),
-                                ),
-                              );
-                            } else {
-                              // Link
-                              if (exIndex > 0) {
-                                final prevEx = _exercises[exIndex - 1];
-                                final prevSupersetId =
-                                    prevEx.exercise.supersetId;
-                                if (prevSupersetId != null) {
-                                  _exercises[exIndex] = eWs.copyWith(
-                                    exercise: eWs.exercise.copyWith(
-                                      supersetId: Value(prevSupersetId),
-                                    ),
-                                  );
-                                } else {
-                                  final maxId = _exercises
-                                      .map((e) => e.exercise.supersetId)
-                                      .whereType<int>()
-                                      .fold<int>(
-                                        0,
-                                        (m, val) => val > m ? val : m,
-                                      );
-                                  final newId = maxId + 1;
-                                  _exercises[exIndex - 1] = prevEx.copyWith(
-                                    exercise: prevEx.exercise.copyWith(
-                                      supersetId: Value(newId),
-                                    ),
-                                  );
-                                  _exercises[exIndex] = eWs.copyWith(
-                                    exercise: eWs.exercise.copyWith(
-                                      supersetId: Value(newId),
-                                    ),
-                                  );
-                                }
-                              }
-                            }
-                          });
-                          _saveProgressToDb();
-                        },
-                      );
-                    },
+  Widget _buildExerciseCard(
+    BuildContext context, {
+    required ExerciseWithSets eWs,
+    required int exIndex,
+    required SupersetInfo info,
+    required SettingsState settings,
+  }) {
+    return ExerciseCard(
+      key: ValueKey<String>('ex_${eWs.exercise.id}'),
+      index: exIndex,
+      exerciseWithSets: eWs,
+      workout: true,
+      isReordering: _isReordering,
+      previousPerformances: _previousPerformances[eWs.exerciseDC.id],
+      idSetWithRunningStopwatch: _idSetWithRunningStopwatch,
+      showRpe: settings.intensityScale != IntensityScale.none,
+      intensityScale: settings.intensityScale,
+      supersetLabel: info.label,
+      supersetColor: info.color,
+      applyPreviousSetPerformance: (int setId) =>
+          _applyPreviousPerformance(exIndex, setId),
+      updateSetRpe: (String val, int setId) {
+        final double? rpe = double.tryParse(val);
+        setState(() {
+          _exercises[exIndex] = eWs.copyWith(
+            sets: eWs.sets
+                .map(
+                  (WorkoutSet s) =>
+                      s.id == setId ? s.copyWith(rpe: Value<double?>(rpe)) : s,
+                )
+                .toList(),
+          );
+        });
+        _saveProgressToDb();
+      },
+      updateSetRir: (String val, int setId) {
+        final int? rir = int.tryParse(val);
+        setState(() {
+          _exercises[exIndex] = eWs.copyWith(
+            sets: eWs.sets
+                .map(
+                  (WorkoutSet s) =>
+                      s.id == setId ? s.copyWith(rir: Value<int?>(rir)) : s,
+                )
+                .toList(),
+          );
+        });
+        _saveProgressToDb();
+      },
+      addSet: (int exId) {
+        setState(() {
+          final List<WorkoutSet> setList = List<WorkoutSet>.from(eWs.sets);
+          final WorkoutSet? lastSet = setList.lastOrNull;
+          setList.add(
+            WorkoutSet(
+              id: DateTime.now().millisecondsSinceEpoch,
+              load: lastSet?.load ?? 0.0,
+              weightUnit: WeightUnit.kg,
+              reps: lastSet?.reps ?? 0,
+              elapsedTime: 0,
+              completed: false,
+              setType: lastSet?.setType ?? SetType.NORMAL,
+              exerciseId: exId,
+            ),
+          );
+          _exercises[exIndex] = eWs.copyWith(sets: setList);
+        });
+        _saveProgressToDb();
+      },
+      onDetail: (int exId, String dcId) {
+        Navigator.pushNamed(context, '/exercises/info', arguments: dcId);
+      },
+      onDelete: (int exId) => _deleteExercise(exIndex),
+      deleteSet: (int setId) => _deleteSet(exIndex, setId),
+      updateExerciseNotes: (String text, int exId) {
+        setState(() {
+          _exercises[exIndex] = eWs.copyWith(
+            exercise: eWs.exercise.copyWith(notes: text),
+          );
+        });
+        _saveProgressToDb();
+      },
+      updateExerciseRestTime: (int restTime, int exId) {
+        setState(() {
+          _exercises[exIndex] = eWs.copyWith(
+            exercise: eWs.exercise.copyWith(restTime: restTime),
+          );
+        });
+        _saveProgressToDb();
+      },
+      updateExerciseSetMode: (SetMode setMode, int exId) {
+        setState(() {
+          _exercises[exIndex] = eWs.copyWith(
+            exercise: eWs.exercise.copyWith(setMode: setMode),
+          );
+        });
+        _saveProgressToDb();
+      },
+      updateSetTime: (int time, int setId) {
+        setState(() {
+          _exercises[exIndex] = eWs.copyWith(
+            sets: eWs.sets
+                .map(
+                  (WorkoutSet s) =>
+                      s.id == setId ? s.copyWith(elapsedTime: time) : s,
+                )
+                .toList(),
+          );
+        });
+        _saveProgressToDb();
+      },
+      updateSetReps: (int reps, int setId) {
+        setState(() {
+          _exercises[exIndex] = eWs.copyWith(
+            sets: eWs.sets
+                .map(
+                  (WorkoutSet s) => s.id == setId ? s.copyWith(reps: reps) : s,
+                )
+                .toList(),
+          );
+        });
+        _saveProgressToDb();
+      },
+      updateSetLoad: (double load, int setId) {
+        setState(() {
+          _exercises[exIndex] = eWs.copyWith(
+            sets: eWs.sets
+                .map(
+                  (WorkoutSet s) => s.id == setId ? s.copyWith(load: load) : s,
+                )
+                .toList(),
+          );
+        });
+        _saveProgressToDb();
+      },
+      updateSetCompleted: (bool completed, int setId) {
+        setState(() {
+          _exercises[exIndex] = eWs.copyWith(
+            sets: eWs.sets
+                .map(
+                  (WorkoutSet s) =>
+                      s.id == setId ? s.copyWith(completed: completed) : s,
+                )
+                .toList(),
+          );
+        });
+        if (completed && eWs.exercise.restTime > 0) {
+          _startRestTimer(eWs.exercise.restTime);
+        }
+        _saveProgressToDb();
+      },
+      updateIdSetWithRunningStopwatch: (int setId) {
+        if (setId == 0) {
+          _stopSetStopwatch();
+        } else {
+          _startSetStopwatch(setId);
+        }
+      },
+      onMachineBusy: (int exId) {
+        if (_exercises.length <= 1) return;
+        final List<int> newOrder = AIService.reorderMachineBusy(
+          busyIndex: exIndex,
+          totalExercises: _exercises.length,
+        );
+        setState(() {
+          final List<ExerciseWithSets> reordered = newOrder
+              .map((int idx) => _exercises[idx])
+              .toList();
+          for (int i = 0; i < reordered.length; i++) {
+            reordered[i] = reordered[i].copyWith(
+              exercise: reordered[i].exercise.copyWith(position: i),
+            );
+          }
+          _exercises = reordered;
+        });
+        _saveProgressToDb();
+        NexcSnack.show(
+          context,
+          context.l10n.pushedExerciseForLater(eWs.exerciseDC.name),
+        );
+      },
+      onReplace: (int exId) async {
+        final dynamic result = await Navigator.push<dynamic>(
+          context,
+          MaterialPageRoute<dynamic>(
+            builder: (BuildContext context) => ExercisesScreen(
+              addExercises: false,
+              targetExerciseToReplace: eWs.exerciseDC,
+            ),
+          ),
+        );
+        if (!mounted) return;
+        if (result is List<ExerciseDataDC> && result.isNotEmpty) {
+          final ExerciseDataDC newDC = result.first;
+          final SetMode? storedMode = await ref
+              .read(workoutRepositoryProvider)
+              .getLastSetModeForExercise(newDC.id);
+          final SetMode initialSetMode = storedMode ?? _defaultSetMode(newDC);
+          if (!mounted) return;
+          setState(() {
+            _exercises[exIndex] = _exercises[exIndex].copyWith(
+              exerciseDC: newDC,
+              exercise: _exercises[exIndex].exercise.copyWith(
+                exerciseDataId: newDC.id,
+                setMode: initialSetMode,
+              ),
+            );
+          });
+          _saveProgressToDb();
+        }
+      },
+      onSupersetToggle: (int exId) {
+        setState(() {
+          final int? currentSupersetId = eWs.exercise.supersetId;
+          if (currentSupersetId != null) {
+            _exercises[exIndex] = eWs.copyWith(
+              exercise: eWs.exercise.copyWith(
+                supersetId: const Value<int?>(null),
+              ),
+            );
+          } else if (exIndex > 0) {
+            final ExerciseWithSets previous = _exercises[exIndex - 1];
+            final int? previousSupersetId = previous.exercise.supersetId;
+            if (previousSupersetId != null) {
+              _exercises[exIndex] = eWs.copyWith(
+                exercise: eWs.exercise.copyWith(
+                  supersetId: Value<int?>(previousSupersetId),
+                ),
+              );
+            } else {
+              final int maxId = _exercises
+                  .map((ExerciseWithSets e) => e.exercise.supersetId)
+                  .whereType<int>()
+                  .fold<int>(
+                    0,
+                    (int max, int value) => value > max ? value : max,
+                  );
+              final int newId = maxId + 1;
+              _exercises[exIndex - 1] = previous.copyWith(
+                exercise: previous.exercise.copyWith(
+                  supersetId: Value<int?>(newId),
+                ),
+              );
+              _exercises[exIndex] = eWs.copyWith(
+                exercise: eWs.exercise.copyWith(supersetId: Value<int?>(newId)),
+              );
+            }
+          }
+        });
+        _saveProgressToDb();
+      },
+    );
+  }
+}
+
+class _WorkoutProgressCard extends StatelessWidget {
+  final int completedSets;
+  final int totalSets;
+  final String elapsed;
+  final bool elevated;
+
+  const _WorkoutProgressCard({
+    required this.completedSets,
+    required this.totalSets,
+    required this.elapsed,
+    required this.elevated,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    return Material(
+      color: theme.colorScheme.primaryContainer,
+      elevation: elevated ? 4 : 0,
+      borderRadius: NexcShapes.lgRadius,
+      child: Padding(
+        padding: const EdgeInsets.all(NexcSpacing.lg),
+        child: Column(
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Text(
+                    l10n.setsRatio(completedSets, totalSets),
+                    style: theme.textTheme.bodyMedium?.copyWith(
+                      color: theme.colorScheme.onPrimaryContainer,
+                    ),
                   ),
-            if (settings.isWorkoutHeaderSticky)
-              Positioned(top: 16, left: 0, right: 0, child: headerCard),
-
-            // Floating Action Bar / Rest timer bar at bottom
-            Positioned(
-              bottom: 16,
-              right: 16,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  if (_restSecondsRemaining > 0) ...[
-                    _RestTimerPanel(
-                      restSecondsRemaining: _restSecondsRemaining,
-                      initialRestTime: _initialRestTime,
-                      onIncrement: () => _modifyRestTime(true),
-                      onDecrement: () => _modifyRestTime(false),
-                      onCancel: () {
-                        _restTimer?.cancel();
-                        _cancelRestNotification();
-                        setState(() {
-                          _restSecondsRemaining = 0;
-                          _initialRestTime = 0;
-                        });
-                        showFloatingToast(context, l10n.timerCanceled);
-                      },
-                    ),
-                  ],
-
-                  // + button (big)
-                  FloatingActionButton.extended(
-                    heroTag: 'btn_add_ex_workout',
-                    onPressed: () async {
-                      final result = await Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              const ExercisesScreen(addExercises: true),
-                        ),
-                      );
-                      if (!mounted) return;
-                      if (result != null && result is List<ExerciseDataDC>) {
-                        for (final dc in result) {
-                          await _addExercise(dc);
-                        }
-                      }
-                    },
-                    icon: const Icon(Icons.add),
-                    label: Text(l10n.addExercise),
+                ),
+                Text(
+                  elapsed,
+                  style: theme.textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    color: theme.colorScheme.onPrimaryContainer,
+                    fontFeatures: const <FontFeature>[
+                      FontFeature.tabularFigures(),
+                    ],
                   ),
-                ],
+                ),
+              ],
+            ),
+            const SizedBox(height: NexcSpacing.md),
+            LinearWavyProgressIndicator(
+              value: totalSets > 0 ? completedSets / totalSets : 0,
+              color: theme.colorScheme.onPrimaryContainer,
+              backgroundColor: theme.colorScheme.onPrimaryContainer.withValues(
+                alpha: 0.2,
               ),
             ),
           ],
@@ -1494,157 +1561,137 @@ class _WorkoutScreenState extends ConsumerState<WorkoutScreen>
   }
 }
 
-extension CoerceInt on int {
-  int coerceAtLeast(int minVal) => this < minVal ? minVal : this;
-}
+class _FinishSummaryRow extends StatelessWidget {
+  final IconData icon;
+  final String text;
 
-class _RestTimerPanel extends StatefulWidget {
-  final int restSecondsRemaining;
-  final int initialRestTime;
-  final VoidCallback onIncrement;
-  final VoidCallback onDecrement;
-  final VoidCallback onCancel;
-
-  const _RestTimerPanel({
-    required this.restSecondsRemaining,
-    required this.initialRestTime,
-    required this.onIncrement,
-    required this.onDecrement,
-    required this.onCancel,
-  });
-
-  @override
-  State<_RestTimerPanel> createState() => _RestTimerPanelState();
-}
-
-class _RestTimerPanelState extends State<_RestTimerPanel>
-    with SingleTickerProviderStateMixin {
-  late AnimationController _rotationController;
-
-  @override
-  void initState() {
-    super.initState();
-    _rotationController = AnimationController(
-      vsync: this,
-      duration: const Duration(seconds: 12),
-    )..repeat();
-  }
-
-  @override
-  void dispose() {
-    _rotationController.dispose();
-    super.dispose();
-  }
+  const _FinishSummaryRow({required this.icon, required this.text});
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    return Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        // Horizontal adjustment buttons row
-        Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            FloatingActionButton.small(
-              heroTag: 'btn_dec_rest',
-              shape: const CircleBorder(),
-              elevation: 2,
-              backgroundColor: theme.colorScheme.tertiaryContainer,
-              foregroundColor: theme.colorScheme.onTertiaryContainer,
-              onPressed: widget.onDecrement,
-              child: const Icon(Icons.remove, size: 18),
-            ),
-            const SizedBox(width: 8),
-            FloatingActionButton.small(
-              heroTag: 'btn_inc_rest',
-              shape: const CircleBorder(),
-              elevation: 2,
-              backgroundColor: theme.colorScheme.tertiaryContainer,
-              foregroundColor: theme.colorScheme.onTertiaryContainer,
-              onPressed: widget.onIncrement,
-              child: const Icon(Icons.add, size: 18),
-            ),
-          ],
-        ),
-        const SizedBox(height: 8),
-
-        // Rest timer container — Pentagon background + wavy ring
-        GestureDetector(
-          onDoubleTap: widget.onCancel,
-          child: SizedBox(
-            width: 150,
-            height: 150,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                // Pentagon fills the full box via Positioned.fill
-                Positioned.fill(
-                  child: RotationTransition(
-                    turns: _rotationController,
-                    child: Container(
-                      decoration: ShapeDecoration(
-                        color: theme.colorScheme.tertiaryContainer,
-                        shape: const StarBorder(
-                          points: 5,
-                          innerRadiusRatio: 0.85,
-                          pointRounding: 0.25,
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-
-                // Wavy progress ring — change 100 to resize relative to the 150px pentagon
-                SizedBox(
-                  width: 100,
-                  height: 100,
-                  child: CircularWavyProgressIndicator(
-                    key: const ValueKey('rest_timer_indicator'),
-                    value: widget.initialRestTime > 0
-                        ? widget.restSecondsRemaining / widget.initialRestTime
-                        : 0.0,
-                    color: theme.colorScheme.onTertiaryContainer,
-                    backgroundColor: theme.colorScheme.onTertiaryContainer
-                        .withValues(alpha: 0.15),
-                    strokeWidth: 4.5,
-                    waveHeight: 1.5,
-                    waveCount: 9,
-                  ),
-                ),
-
-                // Centered text (non-rotating)
-                Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      context.l10n.restTimerBadge,
-                      style: theme.textTheme.labelSmall?.copyWith(
-                        fontSize: 10,
-                        letterSpacing: 1.0,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onTertiaryContainer.withValues(
-                          alpha: 0.7,
-                        ),
-                      ),
-                    ),
-                    Text(
-                      '${widget.restSecondsRemaining}',
-                      style: theme.textTheme.headlineMedium?.copyWith(
-                        fontSize: 26,
-                        fontWeight: FontWeight.bold,
-                        color: theme.colorScheme.onTertiaryContainer,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
+    final ThemeData theme = Theme.of(context);
+    return Container(
+      padding: const EdgeInsets.all(NexcSpacing.md),
+      decoration: BoxDecoration(
+        color: theme.colorScheme.surfaceContainerHighest,
+        borderRadius: NexcShapes.mdRadius,
+      ),
+      child: Row(
+        children: <Widget>[
+          Icon(icon, color: theme.colorScheme.primary),
+          const SizedBox(width: NexcSpacing.md),
+          Expanded(
+            child: Text(
+              text,
+              style: theme.textTheme.bodyLarge?.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
             ),
           ),
-        ),
-        const SizedBox(height: 16),
-      ],
+        ],
+      ),
     );
   }
+}
+
+/// Compact rest timer with one progress ring and explicit actions.
+class RestTimerBar extends StatelessWidget {
+  final int remainingSeconds;
+  final int initialSeconds;
+  final VoidCallback onCancel;
+  final VoidCallback onAddTime;
+
+  const RestTimerBar({
+    super.key,
+    required this.remainingSeconds,
+    required this.initialSeconds,
+    required this.onCancel,
+    required this.onAddTime,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final AppLocalizations l10n = context.l10n;
+    final bool reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    return Material(
+      color: theme.colorScheme.tertiaryContainer,
+      elevation: 3,
+      borderRadius: NexcShapes.lgRadius,
+      child: Padding(
+        padding: const EdgeInsets.all(NexcSpacing.md),
+        child: Row(
+          children: <Widget>[
+            SizedBox(
+              width: 44,
+              height: 44,
+              child: TweenAnimationBuilder<double>(
+                tween: Tween<double>(
+                  begin: 0,
+                  end: initialSeconds > 0
+                      ? remainingSeconds / initialSeconds
+                      : 0,
+                ),
+                duration: reduceMotion ? Duration.zero : NexcMotion.short,
+                builder: (BuildContext context, double value, Widget? child) {
+                  return CircularWavyProgressIndicator(
+                    key: const ValueKey<String>('rest_timer_indicator'),
+                    value: value,
+                    color: theme.colorScheme.onTertiaryContainer,
+                    backgroundColor: theme.colorScheme.onTertiaryContainer
+                        .withValues(alpha: 0.18),
+                    strokeWidth: 4,
+                    waveHeight: 1.5,
+                    waveCount: 9,
+                  );
+                },
+              ),
+            ),
+            const SizedBox(width: NexcSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  Text(
+                    l10n.restTimerBadge,
+                    style: theme.textTheme.labelSmall?.copyWith(
+                      color: theme.colorScheme.onTertiaryContainer.withValues(
+                        alpha: 0.8,
+                      ),
+                      fontWeight: FontWeight.w700,
+                      letterSpacing: 1,
+                    ),
+                  ),
+                  Text(
+                    formatClock(remainingSeconds),
+                    style: theme.textTheme.titleLarge?.copyWith(
+                      color: theme.colorScheme.onTertiaryContainer,
+                      fontWeight: FontWeight.w700,
+                      fontFeatures: const <FontFeature>[
+                        FontFeature.tabularFigures(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Tooltip(
+              message: l10n.increaseBy('10s'),
+              child: TextButton(
+                onPressed: onAddTime,
+                child: const Text('+10s'),
+              ),
+            ),
+            TextButton(onPressed: onCancel, child: Text(l10n.cancel)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+extension CoerceInt on int {
+  int coerceAtLeast(int minVal) => this < minVal ? minVal : this;
 }

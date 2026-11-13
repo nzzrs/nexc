@@ -17,3 +17,11 @@ official work.
 | Use the Nexc name and logo to refer to the **official** project.              | Use the Nexc name or logo for your **own fork** of the project.     |
 | Use the logo in articles, reviews, or tutorials about the official project.       | Imply that your project is **endorsed by or affiliated with** Nexc. |
 | State that your software is **"for Nexc"** or **"compatible with Nexc"**. | Use "Nexc" as part of your own project, company, or domain name.    |
+
+## Upstream LibreFit Marks
+
+These guidelines cover the Nexc brand only. The LibreFit name and logo are not Nexc marks: they
+remain governed by the upstream LibreFit [`ADDITIONAL_TERMS.md`](ADDITIONAL_TERMS.md), which this
+fork does not modify or relax. Nothing here grants rights to the LibreFit name or logo, and Nexc
+must not imply any endorsement by, affiliation with, or sponsorship from LibreFit or its
+maintainers.

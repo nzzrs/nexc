@@ -20,7 +20,7 @@ Merge gate: `flutter analyze` (0 issues) + `flutter test` (green) + scope review
 | 3 | T8 units core | `feat/upstream-units-core` | merged | merged | `4a574f6c` | 163 |
 | 3 | T9 units workout UI | `feat/upstream-units-workout-ui` | merged | merged | `b0526a8d` | 169 |
 | 3 | T10 units profile UI | `feat/upstream-units-profile-ui` | pending | pending | | |
-| 4 | T11 plate calculator | `feat/upstream-plate-calculator` | merged | merged | `6b4b4fd0` | 189 |
+| 4 | T11 plate calculator | `feat/upstream-plate-calculator` | merged | merged | `7e3cc78a` | 189 |
 | 4 | T12 scroll wheel input | `feat/upstream-scroll-wheel` | pending | pending | | |
 | 5 | T13 i18n infrastructure | `feat/upstream-i18n` | pending | pending | | |
 | 5 | T14 translations (20 locales) | `i18n/<locale>` | pending | pending | | |

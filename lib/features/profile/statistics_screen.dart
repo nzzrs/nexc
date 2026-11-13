@@ -7,476 +7,390 @@
  * see the ADDITIONAL_TERMS.md and TRADEMARK_POLICY.md files in the project root.
  */
 
+import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:fl_chart/fl_chart.dart';
+
+import '../../core/components/body_heatmap.dart';
+import '../../core/components/nexc_badge.dart';
+import '../../core/components/nexc_chart_card.dart';
+import '../../core/components/nexc_macro.dart';
+import '../../core/components/nexc_page.dart';
+import '../../core/components/nexc_section.dart';
+import '../../core/components/nexc_stat_tile.dart';
 import '../../core/db/enums.dart';
 import '../../core/db/relations.dart';
 import '../../core/l10n/l10n.dart';
 import '../../core/providers/profile_providers.dart';
-import '../../core/components/nexc_scaffold.dart';
-import '../../core/components/body_heatmap.dart';
+import '../../core/theme/iconography.dart';
+import '../../core/theme/spacing.dart';
+import '../../core/util/format.dart';
+import '../../core/util/macro_totals.dart';
 
 class StatisticsScreen extends ConsumerWidget {
   const StatisticsScreen({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final workoutsAsync = ref.watch(completedWorkoutsProvider);
-    final mealLogsAsync = ref.watch(profileMealLogsProvider);
-    final theme = Theme.of(context);
     final l10n = context.l10n;
+    final AsyncValue<List<WorkoutWithExercisesAndSets>> workoutsAsync = ref
+        .watch(completedWorkoutsProvider);
+    final AsyncValue<List<MealPlanWithMealsAndItems>> mealLogsAsync = ref.watch(
+      profileMealLogsProvider,
+    );
 
-    return NexcScaffold(
-      title: Text(l10n.statisticsTitle),
-      navigateBack: () => Navigator.pop(context),
-      content: (context, padding) {
-        return ListView(
-          padding: const EdgeInsets.all(16.0),
-          children: [
-            // Workouts Section
-            workoutsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (err, stack) =>
-                  Center(child: Text(l10n.errorLoadingWorkouts('$err'))),
-              data: (workouts) {
-                final totalWorkouts = workouts.length;
-                int totalMinutes = 0;
-                final muscleTargetCounts = <Muscle, int>{};
-
-                for (final w in workouts) {
-                  totalMinutes += (w.workout.timeElapsed ~/ 60);
-                  for (final ex in w.exercisesWithSets) {
-                    for (final m in ex.exerciseDC.primaryMuscles) {
-                      muscleTargetCounts[m] = (muscleTargetCounts[m] ?? 0) + 1;
-                    }
-                  }
-                }
-
-                final avgDuration = totalWorkouts > 0
-                    ? (totalMinutes / totalWorkouts).toStringAsFixed(1)
-                    : "0";
-
-                // Sort targeted muscles
-                final sortedMuscles = muscleTargetCounts.entries.toList()
-                  ..sort((a, b) => b.value.compareTo(a.value));
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.workoutMetrics,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            _buildStatRow(
-                              l10n.totalWorkouts,
-                              "$totalWorkouts",
-                              Icons.fitness_center,
-                              theme,
-                            ),
-                            const Divider(),
-                            _buildStatRow(
-                              l10n.totalActiveTime,
-                              l10n.minutesValue('$totalMinutes'),
-                              Icons.timer_outlined,
-                              theme,
-                            ),
-                            const Divider(),
-                            _buildStatRow(
-                              l10n.averageSession,
-                              l10n.minutesValue(avgDuration),
-                              Icons.query_stats,
-                              theme,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      l10n.targetedMusclesHeatmap,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Builder(
-                      builder: (context) {
-                        final maxCount = muscleTargetCounts.values.fold(
-                          0,
-                          (max, val) => val > max ? val : max,
-                        );
-                        final intensities = muscleTargetCounts.map(
-                          (m, count) => MapEntry(
-                            m,
-                            maxCount > 0 ? count / maxCount : 0.0,
-                          ),
-                        );
-                        return BodyHeatmap(intensities: intensities);
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    Text(
-                      l10n.topTargetMuscles,
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    if (sortedMuscles.isEmpty)
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Text(l10n.noMuscleData),
-                        ),
-                      )
-                    else
-                      Card(
-                        child: Padding(
-                          padding: const EdgeInsets.all(16.0),
-                          child: Column(
-                            children: sortedMuscles.take(5).map((entry) {
-                              return Padding(
-                                padding: const EdgeInsets.symmetric(
-                                  vertical: 4.0,
-                                ),
-                                child: Row(
-                                  mainAxisAlignment:
-                                      MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Text(
-                                      entry.key.name,
-                                      style: const TextStyle(
-                                        fontWeight: FontWeight.bold,
-                                      ),
-                                    ),
-                                    Chip(
-                                      label: Text(l10n.timesCount(entry.value)),
-                                      visualDensity: VisualDensity.compact,
-                                    ),
-                                  ],
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        ),
-                      ),
-                  ],
-                );
-              },
+    return NexcPage(
+      title: l10n.statisticsTitle,
+      body: ListView(
+        padding: const EdgeInsets.only(
+          top: NexcSpacing.sm,
+          bottom: NexcSpacing.xl,
+        ),
+        children: [
+          workoutsAsync.when(
+            loading: () => const Center(
+              child: Padding(
+                padding: EdgeInsets.all(NexcSpacing.xl),
+                child: CircularProgressIndicator(),
+              ),
             ),
-            const SizedBox(height: 20),
-
-            // Nutrition Stats Section
-            mealLogsAsync.when(
-              loading: () => const SizedBox.shrink(),
-              error: (err, stack) =>
-                  Center(child: Text(l10n.errorLoadingNutrition('$err'))),
-              data: (logs) {
-                if (logs.isEmpty) return const SizedBox.shrink();
-
-                double totalProt = 0.0;
-                double totalCarb = 0.0;
-                double totalFat = 0.0;
-
-                for (final planWithMeals in logs) {
-                  for (final m in planWithMeals.meals) {
-                    for (final detail in m.items) {
-                      final scale = detail.macroScale;
-                      if (detail.mealItem.type == MealItemType.PRODUCT &&
-                          detail.product != null) {
-                        totalProt += detail.product!.proteins * scale;
-                        totalCarb += detail.product!.carbs * scale;
-                        totalFat += detail.product!.fats * scale;
-                      } else if (detail.mealItem.type == MealItemType.RECIPE &&
-                          detail.recipe != null) {
-                        for (final ing in detail.recipe!.ingredients) {
-                          final ingScale =
-                              (ing.ingredient.amount / 100.0) * scale;
-                          totalProt += ing.product.proteins * ingScale;
-                          totalCarb += ing.product.carbs * ingScale;
-                          totalFat += ing.product.fats * ingScale;
-                        }
-                      }
-                    }
-                  }
-                }
-
-                final days = logs.length;
-                final avgProt = totalProt / days;
-                final avgCarb = totalCarb / days;
-                final avgFat = totalFat / days;
-                final avgKcal = (avgProt * 4) + (avgCarb * 4) + (avgFat * 9);
-
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.nutritionInsights(days),
-                      style: theme.textTheme.titleMedium?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          children: [
-                            _buildStatRow(
-                              l10n.avgCalories,
-                              "${avgKcal.toStringAsFixed(0)} kcal",
-                              Icons.local_fire_department,
-                              theme,
-                            ),
-                            const Divider(),
-                            _buildStatRow(
-                              l10n.avgProtein,
-                              "${avgProt.toStringAsFixed(1)}g",
-                              Icons.egg_outlined,
-                              theme,
-                            ),
-                            const Divider(),
-                            _buildStatRow(
-                              l10n.avgCarbs,
-                              "${avgCarb.toStringAsFixed(1)}g",
-                              Icons.grain,
-                              theme,
-                            ),
-                            const Divider(),
-                            _buildStatRow(
-                              l10n.avgFats,
-                              "${avgFat.toStringAsFixed(1)}g",
-                              Icons.water_drop_outlined,
-                              theme,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _buildMacrosChart(
-                      context,
-                      avgProt,
-                      avgCarb,
-                      avgFat,
-                      avgKcal,
-                      theme,
-                    ),
-                  ],
-                );
-              },
+            error: (Object error, StackTrace stack) => Padding(
+              padding: const EdgeInsets.all(NexcSpacing.lg),
+              child: Text(
+                l10n.errorLoadingWorkouts('$error'),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
             ),
-          ],
-        );
-      },
+            data: (List<WorkoutWithExercisesAndSets> workouts) =>
+                _WorkoutMetrics(workouts: workouts),
+          ),
+          mealLogsAsync.when(
+            loading: () => const SizedBox.shrink(),
+            error: (Object error, StackTrace stack) => Padding(
+              padding: const EdgeInsets.all(NexcSpacing.lg),
+              child: Text(
+                l10n.errorLoadingNutrition('$error'),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.error,
+                ),
+              ),
+            ),
+            data: (List<MealPlanWithMealsAndItems> logs) {
+              if (logs.isEmpty) return const SizedBox.shrink();
+              return _NutritionMetrics(logs: logs);
+            },
+          ),
+        ],
+      ),
     );
   }
+}
 
-  Widget _buildMacrosChart(
-    BuildContext context,
-    double prot,
-    double carb,
-    double fat,
-    double totalKcal,
-    ThemeData theme,
-  ) {
+class _WorkoutMetrics extends StatelessWidget {
+  final List<WorkoutWithExercisesAndSets> workouts;
+
+  const _WorkoutMetrics({required this.workouts});
+
+  @override
+  Widget build(BuildContext context) {
     final l10n = context.l10n;
-    final protKcal = prot * 4.0;
-    final carbKcal = carb * 4.0;
-    final fatKcal = fat * 9.0;
+    final int totalWorkouts = workouts.length;
+    int totalSeconds = 0;
+    final Map<Muscle, int> muscleTargetCounts = <Muscle, int>{};
 
-    final protPct = totalKcal > 0 ? (protKcal / totalKcal * 100) : 0.0;
-    final carbPct = totalKcal > 0 ? (carbKcal / totalKcal * 100) : 0.0;
-    final fatPct = totalKcal > 0 ? (fatKcal / totalKcal * 100) : 0.0;
+    for (final WorkoutWithExercisesAndSets workout in workouts) {
+      totalSeconds += workout.workout.timeElapsed;
+      for (final ExerciseWithSets exercise in workout.exercisesWithSets) {
+        for (final Muscle muscle in exercise.exerciseDC.primaryMuscles) {
+          muscleTargetCounts[muscle] = (muscleTargetCounts[muscle] ?? 0) + 1;
+        }
+      }
+    }
 
-    const protColor = Color(0xFF42A5F5); // Blue
-    const carbColor = Color(0xFFFFA726); // Orange
-    const fatColor = Color(0xFFAB47BC); // Purple
+    final int totalMinutes = totalSeconds ~/ 60;
+    final double averageMinutes = totalWorkouts > 0
+        ? totalSeconds / 60 / totalWorkouts
+        : 0;
+    final String averageDuration = formatDecimal(
+      averageMinutes,
+      maxDecimals: 1,
+    );
 
-    return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    final List<MapEntry<Muscle, int>> sortedMuscles =
+        muscleTargetCounts.entries.toList()..sort(
+          (MapEntry<Muscle, int> a, MapEntry<Muscle, int> b) =>
+              b.value.compareTo(a.value),
+        );
+    final int maxCount = sortedMuscles.isEmpty ? 0 : sortedMuscles.first.value;
+    final Map<Muscle, double> intensities = <Muscle, double>{
+      for (final MapEntry<Muscle, int> entry in muscleTargetCounts.entries)
+        entry.key: maxCount > 0 ? entry.value / maxCount : 0.0,
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        NexcSection(
+          title: l10n.workoutMetrics,
           children: [
-            Row(
-              children: [
-                Icon(
-                  Icons.pie_chart_outline,
-                  color: theme.colorScheme.primary,
-                  size: 20,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  l10n.macrosDistribution,
-                  style: theme.textTheme.titleSmall?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            if (totalKcal <= 0)
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 24.0),
-                  child: Text(l10n.noMacroData),
-                ),
-              )
-            else
-              Row(
+            Padding(
+              padding: const EdgeInsets.all(NexcSpacing.lg),
+              child: Column(
                 children: [
-                  SizedBox(
-                    width: 120,
-                    height: 120,
-                    child: PieChart(
-                      PieChartData(
-                        sectionsSpace: 2,
-                        centerSpaceRadius: 32,
-                        sections: [
-                          PieChartSectionData(
-                            value: protKcal > 0 ? protKcal : 0.01,
-                            title: "${protPct.toStringAsFixed(0)}%",
-                            color: protColor,
-                            radius: 26,
-                            titleStyle: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
+                  NexcStatTile(
+                    label: l10n.totalWorkouts,
+                    value: formatCount(totalWorkouts),
+                    icon: NexcIcons.workout,
+                    tone: NexcBadgeTone.info,
+                  ),
+                  const SizedBox(height: NexcSpacing.md),
+                  NexcStatTile(
+                    label: l10n.totalActiveTime,
+                    value: l10n.minutesValue(formatCount(totalMinutes)),
+                    icon: NexcIcons.timer,
+                    tone: NexcBadgeTone.info,
+                  ),
+                  const SizedBox(height: NexcSpacing.md),
+                  NexcStatTile(
+                    label: l10n.averageSession,
+                    value: l10n.minutesValue(averageDuration),
+                    icon: NexcIcons.overview,
+                    tone: NexcBadgeTone.info,
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+        NexcSection(
+          title: l10n.targetedMusclesHeatmap,
+          padded: true,
+          children: [BodyHeatmap(intensities: intensities)],
+        ),
+        NexcSection(
+          title: l10n.topTargetMuscles,
+          children: sortedMuscles.isEmpty
+              ? [
+                  Padding(
+                    padding: const EdgeInsets.all(NexcSpacing.lg),
+                    child: Text(l10n.noMuscleData),
+                  ),
+                ]
+              : [
+                  for (final MapEntry<Muscle, int> entry in sortedMuscles.take(
+                    5,
+                  ))
+                    Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: NexcSpacing.lg,
+                        vertical: NexcSpacing.md,
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _muscleLabel(entry.key),
+                              maxLines: 2,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.titleSmall,
                             ),
                           ),
-                          PieChartSectionData(
-                            value: carbKcal > 0 ? carbKcal : 0.01,
-                            title: "${carbPct.toStringAsFixed(0)}%",
-                            color: carbColor,
-                            radius: 26,
-                            titleStyle: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          PieChartSectionData(
-                            value: fatKcal > 0 ? fatKcal : 0.01,
-                            title: "${fatPct.toStringAsFixed(0)}%",
-                            color: fatColor,
-                            radius: 26,
-                            titleStyle: const TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
+                          const SizedBox(width: NexcSpacing.sm),
+                          NexcBadge(
+                            l10n.timesCount(entry.value),
+                            tone: NexcBadgeTone.info,
                           ),
                         ],
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        _buildMacroLegendItem(
-                          context,
-                          l10n.proteinLabel,
-                          "${prot.toStringAsFixed(1)}g",
-                          "${protPct.toStringAsFixed(0)}%",
-                          protColor,
-                          theme,
-                        ),
-                        const SizedBox(height: 8),
-                        _buildMacroLegendItem(
-                          context,
-                          l10n.carbsLabel,
-                          "${carb.toStringAsFixed(1)}g",
-                          "${carbPct.toStringAsFixed(0)}%",
-                          carbColor,
-                          theme,
-                        ),
-                        const SizedBox(height: 8),
-                        _buildMacroLegendItem(
-                          context,
-                          l10n.fatsLabel,
-                          "${fat.toStringAsFixed(1)}g",
-                          "${fatPct.toStringAsFixed(0)}%",
-                          fatColor,
-                          theme,
-                        ),
-                      ],
-                    ),
-                  ),
                 ],
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildMacroLegendItem(
-    BuildContext context,
-    String label,
-    String grams,
-    String pct,
-    Color color,
-    ThemeData theme,
-  ) {
-    return Row(
-      children: [
-        Container(
-          width: 12,
-          height: 12,
-          decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-        ),
-        const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            label,
-            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-          ),
-        ),
-        Text(
-          context.l10n.gramsPercent(grams, pct),
-          style: TextStyle(
-            color: theme.colorScheme.onSurfaceVariant,
-            fontSize: 12,
-          ),
         ),
       ],
     );
   }
 
-  Widget _buildStatRow(
-    String title,
-    String value,
-    IconData icon,
-    ThemeData theme,
-  ) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Row(
-        children: [
-          Icon(icon, color: theme.colorScheme.primary),
-          const SizedBox(width: 16),
-          Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          const Spacer(),
-          Text(
-            value,
-            style: TextStyle(
-              color: theme.colorScheme.secondary,
-              fontWeight: FontWeight.bold,
+  /// Sentence-cases the canonical English muscle name.
+  String _muscleLabel(Muscle muscle) {
+    final String name = muscle.toJson();
+    if (name.isEmpty) return name;
+    return '${name[0].toUpperCase()}${name.substring(1)}';
+  }
+}
+
+class _NutritionMetrics extends StatelessWidget {
+  final List<MealPlanWithMealsAndItems> logs;
+
+  const _NutritionMetrics({required this.logs});
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = context.l10n;
+    final int days = logs.length;
+    MacroTotals totals = MacroTotals.zero;
+    for (final MealPlanWithMealsAndItems log in logs) {
+      totals += MacroTotals.ofPlan(log);
+    }
+    final MacroTotals average = totals * (1 / days);
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        NexcSection(
+          title: l10n.nutritionInsights(days),
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(NexcSpacing.lg),
+              child: Column(
+                children: [
+                  NexcStatTile(
+                    label: l10n.avgCalories,
+                    value: formatDecimal(
+                      average.impliedCalories,
+                      maxDecimals: 0,
+                    ),
+                    unit: 'kcal',
+                    icon: NexcIcons.macros,
+                    tone: NexcBadgeTone.warning,
+                  ),
+                  const SizedBox(height: NexcSpacing.md),
+                  NexcStatTile(
+                    label: l10n.avgProtein,
+                    value: formatDecimal(average.protein, maxDecimals: 1),
+                    unit: 'g',
+                    icon: NexcIcons.macros,
+                    tone: NexcBadgeTone.info,
+                  ),
+                  const SizedBox(height: NexcSpacing.md),
+                  NexcStatTile(
+                    label: l10n.avgCarbs,
+                    value: formatDecimal(average.carbs, maxDecimals: 1),
+                    unit: 'g',
+                    icon: NexcIcons.macros,
+                    tone: NexcBadgeTone.success,
+                  ),
+                  const SizedBox(height: NexcSpacing.md),
+                  NexcStatTile(
+                    label: l10n.avgFats,
+                    value: formatDecimal(average.fats, maxDecimals: 1),
+                    unit: 'g',
+                    icon: NexcIcons.macros,
+                    tone: NexcBadgeTone.neutral,
+                  ),
+                ],
+              ),
             ),
+          ],
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: NexcSpacing.lg),
+          child: _MacroChart(average: average),
+        ),
+      ],
+    );
+  }
+}
+
+class _MacroChart extends StatelessWidget {
+  final MacroTotals average;
+
+  const _MacroChart({required this.average});
+
+  @override
+  Widget build(BuildContext context) {
+    final ThemeData theme = Theme.of(context);
+    final ColorScheme scheme = theme.colorScheme;
+    final l10n = context.l10n;
+
+    final double proteinKcal = average.protein * 4;
+    final double carbsKcal = average.carbs * 4;
+    final double fatsKcal = average.fats * 9;
+    final double totalKcal = proteinKcal + carbsKcal + fatsKcal;
+
+    final Color proteinColor = NexcMacroColors.protein(scheme);
+    final Color carbsColor = NexcMacroColors.carbs(scheme);
+    final Color fatsColor = NexcMacroColors.fats(scheme);
+
+    String percent(double value) => totalKcal > 0
+        ? '${formatDecimal(value / totalKcal * 100, maxDecimals: 0)}%'
+        : '0%';
+
+    return NexcChartCard(
+      title: l10n.macrosDistribution,
+      emptyMessage: totalKcal <= 0 ? l10n.noMacroData : null,
+      legend: totalKcal <= 0
+          ? const []
+          : [
+              NexcChartLegend(
+                label:
+                    '${l10n.proteinLabel} '
+                    '${formatDecimal(average.protein, maxDecimals: 1)}g '
+                    '(${percent(proteinKcal)})',
+                color: proteinColor,
+              ),
+              NexcChartLegend(
+                label:
+                    '${l10n.carbsLabel} '
+                    '${formatDecimal(average.carbs, maxDecimals: 1)}g '
+                    '(${percent(carbsKcal)})',
+                color: carbsColor,
+              ),
+              NexcChartLegend(
+                label:
+                    '${l10n.fatsLabel} '
+                    '${formatDecimal(average.fats, maxDecimals: 1)}g '
+                    '(${percent(fatsKcal)})',
+                color: fatsColor,
+              ),
+            ],
+      child: SizedBox(
+        height: 160,
+        child: PieChart(
+          PieChartData(
+            sectionsSpace: 2,
+            centerSpaceRadius: 36,
+            sections: [
+              _section(
+                value: proteinKcal,
+                title: percent(proteinKcal),
+                color: proteinColor,
+                onColor: scheme.onPrimary,
+              ),
+              _section(
+                value: carbsKcal,
+                title: percent(carbsKcal),
+                color: carbsColor,
+                onColor: scheme.onTertiary,
+              ),
+              _section(
+                value: fatsKcal,
+                title: percent(fatsKcal),
+                color: fatsColor,
+                onColor: scheme.onSecondary,
+              ),
+            ],
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  PieChartSectionData _section({
+    required double value,
+    required String title,
+    required Color color,
+    required Color onColor,
+  }) {
+    return PieChartSectionData(
+      value: value > 0 ? value : 0.01,
+      title: title,
+      color: color,
+      radius: 28,
+      titleStyle: TextStyle(
+        fontSize: 10,
+        fontWeight: FontWeight.bold,
+        color: onColor,
       ),
     );
   }

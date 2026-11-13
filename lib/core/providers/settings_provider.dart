@@ -33,6 +33,8 @@ class SettingsState {
   final Language language;
   final RoutineUpdateMode routineUpdateMode;
   final UnitSystem unitSystem;
+  final bool useScrollWheelForInput;
+  final bool dismissScrollWheelInputAutomatically;
 
   /// Last barbell weight chosen in the plate calculator, in kilograms.
   final double? defaultBarWeightKg;
@@ -95,6 +97,8 @@ class SettingsState {
     required this.language,
     required this.routineUpdateMode,
     required this.unitSystem,
+    this.useScrollWheelForInput = true,
+    this.dismissScrollWheelInputAutomatically = true,
     this.defaultBarWeightKg,
     required this.targetProtein,
     required this.targetCarbs,
@@ -141,6 +145,8 @@ class SettingsState {
     Language? language,
     RoutineUpdateMode? routineUpdateMode,
     UnitSystem? unitSystem,
+    bool? useScrollWheelForInput,
+    bool? dismissScrollWheelInputAutomatically,
     double? defaultBarWeightKg,
     double? targetProtein,
     double? targetCarbs,
@@ -185,6 +191,9 @@ class SettingsState {
       language: language ?? this.language,
       routineUpdateMode: routineUpdateMode ?? this.routineUpdateMode,
       unitSystem: unitSystem ?? this.unitSystem,
+      useScrollWheelForInput: useScrollWheelForInput ?? this.useScrollWheelForInput,
+      dismissScrollWheelInputAutomatically:
+          dismissScrollWheelInputAutomatically ?? this.dismissScrollWheelInputAutomatically,
       defaultBarWeightKg: defaultBarWeightKg ?? this.defaultBarWeightKg,
       targetProtein: targetProtein ?? this.targetProtein,
       targetCarbs: targetCarbs ?? this.targetCarbs,
@@ -255,6 +264,10 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       orElse: resolveDefaultUnitSystemFromPlatform,
     );
 
+    final useScrollWheelForInput = prefs.getBool('use_scroll_wheel_for_input') ?? true;
+    final dismissScrollWheelInputAutomatically =
+        prefs.getBool('dismiss_scroll_wheel_input_automatically') ?? true;
+
     final defaultBarWeightKg = prefs.getDouble('default_bar_weight_kg');
 
     final targetProtein = prefs.getDouble('target_protein') ?? 150.0;
@@ -306,6 +319,8 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
       language: language,
       routineUpdateMode: routineUpdateMode,
       unitSystem: unitSystem,
+      useScrollWheelForInput: useScrollWheelForInput,
+      dismissScrollWheelInputAutomatically: dismissScrollWheelInputAutomatically,
       defaultBarWeightKg: defaultBarWeightKg,
       targetProtein: targetProtein,
       targetCarbs: targetCarbs,
@@ -409,6 +424,16 @@ class SettingsNotifier extends StateNotifier<SettingsState> {
   Future<void> setUnitSystem(UnitSystem system) async {
     await _prefs.setString('unit_system', system.name);
     state = state.copyWith(unitSystem: system);
+  }
+
+  Future<void> setUseScrollWheelForInput(bool val) async {
+    await _prefs.setBool('use_scroll_wheel_for_input', val);
+    state = state.copyWith(useScrollWheelForInput: val);
+  }
+
+  Future<void> setDismissScrollWheelInputAutomatically(bool val) async {
+    await _prefs.setBool('dismiss_scroll_wheel_input_automatically', val);
+    state = state.copyWith(dismissScrollWheelInputAutomatically: val);
   }
 
   /// Remembers the barbell weight picked in the plate calculator.

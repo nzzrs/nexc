@@ -286,6 +286,28 @@ class SettingsScreen extends ConsumerWidget {
             },
           ),
 
+          _SettingItem(
+            settingName: 'Scroll wheel input',
+            settingDesc: settings.useScrollWheelForInput
+                ? 'Tap a value to open the picker'
+                : 'Inline text fields',
+            icon: Icons.unfold_more,
+            isChecked: settings.useScrollWheelForInput,
+            onClick: () => notifier.setUseScrollWheelForInput(!settings.useScrollWheelForInput),
+          ),
+          if (settings.useScrollWheelForInput)
+            _SettingItem(
+              settingName: 'Dismiss scroll wheel automatically',
+              settingDesc: settings.dismissScrollWheelInputAutomatically
+                  ? 'Closes after a short pause'
+                  : 'Confirm with Done',
+              icon: Icons.close_fullscreen,
+              isChecked: settings.dismissScrollWheelInputAutomatically,
+              onClick: () => notifier.setDismissScrollWheelInputAutomatically(
+                !settings.dismissScrollWheelInputAutomatically,
+              ),
+            ),
+
           const SizedBox(height: 16),
 
           // Navigation buttons
